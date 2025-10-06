@@ -48,15 +48,12 @@ interface DataStore {
 class StorageService {
   private dataDir: string
   private dataFile: string
-  private backupDir: string
-  private maxBackups = 10
 
   constructor() {
     // Use Documents/Stunts for data storage
     const documentsPath = app.getPath('documents')
     this.dataDir = path.join(documentsPath, 'Stunts')
     this.dataFile = path.join(this.dataDir, 'data.json')
-    this.backupDir = path.join(this.dataDir, 'backups')
   }
 
   /**
@@ -64,9 +61,8 @@ class StorageService {
    */
   async initialize(): Promise<void> {
     try {
-      // Create directories if they don't exist
+      // Create directory if it doesn't exist
       await fs.mkdir(this.dataDir, { recursive: true })
-      await fs.mkdir(this.backupDir, { recursive: true })
 
       // Create data file if it doesn't exist
       try {
@@ -107,69 +103,11 @@ class StorageService {
       const tempFile = `${this.dataFile}.tmp`
       await fs.writeFile(tempFile, JSON.stringify(data, null, 2), 'utf-8')
 
-      // Create backup before replacing
-      await this.createBackup()
-
       // Atomic rename
       await fs.rename(tempFile, this.dataFile)
     } catch (error) {
       console.error('Failed to write data:', error)
       throw error
-    }
-  }
-
-  /**
-   * Create backup of current data
-   */
-  private async createBackup(): Promise<void> {
-    try {
-      // Check if data file exists
-      try {
-        await fs.access(this.dataFile)
-      } catch {
-        return // No file to backup
-      }
-
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-      const backupFile = path.join(this.backupDir, `data-${timestamp}.json`)
-
-      // Copy current data to backup
-      await fs.copyFile(this.dataFile, backupFile)
-
-      // Clean old backups
-      await this.cleanOldBackups()
-    } catch (error) {
-      console.error('Failed to create backup:', error)
-      // Don't throw - backup failure shouldn't prevent writes
-    }
-  }
-
-  /**
-   * Remove old backups keeping only the most recent ones
-   */
-  private async cleanOldBackups(): Promise<void> {
-    try {
-      const files = await fs.readdir(this.backupDir)
-      const backupFiles = files
-        .filter((f) => f.startsWith('data-') && f.endsWith('.json'))
-        .map((f) => path.join(this.backupDir, f))
-
-      // Get file stats with timestamps
-      const filesWithStats = await Promise.all(
-        backupFiles.map(async (file) => ({
-          file,
-          mtime: (await fs.stat(file)).mtime
-        }))
-      )
-
-      // Sort by modification time (newest first)
-      filesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime())
-
-      // Delete old backups
-      const toDelete = filesWithStats.slice(this.maxBackups)
-      await Promise.all(toDelete.map((f) => fs.unlink(f.file)))
-    } catch (error) {
-      console.error('Failed to clean old backups:', error)
     }
   }
 
