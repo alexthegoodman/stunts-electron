@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { storage } from './services/storage'
 import { apiKeys } from './services/api-keys'
+import { registerAllHandlers } from './ipc'
 
 function createWindow(): void {
   // Create the browser window.
@@ -52,6 +53,9 @@ app.whenReady().then(async () => {
   } catch (error) {
     console.error('Failed to initialize storage:', error)
   }
+
+  // Register IPC handlers
+  registerAllHandlers()
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
