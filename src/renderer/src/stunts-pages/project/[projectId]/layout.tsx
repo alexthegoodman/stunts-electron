@@ -1,30 +1,26 @@
-"use client";
+'use client'
 
-import { NavButton } from "@/components/stunts-app/items";
-import { useParams, usePathname } from "next/navigation";
+import { NavButton } from '../components/stunts-app/items'
+import { useParams, usePathname } from 'next/navigation'
 
-import { Toaster } from "react-hot-toast";
-import { useTranslation } from "react-i18next";
-import { ThemeSelector } from "@/app/components/ThemeSelector";
+import { Toaster } from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
+import { ThemeSelector } from '../app/components/ThemeSelector'
 
 export default function ProjectLayout({ children = null }) {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common')
 
-  const { projectId } = useParams();
-  const pathname = usePathname();
+  const { projectId } = useParams()
+  const pathname = usePathname()
 
-  let hubUrl = `/project/${projectId}`;
-  if (
-    pathname.includes("flows") ||
-    pathname === hubUrl ||
-    pathname === hubUrl + "/"
-  ) {
+  let hubUrl = `/project/${projectId}`
+  if (pathname.includes('flows') || pathname === hubUrl || pathname === hubUrl + '/') {
     return (
       <>
         <Toaster position="bottom-left" reverseOrder={false} />
         {children}
       </>
-    );
+    )
   }
 
   return (
@@ -41,16 +37,8 @@ export default function ProjectLayout({ children = null }) {
             icon="lightning"
             destination={`/project/${projectId}`}
           /> */}
-          <NavButton
-            label={t("Projects")}
-            icon="shapes"
-            destination={`/projects/`}
-          />
-          <NavButton
-            label={t("Video")}
-            icon="video"
-            destination={`/project/${projectId}/videos`}
-          />
+          <NavButton label={t('Projects')} icon="shapes" destination={`/projects/`} />
+          <NavButton label={t('Video')} icon="video" destination={`/project/${projectId}/videos`} />
           {/* <NavButton
             label={t("Document")}
             icon="file-cloud"
@@ -77,7 +65,7 @@ export default function ProjectLayout({ children = null }) {
             destination={`/project/${projectId}/books`}
           /> */}
           <NavButton
-            label={t("Settings")}
+            label={t('Settings')}
             icon="gear"
             destination={`/project/${projectId}/settings`}
           />
@@ -85,5 +73,5 @@ export default function ProjectLayout({ children = null }) {
         {children}
       </div>
     </>
-  );
+  )
 }

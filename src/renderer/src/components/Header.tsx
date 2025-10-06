@@ -1,36 +1,34 @@
-"use client";
+import Link from './Link'
 
-import Link from "next/link";
-
-export default function Header({ language = "en", showLogo = false }) {
-  let copy = null;
+export default function Header({ language = 'en', showLogo = false }) {
+  let copy: any = null
   switch (language) {
-    case "en":
+    case 'en':
       copy = {
-        blog: "Blog",
-        login: "Login",
-        register: "Register",
-      };
-      break;
+        blog: 'Blog',
+        login: 'Login',
+        register: 'Register'
+      }
+      break
 
-    case "hi":
+    case 'hi':
       copy = {
-        blog: "ब्लॉग",
-        login: "लॉगिन",
-        register: "रजिस्टर",
-      };
-      break;
+        blog: 'ब्लॉग',
+        login: 'लॉगिन',
+        register: 'रजिस्टर'
+      }
+      break
 
-    case "bn":
+    case 'bn':
       copy = {
-        blog: "",
-        login: "",
-        register: "",
-      };
-      break;
+        blog: '',
+        login: '',
+        register: ''
+      }
+      break
 
     default:
-      break;
+      break
   }
 
   return (
@@ -39,11 +37,7 @@ export default function Header({ language = "en", showLogo = false }) {
         <div>
           {showLogo && (
             <Link href="/stunts">
-              <img
-                src="/stunts_logo_blackground.png"
-                alt="Stunts Logo"
-                className="mx-auto h-20"
-              />
+              <img src="/stunts_logo_blackground.png" alt="Stunts Logo" className="mx-auto h-20" />
             </Link>
           )}
         </div>
@@ -62,5 +56,5 @@ export default function Header({ language = "en", showLogo = false }) {
         </nav>
       </div>
     </section>
-  );
+  )
 }

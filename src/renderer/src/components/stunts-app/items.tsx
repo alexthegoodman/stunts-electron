@@ -1,122 +1,113 @@
-"use client";
+'use client'
 
-import { useRouter } from "next/navigation";
-import React, { useCallback, useEffect, useState } from "react";
-import { CreateIcon } from "./icon";
-import { useDebounce, useLocalStorage } from "@uidotdev/usehooks";
-import { Editor } from "@/engine/editor";
-import EditorState from "@/engine/editor_state";
-import { FullExporter } from "@/engine/export";
+import { useRouter } from '../../hooks/useRouter'
+import React, { useCallback, useEffect, useState } from 'react'
+import { CreateIcon } from './icon'
+import { useDebounce, useLocalStorage } from '@uidotdev/usehooks'
+import { Editor } from '../../engine/editor'
+import EditorState from '../../engine/editor_state'
+import { FullExporter } from '../../engine/export'
 
-import toast from "react-hot-toast";
+import toast from 'react-hot-toast'
 import {
   AuthToken,
   createProject,
   deleteProject,
   getProjects,
-  getSingleProject,
-} from "@/fetchers/projects";
-import { mutate } from "swr";
-import { useTranslation } from "react-i18next";
+  getSingleProject
+} from '../../fetchers/projects'
+import { mutate } from 'swr'
+import { useTranslation } from 'react-i18next'
 
 export const ProjectItem = ({
   project_id,
   project_label,
   icon,
-  user,
+  user
 }: {
-  project_id: string;
-  project_label: string;
-  icon: string;
-  user?: { role: string } | null;
+  project_id: string
+  project_label: string
+  icon: string
+  user?: { role: string } | null
 }) => {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common')
 
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [authToken] = useLocalStorage<AuthToken | null>("auth-token", null);
-  const storedProject = JSON.parse(
-    localStorage.getItem("stored-project") || "{}"
-  );
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
+  const storedProject = JSON.parse(localStorage.getItem('stored-project') || '{}')
 
   const handleSubmit = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    setLoading(true);
+    event.preventDefault()
+    setLoading(true)
 
-    localStorage.setItem("stored-project", JSON.stringify({ project_id }));
+    localStorage.setItem('stored-project', JSON.stringify({ project_id }))
 
-    router.push(`/project/${project_id}/videos`);
-    setLoading(false);
-  };
+    router.push(`/project/${project_id}/videos`)
+    setLoading(false)
+  }
 
-  const handleDuplicate = async (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    event.preventDefault();
+  const handleDuplicate = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
 
     if (!authToken) {
-      return;
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     try {
-      const { project } = await getSingleProject(authToken.token, project_id);
+      const { project } = await getSingleProject(authToken.token, project_id)
 
       if (!project?.fileData || !project.docData || !project.presData) {
-        return;
+        return
       }
 
       await createProject(
         authToken.token,
-        project?.name + " Duplicate",
+        project?.name + ' Duplicate',
         project?.fileData,
         project?.docData,
         project?.presData
-      );
+      )
 
-      mutate("projects", () => getProjects(authToken));
+      mutate('projects', () => getProjects(authToken))
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes("Project limit reached")
-      ) {
-        toast.error("Project limit reached. Upgrade to create more projects.");
+      if (error instanceof Error && error.message.includes('Project limit reached')) {
+        toast.error('Project limit reached. Upgrade to create more projects.')
       } else {
-        toast.error("Failed to duplicate project. Please try again.");
+        toast.error('Failed to duplicate project. Please try again.')
       }
     }
 
-    setLoading(false);
-  };
+    setLoading(false)
+  }
 
   const handleDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
+    event.preventDefault()
 
-    if (!authToken || !user || user.role !== "ADMIN") {
-      return;
+    if (!authToken || !user || user.role !== 'ADMIN') {
+      return
     }
 
     if (
-      !confirm(
-        `Are you sure you want to delete "${project_label}"? This action cannot be undone.`
-      )
+      !confirm(`Are you sure you want to delete "${project_label}"? This action cannot be undone.`)
     ) {
-      return;
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     try {
-      await deleteProject(authToken.token, project_id);
-      mutate("projects", () => getProjects(authToken));
-      toast.success("Project deleted successfully");
+      await deleteProject(authToken.token, project_id)
+      mutate('projects', () => getProjects(authToken))
+      toast.success('Project deleted successfully')
     } catch (error: any) {
-      toast.error(error.message || "Failed to delete project");
+      toast.error(error.message || 'Failed to delete project')
     }
 
-    setLoading(false);
-  };
+    setLoading(false)
+  }
 
   return (
     <div className="flex flex-row gap-2">
@@ -139,9 +130,9 @@ export const ProjectItem = ({
         disabled={loading}
         onClick={handleDuplicate}
       >
-        {t("Duplicate")}
+        {t('Duplicate')}
       </button>
-      {user?.role === "ADMIN" && (
+      {user?.role === 'ADMIN' && (
         <button
           className="w-24 rounded-xl flex items-center justify-center p-2 bg-red-500
                hover:bg-red-600 hover:cursor-pointer 
@@ -149,36 +140,32 @@ export const ProjectItem = ({
           disabled={loading}
           onClick={handleDelete}
         >
-          {t("Delete")}
+          {t('Delete')}
         </button>
       )}
     </div>
-  );
-};
-
-interface NavButtonProps {
-  label: string;
-  icon: string;
-  destination: string;
+  )
 }
 
-export const NavButton: React.FC<NavButtonProps> = ({
-  label,
-  icon,
-  destination,
-}) => {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+interface NavButtonProps {
+  label: string
+  icon: string
+  destination: string
+}
+
+export const NavButton: React.FC<NavButtonProps> = ({ label, icon, destination }) => {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
 
   const handleClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      setLoading(true);
-      router.push(destination);
-      setLoading(false);
+      event.preventDefault()
+      setLoading(true)
+      router.push(destination)
+      setLoading(false)
     },
     [router, destination]
-  );
+  )
 
   return (
     <button
@@ -196,15 +183,15 @@ export const NavButton: React.FC<NavButtonProps> = ({
       </div>
       <span className="text-[10px] md:text-xs">{label}</span>
     </button>
-  );
-};
+  )
+}
 
 interface OptionButtonProps {
-  style: any;
-  label: string;
-  icon: string;
-  callback: () => void;
-  "aria-label"?: string;
+  style: any
+  label: string
+  icon: string
+  callback: () => void
+  'aria-label'?: string
 }
 
 export const OptionButton: React.FC<OptionButtonProps> = ({
@@ -212,12 +199,12 @@ export const OptionButton: React.FC<OptionButtonProps> = ({
   label,
   icon,
   callback,
-  "aria-label": ariaLabel,
+  'aria-label': ariaLabel
 }) => {
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    callback();
-  };
+    event.preventDefault()
+    callback()
+  }
 
   return (
     <button
@@ -233,28 +220,28 @@ export const OptionButton: React.FC<OptionButtonProps> = ({
       </div>
       <span className="text-[11px]">{label}</span>
     </button>
-  );
-};
+  )
+}
 
 // Helper function to parse inline styles
 const parseStyle = (styleString: string) => {
-  const style: any = {};
-  styleString.split(";").forEach((declaration) => {
-    const [property, value] = declaration.split(":").map((s) => s.trim());
+  const style: any = {}
+  styleString.split(';').forEach((declaration) => {
+    const [property, value] = declaration.split(':').map((s) => s.trim())
     if (property && value) {
-      style[property as any] = value;
+      style[property as any] = value
     }
-  });
-  return style;
-};
+  })
+  return style
+}
 
 interface DebouncedInputProps {
-  id: string;
-  label: string;
-  placeholder: string;
-  initialValue: string;
-  onDebounce: (value: string) => void;
-  style?: any;
+  id: string
+  label: string
+  placeholder: string
+  initialValue: string
+  onDebounce: (value: string) => void
+  style?: any
 }
 
 export const DebouncedInput: React.FC<DebouncedInputProps> = ({
@@ -263,25 +250,25 @@ export const DebouncedInput: React.FC<DebouncedInputProps> = ({
   placeholder,
   initialValue,
   onDebounce,
-  style,
+  style
 }) => {
-  const [value, setValue] = useState(initialValue);
-  const debouncedValue = useDebounce(value, 300);
-  const [debounced, setDebounced] = useState(false);
+  const [value, setValue] = useState(initialValue)
+  const debouncedValue = useDebounce(value, 300)
+  const [debounced, setDebounced] = useState(false)
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = event.target.value;
-    setValue(newValue);
-  };
+    const newValue = event.target.value
+    setValue(newValue)
+  }
 
   useEffect(() => {
     if (debouncedValue && debounced) {
-      console.info("on debounce!");
-      onDebounce(debouncedValue);
+      console.info('on debounce!')
+      onDebounce(debouncedValue)
     } else if (debouncedValue) {
-      setDebounced(true);
+      setDebounced(true)
     }
-  }, [debouncedValue]);
+  }, [debouncedValue])
 
   return (
     <div className="space-y-2" style={style}>
@@ -299,8 +286,8 @@ export const DebouncedInput: React.FC<DebouncedInputProps> = ({
         className="border rounded px-2 py-1 w-full min-w-2 text-xs"
       />
     </div>
-  );
-};
+  )
+}
 
 export const DebouncedTextarea: React.FC<DebouncedInputProps> = ({
   id,
@@ -308,25 +295,25 @@ export const DebouncedTextarea: React.FC<DebouncedInputProps> = ({
   placeholder,
   initialValue,
   onDebounce,
-  style,
+  style
 }) => {
-  const [value, setValue] = useState(initialValue);
-  const debouncedValue = useDebounce(value, 300);
-  const [debounced, setDebounced] = useState(false);
+  const [value, setValue] = useState(initialValue)
+  const debouncedValue = useDebounce(value, 300)
+  const [debounced, setDebounced] = useState(false)
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = event.target.value;
-    setValue(newValue);
-  };
+    const newValue = event.target.value
+    setValue(newValue)
+  }
 
   useEffect(() => {
     if (debouncedValue && debounced) {
-      console.info("on debounce!");
-      onDebounce(debouncedValue);
+      console.info('on debounce!')
+      onDebounce(debouncedValue)
     } else if (debouncedValue) {
-      setDebounced(true);
+      setDebounced(true)
     }
-  }, [debouncedValue]);
+  }, [debouncedValue])
 
   return (
     <div className="space-y-2" style={style}>
@@ -344,95 +331,91 @@ export const DebouncedTextarea: React.FC<DebouncedInputProps> = ({
         className="border rounded px-2 py-1 w-full min-w-2 text-xs"
       ></textarea>
     </div>
-  );
-};
+  )
+}
 
 export const PlaySequenceButton: React.FC<{
-  editorRef: React.RefObject<Editor | null>;
-  editorStateRef: React.RefObject<EditorState | null>;
-  selected_sequence_id: string;
+  editorRef: React.RefObject<Editor | null>
+  editorStateRef: React.RefObject<EditorState | null>
+  selected_sequence_id: string
 }> = ({ editorRef, editorStateRef, selected_sequence_id }) => {
-  const { t } = useTranslation("common");
-  const [isPlaying, setIsPlaying] = useState(false);
+  const { t } = useTranslation('common')
+  const [isPlaying, setIsPlaying] = useState(false)
 
   return (
     <button
       className="text-xs rounded-md theme-button px-2 py-1"
       onClick={() => {
-        let editor = editorRef.current;
-        let editorState = editorStateRef.current;
+        let editor = editorRef.current
+        let editorState = editorStateRef.current
 
         if (!editor || !editorState) {
-          return;
+          return
         }
 
         if (editor.isPlaying) {
-          console.info("Pause Sequence...");
+          console.info('Pause Sequence...')
 
-          editor.isPlaying = false;
-          editor.startPlayingTime = null;
+          editor.isPlaying = false
+          editor.startPlayingTime = null
 
           // Stop all text animations
           for (const textItem of editor.textItems) {
             if (textItem.hasTextAnimation()) {
-              textItem.stopTextAnimation();
+              textItem.stopTextAnimation()
             }
           }
 
           // should return objects to the startup positions and state
-          editor.reset_sequence_objects();
+          editor.reset_sequence_objects()
 
-          setIsPlaying(false);
+          setIsPlaying(false)
         } else {
-          console.info("Play Sequence...");
+          console.info('Play Sequence...')
 
           let selected_sequence_data = editorState.savedState.sequences.find(
             (s) => s.id === selected_sequence_id
-          );
+          )
 
           if (!selected_sequence_data) {
-            return;
+            return
           }
 
-          let now = Date.now();
-          editor.startPlayingTime = now;
+          let now = Date.now()
+          editor.startPlayingTime = now
 
-          editor.currentSequenceData = selected_sequence_data;
-          editor.isPlaying = true;
+          editor.currentSequenceData = selected_sequence_data
+          editor.isPlaying = true
 
           // Start all text animations with relative time (0 = start of sequence)
           for (const textItem of editor.textItems) {
             if (!textItem.hidden && textItem.hasTextAnimation()) {
-              textItem.startTextAnimation(0);
+              textItem.startTextAnimation(0)
             }
           }
 
-          setIsPlaying(true);
+          setIsPlaying(true)
         }
       }}
     >
       {/* {isPlaying ? t("Pause Sequence") : t("Play Sequence")} */}
-      {isPlaying ? (
-        <CreateIcon icon="pause" size="24px" />
-      ) : (
-        <CreateIcon icon="play" size="24px" />
-      )}
+      {isPlaying ? <CreateIcon icon="pause" size="24px" /> : <CreateIcon icon="play" size="24px" />}
     </button>
-  );
-};
+  )
+}
 
 export const PlayVideoButton: React.FC<{
-  editorRef: React.RefObject<Editor | null>;
-  editorStateRef: React.RefObject<EditorState | null>;
+  editorRef: React.RefObject<Editor | null>
+  editorStateRef: React.RefObject<EditorState | null>
 }> = ({ editorRef, editorStateRef }) => {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common')
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  let [canPlay, setCanPlay] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false)
+  let [canPlay, setCanPlay] = useState(false)
 
   useEffect(() => {
     if (editorStateRef.current) {
-      let canPlay = false;
+      let canPlay = false
       editorStateRef.current.savedState.sequences.forEach((seq) => {
         if (
           seq.activePolygons.length > 0 ||
@@ -440,191 +423,163 @@ export const PlayVideoButton: React.FC<{
           seq.activeTextItems.length > 0 ||
           seq.activeVideoItems.length > 0
         ) {
-          canPlay = true;
+          canPlay = true
         }
-      });
+      })
 
-      setCanPlay(canPlay);
+      setCanPlay(canPlay)
     }
-  }, [editorStateRef]);
+  }, [editorStateRef])
 
   if (!canPlay) {
     return (
       <>
         <span className="text-sm">Add content to play a video</span>
       </>
-    );
+    )
   }
 
   return (
     <button
       className="text-xs rounded-md px-2 py-1 theme-button"
       onClick={() => {
-        let editor = editorRef.current;
-        let editorState = editorStateRef.current;
+        let editor = editorRef.current
+        let editorState = editorStateRef.current
 
         if (!editor || !editorState) {
-          return;
+          return
         }
 
         if (editor.isPlaying) {
-          console.info("Pause Video...");
+          console.info('Pause Video...')
 
-          editor.videoIsPlaying = false;
-          editor.videoStartPlayingTime = null;
-          editor.videoCurrentSequenceTimeline = null;
-          editor.videoCurrentSequencesData = null;
-          editor.isPlaying = false;
-          editor.startPlayingTime = null;
+          editor.videoIsPlaying = false
+          editor.videoStartPlayingTime = null
+          editor.videoCurrentSequenceTimeline = null
+          editor.videoCurrentSequencesData = null
+          editor.isPlaying = false
+          editor.startPlayingTime = null
 
           // TODO: reset_sequence_objects?
           editor.videoItems.forEach((v) => {
-            v.resetPlayback();
-          });
+            v.resetPlayback()
+          })
 
-          setIsPlaying(false);
+          setIsPlaying(false)
         } else {
-          console.info("Play Video...");
+          console.info('Play Video...')
 
           if (!editorState.savedState.timeline_state) {
-            return;
+            return
           }
 
-          let timelineSequences =
-            editorState.savedState.timeline_state.timeline_sequences;
+          let timelineSequences = editorState.savedState.timeline_state.timeline_sequences
 
           if (timelineSequences.length === 0) {
-            toast.error(
-              "Please add a sequence to the timeline before playing."
-            );
-            return;
+            toast.error('Please add a sequence to the timeline before playing.')
+            return
           }
 
-          let firstTimelineSequence = timelineSequences.reduce(
-            (earliest, current) => {
-              return current.startTimeMs < earliest.startTimeMs
-                ? current
-                : earliest;
-            }
-          );
+          let firstTimelineSequence = timelineSequences.reduce((earliest, current) => {
+            return current.startTimeMs < earliest.startTimeMs ? current : earliest
+          })
 
           let first_sequence_data = editorState.savedState.sequences.find(
             (s) => s.id === firstTimelineSequence.sequenceId
-          );
+          )
 
           if (!first_sequence_data) {
-            return;
+            return
           }
 
           editorState.savedState.sequences.forEach((sequence, index) => {
             if (index === 0) {
               sequence.activePolygons.forEach((ap) => {
-                const polygon = editor.polygons.find(
-                  (p) => p.id.toString() === ap.id
-                );
-                if (!polygon) throw new Error("Couldn't find polygon");
-                polygon.hidden = false;
-              });
+                const polygon = editor.polygons.find((p) => p.id.toString() === ap.id)
+                if (!polygon) throw new Error("Couldn't find polygon")
+                polygon.hidden = false
+              })
 
               sequence.activeImageItems.forEach((si) => {
-                const image = editor.imageItems.find(
-                  (i) => i.id.toString() === si.id
-                );
-                if (!image) throw new Error("Couldn't find image");
-                image.hidden = false;
-              });
+                const image = editor.imageItems.find((i) => i.id.toString() === si.id)
+                if (!image) throw new Error("Couldn't find image")
+                image.hidden = false
+              })
 
               sequence.activeTextItems.forEach((tr) => {
-                const text = editor.textItems.find(
-                  (t) => t.id.toString() === tr.id
-                );
-                if (!text) throw new Error("Couldn't find text item");
-                text.hidden = false;
-              });
+                const text = editor.textItems.find((t) => t.id.toString() === tr.id)
+                if (!text) throw new Error("Couldn't find text item")
+                text.hidden = false
+              })
 
               sequence.activeVideoItems.forEach((tr) => {
-                const video = editor.videoItems.find(
-                  (t) => t.id.toString() === tr.id
-                );
-                if (!video) throw new Error("Couldn't find video item");
-                video.hidden = false;
-              });
+                const video = editor.videoItems.find((t) => t.id.toString() === tr.id)
+                if (!video) throw new Error("Couldn't find video item")
+                video.hidden = false
+              })
             } else {
               sequence.activePolygons.forEach((ap) => {
-                const polygon = editor.polygons.find(
-                  (p) => p.id.toString() === ap.id
-                );
-                if (!polygon) throw new Error("Couldn't find polygon");
-                polygon.hidden = true;
-              });
+                const polygon = editor.polygons.find((p) => p.id.toString() === ap.id)
+                if (!polygon) throw new Error("Couldn't find polygon")
+                polygon.hidden = true
+              })
 
               sequence.activeImageItems.forEach((si) => {
-                const image = editor.imageItems.find(
-                  (i) => i.id.toString() === si.id
-                );
-                if (!image) throw new Error("Couldn't find image");
-                image.hidden = true;
-              });
+                const image = editor.imageItems.find((i) => i.id.toString() === si.id)
+                if (!image) throw new Error("Couldn't find image")
+                image.hidden = true
+              })
 
               sequence.activeTextItems.forEach((tr) => {
-                const text = editor.textItems.find(
-                  (t) => t.id.toString() === tr.id
-                );
-                if (!text) throw new Error("Couldn't find text item");
-                text.hidden = true;
-              });
+                const text = editor.textItems.find((t) => t.id.toString() === tr.id)
+                if (!text) throw new Error("Couldn't find text item")
+                text.hidden = true
+              })
 
               sequence.activeVideoItems.forEach((tr) => {
-                const video = editor.videoItems.find(
-                  (t) => t.id.toString() === tr.id
-                );
-                if (!video) throw new Error("Couldn't find video item");
-                video.hidden = true;
-              });
+                const video = editor.videoItems.find((t) => t.id.toString() === tr.id)
+                if (!video) throw new Error("Couldn't find video item")
+                video.hidden = true
+              })
             }
-          });
+          })
 
-          let now = Date.now();
-          editor.startPlayingTime = now;
+          let now = Date.now()
+          editor.startPlayingTime = now
 
-          editor.videoStartPlayingTime = now;
+          editor.videoStartPlayingTime = now
 
-          editor.videoCurrentSequenceTimeline =
-            editorState.savedState.timeline_state;
-          editor.videoCurrentSequencesData = editorState.savedState.sequences;
+          editor.videoCurrentSequenceTimeline = editorState.savedState.timeline_state
+          editor.videoCurrentSequencesData = editorState.savedState.sequences
 
-          editor.videoIsPlaying = true;
+          editor.videoIsPlaying = true
 
-          editor.currentSequenceData = first_sequence_data;
-          editor.isPlaying = true;
+          editor.currentSequenceData = first_sequence_data
+          editor.isPlaying = true
 
-          setIsPlaying(true);
+          setIsPlaying(true)
         }
       }}
     >
       {/* {isPlaying ? t("Pause Video") : t("Play Video")} */}
-      {isPlaying ? (
-        <CreateIcon icon="pause" size="24px" />
-      ) : (
-        <CreateIcon icon="play" size="24px" />
-      )}
+      {isPlaying ? <CreateIcon icon="pause" size="24px" /> : <CreateIcon icon="play" size="24px" />}
     </button>
-  );
-};
+  )
+}
 
 export const ExportVideoButton: React.FC<{
-  editorRef: React.RefObject<Editor | null>;
-  editorStateRef: React.RefObject<EditorState | null>;
+  editorRef: React.RefObject<Editor | null>
+  editorStateRef: React.RefObject<EditorState | null>
 }> = ({ editorRef, editorStateRef }) => {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common')
 
-  let [isExporting, setIsExporting] = useState(false);
-  let [progress, setProgress] = useState("0");
-  let [canExport, setCanExport] = useState(false);
+  let [isExporting, setIsExporting] = useState(false)
+  let [progress, setProgress] = useState('0')
+  let [canExport, setCanExport] = useState(false)
 
   useEffect(() => {
     if (editorStateRef.current) {
-      let canExport = false;
+      let canExport = false
       editorStateRef.current.savedState.sequences.forEach((seq) => {
         if (
           seq.activePolygons.length > 0 ||
@@ -632,73 +587,65 @@ export const ExportVideoButton: React.FC<{
           seq.activeTextItems.length > 0 ||
           seq.activeVideoItems.length > 0
         ) {
-          canExport = true;
+          canExport = true
         }
-      });
+      })
 
-      setCanExport(canExport);
+      setCanExport(canExport)
     }
-  }, [editorStateRef]);
+  }, [editorStateRef])
 
   const exportHandler = async () => {
-    let editorState = editorStateRef.current;
+    let editorState = editorStateRef.current
 
     if (!editorState) {
-      return;
+      return
     }
 
-    let timelineState = editorState.savedState.timeline_state;
+    let timelineState = editorState.savedState.timeline_state
 
     if (!timelineState || timelineState.timeline_sequences.length === 0) {
-      toast.error("Please add a sequence to the timeline before exporting.");
-      return;
+      toast.error('Please add a sequence to the timeline before exporting.')
+      return
     }
 
     try {
-      let isVertical =
-        editorState.savedState.settings?.dimensions.height === 900
-          ? true
-          : false;
+      let isVertical = editorState.savedState.settings?.dimensions.height === 900 ? true : false
 
-      const exporter = new FullExporter(isVertical);
+      const exporter = new FullExporter(isVertical)
 
-      console.info("Initializing FullExporter");
+      console.info('Initializing FullExporter')
 
-      setIsExporting(true);
+      setIsExporting(true)
 
       let progressInterval = setInterval(() => {
-        let exportProgress = (window as any).exportProgress;
+        let exportProgress = (window as any).exportProgress
         if (exportProgress) {
-          setProgress(exportProgress);
+          setProgress(exportProgress)
         }
-      }, 1000);
+      }, 1000)
 
-      await exporter.initialize(
-        editorState.savedState,
-        (progress, currentTime, totalDuration) => {
-          let perc = (progress * 100).toFixed(1);
-          console.log(`Export progress: ${perc}%`);
-          console.log(
-            `Time: ${currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s`
-          );
-          (window as any).exportProgress = perc;
-        }
-      );
+      await exporter.initialize(editorState.savedState, (progress, currentTime, totalDuration) => {
+        let perc = (progress * 100).toFixed(1)
+        console.log(`Export progress: ${perc}%`)
+        console.log(`Time: ${currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s`)
+        ;(window as any).exportProgress = perc
+      })
 
-      setIsExporting(false);
-      clearInterval(progressInterval);
+      setIsExporting(false)
+      clearInterval(progressInterval)
     } catch (error: any) {
-      console.error("export error", error);
-      toast.error(error.message || "An error occurred");
+      console.error('export error', error)
+      toast.error(error.message || 'An error occurred')
     }
-  };
+  }
 
   if (!canExport) {
     return (
       <>
         <span className="text-sm">Add content to export a video</span>
       </>
-    );
+    )
   }
 
   return (
@@ -707,12 +654,12 @@ export const ExportVideoButton: React.FC<{
         className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
         disabled={isExporting}
         onClick={() => {
-          exportHandler();
+          exportHandler()
         }}
       >
-        {isExporting ? t("Exporting") + "..." : t("Export Video")}
+        {isExporting ? t('Exporting') + '../...' : t('Export Video')}
       </button>
       {isExporting && <p>{progress}%</p>}
     </div>
-  );
-};
+  )
+}

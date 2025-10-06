@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from 'uuid'
 import {
   AnimationData,
   AnimationProperty,
@@ -11,16 +11,16 @@ import {
   ObjectType,
   PathType,
   SavedState,
-  UIKeyframe,
-} from "@/engine/animations";
-import { Editor } from "@/engine/editor";
-import EditorState, { SaveTarget } from "@/engine/editor_state";
-import { TextAnimationManager } from "@/engine/textAnimationManager";
-import { AuthToken, saveSequencesData } from "@/fetchers/projects";
-import { Disclosure } from "@headlessui/react";
-import { ArrowDown, MagicWand } from "@phosphor-icons/react";
-import { useState } from "react";
-import toast from "react-hot-toast";
+  UIKeyframe
+} from '../../engine/animations'
+import { Editor } from '../../engine/editor'
+import EditorState, { SaveTarget } from '../../engine/editor_state'
+import { TextAnimationManager } from '../../engine/textAnimationManager'
+import { AuthToken, saveSequencesData } from '../../fetchers/projects'
+import { Disclosure } from '@headlessui/react'
+import { ArrowDown, MagicWand } from '@phosphor-icons/react'
+import { useState } from 'react'
+import toast from 'react-hot-toast'
 import {
   save_adaptive_grid_keyframes,
   save_confetti_explosion_keyframes,
@@ -37,106 +37,106 @@ import {
   save_ripple_wave_keyframes,
   save_scrapbook_scatter_keyframes,
   save_screen_carousel_keyframes,
-  save_swarm_convergence_keyframes,
-} from "@/engine/state/keyframes";
-import { useLocalStorage } from "@uidotdev/usehooks";
+  save_swarm_convergence_keyframes
+} from '../../engine/state/keyframes'
+import { useLocalStorage } from '@uidotdev/usehooks'
 
 export default function AnimationTab({
   editorRef,
   editorStateRef,
   current_sequence_id,
   saveTarget,
-  userLanguage = "en",
-  selectedTextId = "",
+  userLanguage = 'en',
+  selectedTextId = '',
   setRefreshTimeline,
-  setSelectedTextId,
+  setSelectedTextId
 }: {
-  editorRef: React.RefObject<Editor | null>;
-  editorStateRef: React.RefObject<EditorState | null>;
-  current_sequence_id: string;
-  saveTarget: SaveTarget;
-  userLanguage?: string;
-  selectedTextId: string;
-  setRefreshTimeline: any;
-  setSelectedTextId: any;
+  editorRef: React.RefObject<Editor | null>
+  editorStateRef: React.RefObject<EditorState | null>
+  current_sequence_id: string
+  saveTarget: SaveTarget
+  userLanguage?: string
+  selectedTextId: string
+  setRefreshTimeline: any
+  setSelectedTextId: any
 }) {
-  const [authToken] = useLocalStorage<AuthToken | null>("auth-token", null);
+  const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
 
-  let [loading, set_loading] = useState(false);
+  let [loading, set_loading] = useState(false)
 
   // AI Animation Generation states
-  let [aiAnimationPrompt, setAiAnimationPrompt] = useState("");
-  let [aiAnimationDuration, setAiAnimationDuration] = useState(3000);
-  let [aiAnimationStyle, setAiAnimationStyle] = useState("smooth");
-  let [aiLoading, setAiLoading] = useState(false);
+  let [aiAnimationPrompt, setAiAnimationPrompt] = useState('')
+  let [aiAnimationDuration, setAiAnimationDuration] = useState(3000)
+  let [aiAnimationStyle, setAiAnimationStyle] = useState('smooth')
+  let [aiLoading, setAiLoading] = useState(false)
 
   // Choreographed template state
-  let [confettiCenterX, setConfettiCenterX] = useState(400);
-  let [confettiCenterY, setConfettiCenterY] = useState(300);
-  let [confettiForce, setConfettiForce] = useState(200);
-  let [confettiGravity, setConfettiGravity] = useState(300);
+  let [confettiCenterX, setConfettiCenterX] = useState(400)
+  let [confettiCenterY, setConfettiCenterY] = useState(300)
+  let [confettiForce, setConfettiForce] = useState(200)
+  let [confettiGravity, setConfettiGravity] = useState(300)
 
-  let [flockStartX, setFlockStartX] = useState(200);
-  let [flockStartY, setFlockStartY] = useState(200);
-  let [flockTargetX, setFlockTargetX] = useState(600);
-  let [flockTargetY, setFlockTargetY] = useState(400);
-  let [flockSpacing, setFlockSpacing] = useState(80);
+  let [flockStartX, setFlockStartX] = useState(200)
+  let [flockStartY, setFlockStartY] = useState(200)
+  let [flockTargetX, setFlockTargetX] = useState(600)
+  let [flockTargetY, setFlockTargetY] = useState(400)
+  let [flockSpacing, setFlockSpacing] = useState(80)
 
-  let [rippleAmplitude, setRippleAmplitude] = useState(100);
-  let [rippleSpeed, setRippleSpeed] = useState(2);
+  let [rippleAmplitude, setRippleAmplitude] = useState(100)
+  let [rippleSpeed, setRippleSpeed] = useState(2)
 
-  let [orbitCenterX, setOrbitCenterX] = useState(400);
-  let [orbitCenterY, setOrbitCenterY] = useState(300);
-  let [orbitRadius, setOrbitRadius] = useState(100);
+  let [orbitCenterX, setOrbitCenterX] = useState(400)
+  let [orbitCenterY, setOrbitCenterY] = useState(300)
+  let [orbitRadius, setOrbitRadius] = useState(100)
 
-  let [dominoDelay, setDominoDelay] = useState(100);
+  let [dominoDelay, setDominoDelay] = useState(100)
 
-  let [swarmScatterX, setSwarmScatterX] = useState(200);
-  let [swarmScatterY, setSwarmScatterY] = useState(200);
-  let [swarmTargetX, setSwarmTargetX] = useState(600);
-  let [swarmTargetY, setSwarmTargetY] = useState(400);
-  let [swarmScatterRadius, setSwarmScatterRadius] = useState(200);
-  let [swarmFormRadius, setSwarmFormRadius] = useState(50);
+  let [swarmScatterX, setSwarmScatterX] = useState(200)
+  let [swarmScatterY, setSwarmScatterY] = useState(200)
+  let [swarmTargetX, setSwarmTargetX] = useState(600)
+  let [swarmTargetY, setSwarmTargetY] = useState(400)
+  let [swarmScatterRadius, setSwarmScatterRadius] = useState(200)
+  let [swarmFormRadius, setSwarmFormRadius] = useState(50)
 
   // Collage-style template state
-  let [mosaicCenterX, setMosaicCenterX] = useState(450);
-  let [mosaicCenterY, setMosaicCenterY] = useState(275);
-  let [mosaicSpacing, setMosaicSpacing] = useState(120);
-  let [mosaicStagger, setMosaicStagger] = useState(100);
+  let [mosaicCenterX, setMosaicCenterX] = useState(450)
+  let [mosaicCenterY, setMosaicCenterY] = useState(275)
+  let [mosaicSpacing, setMosaicSpacing] = useState(120)
+  let [mosaicStagger, setMosaicStagger] = useState(100)
 
-  let [scatterDropHeight, setScatterDropHeight] = useState(-200);
-  let [scatterBounce, setScatterBounce] = useState(0.3);
-  let [scatterRotation, setScatterRotation] = useState(15);
-  let [animationManager] = useState(() => new TextAnimationManager());
+  let [scatterDropHeight, setScatterDropHeight] = useState(-200)
+  let [scatterBounce, setScatterBounce] = useState(0.3)
+  let [scatterRotation, setScatterRotation] = useState(15)
+  let [animationManager] = useState(() => new TextAnimationManager())
 
-  let [galleryX, setGalleryX] = useState(100);
-  let [galleryY, setGalleryY] = useState(100);
-  let [galleryWidth, setGalleryWidth] = useState(700);
-  let [galleryHeight, setGalleryHeight] = useState(350);
-  let [galleryDelay, setGalleryDelay] = useState(200);
-  let [galleryScale, setGalleryScale] = useState(true);
+  let [galleryX, setGalleryX] = useState(100)
+  let [galleryY, setGalleryY] = useState(100)
+  let [galleryWidth, setGalleryWidth] = useState(700)
+  let [galleryHeight, setGalleryHeight] = useState(350)
+  let [galleryDelay, setGalleryDelay] = useState(200)
+  let [galleryScale, setGalleryScale] = useState(true)
 
-  let [carouselY, setCarouselY] = useState(300);
-  let [carouselSpacing, setCarouselSpacing] = useState(150);
-  let [carouselCurve, setCarouselCurve] = useState(50);
+  let [carouselY, setCarouselY] = useState(300)
+  let [carouselSpacing, setCarouselSpacing] = useState(150)
+  let [carouselCurve, setCarouselCurve] = useState(50)
 
-  let [polaroidRotation, setPolaroidRotation] = useState(45);
-  let [polaroidSettle, setPolaroidSettle] = useState(0.7);
+  let [polaroidRotation, setPolaroidRotation] = useState(45)
+  let [polaroidSettle, setPolaroidSettle] = useState(0.7)
 
   // New Screen-Filling Animation parameters
-  let [slideshowDuration, setSlideshowDuration] = useState(2000);
-  let [slideshowTransition, setSlideshowTransition] = useState(500);
+  let [slideshowDuration, setSlideshowDuration] = useState(2000)
+  let [slideshowTransition, setSlideshowTransition] = useState(500)
 
-  let [gridCols, setGridCols] = useState(3);
-  let [gridRows, setGridRows] = useState(2);
-  let [gridMargin, setGridMargin] = useState(20);
-  let [gridStagger, setGridStagger] = useState(150);
+  let [gridCols, setGridCols] = useState(3)
+  let [gridRows, setGridRows] = useState(2)
+  let [gridMargin, setGridMargin] = useState(20)
+  let [gridStagger, setGridStagger] = useState(150)
 
-  let [carouselEnterDelay, setCarouselEnterDelay] = useState(200);
-  let [carouselSlideSpeed, setCarouselSlideSpeed] = useState(800);
+  let [carouselEnterDelay, setCarouselEnterDelay] = useState(200)
+  let [carouselSlideSpeed, setCarouselSlideSpeed] = useState(800)
 
-  let [showcaseScale, setShowcaseScale] = useState(0.9);
-  let [showcaseStagger, setShowcaseStagger] = useState(300);
+  let [showcaseScale, setShowcaseScale] = useState(0.9)
+  let [showcaseStagger, setShowcaseStagger] = useState(300)
 
   // Helper methods for raw AnimationData manipulation (similar to MCP server)
   let findOrCreateAnimationData = (
@@ -144,23 +144,21 @@ export default function AnimationTab({
     sequenceId: string,
     objectId: string
   ): AnimationData => {
-    let sequence = savedState.sequences.find((s) => s.id === sequenceId);
+    let sequence = savedState.sequences.find((s) => s.id === sequenceId)
     if (!sequence) {
-      throw new Error(`Sequence with ID ${sequenceId} not found`);
+      throw new Error(`Sequence with ID ${sequenceId} not found`)
     }
 
     if (!sequence.polygonMotionPaths) {
-      sequence.polygonMotionPaths = [];
+      sequence.polygonMotionPaths = []
     }
 
-    let animationData = sequence.polygonMotionPaths.find(
-      (path) => path.polygonId === objectId
-    );
+    let animationData = sequence.polygonMotionPaths.find((path) => path.polygonId === objectId)
 
     if (!animationData) {
-      let objectType = findObjectType(savedState, objectId);
+      let objectType = findObjectType(savedState, objectId)
       if (!objectType) {
-        throw new Error(`Object with ID ${objectId} not found in sequence`);
+        throw new Error(`Object with ID ${objectId} not found in sequence`)
       }
 
       animationData = {
@@ -170,25 +168,21 @@ export default function AnimationTab({
         duration: 5000,
         startTimeMs: 0,
         properties: [],
-        position: [0, 0],
-      };
-      sequence.polygonMotionPaths.push(animationData);
+        position: [0, 0]
+      }
+      sequence.polygonMotionPaths.push(animationData)
     }
 
-    return animationData;
-  };
+    return animationData
+  }
 
   let findOrCreateAnimationProperty = (
     animationData: AnimationData,
     propertyName: string
   ): AnimationProperty => {
     let visibleName =
-      propertyName === "ScaleX"
-        ? "Scale X"
-        : propertyName === "ScaleY"
-        ? "Scale Y"
-        : propertyName;
-    let property = animationData.properties.find((p) => p.name === visibleName);
+      propertyName === 'ScaleX' ? 'Scale X' : propertyName === 'ScaleY' ? 'Scale Y' : propertyName
+    let property = animationData.properties.find((p) => p.name === visibleName)
 
     if (!property) {
       property = {
@@ -196,85 +190,82 @@ export default function AnimationTab({
         propertyPath: propertyName.toLowerCase(),
         children: [],
         keyframes: [],
-        depth: 0,
-      };
-      animationData.properties.push(property);
+        depth: 0
+      }
+      animationData.properties.push(property)
     }
 
-    return property;
-  };
+    return property
+  }
 
-  let createKeyframeValue = (
-    propertyName: string,
-    value: any
-  ): KeyframeValue => {
-    let lowerProperty = propertyName.toLowerCase();
+  let createKeyframeValue = (propertyName: string, value: any): KeyframeValue => {
+    let lowerProperty = propertyName.toLowerCase()
 
-    if (lowerProperty === "position") {
+    if (lowerProperty === 'position') {
       if (Array.isArray(value) && value.length === 2) {
-        return { type: "Position", value: [value[0], value[1]] };
+        return { type: 'Position', value: [value[0], value[1]] }
       }
-      throw new Error("Position property requires [x, y] array");
+      throw new Error('Position property requires [x, y] array')
     }
 
-    if (lowerProperty === "rotation") {
-      if (typeof value === "number") {
-        return { type: "Rotation", value: value };
+    if (lowerProperty === 'rotation') {
+      if (typeof value === 'number') {
+        return { type: 'Rotation', value: value }
       }
-      throw new Error("Rotation property requires a number value");
+      throw new Error('Rotation property requires a number value')
     }
 
-    if (lowerProperty === "scalex") {
-      if (typeof value === "number") {
-        return { type: "ScaleX", value: value };
+    if (lowerProperty === 'scalex') {
+      if (typeof value === 'number') {
+        return { type: 'ScaleX', value: value }
       }
-      throw new Error("ScaleX property requires a number value");
+      throw new Error('ScaleX property requires a number value')
     }
 
-    if (lowerProperty === "scaley") {
-      if (typeof value === "number") {
-        return { type: "ScaleY", value: value };
+    if (lowerProperty === 'scaley') {
+      if (typeof value === 'number') {
+        return { type: 'ScaleY', value: value }
       }
-      throw new Error("ScaleY property requires a number value");
+      throw new Error('ScaleY property requires a number value')
     }
 
-    if (lowerProperty === "opacity") {
-      if (typeof value === "number") {
-        return { type: "Opacity", value: value };
+    if (lowerProperty === 'opacity') {
+      if (typeof value === 'number') {
+        return { type: 'Opacity', value: value }
       }
-      throw new Error("Opacity property requires a number value");
+      throw new Error('Opacity property requires a number value')
     }
 
-    throw new Error(`Unsupported property: ${propertyName}`);
-  };
+    throw new Error(`Unsupported property: ${propertyName}`)
+  }
 
   let onGenerateAIAnimation = async () => {
-    let editor = editorRef.current;
-    let editor_state = editorStateRef.current;
+    let editor = editorRef.current
+    let editor_state = editorStateRef.current
 
     if (!editor || !editor_state) {
-      return;
+      return
     }
 
     if (!aiAnimationPrompt.trim()) {
-      toast.error("Please describe the animation you want to create");
-      return;
+      toast.error('Please describe the animation you want to create')
+      return
     }
 
     if (!current_sequence_id) {
-      return;
+      return
     }
 
-    setAiLoading(true);
+    setAiLoading(true)
 
     try {
       // Get all visible objects in the current sequence with their metadata
       let objectsData: Array<{
-        id: string;
-        objectType: string;
-        dimensions: { width: number; height: number };
-        position: { x: number; y: number };
-      }> = [];
+        id: string
+        objectType: string
+        dimensions: { width: number; height: number }
+        position: { x: number; y: number }
+      }> = []
 
       // Add text objects
       if (editor.textItems) {
@@ -283,17 +274,17 @@ export default function AnimationTab({
             .filter((item) => !item.hidden)
             .map((item) => ({
               id: item.id,
-              objectType: "text",
+              objectType: 'text',
               dimensions: {
                 width: item.dimensions[0] || 100,
-                height: item.dimensions[1] || 50,
+                height: item.dimensions[1] || 50
               },
               position: {
                 x: item.transform.position[0] || 0,
-                y: item.transform.position[1] || 0,
-              },
+                y: item.transform.position[1] || 0
+              }
             }))
-        );
+        )
       }
 
       // Add polygon objects
@@ -303,17 +294,17 @@ export default function AnimationTab({
             .filter((item) => !item.hidden)
             .map((item) => ({
               id: item.id,
-              objectType: "polygon",
+              objectType: 'polygon',
               dimensions: {
                 width: item.dimensions[0] || 100,
-                height: item.dimensions[1] || 50,
+                height: item.dimensions[1] || 50
               },
               position: {
                 x: item.transform.position[0] || 0,
-                y: item.transform.position[1] || 0,
-              },
+                y: item.transform.position[1] || 0
+              }
             }))
-        );
+        )
       }
 
       // Add image objects
@@ -323,17 +314,17 @@ export default function AnimationTab({
             .filter((item) => !item.hidden)
             .map((item) => ({
               id: item.id,
-              objectType: "image",
+              objectType: 'image',
               dimensions: {
                 width: item.dimensions[0] || 100,
-                height: item.dimensions[1] || 50,
+                height: item.dimensions[1] || 50
               },
               position: {
                 x: item.transform.position[0] || 0,
-                y: item.transform.position[1] || 0,
-              },
+                y: item.transform.position[1] || 0
+              }
             }))
-        );
+        )
       }
 
       // Add video objects
@@ -343,63 +334,63 @@ export default function AnimationTab({
             .filter((item) => !item.hidden)
             .map((item) => ({
               id: item.id,
-              objectType: "video",
+              objectType: 'video',
               dimensions: {
                 width: item.dimensions[0] || 100,
-                height: item.dimensions[1] || 50,
+                height: item.dimensions[1] || 50
               },
               position: {
                 x: item.transform.position[0] || 0,
-                y: item.transform.position[1] || 0,
-              },
+                y: item.transform.position[1] || 0
+              }
             }))
-        );
+        )
       }
 
       if (objectsData.length === 0) {
         toast.error(
-          "No objects available for animation. Please add some text, shapes, or images first."
-        );
-        setAiLoading(false);
-        return;
+          'No objects available for animation. Please add some text, shapes, or images first.'
+        )
+        setAiLoading(false)
+        return
       }
 
       // Get canvas size
       let canvasSize = editor.camera
         ? {
             width: editor.camera.windowSize.width,
-            height: editor.camera.windowSize.height,
+            height: editor.camera.windowSize.height
           }
-        : { width: 550, height: 900 };
+        : { width: 550, height: 900 }
 
       // Call the AI API
-      let response = await fetch("/api/projects/generate-animation", {
-        method: "POST",
+      let response = await fetch('/api/projects/generate-animation', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken?.token}`,
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken?.token}`
         },
         body: JSON.stringify({
           prompt: aiAnimationPrompt,
           duration: aiAnimationDuration,
           style: aiAnimationStyle,
           objectsData: objectsData,
-          canvasSize: canvasSize,
-        }),
-      });
+          canvasSize: canvasSize
+        })
+      })
 
       if (!response.ok) {
-        throw new Error(`Failed to generate animation: ${response.statusText}`);
+        throw new Error(`Failed to generate animation: ${response.statusText}`)
       }
 
-      let result = await response.json();
+      let result = await response.json()
 
       if (!result.success || !result.data) {
-        throw new Error("Invalid response from AI animation generator");
+        throw new Error('Invalid response from AI animation generator')
       }
 
       // Apply the generated animation to the editor
-      let animationData = result.data;
+      let animationData = result.data
 
       // Apply keyframes for each animated object using raw AnimationData structure
       for (let animation of animationData.animations) {
@@ -408,45 +399,40 @@ export default function AnimationTab({
           editor_state.savedState,
           current_sequence_id,
           animation.objectId
-        );
+        )
 
         for (let property of animation.properties) {
           // Find or create AnimationProperty for this property
           let animationProperty = findOrCreateAnimationProperty(
             animationDataItem,
             capitalizeFirstLetter(property.propertyName as string)
-          );
+          )
 
           // reset this property's keyframes before adding new ones
-          animationProperty.keyframes = [];
+          animationProperty.keyframes = []
 
           // Sort keyframes by time to ensure proper order
-          let sortedKeyframes = property.keyframes.sort(
-            (a: any, b: any) => a.time - b.time
-          );
+          let sortedKeyframes = property.keyframes.sort((a: any, b: any) => a.time - b.time)
 
           // Add keyframes to the property
           for (let kf of sortedKeyframes) {
-            let keyframeValue = createKeyframeValue(
-              property.propertyName,
-              kf.value
-            );
+            let keyframeValue = createKeyframeValue(property.propertyName, kf.value)
 
             let keyframe: UIKeyframe = {
               id: uuidv4(),
               time: kf.time,
               value: keyframeValue,
-              easing: (kf.easing || "Linear") as EasingType,
-              pathType: "Linear" as PathType,
+              easing: (kf.easing || 'Linear') as EasingType,
+              pathType: 'Linear' as PathType,
               curveData: null,
-              keyType: { type: "Frame" },
-            };
+              keyType: { type: 'Frame' }
+            }
 
-            animationProperty.keyframes.push(keyframe);
+            animationProperty.keyframes.push(keyframe)
           }
 
           // Sort keyframes by time
-          animationProperty.keyframes.sort((a, b) => a.time - b.time);
+          animationProperty.keyframes.sort((a, b) => a.time - b.time)
         }
       }
 
@@ -454,133 +440,112 @@ export default function AnimationTab({
       if (animationData.duration > 0) {
         editor_state.savedState.sequences.forEach((s) => {
           if (s.id === current_sequence_id) {
-            s.durationMs = Math.max(
-              s.durationMs || 5000,
-              animationData.duration
-            );
+            s.durationMs = Math.max(s.durationMs || 5000, animationData.duration)
           }
-        });
+        })
       }
 
       // Save the updated sequences
-      saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos);
+      saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos)
 
       // update motion paths
-      editor.updateMotionPaths(editor_state.savedState.sequences[0]);
+      editor.updateMotionPaths(editor_state.savedState.sequences[0])
 
       // Refresh the timeline to show the new keyframes
-      setRefreshTimeline(Date.now());
+      setRefreshTimeline(Date.now())
 
-      toast.success("AI animation generated successfully!");
+      toast.success('AI animation generated successfully!')
 
       // Clear the prompt for next use
-      setAiAnimationPrompt("");
+      setAiAnimationPrompt('')
     } catch (error: any) {
-      console.error("AI animation generation error:", error);
-      toast.error(error.message || "Failed to generate AI animation");
+      console.error('AI animation generation error:', error)
+      toast.error(error.message || 'Failed to generate AI animation')
     } finally {
-      setAiLoading(false);
+      setAiLoading(false)
     }
-  };
+  }
 
   // Text Animation handlers
   const handleTextAnimationSelect = (templateId: string) => {
     if (!selectedTextId) {
-      toast.error("Please select a text element first");
-      return;
+      toast.error('Please select a text element first')
+      return
     }
 
-    const editor = editorRef.current;
-    const editorState = editorStateRef.current;
+    const editor = editorRef.current
+    const editorState = editorStateRef.current
 
-    if (!editor || !editorState) return;
+    if (!editor || !editorState) return
 
     // Find the text renderer
-    const textRenderer = editor.textItems.find((t) => t.id === selectedTextId);
+    const textRenderer = editor.textItems.find((t) => t.id === selectedTextId)
     if (!textRenderer) {
-      toast.error("Text element not found");
-      return;
+      toast.error('Text element not found')
+      return
     }
 
     // Apply the animation template
-    const success = textRenderer.setTextAnimationFromTemplate(templateId);
+    const success = textRenderer.setTextAnimationFromTemplate(templateId)
 
     if (success) {
       // Save animation data to editor state using the new method
-      editorState.updateTextAnimation(
-        selectedTextId,
-        textRenderer.getTextAnimationConfig()
-      );
-      toast.success("Text animation applied!");
+      editorState.updateTextAnimation(selectedTextId, textRenderer.getTextAnimationConfig())
+      toast.success('Text animation applied!')
     } else {
-      toast.error("Failed to apply text animation");
+      toast.error('Failed to apply text animation')
     }
-  };
+  }
 
   // Template application functions
-  const applyTemplate = (
-    templateName: string,
-    templateFunction: any,
-    ...args: any[]
-  ) => {
-    let editor_state = editorStateRef.current;
-    if (!editor_state || !current_sequence_id) return;
+  const applyTemplate = (templateName: string, templateFunction: any, ...args: any[]) => {
+    let editor_state = editorStateRef.current
+    if (!editor_state || !current_sequence_id) return
 
-    let sequence = editor_state.savedState.sequences.find(
-      (s) => s.id === current_sequence_id
-    );
-    if (!sequence) return;
+    let sequence = editor_state.savedState.sequences.find((s) => s.id === current_sequence_id)
+    if (!sequence) return
 
     // Get all objects in the current sequence
     let allObjects = [
       ...(sequence.activePolygons || []),
       ...(sequence.activeTextItems || []),
       ...(sequence.activeImageItems || []),
-      ...(sequence.activeVideoItems || []),
-    ];
+      ...(sequence.activeVideoItems || [])
+    ]
 
     if (allObjects.length === 0) {
-      alert("No objects found in current sequence to animate");
-      return;
+      alert('No objects found in current sequence to animate')
+      return
     }
 
-    let objectIds = allObjects.map((obj) => obj.id);
+    let objectIds = allObjects.map((obj) => obj.id)
     let objectTypes: ObjectType[] = allObjects.map((obj) => {
-      if (sequence.activePolygons?.find((p) => p.id === obj.id))
-        return ObjectType.Polygon;
-      if (sequence.activeTextItems?.find((t) => t.id === obj.id))
-        return ObjectType.TextItem;
-      if (sequence.activeImageItems?.find((i) => i.id === obj.id))
-        return ObjectType.ImageItem;
-      if (sequence.activeVideoItems?.find((v) => v.id === obj.id))
-        return ObjectType.VideoItem;
-      return ObjectType.Polygon;
-    });
+      if (sequence.activePolygons?.find((p) => p.id === obj.id)) return ObjectType.Polygon
+      if (sequence.activeTextItems?.find((t) => t.id === obj.id)) return ObjectType.TextItem
+      if (sequence.activeImageItems?.find((i) => i.id === obj.id)) return ObjectType.ImageItem
+      if (sequence.activeVideoItems?.find((v) => v.id === obj.id)) return ObjectType.VideoItem
+      return ObjectType.Polygon
+    })
 
     // Get current animation data or create default
     let currentAnimationData = allObjects.map((obj) => {
-      let existingAnimation = sequence.polygonMotionPaths?.find(
-        (mp) => mp.polygonId === obj.id
-      );
+      let existingAnimation = sequence.polygonMotionPaths?.find((mp) => mp.polygonId === obj.id)
       return (
         existingAnimation || {
           id: obj.id,
           polygonId: obj.id,
           duration: 3000,
-          properties: [],
+          properties: []
         }
-      );
-    });
+      )
+    })
 
-    let objectPositions = allObjects.map((obj) => [
-      obj.position?.x || 0,
-      obj.position?.y || 0,
-    ]);
+    let objectPositions = allObjects.map((obj) => [obj.position?.x || 0, obj.position?.y || 0])
 
     try {
       // Call the template function with appropriate parameters
-      let newAnimationData;
-      if (templateName === "confetti") {
+      let newAnimationData
+      if (templateName === 'confetti') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -589,8 +554,8 @@ export default function AnimationTab({
           [confettiCenterX, confettiCenterY],
           confettiForce,
           confettiGravity
-        );
-      } else if (templateName === "flock") {
+        )
+      } else if (templateName === 'flock') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -599,8 +564,8 @@ export default function AnimationTab({
           [flockStartX, flockStartY],
           [flockTargetX, flockTargetY],
           flockSpacing
-        );
-      } else if (templateName === "ripple") {
+        )
+      } else if (templateName === 'ripple') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -609,8 +574,8 @@ export default function AnimationTab({
           objectPositions,
           rippleAmplitude,
           rippleSpeed
-        );
-      } else if (templateName === "orbit") {
+        )
+      } else if (templateName === 'orbit') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -618,8 +583,8 @@ export default function AnimationTab({
           currentAnimationData,
           [orbitCenterX, orbitCenterY],
           orbitRadius
-        );
-      } else if (templateName === "domino") {
+        )
+      } else if (templateName === 'domino') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -627,8 +592,8 @@ export default function AnimationTab({
           currentAnimationData,
           objectPositions,
           dominoDelay
-        );
-      } else if (templateName === "swarm") {
+        )
+      } else if (templateName === 'swarm') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -638,8 +603,8 @@ export default function AnimationTab({
           [swarmTargetX, swarmTargetY],
           swarmScatterRadius,
           swarmFormRadius
-        );
-      } else if (templateName === "mosaic") {
+        )
+      } else if (templateName === 'mosaic') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -648,8 +613,8 @@ export default function AnimationTab({
           args[0], // [mosaicCenterX, mosaicCenterY]
           args[1], // mosaicSpacing
           args[2] // mosaicStagger
-        );
-      } else if (templateName === "scatter") {
+        )
+      } else if (templateName === 'scatter') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -658,8 +623,8 @@ export default function AnimationTab({
           args[0], // scatterDropHeight
           args[1], // scatterBounce
           args[2] // scatterRotation
-        );
-      } else if (templateName === "gallery") {
+        )
+      } else if (templateName === 'gallery') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -668,8 +633,8 @@ export default function AnimationTab({
           args[0], // [galleryX, galleryY, galleryWidth, galleryHeight]
           args[1], // galleryDelay
           args[2] // galleryScale
-        );
-      } else if (templateName === "carousel") {
+        )
+      } else if (templateName === 'carousel') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -678,8 +643,8 @@ export default function AnimationTab({
           args[0], // carouselY
           args[1], // carouselSpacing
           args[2] // carouselCurve
-        );
-      } else if (templateName === "polaroid") {
+        )
+      } else if (templateName === 'polaroid') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -688,8 +653,8 @@ export default function AnimationTab({
           args[0], // null (tumble_positions)
           args[1], // polaroidRotation
           args[2] // polaroidSettle
-        );
-      } else if (templateName === "slideshow") {
+        )
+      } else if (templateName === 'slideshow') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -697,8 +662,8 @@ export default function AnimationTab({
           currentAnimationData,
           args[0], // slideshowDuration
           args[1] // slideshowTransition
-        );
-      } else if (templateName === "grid") {
+        )
+      } else if (templateName === 'grid') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -708,8 +673,8 @@ export default function AnimationTab({
           args[1], // rows
           args[2], // marger
           args[3] // stagger
-        );
-      } else if (templateName === "carousel-screen") {
+        )
+      } else if (templateName === 'carousel-screen') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -717,8 +682,8 @@ export default function AnimationTab({
           currentAnimationData,
           args[0], // enterDelay
           args[1] // slideSpeed
-        );
-      } else if (templateName === "showcase") {
+        )
+      } else if (templateName === 'showcase') {
         newAnimationData = templateFunction(
           editor_state,
           objectIds,
@@ -726,62 +691,59 @@ export default function AnimationTab({
           currentAnimationData,
           args[0], // showcaseScale
           args[1] //stagger
-        );
+        )
       }
 
       if (newAnimationData) {
         // Update the sequence with new animation data
-        sequence.polygonMotionPaths = newAnimationData;
+        sequence.polygonMotionPaths = newAnimationData
 
         // Save the updated sequences
-        saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos);
+        saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos)
 
         // Update the editor if available
-        let editor = editorRef.current;
+        let editor = editorRef.current
         if (editor) {
-          editor.updateMotionPaths(sequence);
+          editor.updateMotionPaths(sequence)
         }
       }
     } catch (error) {
-      console.error("Error applying template:", error);
+      console.error('Error applying template:', error)
       // alert("Error applying animation template");
-      toast.error(`Error applying animation template`);
+      toast.error(`Error applying animation template`)
     }
-  };
+  }
 
   // Reset animations function
   const resetAnimations = () => {
-    let editor_state = editorStateRef.current;
-    if (!editor_state || !current_sequence_id) return;
+    let editor_state = editorStateRef.current
+    if (!editor_state || !current_sequence_id) return
 
-    let sequence = editor_state.savedState.sequences.find(
-      (s) => s.id === current_sequence_id
-    );
-    if (!sequence) return;
+    let sequence = editor_state.savedState.sequences.find((s) => s.id === current_sequence_id)
+    if (!sequence) return
 
     // Get all objects in the current sequence
     let allObjects = [
       ...(sequence.activePolygons || []),
       ...(sequence.activeTextItems || []),
       ...(sequence.activeImageItems || []),
-      ...(sequence.activeVideoItems || []),
-    ];
+      ...(sequence.activeVideoItems || [])
+    ]
 
     if (allObjects.length === 0) {
-      alert("No objects found in current sequence to reset");
-      return;
+      alert('No objects found in current sequence to reset')
+      return
     }
 
     try {
       // Create default animations for all objects
       let resetAnimationData = allObjects.map((obj) => {
-        let objectType = ObjectType.Polygon;
-        if (sequence.activeTextItems?.find((t) => t.id === obj.id))
-          objectType = ObjectType.TextItem;
+        let objectType = ObjectType.Polygon
+        if (sequence.activeTextItems?.find((t) => t.id === obj.id)) objectType = ObjectType.TextItem
         else if (sequence.activeImageItems?.find((i) => i.id === obj.id))
-          objectType = ObjectType.ImageItem;
+          objectType = ObjectType.ImageItem
         else if (sequence.activeVideoItems?.find((v) => v.id === obj.id))
-          objectType = ObjectType.VideoItem;
+          objectType = ObjectType.VideoItem
 
         return save_default_keyframes(
           editor_state,
@@ -789,27 +751,27 @@ export default function AnimationTab({
           objectType,
           obj.position || { x: 400, y: 300 },
           20000 // 3 second duration
-        );
-      });
+        )
+      })
 
       // Update the sequence with reset animation data
-      sequence.polygonMotionPaths = resetAnimationData;
+      sequence.polygonMotionPaths = resetAnimationData
 
       // Save the updated sequences
-      saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos);
+      saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos)
 
       // Update the editor if available
-      let editor = editorRef.current;
+      let editor = editorRef.current
       if (editor) {
-        editor.updateMotionPaths(sequence);
+        editor.updateMotionPaths(sequence)
       }
 
-      toast.success("Animations reset to default");
+      toast.success('Animations reset to default')
     } catch (error) {
-      console.error("Error resetting animations:", error);
-      toast.error("Error resetting animations");
+      console.error('Error resetting animations:', error)
+      toast.error('Error resetting animations')
     }
-  };
+  }
 
   return (
     <>
@@ -832,9 +794,7 @@ export default function AnimationTab({
             <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus-visible:ring focus-visible:ring-opacity-75">
               <span>Generate Animation</span>
               <ArrowDown
-                className={`${
-                  open ? "rotate-180 transform" : ""
-                } h-5 w-5 text-gray-500`}
+                className={`${open ? 'rotate-180 transform' : ''} h-5 w-5 text-gray-500`}
               />
             </Disclosure.Button>
             <Disclosure.Panel className="p-2 text-sm text-gray-500">
@@ -905,9 +865,7 @@ export default function AnimationTab({
                 <div className="mt-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
                   <div className="flex items-center gap-2 mb-3">
                     <MagicWand size={16} className="text-purple-600" />
-                    <h4 className="text-sm font-medium text-purple-900">
-                      AI Animation Generator
-                    </h4>
+                    <h4 className="text-sm font-medium text-purple-900">AI Animation Generator</h4>
                   </div>
 
                   <div className="space-y-3">
@@ -925,15 +883,11 @@ export default function AnimationTab({
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-gray-600 block mb-1">
-                          Duration
-                        </label>
+                        <label className="text-xs text-gray-600 block mb-1">Duration</label>
                         <select
                           className="text-xs border rounded px-2 py-1 w-full"
                           value={aiAnimationDuration}
-                          onChange={(e) =>
-                            setAiAnimationDuration(Number(e.target.value))
-                          }
+                          onChange={(e) => setAiAnimationDuration(Number(e.target.value))}
                         >
                           <option value={1000}>1 second</option>
                           <option value={2000}>2 seconds</option>
@@ -944,9 +898,7 @@ export default function AnimationTab({
                       </div>
 
                       <div>
-                        <label className="text-xs text-gray-600 block mb-1">
-                          Style
-                        </label>
+                        <label className="text-xs text-gray-600 block mb-1">Style</label>
                         <select
                           className="text-xs border rounded px-2 py-1 w-full"
                           value={aiAnimationStyle}
@@ -994,9 +946,7 @@ export default function AnimationTab({
             <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus-visible:ring focus-visible:ring-opacity-75">
               <span>Choreographed Templates</span>
               <ArrowDown
-                className={`${
-                  open ? "rotate-180 transform" : ""
-                } h-5 w-5 text-gray-500`}
+                className={`${open ? 'rotate-180 transform' : ''} h-5 w-5 text-gray-500`}
               />
             </Disclosure.Button>
             <Disclosure.Panel className="px-4 pt-4 pb-2">
@@ -1011,9 +961,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={confettiCenterX}
-                        onChange={(e) =>
-                          setConfettiCenterX(Number(e.target.value))
-                        }
+                        onChange={(e) => setConfettiCenterX(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1022,9 +970,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={confettiCenterY}
-                        onChange={(e) =>
-                          setConfettiCenterY(Number(e.target.value))
-                        }
+                        onChange={(e) => setConfettiCenterY(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1033,9 +979,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={confettiForce}
-                        onChange={(e) =>
-                          setConfettiForce(Number(e.target.value))
-                        }
+                        onChange={(e) => setConfettiForce(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1044,9 +988,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={confettiGravity}
-                        onChange={(e) =>
-                          setConfettiGravity(Number(e.target.value))
-                        }
+                        onChange={(e) => setConfettiGravity(Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -1054,10 +996,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
                     onClick={() =>
                       applyTemplate(
-                        "confetti",
-                        save_confetti_explosion_keyframes.bind(
-                          editorStateRef.current
-                        )
+                        'confetti',
+                        save_confetti_explosion_keyframes.bind(editorStateRef.current)
                       )
                     }
                   >
@@ -1093,9 +1033,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={flockTargetX}
-                        onChange={(e) =>
-                          setFlockTargetX(Number(e.target.value))
-                        }
+                        onChange={(e) => setFlockTargetX(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1104,9 +1042,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={flockTargetY}
-                        onChange={(e) =>
-                          setFlockTargetY(Number(e.target.value))
-                        }
+                        onChange={(e) => setFlockTargetY(Number(e.target.value))}
                       />
                     </div>
                     <div className="col-span-2">
@@ -1115,9 +1051,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={flockSpacing}
-                        onChange={(e) =>
-                          setFlockSpacing(Number(e.target.value))
-                        }
+                        onChange={(e) => setFlockSpacing(Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -1125,10 +1059,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-green-500 text-white rounded hover:bg-green-600"
                     onClick={() =>
                       applyTemplate(
-                        "flock",
-                        save_flock_formation_keyframes.bind(
-                          editorStateRef.current
-                        )
+                        'flock',
+                        save_flock_formation_keyframes.bind(editorStateRef.current)
                       )
                     }
                   >
@@ -1141,16 +1073,12 @@ export default function AnimationTab({
                   <h5 className="text-xs font-medium">Ripple Wave</h5>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Amplitude:
-                      </label>
+                      <label className="text-xs text-gray-600">Amplitude:</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={rippleAmplitude}
-                        onChange={(e) =>
-                          setRippleAmplitude(Number(e.target.value))
-                        }
+                        onChange={(e) => setRippleAmplitude(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1168,7 +1096,7 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-purple-500 text-white rounded hover:bg-purple-600"
                     onClick={() =>
                       applyTemplate(
-                        "ripple",
+                        'ripple',
                         save_ripple_wave_keyframes.bind(editorStateRef.current)
                       )
                     }
@@ -1187,9 +1115,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={orbitCenterX}
-                        onChange={(e) =>
-                          setOrbitCenterX(Number(e.target.value))
-                        }
+                        onChange={(e) => setOrbitCenterX(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1198,9 +1124,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={orbitCenterY}
-                        onChange={(e) =>
-                          setOrbitCenterY(Number(e.target.value))
-                        }
+                        onChange={(e) => setOrbitCenterY(Number(e.target.value))}
                       />
                     </div>
                     <div className="col-span-2">
@@ -1217,7 +1141,7 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-orange-500 text-white rounded hover:bg-orange-600"
                     onClick={() =>
                       applyTemplate(
-                        "orbit",
+                        'orbit',
                         save_orbit_dance_keyframes.bind(editorStateRef.current)
                       )
                     }
@@ -1242,10 +1166,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-red-500 text-white rounded hover:bg-red-600"
                     onClick={() =>
                       applyTemplate(
-                        "domino",
-                        save_domino_cascade_keyframes.bind(
-                          editorStateRef.current
-                        )
+                        'domino',
+                        save_domino_cascade_keyframes.bind(editorStateRef.current)
                       )
                     }
                   >
@@ -1258,29 +1180,21 @@ export default function AnimationTab({
                   <h5 className="text-xs font-medium">Swarm Convergence</h5>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Scatter X:
-                      </label>
+                      <label className="text-xs text-gray-600">Scatter X:</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={swarmScatterX}
-                        onChange={(e) =>
-                          setSwarmScatterX(Number(e.target.value))
-                        }
+                        onChange={(e) => setSwarmScatterX(Number(e.target.value))}
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Scatter Y:
-                      </label>
+                      <label className="text-xs text-gray-600">Scatter Y:</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={swarmScatterY}
-                        onChange={(e) =>
-                          setSwarmScatterY(Number(e.target.value))
-                        }
+                        onChange={(e) => setSwarmScatterY(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1289,9 +1203,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={swarmTargetX}
-                        onChange={(e) =>
-                          setSwarmTargetX(Number(e.target.value))
-                        }
+                        onChange={(e) => setSwarmTargetX(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1300,22 +1212,16 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={swarmTargetY}
-                        onChange={(e) =>
-                          setSwarmTargetY(Number(e.target.value))
-                        }
+                        onChange={(e) => setSwarmTargetY(Number(e.target.value))}
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Scatter R:
-                      </label>
+                      <label className="text-xs text-gray-600">Scatter R:</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={swarmScatterRadius}
-                        onChange={(e) =>
-                          setSwarmScatterRadius(Number(e.target.value))
-                        }
+                        onChange={(e) => setSwarmScatterRadius(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1324,9 +1230,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={swarmFormRadius}
-                        onChange={(e) =>
-                          setSwarmFormRadius(Number(e.target.value))
-                        }
+                        onChange={(e) => setSwarmFormRadius(Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -1334,10 +1238,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-teal-500 text-white rounded hover:bg-teal-600"
                     onClick={() =>
                       applyTemplate(
-                        "swarm",
-                        save_swarm_convergence_keyframes.bind(
-                          editorStateRef.current
-                        )
+                        'swarm',
+                        save_swarm_convergence_keyframes.bind(editorStateRef.current)
                       )
                     }
                   >
@@ -1357,18 +1259,14 @@ export default function AnimationTab({
             <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus-visible:ring focus-visible:ring-opacity-75">
               <span>Collage Templates</span>
               <ArrowDown
-                className={`${
-                  open ? "rotate-180 transform" : ""
-                } h-5 w-5 text-gray-500`}
+                className={`${open ? 'rotate-180 transform' : ''} h-5 w-5 text-gray-500`}
               />
             </Disclosure.Button>
             <Disclosure.Panel className="px-4 pt-4 pb-2">
               <div className="space-y-3">
                 {/* Photo Mosaic Assembly */}
                 <div className="border border-blue-200 rounded p-3 space-y-2">
-                  <h5 className="text-xs font-medium text-blue-800">
-                    Photo Mosaic Assembly
-                  </h5>
+                  <h5 className="text-xs font-medium text-blue-800">Photo Mosaic Assembly</h5>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-xs text-gray-600">Center X:</label>
@@ -1376,9 +1274,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={mosaicCenterX}
-                        onChange={(e) =>
-                          setMosaicCenterX(Number(e.target.value))
-                        }
+                        onChange={(e) => setMosaicCenterX(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1387,9 +1283,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={mosaicCenterY}
-                        onChange={(e) =>
-                          setMosaicCenterY(Number(e.target.value))
-                        }
+                        onChange={(e) => setMosaicCenterY(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1398,22 +1292,16 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={mosaicSpacing}
-                        onChange={(e) =>
-                          setMosaicSpacing(Number(e.target.value))
-                        }
+                        onChange={(e) => setMosaicSpacing(Number(e.target.value))}
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Stagger (ms):
-                      </label>
+                      <label className="text-xs text-gray-600">Stagger (ms):</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={mosaicStagger}
-                        onChange={(e) =>
-                          setMosaicStagger(Number(e.target.value))
-                        }
+                        onChange={(e) => setMosaicStagger(Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -1421,10 +1309,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
                     onClick={() =>
                       applyTemplate(
-                        "mosaic",
-                        save_photo_mosaic_keyframes.bind(
-                          editorStateRef.current
-                        ),
+                        'mosaic',
+                        save_photo_mosaic_keyframes.bind(editorStateRef.current),
                         [mosaicCenterX, mosaicCenterY],
                         mosaicSpacing,
                         mosaicStagger
@@ -1437,21 +1323,15 @@ export default function AnimationTab({
 
                 {/* Scrapbook Scatter */}
                 <div className="border border-blue-200 rounded p-3 space-y-2">
-                  <h5 className="text-xs font-medium text-blue-800">
-                    Scrapbook Scatter
-                  </h5>
+                  <h5 className="text-xs font-medium text-blue-800">Scrapbook Scatter</h5>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Drop Height:
-                      </label>
+                      <label className="text-xs text-gray-600">Drop Height:</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={scatterDropHeight}
-                        onChange={(e) =>
-                          setScatterDropHeight(Number(e.target.value))
-                        }
+                        onChange={(e) => setScatterDropHeight(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1460,25 +1340,19 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={scatterBounce}
-                        onChange={(e) =>
-                          setScatterBounce(Number(e.target.value))
-                        }
+                        onChange={(e) => setScatterBounce(Number(e.target.value))}
                         step="0.1"
                         min="0"
                         max="1"
                       />
                     </div>
                     <div className="col-span-2">
-                      <label className="text-xs text-gray-600">
-                        Rotation Range:
-                      </label>
+                      <label className="text-xs text-gray-600">Rotation Range:</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={scatterRotation}
-                        onChange={(e) =>
-                          setScatterRotation(Number(e.target.value))
-                        }
+                        onChange={(e) => setScatterRotation(Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -1486,10 +1360,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-pink-500 text-white rounded hover:bg-pink-600"
                     onClick={() =>
                       applyTemplate(
-                        "scatter",
-                        save_scrapbook_scatter_keyframes.bind(
-                          editorStateRef.current
-                        ),
+                        'scatter',
+                        save_scrapbook_scatter_keyframes.bind(editorStateRef.current),
                         scatterDropHeight,
                         scatterBounce,
                         scatterRotation
@@ -1502,9 +1374,7 @@ export default function AnimationTab({
 
                 {/* Gallery Wall Build */}
                 <div className="border border-blue-200 rounded p-3 space-y-2">
-                  <h5 className="text-xs font-medium text-blue-800">
-                    Gallery Wall Build
-                  </h5>
+                  <h5 className="text-xs font-medium text-blue-800">Gallery Wall Build</h5>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-xs text-gray-600">Wall X:</label>
@@ -1530,9 +1400,7 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={galleryWidth}
-                        onChange={(e) =>
-                          setGalleryWidth(Number(e.target.value))
-                        }
+                        onChange={(e) => setGalleryWidth(Number(e.target.value))}
                       />
                     </div>
                     <div>
@@ -1541,22 +1409,16 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={galleryHeight}
-                        onChange={(e) =>
-                          setGalleryHeight(Number(e.target.value))
-                        }
+                        onChange={(e) => setGalleryHeight(Number(e.target.value))}
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Delay (ms):
-                      </label>
+                      <label className="text-xs text-gray-600">Delay (ms):</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={galleryDelay}
-                        onChange={(e) =>
-                          setGalleryDelay(Number(e.target.value))
-                        }
+                        onChange={(e) => setGalleryDelay(Number(e.target.value))}
                       />
                     </div>
                     <div className="flex items-center">
@@ -1567,10 +1429,7 @@ export default function AnimationTab({
                         onChange={(e) => setGalleryScale(e.target.checked)}
                         className="mr-2"
                       />
-                      <label
-                        htmlFor="gallery_scale"
-                        className="text-xs text-gray-600"
-                      >
+                      <label htmlFor="gallery_scale" className="text-xs text-gray-600">
                         Scale Effect
                       </label>
                     </div>
@@ -1579,10 +1438,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-emerald-500 text-white rounded hover:bg-emerald-600"
                     onClick={() =>
                       applyTemplate(
-                        "gallery",
-                        save_gallery_wall_keyframes.bind(
-                          editorStateRef.current
-                        ),
+                        'gallery',
+                        save_gallery_wall_keyframes.bind(editorStateRef.current),
                         [galleryX, galleryY, galleryWidth, galleryHeight],
                         galleryDelay,
                         galleryScale
@@ -1595,14 +1452,10 @@ export default function AnimationTab({
 
                 {/* Memory Carousel */}
                 <div className="border border-blue-200 rounded p-3 space-y-2">
-                  <h5 className="text-xs font-medium text-blue-800">
-                    Memory Carousel
-                  </h5>
+                  <h5 className="text-xs font-medium text-blue-800">Memory Carousel</h5>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Carousel Y:
-                      </label>
+                      <label className="text-xs text-gray-600">Carousel Y:</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
@@ -1616,22 +1469,16 @@ export default function AnimationTab({
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={carouselSpacing}
-                        onChange={(e) =>
-                          setCarouselSpacing(Number(e.target.value))
-                        }
+                        onChange={(e) => setCarouselSpacing(Number(e.target.value))}
                       />
                     </div>
                     <div className="col-span-2">
-                      <label className="text-xs text-gray-600">
-                        Curve Intensity:
-                      </label>
+                      <label className="text-xs text-gray-600">Curve Intensity:</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={carouselCurve}
-                        onChange={(e) =>
-                          setCarouselCurve(Number(e.target.value))
-                        }
+                        onChange={(e) => setCarouselCurve(Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -1639,10 +1486,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-cyan-500 text-white rounded hover:bg-cyan-600"
                     onClick={() =>
                       applyTemplate(
-                        "carousel",
-                        save_memory_carousel_keyframes.bind(
-                          editorStateRef.current
-                        ),
+                        'carousel',
+                        save_memory_carousel_keyframes.bind(editorStateRef.current),
                         carouselY,
                         carouselSpacing,
                         carouselCurve
@@ -1655,34 +1500,24 @@ export default function AnimationTab({
 
                 {/* Polaroid Tumble */}
                 <div className="border border-blue-200 rounded p-3 space-y-2">
-                  <h5 className="text-xs font-medium text-blue-800">
-                    Polaroid Tumble
-                  </h5>
+                  <h5 className="text-xs font-medium text-blue-800">Polaroid Tumble</h5>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Rotation Range:
-                      </label>
+                      <label className="text-xs text-gray-600">Rotation Range:</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={polaroidRotation}
-                        onChange={(e) =>
-                          setPolaroidRotation(Number(e.target.value))
-                        }
+                        onChange={(e) => setPolaroidRotation(Number(e.target.value))}
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Settle Time:
-                      </label>
+                      <label className="text-xs text-gray-600">Settle Time:</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={polaroidSettle}
-                        onChange={(e) =>
-                          setPolaroidSettle(Number(e.target.value))
-                        }
+                        onChange={(e) => setPolaroidSettle(Number(e.target.value))}
                         step="0.1"
                         min="0.1"
                         max="1"
@@ -1693,10 +1528,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-amber-500 text-white rounded hover:bg-amber-600"
                     onClick={() =>
                       applyTemplate(
-                        "polaroid",
-                        save_polaroid_tumble_keyframes.bind(
-                          editorStateRef.current
-                        ),
+                        'polaroid',
+                        save_polaroid_tumble_keyframes.bind(editorStateRef.current),
                         null,
                         polaroidRotation,
                         polaroidSettle
@@ -1719,43 +1552,31 @@ export default function AnimationTab({
             <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus-visible:ring focus-visible:ring-opacity-75">
               <span>Screen-Filling Templates</span>
               <ArrowDown
-                className={`${
-                  open ? "rotate-180 transform" : ""
-                } h-5 w-5 text-gray-500`}
+                className={`${open ? 'rotate-180 transform' : ''} h-5 w-5 text-gray-500`}
               />
             </Disclosure.Button>
             <Disclosure.Panel className="px-4 pt-4 pb-2">
               <div className="space-y-3">
                 {/* Full-Screen Slideshow */}
                 <div className="border border-green-200 rounded p-3 space-y-2">
-                  <h5 className="text-xs font-medium text-green-800">
-                    Full-Screen Slideshow
-                  </h5>
+                  <h5 className="text-xs font-medium text-green-800">Full-Screen Slideshow</h5>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Duration (ms):
-                      </label>
+                      <label className="text-xs text-gray-600">Duration (ms):</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={slideshowDuration}
-                        onChange={(e) =>
-                          setSlideshowDuration(Number(e.target.value))
-                        }
+                        onChange={(e) => setSlideshowDuration(Number(e.target.value))}
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Transition (ms):
-                      </label>
+                      <label className="text-xs text-gray-600">Transition (ms):</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={slideshowTransition}
-                        onChange={(e) =>
-                          setSlideshowTransition(Number(e.target.value))
-                        }
+                        onChange={(e) => setSlideshowTransition(Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -1763,10 +1584,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-green-500 text-white rounded hover:bg-green-600"
                     onClick={() =>
                       applyTemplate(
-                        "slideshow",
-                        save_fullscreen_slideshow_keyframes.bind(
-                          editorStateRef.current
-                        ),
+                        'slideshow',
+                        save_fullscreen_slideshow_keyframes.bind(editorStateRef.current),
                         null,
                         slideshowDuration,
                         slideshowTransition
@@ -1779,9 +1598,7 @@ export default function AnimationTab({
 
                 {/* Adaptive Grid Layout */}
                 <div className="border border-green-200 rounded p-3 space-y-2">
-                  <h5 className="text-xs font-medium text-green-800">
-                    Adaptive Grid Layout
-                  </h5>
+                  <h5 className="text-xs font-medium text-green-800">Adaptive Grid Layout</h5>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-xs text-gray-600">Columns:</label>
@@ -1815,9 +1632,7 @@ export default function AnimationTab({
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Stagger (ms):
-                      </label>
+                      <label className="text-xs text-gray-600">Stagger (ms):</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
@@ -1830,10 +1645,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-green-500 text-white rounded hover:bg-green-600"
                     onClick={() =>
                       applyTemplate(
-                        "grid",
-                        save_adaptive_grid_keyframes.bind(
-                          editorStateRef.current
-                        ),
+                        'grid',
+                        save_adaptive_grid_keyframes.bind(editorStateRef.current),
                         null,
                         gridCols,
                         gridRows,
@@ -1848,34 +1661,24 @@ export default function AnimationTab({
 
                 {/* Screen-Filling Carousel */}
                 <div className="border border-green-200 rounded p-3 space-y-2">
-                  <h5 className="text-xs font-medium text-green-800">
-                    Screen-Filling Carousel
-                  </h5>
+                  <h5 className="text-xs font-medium text-green-800">Screen-Filling Carousel</h5>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Enter Delay (ms):
-                      </label>
+                      <label className="text-xs text-gray-600">Enter Delay (ms):</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={carouselEnterDelay}
-                        onChange={(e) =>
-                          setCarouselEnterDelay(Number(e.target.value))
-                        }
+                        onChange={(e) => setCarouselEnterDelay(Number(e.target.value))}
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Slide Speed (ms):
-                      </label>
+                      <label className="text-xs text-gray-600">Slide Speed (ms):</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={carouselSlideSpeed}
-                        onChange={(e) =>
-                          setCarouselSlideSpeed(Number(e.target.value))
-                        }
+                        onChange={(e) => setCarouselSlideSpeed(Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -1883,10 +1686,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-green-500 text-white rounded hover:bg-green-600"
                     onClick={() =>
                       applyTemplate(
-                        "carousel-screen",
-                        save_screen_carousel_keyframes.bind(
-                          editorStateRef.current
-                        ),
+                        'carousel-screen',
+                        save_screen_carousel_keyframes.bind(editorStateRef.current),
                         null,
                         carouselEnterDelay,
                         carouselSlideSpeed
@@ -1899,37 +1700,27 @@ export default function AnimationTab({
 
                 {/* Maximize & Showcase */}
                 <div className="border border-green-200 rounded p-3 space-y-2">
-                  <h5 className="text-xs font-medium text-green-800">
-                    Maximize & Showcase
-                  </h5>
+                  <h5 className="text-xs font-medium text-green-800">Maximize & Showcase</h5>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Scale Factor:
-                      </label>
+                      <label className="text-xs text-gray-600">Scale Factor:</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={showcaseScale}
-                        onChange={(e) =>
-                          setShowcaseScale(Number(e.target.value))
-                        }
+                        onChange={(e) => setShowcaseScale(Number(e.target.value))}
                         step="0.1"
                         min="0.1"
                         max="2"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-600">
-                        Stagger (ms):
-                      </label>
+                      <label className="text-xs text-gray-600">Stagger (ms):</label>
                       <input
                         type="number"
                         className="text-xs border rounded px-2 py-1 w-full"
                         value={showcaseStagger}
-                        onChange={(e) =>
-                          setShowcaseStagger(Number(e.target.value))
-                        }
+                        onChange={(e) => setShowcaseStagger(Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -1937,10 +1728,8 @@ export default function AnimationTab({
                     className="w-full py-1 px-2 text-xs bg-green-500 text-white rounded hover:bg-green-600"
                     onClick={() =>
                       applyTemplate(
-                        "showcase",
-                        save_maximize_showcase_keyframes.bind(
-                          editorStateRef.current
-                        ),
+                        'showcase',
+                        save_maximize_showcase_keyframes.bind(editorStateRef.current),
                         null,
                         showcaseScale,
                         showcaseStagger
@@ -1956,5 +1745,5 @@ export default function AnimationTab({
         )}
       </Disclosure>
     </>
-  );
+  )
 }

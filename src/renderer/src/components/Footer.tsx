@@ -1,8 +1,8 @@
-"use client";
+'use client'
 
-import Link from "next/link";
+import Link from './Link'
 
-export default function Footer({ color = "black", subset = "" }) {
+export default function Footer({ color = 'black', subset = '' }) {
   return (
     <footer className={`container mx-auto px-4 py-16 text-${color}`} role="contentinfo">
       <div className="flex flex-row justify-between">
@@ -23,21 +23,17 @@ export default function Footer({ color = "black", subset = "" }) {
               </li>
             </ul>
           </nav>
-          {subset === "stunts" && (
+          {subset === 'stunts' && (
             <nav aria-label="Alternative tools navigation">
               <ul className="flex flex-row gap-5">
                 <li>
-                  <Link href="/stunts/after-effects-alternative/">
-                    After Effects Alternative
-                  </Link>
+                  <Link href="/stunts/after-effects-alternative/">After Effects Alternative</Link>
                 </li>
                 <li>
                   <Link href="/stunts/canva-alternative/">Canva Alternative</Link>
                 </li>
                 <li>
-                  <Link href="/stunts/capcut-alternative/">
-                    CapCut Alternative
-                  </Link>
+                  <Link href="/stunts/capcut-alternative/">CapCut Alternative</Link>
                 </li>
               </ul>
             </nav>
@@ -47,5 +43,5 @@ export default function Footer({ color = "black", subset = "" }) {
         <span>&copy; {new Date().getFullYear()} Common</span>
       </div>
     </footer>
-  );
+  )
 }

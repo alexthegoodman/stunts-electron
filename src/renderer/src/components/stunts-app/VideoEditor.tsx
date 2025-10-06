@@ -1,16 +1,16 @@
-"use client";
+'use client'
 
-import React, { useEffect, useRef, useState } from "react";
-import { vec2 } from "gl-matrix";
+import React, { useEffect, useRef, useState } from 'react'
+import { vec2 } from 'gl-matrix'
 import {
   DebouncedInput,
   ExportVideoButton,
   NavButton,
   OptionButton,
   PlaySequenceButton,
-  PlayVideoButton,
-} from "./items";
-import { CreateIcon } from "./icon";
+  PlayVideoButton
+} from './items'
+import { CreateIcon } from './icon'
 import {
   AnimationData,
   AnimationProperty,
@@ -26,11 +26,11 @@ import {
   UIKeyframe,
   KeyframeValue,
   EasingType,
-  PathType,
-} from "@/engine/animations";
-import { v4 as uuidv4 } from "uuid";
-import { useRouter } from "next/navigation";
-import { useLocalStorage } from "@uidotdev/usehooks";
+  PathType
+} from '../../engine/animations'
+import { v4 as uuidv4 } from 'uuid'
+import { useRouter } from '../../hooks/useRouter'
+import { useLocalStorage } from '@uidotdev/usehooks'
 import {
   AuthToken,
   getSingleProject,
@@ -38,9 +38,9 @@ import {
   saveSequencesData,
   saveTimelineData,
   saveVideo,
-  updateSequences,
-} from "@/fetchers/projects";
-import { useDevEffectOnce } from "@/hooks/useDevOnce";
+  updateSequences
+} from '../../fetchers/projects'
+import { useDevEffectOnce } from '../../hooks/useDevOnce'
 import {
   CANVAS_HORIZ_OFFSET,
   CANVAS_VERT_OFFSET,
@@ -50,17 +50,17 @@ import {
   Point,
   rgbToWgpu,
   Viewport,
-  wgpuToHuman,
-} from "@/engine/editor";
-import { StVideoConfig } from "@/engine/video";
-import { fileToBlob, StImageConfig } from "@/engine/image";
-import { TextRendererConfig } from "@/engine/text";
-import { PolygonConfig } from "@/engine/polygon";
-import { Cube3DConfig } from "@/engine/cube3d";
-import { Sphere3DConfig } from "@/engine/sphere3d";
-import EditorState, { SaveTarget } from "@/engine/editor_state";
-import LayerPanel, { Layer, LayerFromConfig } from "./layers";
-import { CanvasPipeline } from "@/engine/pipeline";
+  wgpuToHuman
+} from '../../engine/editor'
+import { StVideoConfig } from '../../engine/video'
+import { fileToBlob, StImageConfig } from '../../engine/image'
+import { TextRendererConfig } from '../../engine/text'
+import { PolygonConfig } from '../../engine/polygon'
+import { Cube3DConfig } from '../../engine/cube3d'
+import { Sphere3DConfig } from '../../engine/sphere3d'
+import EditorState, { SaveTarget } from '../../engine/editor_state'
+import LayerPanel, { Layer, LayerFromConfig } from './layers'
+import { CanvasPipeline } from '../../engine/pipeline'
 import {
   ImageProperties,
   KeyframeProperties,
@@ -69,21 +69,21 @@ import {
   VideoProperties,
   Cube3DProperties,
   Sphere3DProperties,
-  Mockup3DProperties,
-} from "./Properties";
-import BrushProperties from "./BrushProperties";
-import { callMotionInference } from "@/fetchers/inference";
-import KeyframeTimeline from "./KeyframeTimeline";
-import { TimelineTrack } from "./SequenceTimeline";
-import { WebCapture } from "@/engine/capture";
-import { ToolGrid } from "./ToolGrid";
-import { PageSequence } from "@/engine/data";
-import { WindowSize } from "@/engine/camera";
-import { Camera3D } from "@/engine/3dcamera";
-import { ThemePicker } from "./ThemePicker";
-import { ObjectTrack } from "./ObjectTimeline";
-import { TimelineTicks } from "./TimelineTicks";
-import toast from "react-hot-toast";
+  Mockup3DProperties
+} from './Properties'
+import BrushProperties from './BrushProperties'
+import { callMotionInference } from '../../fetchers/inference'
+import KeyframeTimeline from './KeyframeTimeline'
+import { TimelineTrack } from './SequenceTimeline'
+import { WebCapture } from '../../engine/capture'
+import { ToolGrid } from './ToolGrid'
+import { PageSequence } from '../../engine/data'
+import { WindowSize } from '../../engine/camera'
+import { Camera3D } from '../../engine/3dcamera'
+import { ThemePicker } from './ThemePicker'
+import { ObjectTrack } from './ObjectTimeline'
+import { TimelineTicks } from './TimelineTicks'
+import toast from 'react-hot-toast'
 import {
   ArrowRight,
   CameraRotate,
@@ -95,17 +95,17 @@ import {
   Toolbox,
   WaveSawtooth,
   ArrowDown,
-  X,
-} from "@phosphor-icons/react";
-import { useTranslation } from "react-i18next";
-import { FlowArrow } from "@phosphor-icons/react/dist/ssr";
-import useSWR from "swr";
-import { getCurrentUser } from "@/hooks/useCurrentUser";
-import TextAnimationPanel from "./TextAnimationPanel";
-import { Disclosure } from "@headlessui/react";
+  X
+} from '@phosphor-icons/react'
+import { useTranslation } from 'react-i18next'
+import { FlowArrow } from '@phosphor-icons/react/dist/ssr'
+import useSWR from 'swr'
+import { getCurrentUser } from '../../hooks/useCurrentUser'
+import TextAnimationPanel from './TextAnimationPanel'
+import { Disclosure } from '@headlessui/react'
 
-import AnimationTab from "./AnimationTab";
-import { Mockup3DConfig } from "@/engine/mockup3d";
+import AnimationTab from './AnimationTab'
+import { Mockup3DConfig } from '../../engine/mockup3d'
 
 export function update_keyframe(
   editor_state: EditorState,
@@ -121,22 +121,22 @@ export function update_keyframe(
   // sequence_selected: RwSignal<bool>,
 ) {
   if (!current_sequence.polygonMotionPaths) {
-    return;
+    return
   }
 
   if (selected_keyframes && set_selected_keyframes) {
-    let selected_keyframe = selected_keyframes[0];
+    let selected_keyframe = selected_keyframes[0]
     if (current_keyframe.id != selected_keyframe) {
-      let new_keyframes = [];
-      new_keyframes.push(current_keyframe.id);
+      let new_keyframes: any = []
+      new_keyframes.push(current_keyframe.id)
 
-      set_selected_keyframes(new_keyframes);
+      set_selected_keyframes(new_keyframes)
     }
   } else if (set_selected_keyframes) {
-    let new_keyframes = [];
-    new_keyframes.push(current_keyframe.id);
+    let new_keyframes: any = []
+    new_keyframes.push(current_keyframe.id)
 
-    set_selected_keyframes(new_keyframes);
+    set_selected_keyframes(new_keyframes)
   }
 
   // update animation data
@@ -155,11 +155,11 @@ export function update_keyframe(
     pm.properties.forEach((p) => {
       p.keyframes.forEach((k) => {
         if (k.id == current_keyframe.id) {
-          k = current_keyframe;
+          k = current_keyframe
         }
-      });
-    });
-  });
+      })
+    })
+  })
 
   // set_selected_sequence_data(current_sequence);
 
@@ -175,11 +175,11 @@ export function update_keyframe(
     pm.properties.forEach((p) => {
       p.keyframes.forEach((k) => {
         if (k.id == current_keyframe.id) {
-          k = current_keyframe;
+          k = current_keyframe
         }
-      });
-    });
-  });
+      })
+    })
+  })
   // }
   // });
 
@@ -188,292 +188,248 @@ export function update_keyframe(
 
   editor_state.savedState.sequences.forEach((s) => {
     if (s.id == current_sequence.id) {
-      s = current_sequence;
+      s = current_sequence
     }
-  });
+  })
 
-  saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos);
+  saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos)
 }
 
 export const VideoEditor: React.FC<any> = ({ projectId }) => {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common')
 
-  const router = useRouter();
-  const [authToken] = useLocalStorage<AuthToken | null>("auth-token", null);
+  const router = useRouter()
+  const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
 
-  const { data: user } = useSWR("currentUser", () =>
-    getCurrentUser(authToken?.token ? authToken?.token : "")
-  );
+  const { data: user } = useSWR('currentUser', () =>
+    getCurrentUser(authToken?.token ? authToken?.token : '')
+  )
 
-  let [settings, set_settings] = useState<ProjectSettings | undefined | null>(
-    null
-  );
-  let [sequences, set_sequences] = useState<Sequence[]>([]);
-  let [error, set_error] = useState<string | null>(null);
-  let [loading, set_loading] = useState(false);
-  let [section, set_section] = useState("SequenceList");
-  let [keyframe_count, set_keyframe_count] = useState(0);
-  let [is_curved, set_is_curved] = useState(false);
-  let [auto_choreograph, set_auto_choreograph] = useState(true);
-  let [auto_fade, set_auto_fade] = useState(true);
+  let [settings, set_settings] = useState<ProjectSettings | undefined | null>(null)
+  let [sequences, set_sequences] = useState<Sequence[]>([])
+  let [error, set_error] = useState<string | null>(null)
+  let [loading, set_loading] = useState(false)
+  let [section, set_section] = useState('SequenceList')
+  let [keyframe_count, set_keyframe_count] = useState(0)
+  let [is_curved, set_is_curved] = useState(false)
+  let [auto_choreograph, set_auto_choreograph] = useState(true)
+  let [auto_fade, set_auto_fade] = useState(true)
 
-  let [layers, set_layers] = useState<Layer[]>([]);
-  let [dragger_id, set_dragger_id] = useState(null);
-  let [current_sequence_id, set_current_sequence_id] = useState<string | null>(
-    null
-  );
+  let [layers, set_layers] = useState<Layer[]>([])
+  let [dragger_id, set_dragger_id] = useState(null)
+  let [current_sequence_id, set_current_sequence_id] = useState<string | null>(null)
 
-  let [toolbarTab, setToolbarTab] = useState("none");
+  let [toolbarTab, setToolbarTab] = useState('none')
 
   // Camera orbit state
-  let [orbitX, setOrbitX] = useState(0);
-  let [orbitY, setOrbitY] = useState(0);
+  let [orbitX, setOrbitX] = useState(0)
+  let [orbitY, setOrbitY] = useState(0)
 
   // Camera pan state
-  let [panX, setPanX] = useState(0);
-  let [panY, setPanY] = useState(0);
+  let [panX, setPanX] = useState(0)
+  let [panY, setPanY] = useState(0)
 
   // Text Animation state
-  let [selectedTextId, setSelectedTextId] = useState<string | null>(null);
+  let [selectedTextId, setSelectedTextId] = useState<string | null>(null)
 
-  let [selected_polygon_id, set_selected_polygon_id] = useState<string | null>(
-    null
-  );
-  let [selected_image_id, set_selected_image_id] = useState<string | null>(
-    null
-  );
-  let [selected_text_id, set_selected_text_id] = useState<string | null>(null);
-  let [selected_video_id, set_selected_video_id] = useState<string | null>(
-    null
-  );
-  let [selected_cube3d_id, set_selected_cube3d_id] = useState<string | null>(
-    null
-  );
-  let [selected_sphere3d_id, set_selected_sphere3d_id] = useState<
-    string | null
-  >(null);
-  let [selected_mockup3d_id, set_selected_mockup3d_id] = useState<
-    string | null
-  >(null);
-  let [selected_keyframes, set_selected_keyframes] = useState<string[] | null>(
-    null
-  );
+  let [selected_polygon_id, set_selected_polygon_id] = useState<string | null>(null)
+  let [selected_image_id, set_selected_image_id] = useState<string | null>(null)
+  let [selected_text_id, set_selected_text_id] = useState<string | null>(null)
+  let [selected_video_id, set_selected_video_id] = useState<string | null>(null)
+  let [selected_cube3d_id, set_selected_cube3d_id] = useState<string | null>(null)
+  let [selected_sphere3d_id, set_selected_sphere3d_id] = useState<string | null>(null)
+  let [selected_mockup3d_id, set_selected_mockup3d_id] = useState<string | null>(null)
+  let [selected_keyframes, set_selected_keyframes] = useState<string[] | null>(null)
 
-  let [tSequences, setTSequences] = useState<TimelineSequence[]>([]);
-  let [sequenceDurations, setSequenceDurations] = useState<
-    Record<string, number>
-  >({});
-  let [sequenceQuickAccess, setSequenceQuickAccess] = useState<
-    Record<string, string>
-  >({});
+  let [tSequences, setTSequences] = useState<TimelineSequence[]>([])
+  let [sequenceDurations, setSequenceDurations] = useState<Record<string, number>>({})
+  let [sequenceQuickAccess, setSequenceQuickAccess] = useState<Record<string, string>>({})
 
-  let [refreshTimeline, setRefreshTimeline] = useState(Date.now());
+  let [refreshTimeline, setRefreshTimeline] = useState(Date.now())
 
-  const editorRef = useRef<Editor | null>(null);
-  const editorStateRef = useRef<EditorState | null>(null);
-  const canvasPipelineRef = useRef<CanvasPipeline | null>(null);
-  const webCaptureRef = useRef<WebCapture | null>(null);
-  const [editorIsSet, setEditorIsSet] = useState(false);
-  const [editorStateSet, setEditorStateSet] = useState(false);
-  const [refreshUINow, setRefreshUINow] = useState(Date.now());
-  const [project_name, set_project_name] = useState("Loading...");
+  const editorRef = useRef<Editor | null>(null)
+  const editorStateRef = useRef<EditorState | null>(null)
+  const canvasPipelineRef = useRef<CanvasPipeline | null>(null)
+  const webCaptureRef = useRef<WebCapture | null>(null)
+  const [editorIsSet, setEditorIsSet] = useState(false)
+  const [editorStateSet, setEditorStateSet] = useState(false)
+  const [refreshUINow, setRefreshUINow] = useState(Date.now())
+  const [project_name, set_project_name] = useState('Loading...')
 
   let setupCanvasMouseTracking = (canvas: HTMLCanvasElement) => {
-    let editor = editorRef.current;
+    let editor = editorRef.current
 
     if (!editor) {
-      return;
+      return
     }
 
-    function getCanvasCoordinates(
-      canvas: HTMLCanvasElement,
-      event: PointerEvent
-    ) {
-      const rect = canvas.getBoundingClientRect();
+    function getCanvasCoordinates(canvas: HTMLCanvasElement, event: PointerEvent) {
+      const rect = canvas.getBoundingClientRect()
 
       // Get mouse position relative to the scaled canvas
-      const mouseX = event.clientX - rect.left;
-      const mouseY = event.clientY - rect.top;
+      const mouseX = event.clientX - rect.left
+      const mouseY = event.clientY - rect.top
 
       // Convert to canvas internal coordinates
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
+      const scaleX = canvas.width / rect.width
+      const scaleY = canvas.height / rect.height
 
       return {
         x: mouseX * scaleX,
-        y: mouseY * scaleY,
-      };
+        y: mouseY * scaleY
+      }
     }
 
-    canvas.addEventListener("pointermove", (event: PointerEvent) => {
-      const coords = getCanvasCoordinates(canvas, event);
-      editor.handle_mouse_move(coords.x, coords.y);
-    });
+    canvas.addEventListener('pointermove', (event: PointerEvent) => {
+      const coords = getCanvasCoordinates(canvas, event)
+      editor.handle_mouse_move(coords.x, coords.y)
+    })
 
-    canvas.addEventListener("pointerdown", (event) => {
-      canvas.setPointerCapture(event.pointerId);
-      const coords = getCanvasCoordinates(canvas, event);
-      editor.handle_mouse_down(coords.x, coords.y);
-    });
+    canvas.addEventListener('pointerdown', (event) => {
+      canvas.setPointerCapture(event.pointerId)
+      const coords = getCanvasCoordinates(canvas, event)
+      editor.handle_mouse_down(coords.x, coords.y)
+    })
 
-    canvas.addEventListener("pointerup", (event) => {
-      console.info("handle mouse up");
-      canvas.releasePointerCapture(event.pointerId);
-      editor.handle_mouse_up();
-    });
+    canvas.addEventListener('pointerup', (event) => {
+      console.info('handle mouse up')
+      canvas.releasePointerCapture(event.pointerId)
+      editor.handle_mouse_up()
+    })
 
-    canvas.addEventListener("pointercancel", (event) => {
-      console.info("pointer cancelled - treating as mouse up");
-      canvas.releasePointerCapture(event.pointerId);
-      editor.handle_mouse_up();
-    });
-  };
+    canvas.addEventListener('pointercancel', (event) => {
+      console.info('pointer cancelled - treating as mouse up')
+      canvas.releasePointerCapture(event.pointerId)
+      editor.handle_mouse_up()
+    })
+  }
 
   let select_polygon = (polygon_id: string) => {
-    set_selected_polygon_id(polygon_id);
-    set_selected_text_id(null);
-    set_selected_image_id(null);
-    set_selected_video_id(null);
-    set_selected_cube3d_id(null);
-    set_selected_sphere3d_id(null);
-    set_selected_mockup3d_id(null);
-  };
+    set_selected_polygon_id(polygon_id)
+    set_selected_text_id(null)
+    set_selected_image_id(null)
+    set_selected_video_id(null)
+    set_selected_cube3d_id(null)
+    set_selected_sphere3d_id(null)
+    set_selected_mockup3d_id(null)
+  }
 
   let select_text = (text_id: string) => {
-    set_selected_polygon_id(null);
-    set_selected_text_id(text_id);
-    set_selected_image_id(null);
-    set_selected_video_id(null);
-    set_selected_cube3d_id(null);
-    set_selected_sphere3d_id(null);
+    set_selected_polygon_id(null)
+    set_selected_text_id(text_id)
+    set_selected_image_id(null)
+    set_selected_video_id(null)
+    set_selected_cube3d_id(null)
+    set_selected_sphere3d_id(null)
     // Also set for text animations
-    setSelectedTextId(text_id);
-    set_selected_mockup3d_id(null);
-  };
+    setSelectedTextId(text_id)
+    set_selected_mockup3d_id(null)
+  }
 
   let select_image = (image_id: string) => {
-    set_selected_polygon_id(null);
-    set_selected_text_id(null);
-    set_selected_image_id(image_id);
-    set_selected_video_id(null);
-    set_selected_cube3d_id(null);
-    set_selected_sphere3d_id(null);
-    set_selected_mockup3d_id(null);
-  };
+    set_selected_polygon_id(null)
+    set_selected_text_id(null)
+    set_selected_image_id(image_id)
+    set_selected_video_id(null)
+    set_selected_cube3d_id(null)
+    set_selected_sphere3d_id(null)
+    set_selected_mockup3d_id(null)
+  }
 
   let select_video = (video_id: string) => {
-    set_selected_polygon_id(null);
-    set_selected_text_id(null);
-    set_selected_image_id(null);
-    set_selected_video_id(video_id);
-    set_selected_cube3d_id(null);
-    set_selected_sphere3d_id(null);
-    set_selected_mockup3d_id(null);
-  };
+    set_selected_polygon_id(null)
+    set_selected_text_id(null)
+    set_selected_image_id(null)
+    set_selected_video_id(video_id)
+    set_selected_cube3d_id(null)
+    set_selected_sphere3d_id(null)
+    set_selected_mockup3d_id(null)
+  }
 
   let select_cube3d = (cube_id: string) => {
-    set_selected_polygon_id(null);
-    set_selected_text_id(null);
-    set_selected_image_id(null);
-    set_selected_video_id(null);
-    set_selected_cube3d_id(cube_id);
-    set_selected_sphere3d_id(null);
-    set_selected_mockup3d_id(null);
-  };
+    set_selected_polygon_id(null)
+    set_selected_text_id(null)
+    set_selected_image_id(null)
+    set_selected_video_id(null)
+    set_selected_cube3d_id(cube_id)
+    set_selected_sphere3d_id(null)
+    set_selected_mockup3d_id(null)
+  }
 
   let select_sphere3d = (sphere_id: string) => {
-    set_selected_polygon_id(null);
-    set_selected_text_id(null);
-    set_selected_image_id(null);
-    set_selected_video_id(null);
-    set_selected_cube3d_id(null);
-    set_selected_sphere3d_id(sphere_id);
-    set_selected_mockup3d_id(null);
-  };
+    set_selected_polygon_id(null)
+    set_selected_text_id(null)
+    set_selected_image_id(null)
+    set_selected_video_id(null)
+    set_selected_cube3d_id(null)
+    set_selected_sphere3d_id(sphere_id)
+    set_selected_mockup3d_id(null)
+  }
 
   let select_mockup3d = (mockup_id: string) => {
-    set_selected_polygon_id(null);
-    set_selected_text_id(null);
-    set_selected_image_id(null);
-    set_selected_video_id(null);
-    set_selected_cube3d_id(null);
-    set_selected_sphere3d_id(null);
-    set_selected_mockup3d_id(mockup_id);
-  };
+    set_selected_polygon_id(null)
+    set_selected_text_id(null)
+    set_selected_image_id(null)
+    set_selected_video_id(null)
+    set_selected_cube3d_id(null)
+    set_selected_sphere3d_id(null)
+    set_selected_mockup3d_id(mockup_id)
+  }
 
-  let handle_polygon_click = (
-    polygon_id: string,
-    polygon_config: PolygonConfig
-  ) => {
-    select_polygon(polygon_id);
-  };
+  let handle_polygon_click = (polygon_id: string, polygon_config: PolygonConfig) => {
+    select_polygon(polygon_id)
+  }
 
   let handle_text_click = (
     text_id: string
     // polygon_config: PolygonConfig
   ) => {
-    select_text(text_id);
-  };
+    select_text(text_id)
+  }
 
   let handle_image_click = (
     image_id: string
     // polygon_config: PolygonConfig
   ) => {
-    select_image(image_id);
-  };
+    select_image(image_id)
+  }
 
   let handle_video_click = (
     video_id: string
     // polygon_config: PolygonConfig
   ) => {
-    select_video(video_id);
-  };
+    select_video(video_id)
+  }
 
   let handle_cube3d_click = (cube_id: string, cube_config: Cube3DConfig) => {
-    select_cube3d(cube_id);
-  };
+    select_cube3d(cube_id)
+  }
 
-  let handle_sphere3d_click = (
-    sphere_id: string,
-    sphere_config: Sphere3DConfig
-  ) => {
-    select_sphere3d(sphere_id);
-  };
+  let handle_sphere3d_click = (sphere_id: string, sphere_config: Sphere3DConfig) => {
+    select_sphere3d(sphere_id)
+  }
 
-  let handle_mockup3d_click = (
-    mockup_id: string,
-    mockup_config: Mockup3DConfig
-  ) => {
-    select_mockup3d(mockup_id);
-  };
+  let handle_mockup3d_click = (mockup_id: string, mockup_config: Mockup3DConfig) => {
+    select_mockup3d(mockup_id)
+  }
 
-  let handle_mouse_up = (
-    object_id: string,
-    point: Point
-  ): [Sequence, string[]] | null => {
-    let editor = editorRef.current;
+  let handle_mouse_up = (object_id: string, point: Point): [Sequence, string[]] | null => {
+    let editor = editorRef.current
 
     if (!editor) {
-      console.warn("Editor not initialized");
-      return null;
+      console.warn('Editor not initialized')
+      return null
     }
 
-    let last_saved_state = editorStateRef.current?.savedState;
+    let last_saved_state = editorStateRef.current?.savedState
 
     if (!last_saved_state) {
-      return null;
+      return null
     }
 
-    let object_type = findObjectType(last_saved_state, object_id);
+    let object_type = findObjectType(last_saved_state, object_id)
 
-    console.info(
-      "see type",
-      object_type,
-      "id",
-      object_id,
-      "id2",
-      current_sequence_id
-    );
+    console.info('see type', object_type, 'id', object_id, 'id2', current_sequence_id)
 
     last_saved_state.sequences.forEach((s) => {
       if (s.id == current_sequence_id) {
@@ -485,72 +441,72 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
           case ObjectType.Polygon: {
             s.activePolygons.forEach((ap) => {
               if (ap.id == object_id) {
-                console.info("updating position...");
+                console.info('updating position...')
                 ap.position = {
                   x: point.x,
-                  y: point.y,
-                };
+                  y: point.y
+                }
               }
-            });
-            break;
+            })
+            break
           }
           case ObjectType.TextItem: {
             s.activeTextItems.forEach((tr) => {
               if (tr.id == object_id) {
                 tr.position = {
                   x: point.x,
-                  y: point.y,
-                };
+                  y: point.y
+                }
               }
-            });
-            break;
+            })
+            break
           }
           case ObjectType.ImageItem: {
             s.activeImageItems.forEach((si) => {
               if (si.id == object_id) {
                 si.position = {
                   x: point.x,
-                  y: point.y,
-                };
+                  y: point.y
+                }
               }
-            });
-            break;
+            })
+            break
           }
           case ObjectType.VideoItem: {
-            console.info("saving point", point);
+            console.info('saving point', point)
             s.activeVideoItems.forEach((si) => {
               if (si.id == object_id) {
                 si.position = {
                   x: point.x,
-                  y: point.y,
-                };
+                  y: point.y
+                }
               }
-            });
-            break;
+            })
+            break
           }
           case ObjectType.Cube3D: {
-            console.info("saving point", point);
+            console.info('saving point', point)
             s.activeCubes3D?.forEach((si) => {
               if (si.id == object_id) {
                 si.position = {
                   x: point.x,
-                  y: point.y,
-                };
+                  y: point.y
+                }
               }
-            });
-            break;
+            })
+            break
           }
           case ObjectType.Sphere3D: {
-            console.info("saving point", point);
+            console.info('saving point', point)
             s.activeSpheres3D?.forEach((si) => {
               if (si.id == object_id) {
                 si.position = {
                   x: point.x,
-                  y: point.y,
-                };
+                  y: point.y
+                }
               }
-            });
-            break;
+            })
+            break
           }
         }
 
@@ -558,59 +514,48 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         if (s.polygonMotionPaths) {
           s.polygonMotionPaths.forEach((motionPath) => {
             if (motionPath.polygonId === object_id) {
-              let livePath = editor.motionPaths.find(
-                (mp) => mp.associatedPolygonId === object_id
-              );
+              let livePath = editor.motionPaths.find((mp) => mp.associatedPolygonId === object_id)
 
-              let pathPosition = livePath?.transform.position;
+              let pathPosition = livePath?.transform.position
 
               if (pathPosition) {
                 // Update the motion path position
-                motionPath.position = [
-                  pathPosition[0] || 0,
-                  pathPosition[1] || 0,
-                ];
+                motionPath.position = [pathPosition[0] || 0, pathPosition[1] || 0]
               }
             }
-          });
+          })
         }
       }
-    });
+    })
 
     // last_saved_state.sequences = updatedSequences;
 
-    saveSequencesData(last_saved_state.sequences, SaveTarget.Videos);
+    saveSequencesData(last_saved_state.sequences, SaveTarget.Videos)
 
-    console.info("Position updated!");
+    console.info('Position updated!')
 
-    editor?.updateMotionPaths(last_saved_state.sequences[0]);
+    editor?.updateMotionPaths(last_saved_state.sequences[0])
 
-    let current_sequence_data = last_saved_state.sequences.find(
-      (s) => s.id === current_sequence_id
-    );
+    let current_sequence_data = last_saved_state.sequences.find((s) => s.id === current_sequence_id)
 
     if (!current_sequence_data || !selected_keyframes) {
-      return null;
+      return null
     }
 
-    return [current_sequence_data, selected_keyframes];
-  };
+    return [current_sequence_data, selected_keyframes]
+  }
 
-  let on_handle_mouse_up = (
-    keyframeId: string,
-    objectId: string,
-    point: Point
-  ) => {
-    let editor = editorRef.current;
-    let editorState = editorStateRef.current;
+  let on_handle_mouse_up = (keyframeId: string, objectId: string, point: Point) => {
+    let editor = editorRef.current
+    let editorState = editorStateRef.current
 
     if (!editor || !editorState) {
-      return [null, null] as [Sequence | null, string[] | null];
+      return [null, null] as [Sequence | null, string[] | null]
     }
 
     let selected_sequence = editorState.savedState.sequences.find(
       (s) => s.id === current_sequence_id
-    );
+    )
 
     // if (!selected_keyframes) {
     //   console.warn("Keyframe not found");
@@ -618,57 +563,49 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     // }
 
     if (!selected_sequence || !current_sequence_id) {
-      console.warn("Sequence not found");
-      return [null, null] as [Sequence | null, string[] | null];
+      console.warn('Sequence not found')
+      return [null, null] as [Sequence | null, string[] | null]
     }
 
-    let is_polygon = selected_sequence?.activePolygons.find(
-      (p) => p.id === objectId
-    );
-    let is_text = selected_sequence?.activeTextItems.find(
-      (p) => p.id === objectId
-    );
-    let is_image = selected_sequence?.activeImageItems.find(
-      (p) => p.id === objectId
-    );
-    let is_video = selected_sequence?.activeVideoItems.find(
-      (p) => p.id === objectId
-    );
+    let is_polygon = selected_sequence?.activePolygons.find((p) => p.id === objectId)
+    let is_text = selected_sequence?.activeTextItems.find((p) => p.id === objectId)
+    let is_image = selected_sequence?.activeImageItems.find((p) => p.id === objectId)
+    let is_video = selected_sequence?.activeVideoItems.find((p) => p.id === objectId)
 
     if (is_polygon) {
-      select_polygon(objectId);
+      select_polygon(objectId)
     }
     if (is_text) {
-      select_text(objectId);
+      select_text(objectId)
     }
     if (is_image) {
-      select_image(objectId);
+      select_image(objectId)
     }
     if (is_video) {
-      select_video(objectId);
+      select_video(objectId)
     }
 
     if (!selected_sequence?.polygonMotionPaths) {
-      return;
+      return
     }
 
     const currentKf =
       selected_sequence?.polygonMotionPaths
         .find((p) => p.polygonId === objectId)
         ?.properties.flatMap((p) => p.keyframes)
-        .find((k) => k.id === keyframeId) ?? null;
+        .find((k) => k.id === keyframeId) ?? null
 
     if (!currentKf) {
-      console.warn("Keyframe not found");
-      return [null, null] as [Sequence | null, string[] | null];
+      console.warn('Keyframe not found')
+      return [null, null] as [Sequence | null, string[] | null]
     }
 
-    if (currentKf.value.type === "Position") {
-      currentKf.value.value[0] = point.x;
-      currentKf.value.value[1] = point.y;
-    } else if (currentKf.value.type === "Zoom") {
-      currentKf.value.value.position[0] = point.x;
-      currentKf.value.value.position[1] = point.y;
+    if (currentKf.value.type === 'Position') {
+      currentKf.value.value[0] = point.x
+      currentKf.value.value[1] = point.y
+    } else if (currentKf.value.type === 'Zoom') {
+      currentKf.value.value.position[0] = point.x
+      currentKf.value.value.position[1] = point.y
     }
 
     update_keyframe(
@@ -678,120 +615,112 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       selected_keyframes,
       set_selected_keyframes
       // current_sequence_id
-    );
+    )
 
-    return [selected_sequence, selected_keyframes] as [Sequence, string[]];
-  };
+    return [selected_sequence, selected_keyframes] as [Sequence, string[]]
+  }
 
   useDevEffectOnce(() => {
     if (editorIsSet) {
-      return;
+      return
     }
 
-    console.info("Starting Editor...");
+    console.info('Starting Editor...')
 
-    let viewport = new Viewport(900, 550);
+    let viewport = new Viewport(900, 550)
 
-    editorRef.current = new Editor(viewport);
+    editorRef.current = new Editor(viewport)
 
-    webCaptureRef.current = new WebCapture();
+    webCaptureRef.current = new WebCapture()
 
-    setEditorIsSet(true);
-  });
+    setEditorIsSet(true)
+  })
 
   useEffect(() => {
-    console.info("remount");
-  }, []);
+    console.info('remount')
+  }, [])
 
   let fetch_data = async () => {
     try {
       if (!authToken || !editorRef.current) {
-        toast.error(
-          "You must have an auth token or matching device to access this project"
-        );
+        toast.error('You must have an auth token or matching device to access this project')
 
-        return;
+        return
       }
 
-      set_loading(true);
+      set_loading(true)
 
-      let response = await getSingleProject(authToken.token, projectId);
+      let response = await getSingleProject(authToken.token, projectId)
 
-      localStorage.setItem(
-        "stored-project",
-        JSON.stringify({ project_id: projectId })
-      );
+      localStorage.setItem('stored-project', JSON.stringify({ project_id: projectId }))
 
-      let fileName = response.project?.name || "";
-      let fileData = response.project?.fileData;
+      let fileName = response.project?.name || ''
+      let fileData = response.project?.fileData
 
-      console.info("savedState", fileData);
+      console.info('savedState', fileData)
 
       if (!fileData) {
-        toast.error("No file data");
+        toast.error('No file data')
 
-        return;
+        return
       }
 
-      editorStateRef.current = new EditorState(fileData);
+      editorStateRef.current = new EditorState(fileData)
 
-      let cloned_sequences = fileData?.sequences;
-      let cloned_settings = fileData?.settings;
+      let cloned_sequences = fileData?.sequences
+      let cloned_settings = fileData?.settings
 
       if (!cloned_settings) {
         cloned_settings = {
           dimensions: {
             width: 900,
-            height: 550,
-          },
-        };
+            height: 550
+          }
+        }
       }
 
       if (!cloned_sequences) {
-        return;
+        return
       }
 
-      console.info("cloned_settings", cloned_settings);
+      console.info('cloned_settings', cloned_settings)
 
-      set_settings(cloned_settings);
-      set_sequences(cloned_sequences);
-      set_project_name(fileName);
+      set_settings(cloned_settings)
+      set_sequences(cloned_sequences)
+      set_project_name(fileName)
       // set_timeline_state(response.project?.fileData.timeline_state);
 
       // drop(editor_state);
 
-      editorRef.current.settings = cloned_settings;
+      editorRef.current.settings = cloned_settings
 
-      console.info("Initializing pipeline...");
+      console.info('Initializing pipeline...')
 
-      let pipeline = new CanvasPipeline();
+      let pipeline = new CanvasPipeline()
 
       canvasPipelineRef.current = await pipeline.new(
         editorRef.current,
         true,
-        "scene-canvas",
+        'scene-canvas',
         // {
         //   width: 900,
         //   height: 550,
         // },
         cloned_settings.dimensions,
         true
-      );
+      )
 
-      let windowSize = editorRef.current.camera?.windowSize;
+      let windowSize = editorRef.current.camera?.windowSize
 
       if (!windowSize?.width || !windowSize?.height) {
-        return;
+        return
       }
 
-      canvasPipelineRef.current.recreateDepthView(
-        windowSize?.width,
-        windowSize?.height
-      );
+      canvasPipelineRef.current.recreateDepthView(windowSize?.width, windowSize?.height)
 
-      console.info("Beginning rendering...");
+      console.info('Beginning rendering...')
 
-      await canvasPipelineRef.current.beginRendering(editorRef.current);
+      await canvasPipelineRef.current.beginRendering(editorRef.current)
 
       // console.info("Restoring objects...");
 
@@ -800,199 +729,195 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
           sequence,
           true
           // authToken.token,
-        );
+        )
       }
 
       // set handlers
-      const canvas = document.getElementById(
-        "scene-canvas"
-      ) as HTMLCanvasElement;
-      setupCanvasMouseTracking(canvas);
+      const canvas = document.getElementById('scene-canvas') as HTMLCanvasElement
+      setupCanvasMouseTracking(canvas)
 
-      set_quick_access();
+      set_quick_access()
 
-      let firstSequenceId = cloned_sequences[0].id;
+      let firstSequenceId = cloned_sequences[0].id
 
-      on_open_sequence(firstSequenceId);
+      on_open_sequence(firstSequenceId)
 
-      set_loading(false);
-      setEditorStateSet(true);
+      set_loading(false)
+      setEditorStateSet(true)
     } catch (error: any) {
-      console.error("Error fetching data:", error);
-      toast.error("Failed to fetch project data");
-      set_loading(false);
-      set_error(error.message || "Unknown error");
-      return;
+      console.error('Error fetching data:', error)
+      toast.error('Failed to fetch project data')
+      set_loading(false)
+      set_error(error.message || 'Unknown error')
+      return
     }
-  };
+  }
 
   const [onboarding1Visible, setOnboard1Visible] = useLocalStorage<boolean>(
-    "video-onboarding-1-visible",
+    'video-onboarding-1-visible',
     true
-  );
+  )
 
   useEffect(() => {
     if (editorIsSet) {
-      console.info("Fetch data...");
+      console.info('Fetch data...')
 
-      fetch_data();
+      fetch_data()
     }
-  }, [editorIsSet]);
+  }, [editorIsSet])
 
   useEffect(() => {
     if (editorIsSet) {
       if (!editorRef.current) {
-        return;
+        return
       }
 
-      console.info("Setting event handlers!");
+      console.info('Setting event handlers!')
 
       // set handlers that rely on state
-      editorRef.current.handlePolygonClick = handle_polygon_click;
-      editorRef.current.handleTextClick = handle_text_click;
-      editorRef.current.handleImageClick = handle_image_click;
-      editorRef.current.handleVideoClick = handle_video_click;
-      editorRef.current.handleCube3DClick = handle_cube3d_click;
-      editorRef.current.handleSphere3DClick = handle_sphere3d_click;
-      editorRef.current.handleMockup3DClick = handle_mockup3d_click;
-      editorRef.current.onMouseUp = handle_mouse_up;
-      editorRef.current.onHandleMouseUp = on_handle_mouse_up;
+      editorRef.current.handlePolygonClick = handle_polygon_click
+      editorRef.current.handleTextClick = handle_text_click
+      editorRef.current.handleImageClick = handle_image_click
+      editorRef.current.handleVideoClick = handle_video_click
+      editorRef.current.handleCube3DClick = handle_cube3d_click
+      editorRef.current.handleSphere3DClick = handle_sphere3d_click
+      editorRef.current.handleMockup3DClick = handle_mockup3d_click
+      editorRef.current.onMouseUp = handle_mouse_up
+      editorRef.current.onHandleMouseUp = on_handle_mouse_up
     }
-  }, [editorIsSet, current_sequence_id]);
+  }, [editorIsSet, current_sequence_id])
 
   let on_create_sequence = async () => {
-    let editor = editorRef.current;
-    let editorState = editorStateRef.current;
+    let editor = editorRef.current
+    let editorState = editorStateRef.current
 
     if (!editor || !editorState) {
-      toast.error("Your editor or editor state failed to initialize");
+      toast.error('Your editor or editor state failed to initialize')
 
-      return;
+      return
     }
 
     if (!authToken) {
-      toast.error("You must have an auth token");
+      toast.error('You must have an auth token')
 
-      return;
+      return
     }
 
-    set_loading(true);
+    set_loading(true)
 
-    let new_sequences = sequences as Sequence[];
+    let new_sequences = sequences as Sequence[]
 
-    let newId = uuidv4().toString();
+    let newId = uuidv4().toString()
 
     new_sequences.push({
       id: newId,
-      name: "New Sequence",
-      backgroundFill: { type: "Color", value: [200, 200, 200, 255] },
+      name: 'New Sequence',
+      backgroundFill: { type: 'Color', value: [200, 200, 200, 255] },
       durationMs: 20000,
       activePolygons: [],
       polygonMotionPaths: [],
       activeTextItems: [],
       activeImageItems: [],
-      activeVideoItems: [],
-    });
+      activeVideoItems: []
+    })
 
-    set_sequences(new_sequences);
+    set_sequences(new_sequences)
 
-    editorState.savedState.sequences = new_sequences;
+    editorState.savedState.sequences = new_sequences
 
     let response = await updateSequences(
       authToken.token,
       projectId,
       new_sequences,
       SaveTarget.Videos
-    );
+    )
 
-    set_quick_access();
+    set_quick_access()
 
-    on_open_sequence(newId);
+    on_open_sequence(newId)
 
-    set_loading(false);
-  };
+    set_loading(false)
+  }
 
   let set_quick_access = () => {
-    let editor = editorRef.current;
-    let editorState = editorStateRef.current;
+    let editor = editorRef.current
+    let editorState = editorStateRef.current
 
     if (!editor || !editorState) {
-      return;
+      return
     }
 
-    let durations = {} as Record<string, number>;
+    let durations = {} as Record<string, number>
     editorState.savedState.sequences.forEach((s) => {
       if (s.durationMs) {
-        durations[s.id] = s.durationMs;
+        durations[s.id] = s.durationMs
       }
-    });
+    })
 
-    setSequenceDurations(durations);
+    setSequenceDurations(durations)
 
-    let quickAccess = {} as Record<string, string>;
+    let quickAccess = {} as Record<string, string>
     editorState.savedState.sequences.forEach((s) => {
       if (s.name) {
-        quickAccess[s.id] = s.name;
+        quickAccess[s.id] = s.name
       }
-    });
+    })
 
-    setSequenceQuickAccess(quickAccess);
+    setSequenceQuickAccess(quickAccess)
 
     if (editorState.savedState.timeline_state) {
-      setTSequences(editorState.savedState.timeline_state.timeline_sequences);
+      setTSequences(editorState.savedState.timeline_state.timeline_sequences)
     }
-  };
+  }
 
   let on_open_sequence = (sequence_id: string) => {
     try {
-      set_section("SequenceView");
+      set_section('SequenceView')
 
-      console.info("Open Sequence...");
+      console.info('Open Sequence...')
 
-      let editor = editorRef.current;
-      let editor_state = editorStateRef.current;
+      let editor = editorRef.current
+      let editor_state = editorStateRef.current
 
       if (!editor || !editor_state) {
-        toast.error("Your editor or editor state failed to initialize");
-        return;
+        toast.error('Your editor or editor state failed to initialize')
+        return
       }
 
-      let saved_state = editor_state?.savedState;
+      let saved_state = editor_state?.savedState
 
       if (!saved_state) {
-        toast.error("No saved state found");
-        return;
+        toast.error('No saved state found')
+        return
       }
 
-      let saved_sequence = saved_state.sequences.find(
-        (s) => s.id == sequence_id
-      );
+      let saved_sequence = saved_state.sequences.find((s) => s.id == sequence_id)
 
       if (!saved_sequence) {
-        toast.error("Sequence not found");
-        return;
+        toast.error('Sequence not found')
+        return
       }
 
       let background_fill = {
-        type: "Color",
+        type: 'Color',
         value: [
           wgpuToHuman(0.8) as number,
           wgpuToHuman(0.8) as number,
           wgpuToHuman(0.8) as number,
-          255,
-        ],
-      } as BackgroundFill;
+          255
+        ]
+      } as BackgroundFill
 
       if (saved_sequence?.backgroundFill) {
-        background_fill = saved_sequence.backgroundFill;
+        background_fill = saved_sequence.backgroundFill
       }
 
       // for the background polygon and its signal
-      editor_state.selected_polygon_id = saved_sequence.id;
+      editor_state.selected_polygon_id = saved_sequence.id
 
       // drop(editor_state);
 
-      console.info("Opening Sequence...");
+      console.info('Opening Sequence...')
 
       // let mut editor = editor.lock().unwrap();
 
@@ -1011,102 +936,102 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       // set hidden to false based on sequence
       // also reset all objects to hidden=true beforehand
       editor.polygons.forEach((p) => {
-        p.hidden = true;
-      });
+        p.hidden = true
+      })
       editor?.imageItems.forEach((i) => {
-        i.hidden = true;
-      });
+        i.hidden = true
+      })
       editor?.textItems.forEach((t) => {
-        t.hidden = true;
-      });
+        t.hidden = true
+      })
       editor?.videoItems.forEach((t) => {
-        t.hidden = true;
-      });
+        t.hidden = true
+      })
       editor?.cubes3D.forEach((t) => {
-        t.hidden = true;
-      });
+        t.hidden = true
+      })
       editor?.spheres3D.forEach((t) => {
-        t.hidden = true;
-      });
+        t.hidden = true
+      })
       editor?.mockups3D.forEach((t) => {
-        t.hidden = true;
-      });
+        t.hidden = true
+      })
 
       saved_sequence.activePolygons.forEach((ap) => {
-        let polygon = editor.polygons.find((p) => p.id == ap.id);
+        let polygon = editor.polygons.find((p) => p.id == ap.id)
 
         if (!polygon) {
-          return;
+          return
         }
 
-        polygon.hidden = false;
-      });
+        polygon.hidden = false
+      })
       saved_sequence.activeImageItems.forEach((si) => {
-        let image = editor.imageItems.find((i) => i.id == si.id);
+        let image = editor.imageItems.find((i) => i.id == si.id)
 
         if (!image) {
-          return;
+          return
         }
 
-        image.hidden = false;
-      });
+        image.hidden = false
+      })
       saved_sequence.activeTextItems.forEach((tr) => {
-        let text = editor.textItems.find((t) => t.id == tr.id);
+        let text = editor.textItems.find((t) => t.id == tr.id)
 
         if (!text) {
-          return;
+          return
         }
 
-        text.hidden = false;
-      });
+        text.hidden = false
+      })
       saved_sequence.activeVideoItems.forEach((tr) => {
-        let video = editor.videoItems.find((t) => t.id == tr.id);
+        let video = editor.videoItems.find((t) => t.id == tr.id)
 
         if (!video) {
-          return;
+          return
         }
 
-        video.hidden = false;
+        video.hidden = false
 
-        console.info("Video restored!");
-      });
+        console.info('Video restored!')
+      })
       saved_sequence.activeCubes3D?.forEach((ap) => {
-        let cube = editor.cubes3D.find((p) => p.id == ap.id);
+        let cube = editor.cubes3D.find((p) => p.id == ap.id)
 
         if (!cube) {
-          return;
+          return
         }
 
-        cube.hidden = false;
-      });
+        cube.hidden = false
+      })
       saved_sequence.activeSpheres3D?.forEach((ap) => {
-        let sphere = editor.spheres3D.find((p) => p.id == ap.id);
+        let sphere = editor.spheres3D.find((p) => p.id == ap.id)
 
         if (!sphere) {
-          return;
+          return
         }
 
-        sphere.hidden = false;
-      });
+        sphere.hidden = false
+      })
       saved_sequence.activeMockups3D?.forEach((ap) => {
-        let mockup = editor.mockups3D.find((p) => p.id == ap.id);
+        let mockup = editor.mockups3D.find((p) => p.id == ap.id)
 
         if (!mockup) {
-          return;
+          return
         }
 
-        mockup.hidden = false;
-      });
+        mockup.hidden = false
+      })
 
       if (!editor.camera) {
-        toast.error("No camera found in editor");
-        return;
+        toast.error('No camera found in editor')
+        return
       }
 
       let backgroundSize: WindowSize = {
         width: editor.camera?.windowSize.width - 50,
-        height: editor.camera?.windowSize.height - 50,
-      };
+        height: editor.camera?.windowSize.height - 50
+      }
 
       // if (background_fill.type === "Color") {
       editor.replace_background(
@@ -1119,209 +1044,194 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         // )
         background_fill,
         backgroundSize
-      );
+      )
       // }
 
-      console.info("Objects restored!", saved_sequence.id);
+      console.info('Objects restored!', saved_sequence.id)
 
-      editor?.updateMotionPaths(saved_sequence);
+      editor?.updateMotionPaths(saved_sequence)
 
-      console.info("Motion Paths restored!");
+      console.info('Motion Paths restored!')
 
-      console.info("Restoring layers...");
+      console.info('Restoring layers...')
 
-      let new_layers: Layer[] = [];
+      let new_layers: Layer[] = []
       editor.polygons.forEach((polygon) => {
         if (!polygon.hidden) {
-          let polygon_config: PolygonConfig = polygon.toConfig();
-          let new_layer: Layer =
-            LayerFromConfig.fromPolygonConfig(polygon_config);
-          new_layers.push(new_layer);
+          let polygon_config: PolygonConfig = polygon.toConfig()
+          let new_layer: Layer = LayerFromConfig.fromPolygonConfig(polygon_config)
+          new_layers.push(new_layer)
         }
-      });
+      })
       editor.brushes.forEach((brush) => {
         if (!brush.hidden) {
-          let brush_config = brush.toConfig();
-          let new_layer: Layer = LayerFromConfig.fromBrushConfig(brush_config);
-          new_layers.push(new_layer);
+          let brush_config = brush.toConfig()
+          let new_layer: Layer = LayerFromConfig.fromBrushConfig(brush_config)
+          new_layers.push(new_layer)
         }
-      });
+      })
       editor.textItems.forEach((text) => {
         if (!text.hidden) {
-          let text_config: TextRendererConfig = text.toConfig();
-          let new_layer: Layer = LayerFromConfig.fromTextConfig(text_config);
-          new_layers.push(new_layer);
+          let text_config: TextRendererConfig = text.toConfig()
+          let new_layer: Layer = LayerFromConfig.fromTextConfig(text_config)
+          new_layers.push(new_layer)
         }
-      });
+      })
       editor.imageItems.forEach((image) => {
         if (!image.hidden) {
-          let image_config: StImageConfig = image.toConfig();
-          let new_layer: Layer = LayerFromConfig.fromImageConfig(image_config);
-          new_layers.push(new_layer);
+          let image_config: StImageConfig = image.toConfig()
+          let new_layer: Layer = LayerFromConfig.fromImageConfig(image_config)
+          new_layers.push(new_layer)
         }
-      });
+      })
       editor.videoItems.forEach((video) => {
         if (!video.hidden) {
-          let video_config: StVideoConfig = video.toConfig();
-          let new_layer: Layer = LayerFromConfig.fromVideoConfig(video_config);
-          new_layers.push(new_layer);
+          let video_config: StVideoConfig = video.toConfig()
+          let new_layer: Layer = LayerFromConfig.fromVideoConfig(video_config)
+          new_layers.push(new_layer)
         }
-      });
+      })
       editor.cubes3D.forEach((cube) => {
         if (!cube.hidden) {
-          let cube_config: Cube3DConfig = cube.toConfig();
-          let new_layer: Layer = LayerFromConfig.fromCube3DConfig(cube_config);
-          new_layers.push(new_layer);
+          let cube_config: Cube3DConfig = cube.toConfig()
+          let new_layer: Layer = LayerFromConfig.fromCube3DConfig(cube_config)
+          new_layers.push(new_layer)
         }
-      });
+      })
       editor.spheres3D.forEach((sphere) => {
         if (!sphere.hidden) {
-          let sphere_config: Sphere3DConfig = sphere.toConfig();
-          let new_layer: Layer =
-            LayerFromConfig.fromSphere3DConfig(sphere_config);
-          new_layers.push(new_layer);
+          let sphere_config: Sphere3DConfig = sphere.toConfig()
+          let new_layer: Layer = LayerFromConfig.fromSphere3DConfig(sphere_config)
+          new_layers.push(new_layer)
         }
-      });
+      })
       editor.mockups3D.forEach((mockup) => {
         if (!mockup.hidden) {
-          let mockup_config: Mockup3DConfig = mockup.toConfig();
-          let new_layer: Layer =
-            LayerFromConfig.fromMockup3DConfig(mockup_config);
-          new_layers.push(new_layer);
+          let mockup_config: Mockup3DConfig = mockup.toConfig()
+          let new_layer: Layer = LayerFromConfig.fromMockup3DConfig(mockup_config)
+          new_layers.push(new_layer)
         }
-      });
+      })
 
       // console.info("new_layers", new_layers);
 
       // sort layers by layer_index property, lower values should come first in the list
       // but reverse the order because the UI outputs the first one first, thus it displays last
-      new_layers.sort((a, b) => b.initial_layer_index - a.initial_layer_index);
+      new_layers.sort((a, b) => b.initial_layer_index - a.initial_layer_index)
 
-      set_layers(new_layers);
-      console.info("set current", sequence_id);
-      set_current_sequence_id(sequence_id);
+      set_layers(new_layers)
+      console.info('set current', sequence_id)
+      set_current_sequence_id(sequence_id)
 
-      toast.success(`Opened sequence ${saved_sequence.name}`);
+      toast.success(`Opened sequence ${saved_sequence.name}`)
     } catch (error: any) {
-      console.error("Error opening sequence:", error);
-      toast.error("Failed to open sequence");
-      set_loading(false);
-      set_error(error.message || "Unknown error");
-      return;
+      console.error('Error opening sequence:', error)
+      toast.error('Failed to open sequence')
+      set_loading(false)
+      set_error(error.message || 'Unknown error')
+      return
     }
 
     // set_quick_access();
 
     // drop(editor);
-  };
+  }
 
   let on_generate_animation = async () => {
-    let editor = editorRef.current;
-    let editor_state = editorStateRef.current;
+    let editor = editorRef.current
+    let editor_state = editorStateRef.current
 
     if (!editor || !editor_state) {
-      return;
+      return
     }
 
-    set_loading(true);
+    set_loading(true)
 
-    console.info("create prompt");
+    console.info('create prompt')
 
-    let prompt = editor.createInferencePrompt();
-    let predictions = await callMotionInference(prompt);
+    let prompt = editor.createInferencePrompt()
+    let predictions = await callMotionInference(prompt)
 
-    console.info("predictions", predictions);
+    console.info('predictions', predictions)
 
-    let current_positions = editor.getCurrentPositions();
+    let current_positions = editor.getCurrentPositions()
 
-    let animation = editor.createMotionPathsFromPredictions(
-      predictions,
-      current_positions,
-      editor
-    );
+    let animation = editor.createMotionPathsFromPredictions(predictions, current_positions, editor)
 
     editor_state.savedState.sequences.forEach((s) => {
       if (s.id === current_sequence_id) {
-        s.polygonMotionPaths = animation;
+        s.polygonMotionPaths = animation
       }
-    });
+    })
 
     let updatedSequence = editor_state.savedState.sequences.find(
       (s) => s.id === current_sequence_id
-    );
+    )
 
     if (!updatedSequence) {
-      return;
+      return
     }
 
-    console.info("update paths");
+    console.info('update paths')
 
-    editor.updateMotionPaths(updatedSequence);
+    editor.updateMotionPaths(updatedSequence)
 
-    saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos);
+    saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos)
 
-    set_loading(false);
-  };
+    set_loading(false)
+  }
 
-  let on_open_capture = () => {};
+  let on_open_capture = () => {}
 
-  let on_items_updated = () => {};
+  let on_items_updated = () => {}
 
-  let on_item_duplicated = () => {};
+  let on_item_duplicated = () => {}
 
-  let on_item_deleted = () => {};
+  let on_item_deleted = () => {}
 
-  const handleSequenceDragEnd = (
-    sequence: TimelineSequence,
-    newStartTimeMs: number
-  ) => {
+  const handleSequenceDragEnd = (sequence: TimelineSequence, newStartTimeMs: number) => {
     setTSequences((prev) =>
-      prev.map((seq) =>
-        seq.id === sequence.id ? { ...seq, startTimeMs: newStartTimeMs } : seq
-      )
-    );
-  };
+      prev.map((seq) => (seq.id === sequence.id ? { ...seq, startTimeMs: newStartTimeMs } : seq))
+    )
+  }
 
-  const handleObjectDragEnd = (
-    animation: AnimationData,
-    newStartTimeMs: number
-  ) => {
-    let editor = editorRef.current;
-    let editor_state = editorStateRef.current;
+  const handleObjectDragEnd = (animation: AnimationData, newStartTimeMs: number) => {
+    let editor = editorRef.current
+    let editor_state = editorStateRef.current
 
     if (!editor || !editor_state) {
-      return;
+      return
     }
 
     editor_state.savedState.sequences.forEach((s) => {
       if (s.id === current_sequence_id) {
         s.polygonMotionPaths?.forEach((pm) => {
           if (pm.id === animation.id) {
-            pm.startTimeMs = newStartTimeMs;
+            pm.startTimeMs = newStartTimeMs
           }
-        });
+        })
       }
-    });
+    })
 
-    console.info("animation updated", animation, newStartTimeMs);
+    console.info('animation updated', animation, newStartTimeMs)
 
-    saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos);
-  };
+    saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos)
+  }
 
-  let [background_red, set_background_red] = useState(0);
-  let [background_green, set_background_green] = useState(0);
-  let [background_blue, set_background_blue] = useState(0);
+  let [background_red, set_background_red] = useState(0)
+  let [background_green, set_background_green] = useState(0)
+  let [background_blue, set_background_blue] = useState(0)
 
-  let aside_width = 260.0;
-  let quarters = aside_width / 4.0 + 5.0 * 4.0;
-  let thirds = aside_width / 3.0 + 5.0 * 3.0;
-  let halfs = aside_width / 2.0 + 5.0 * 2.0;
+  let aside_width = 260.0
+  let quarters = aside_width / 4.0 + 5.0 * 4.0
+  let thirds = aside_width / 3.0 + 5.0 * 3.0
+  let halfs = aside_width / 2.0 + 5.0 * 2.0
 
   // need hamburger menu for mobile to toggle sidebar
-  let [showSidebar, setShowSidebar] = useState(false);
+  let [showSidebar, setShowSidebar] = useState(false)
   let toggleSidebar = () => {
-    setShowSidebar((prev) => !prev);
-  };
+    setShowSidebar((prev) => !prev)
+  }
 
   return (
     <>
@@ -1352,7 +1262,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       {error ? (
         <div>
           <span>
-            {t("Error")}: {error}
+            {t('Error')}: {error}
           </span>
         </div>
       ) : (
@@ -1360,7 +1270,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       )}
       {loading ? (
         <div>
-          <span>{t("Loading")}...</span>
+          <span>{t('Loading')}...</span>
         </div>
       ) : (
         <></>
@@ -1369,10 +1279,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       <div className="flex flex-row mb-2 gap-4 justify-between w-full">
         <h1>{project_name}</h1>
         {editorStateSet && (
-          <ExportVideoButton
-            editorRef={editorRef}
-            editorStateRef={editorStateRef}
-          />
+          <ExportVideoButton editorRef={editorRef} editorStateRef={editorStateRef} />
         )}
       </div>
 
@@ -1396,10 +1303,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         shadow-[0_0_15px_4px_rgba(0,0,0,0.16)] transition-colors duration-200 ease-in-out 
         hover:cursor-pointer focus-visible:border-2 focus-visible:border-blue-500 z-10"
                   onClick={() => {
-                    if (toolbarTab === "tools") {
-                      setToolbarTab("none");
+                    if (toolbarTab === 'tools') {
+                      setToolbarTab('none')
                     } else {
-                      setToolbarTab("tools");
+                      setToolbarTab('tools')
                     }
                   }}
                 >
@@ -1411,10 +1318,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         shadow-[0_0_15px_4px_rgba(0,0,0,0.16)] transition-colors duration-200 ease-in-out 
         hover:cursor-pointer focus-visible:border-2 focus-visible:border-blue-500 z-10"
                   onClick={() => {
-                    if (toolbarTab === "animations") {
-                      setToolbarTab("none");
+                    if (toolbarTab === 'animations') {
+                      setToolbarTab('none')
                     } else {
-                      setToolbarTab("animations");
+                      setToolbarTab('animations')
                     }
                   }}
                 >
@@ -1426,10 +1333,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         shadow-[0_0_15px_4px_rgba(0,0,0,0.16)] transition-colors duration-200 ease-in-out 
         hover:cursor-pointer focus-visible:border-2 focus-visible:border-blue-500 z-10"
                   onClick={() => {
-                    if (toolbarTab === "themes") {
-                      setToolbarTab("none");
+                    if (toolbarTab === 'themes') {
+                      setToolbarTab('none')
                     } else {
-                      setToolbarTab("themes");
+                      setToolbarTab('themes')
                     }
                   }}
                 >
@@ -1441,10 +1348,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         shadow-[0_0_15px_4px_rgba(0,0,0,0.16)] transition-colors duration-200 ease-in-out 
          hover:cursor-pointer focus-visible:border-2 focus-visible:border-blue-500 z-10"
                   onClick={() => {
-                    if (toolbarTab === "layers") {
-                      setToolbarTab("none");
+                    if (toolbarTab === 'layers') {
+                      setToolbarTab('none')
                     } else {
-                      setToolbarTab("layers");
+                      setToolbarTab('layers')
                     }
                   }}
                 >
@@ -1456,10 +1363,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         shadow-[0_0_15px_4px_rgba(0,0,0,0.16)] transition-colors duration-200 ease-in-out
          hover:cursor-pointer focus-visible:border-2 focus-visible:border-blue-500 z-10"
                   onClick={() => {
-                    if (toolbarTab === "sequences") {
-                      setToolbarTab("none");
+                    if (toolbarTab === 'sequences') {
+                      setToolbarTab('none')
                     } else {
-                      setToolbarTab("sequences");
+                      setToolbarTab('sequences')
                     }
                   }}
                 >
@@ -1486,7 +1393,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
             </div>
 
             <div className="px-3">
-              {toolbarTab === "tools" && (
+              {toolbarTab === 'tools' && (
                 <div>
                   <ToolGrid
                     editorRef={editorRef}
@@ -1495,36 +1402,36 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                     currentSequenceId={current_sequence_id}
                     set_sequences={set_sequences}
                     options={[
-                      "square",
-                      "circle",
-                      "text",
-                      "image",
-                      "video",
-                      "capture",
-                      "imageGeneration",
-                      "stickers",
-                      "brush",
-                      "cube3d",
-                      "sphere3d",
-                      "mockup3d",
+                      'square',
+                      'circle',
+                      'text',
+                      'image',
+                      'video',
+                      'capture',
+                      'imageGeneration',
+                      'stickers',
+                      'brush',
+                      'cube3d',
+                      'sphere3d',
+                      'mockup3d'
                     ]}
                     layers={layers}
                     setLayers={set_layers}
                     update={() => {
-                      setRefreshUINow(Date.now());
+                      setRefreshUINow(Date.now())
                     }}
                   />
                 </div>
               )}
 
-              {toolbarTab === "animations" && (
+              {toolbarTab === 'animations' && (
                 <div className="max-h-[35vh] md:max-h-full overflow-scroll">
                   <AnimationTab
                     editorRef={editorRef}
                     editorStateRef={editorStateRef}
                     current_sequence_id={current_sequence_id!}
                     saveTarget={SaveTarget.Videos}
-                    userLanguage={user?.userLanguage || "en"}
+                    userLanguage={user?.userLanguage || 'en'}
                     setRefreshTimeline={setRefreshTimeline}
                     selectedTextId={selectedTextId!}
                     setSelectedTextId={setSelectedTextId}
@@ -1532,14 +1439,14 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                 </div>
               )}
 
-              {toolbarTab === "themes" && current_sequence_id && (
+              {toolbarTab === 'themes' && current_sequence_id && (
                 <div className="max-h-[35vh] md:max-h-full overflow-scroll">
                   <ThemePicker
                     editorRef={editorRef}
                     editorStateRef={editorStateRef}
                     currentSequenceId={current_sequence_id}
                     saveTarget={SaveTarget.Videos}
-                    userLanguage={user?.userLanguage || "en"}
+                    userLanguage={user?.userLanguage || 'en'}
                   />
 
                   <label className="text-sm">Background Color</label>
@@ -1550,7 +1457,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       placeholder="Red"
                       initialValue={background_red.toString()}
                       onDebounce={(value) => {
-                        set_background_red(parseInt(value));
+                        set_background_red(parseInt(value))
                       }}
                     />
                     <DebouncedInput
@@ -1559,7 +1466,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       placeholder="Green"
                       initialValue={background_green.toString()}
                       onDebounce={(value) => {
-                        set_background_green(parseInt(value));
+                        set_background_green(parseInt(value))
                       }}
                     />
                     <DebouncedInput
@@ -1568,14 +1475,14 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       placeholder="Blue"
                       initialValue={background_blue.toString()}
                       onDebounce={(value) => {
-                        set_background_blue(parseInt(value));
+                        set_background_blue(parseInt(value))
                       }}
                     />
                   </div>
                 </div>
               )}
 
-              {toolbarTab === "layers" && current_sequence_id && (
+              {toolbarTab === 'layers' && current_sequence_id && (
                 <div>
                   <LayerPanel
                     editorRef={editorRef}
@@ -1587,11 +1494,11 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                 </div>
               )}
 
-              {toolbarTab === "sequences" && (
+              {toolbarTab === 'sequences' && (
                 <div>
                   <div className="flex flex-col w-full">
                     <div className="flex flex-row justify-between align-center w-full mt-2">
-                      <h5>{t("Sequences")}</h5>
+                      <h5>{t('Sequences')}</h5>
                       {/* <button
                       className="text-xs rounded-md text-white stunts-gradient px-2 py-1 cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed"
                       disabled={loading}
@@ -1605,19 +1512,19 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                         // disabled={loading}
                         onClick={on_create_sequence}
                       >
-                        {t("New Sequence")}
+                        {t('New Sequence')}
                       </a>
                     </div>
                     <div className="flex flex-col w-full mt-2">
                       {(sequences as Sequence[]).map((sequence: Sequence) => {
-                        let showAddButton = false;
+                        let showAddButton = false
                         if (
                           sequence.activePolygons.length > 0 ||
                           sequence.activeImageItems.length > 0 ||
                           sequence.activeTextItems.length > 0 ||
                           sequence.activeVideoItems.length > 0
                         ) {
-                          showAddButton = true;
+                          showAddButton = true
                         }
 
                         return (
@@ -1628,7 +1535,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                               onClick={() => on_open_sequence(sequence.id)}
                             >
                               <span>
-                                {t("Open")} {sequence.name}
+                                {t('Open')} {sequence.name}
                               </span>
                               <ArrowRight />
                             </button>
@@ -1693,24 +1600,20 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                             </button>
                           )} */}
                           </div>
-                        );
+                        )
                       })}
                     </div>
                   </div>
                 </div>
               )}
 
-              {toolbarTab === "camera" && (
+              {toolbarTab === 'camera' && (
                 <div className="p-4">
-                  <h5 className="text-lg font-semibold mb-4">
-                    Camera Controls
-                  </h5>
+                  <h5 className="text-lg font-semibold mb-4">Camera Controls</h5>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Orbit Horizontal
-                      </label>
+                      <label className="block text-sm font-medium mb-2">Orbit Horizontal</label>
                       <input
                         type="range"
                         min="-3.14159"
@@ -1719,16 +1622,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                         value={orbitX}
                         className="w-full"
                         onChange={(e) => {
-                          const editor = editorRef.current;
+                          const editor = editorRef.current
                           if (editor && editor.camera) {
-                            const newValue = parseFloat(e.target.value);
-                            const deltaX = newValue - orbitX;
-                            (editor.camera as Camera3D).orbit(deltaX, 0);
-                            editor.cameraBinding?.update(
-                              editor.gpuResources?.queue!,
-                              editor.camera
-                            );
-                            setOrbitX(newValue);
+                            const newValue = parseFloat(e.target.value)
+                            const deltaX = newValue - orbitX
+                            ;(editor.camera as Camera3D).orbit(deltaX, 0)
+                            editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
+                            setOrbitX(newValue)
                           }
                         }}
                       />
@@ -1738,9 +1638,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Orbit Vertical
-                      </label>
+                      <label className="block text-sm font-medium mb-2">Orbit Vertical</label>
                       <input
                         type="range"
                         min="-1.57"
@@ -1749,16 +1647,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                         value={orbitY}
                         className="w-full"
                         onChange={(e) => {
-                          const editor = editorRef.current;
+                          const editor = editorRef.current
                           if (editor && editor.camera) {
-                            const newValue = parseFloat(e.target.value);
-                            const deltaY = newValue - orbitY;
-                            (editor.camera as Camera3D).orbit(0, deltaY);
-                            editor.cameraBinding?.update(
-                              editor.gpuResources?.queue!,
-                              editor.camera
-                            );
-                            setOrbitY(newValue);
+                            const newValue = parseFloat(e.target.value)
+                            const deltaY = newValue - orbitY
+                            ;(editor.camera as Camera3D).orbit(0, deltaY)
+                            editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
+                            setOrbitY(newValue)
                           }
                         }}
                       />
@@ -1771,9 +1666,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       <h6 className="text-sm font-medium mb-3">Pan Camera</h6>
 
                       <div className="mb-3">
-                        <label className="block text-sm font-medium mb-2">
-                          Pan Horizontal (X)
-                        </label>
+                        <label className="block text-sm font-medium mb-2">Pan Horizontal (X)</label>
                         <input
                           type="range"
                           min="-10"
@@ -1782,28 +1675,24 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                           value={panX}
                           className="w-full"
                           onChange={(e) => {
-                            const editor = editorRef.current;
+                            const editor = editorRef.current
                             if (editor && editor.camera) {
-                              const newValue = parseFloat(e.target.value);
-                              const deltaX = newValue - panX;
-                              editor.camera.pan(vec2.fromValues(deltaX, 0));
+                              const newValue = parseFloat(e.target.value)
+                              const deltaX = newValue - panX
+                              editor.camera.pan(vec2.fromValues(deltaX, 0))
                               editor.cameraBinding?.update(
                                 editor.gpuResources?.queue!,
                                 editor.camera
-                              );
-                              setPanX(newValue);
+                              )
+                              setPanX(newValue)
                             }
                           }}
                         />
-                        <div className="text-xs text-gray-500 mt-1">
-                          Move camera left/right
-                        </div>
+                        <div className="text-xs text-gray-500 mt-1">Move camera left/right</div>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-2">
-                          Pan Vertical (Y)
-                        </label>
+                        <label className="block text-sm font-medium mb-2">Pan Vertical (Y)</label>
                         <input
                           type="range"
                           min="-10"
@@ -1812,55 +1701,45 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                           value={panY}
                           className="w-full"
                           onChange={(e) => {
-                            const editor = editorRef.current;
+                            const editor = editorRef.current
                             if (editor && editor.camera) {
-                              const newValue = parseFloat(e.target.value);
-                              const deltaY = newValue - panY;
-                              editor.camera.pan(vec2.fromValues(0, deltaY));
+                              const newValue = parseFloat(e.target.value)
+                              const deltaY = newValue - panY
+                              editor.camera.pan(vec2.fromValues(0, deltaY))
                               editor.cameraBinding?.update(
                                 editor.gpuResources?.queue!,
                                 editor.camera
-                              );
-                              setPanY(newValue);
+                              )
+                              setPanY(newValue)
                             }
                           }}
                         />
-                        <div className="text-xs text-gray-500 mt-1">
-                          Move camera up/down
-                        </div>
+                        <div className="text-xs text-gray-500 mt-1">Move camera up/down</div>
                       </div>
                     </div>
 
                     <button
                       className="w-full py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
                       onClick={() => {
-                        const editor = editorRef.current;
+                        const editor = editorRef.current
                         if (editor && editor.camera) {
                           // Reset orbit
-                          const orbitDeltaX = -orbitX;
-                          const orbitDeltaY = -orbitY;
-                          (editor.camera as Camera3D).orbit(
-                            orbitDeltaX,
-                            orbitDeltaY
-                          );
+                          const orbitDeltaX = -orbitX
+                          const orbitDeltaY = -orbitY
+                          ;(editor.camera as Camera3D).orbit(orbitDeltaX, orbitDeltaY)
 
                           // Reset pan
-                          const panDeltaX = -panX;
-                          const panDeltaY = -panY;
-                          editor.camera.pan(
-                            vec2.fromValues(panDeltaX, panDeltaY)
-                          );
+                          const panDeltaX = -panX
+                          const panDeltaY = -panY
+                          editor.camera.pan(vec2.fromValues(panDeltaX, panDeltaY))
 
-                          editor.cameraBinding?.update(
-                            editor.gpuResources?.queue!,
-                            editor.camera
-                          );
+                          editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
 
                           // Reset state
-                          setOrbitX(0);
-                          setOrbitY(0);
-                          setPanX(0);
-                          setPanY(0);
+                          setOrbitX(0)
+                          setOrbitY(0)
+                          setPanX(0)
+                          setPanY(0)
                         }
                       }}
                     >
@@ -1875,14 +1754,14 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                   {selected_keyframes && selected_keyframes?.length > 0 ? (
                     <>
                       <KeyframeProperties
-                        key={"props" + selected_keyframes[0]}
+                        key={'props' + selected_keyframes[0]}
                         editorRef={editorRef}
                         editorStateRef={editorStateRef}
                         currentSequenceId={current_sequence_id}
                         selectedKeyframe={selected_keyframes[0]}
                         setRefreshTimeline={setRefreshTimeline}
                         handleGoBack={() => {
-                          set_selected_keyframes(null);
+                          set_selected_keyframes(null)
                         }}
                       />
                     </>
@@ -1890,13 +1769,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                     <>
                       {selected_polygon_id && (
                         <PolygonProperties
-                          key={"props" + selected_polygon_id}
+                          key={'props' + selected_polygon_id}
                           editorRef={editorRef}
                           editorStateRef={editorStateRef}
                           currentSequenceId={current_sequence_id}
                           currentPolygonId={selected_polygon_id}
                           handleGoBack={() => {
-                            set_selected_polygon_id(null);
+                            set_selected_polygon_id(null)
                           }}
                         />
                       )}
@@ -1904,13 +1783,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       {selected_image_id && (
                         <>
                           <ImageProperties
-                            key={"props" + selected_image_id}
+                            key={'props' + selected_image_id}
                             editorRef={editorRef}
                             editorStateRef={editorStateRef}
                             currentSequenceId={current_sequence_id}
                             currentImageId={selected_image_id}
                             handleGoBack={() => {
-                              set_selected_image_id(null);
+                              set_selected_image_id(null)
                             }}
                           />
                         </>
@@ -1919,13 +1798,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       {selected_text_id && (
                         <>
                           <TextProperties
-                            key={"props" + selected_text_id}
+                            key={'props' + selected_text_id}
                             editorRef={editorRef}
                             editorStateRef={editorStateRef}
                             currentSequenceId={current_sequence_id}
                             currentTextId={selected_text_id}
                             handleGoBack={() => {
-                              set_selected_text_id(null);
+                              set_selected_text_id(null)
                             }}
                           />
                         </>
@@ -1934,13 +1813,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       {selected_cube3d_id && (
                         <>
                           <Cube3DProperties
-                            key={"props" + selected_cube3d_id}
+                            key={'props' + selected_cube3d_id}
                             editorRef={editorRef}
                             editorStateRef={editorStateRef}
                             currentSequenceId={current_sequence_id}
                             currentCubeId={selected_cube3d_id}
                             handleGoBack={() => {
-                              set_selected_cube3d_id(null);
+                              set_selected_cube3d_id(null)
                             }}
                           />
                         </>
@@ -1949,13 +1828,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       {selected_sphere3d_id && (
                         <>
                           <Sphere3DProperties
-                            key={"props" + selected_sphere3d_id}
+                            key={'props' + selected_sphere3d_id}
                             editorRef={editorRef}
                             editorStateRef={editorStateRef}
                             currentSequenceId={current_sequence_id}
                             currentSphereId={selected_sphere3d_id}
                             handleGoBack={() => {
-                              set_selected_sphere3d_id(null);
+                              set_selected_sphere3d_id(null)
                             }}
                           />
                         </>
@@ -1964,13 +1843,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       {selected_mockup3d_id && (
                         <>
                           <Mockup3DProperties
-                            key={"props" + selected_mockup3d_id}
+                            key={'props' + selected_mockup3d_id}
                             editorRef={editorRef}
                             editorStateRef={editorStateRef}
                             currentSequenceId={current_sequence_id}
                             currentMockupId={selected_mockup3d_id}
                             handleGoBack={() => {
-                              set_selected_mockup3d_id(null);
+                              set_selected_mockup3d_id(null)
                             }}
                           />
                         </>
@@ -1982,8 +1861,8 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                             editorRef={editorRef}
                             onClose={() => {
                               if (editorRef.current) {
-                                editorRef.current.brushDrawingMode = false;
-                                setRefreshUINow(Date.now());
+                                editorRef.current.brushDrawingMode = false
+                                setRefreshUINow(Date.now())
                               }
                             }}
                           />
@@ -1993,13 +1872,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       {selected_video_id && (
                         <>
                           <VideoProperties
-                            key={"props" + selected_video_id}
+                            key={'props' + selected_video_id}
                             editorRef={editorRef}
                             editorStateRef={editorStateRef}
                             currentSequenceId={current_sequence_id}
                             currentVideoId={selected_video_id}
                             handleGoBack={() => {
-                              set_selected_video_id(null);
+                              set_selected_video_id(null)
                             }}
                           />
                         </>
@@ -2059,16 +1938,16 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
             <div
               style={
                 settings?.dimensions.width === 960
-                  ? { aspectRatio: 960 / 540, minWidth: "960px" }
-                  : { aspectRatio: 540 / 960, minWidth: "540px" }
+                  ? { aspectRatio: 960 / 540, minWidth: '960px' }
+                  : { aspectRatio: 540 / 960, minWidth: '540px' }
               }
             >
               <div
                 id="scene-canvas-wrapper"
                 style={
                   settings?.dimensions.width === 960
-                    ? { aspectRatio: 960 / 540, maxWidth: "960px" }
-                    : { aspectRatio: 540 / 960, maxWidth: "540px" }
+                    ? { aspectRatio: 960 / 540, maxWidth: '960px' }
+                    : { aspectRatio: 540 / 960, maxWidth: '540px' }
                 }
               >
                 <canvas
@@ -2087,10 +1966,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                   />
                 )}
                 {editorStateSet && !current_sequence_id && (
-                  <PlayVideoButton
-                    editorRef={editorRef}
-                    editorStateRef={editorStateRef}
-                  />
+                  <PlayVideoButton editorRef={editorRef} editorStateRef={editorStateRef} />
                 )}
               </div>
             </div>
@@ -2104,9 +1980,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                     <div
                       className={`flex flex-col justify-end w-full mx-auto md:self-end md:m-0 md:overflow-x-scroll`}
                       style={{
-                        maxWidth: `${
-                          (settings?.dimensions.width || 0) + 100
-                        }px`,
+                        maxWidth: `${(settings?.dimensions.width || 0) + 100}px`
                       }}
                     >
                       {sequences
@@ -2122,77 +1996,48 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                   durationMs={sequence.durationMs || 5000}
                                 />
 
-                                {sequence.polygonMotionPaths.map(
-                                  (animation) => {
-                                    let objectName = null;
-                                    if (
-                                      animation.objectType ===
-                                      ObjectType.Polygon
-                                    ) {
-                                      objectName = sequence.activePolygons.find(
-                                        (pol) => pol.id === animation.polygonId
-                                      )?.name;
-                                    } else if (
-                                      animation.objectType ===
-                                      ObjectType.ImageItem
-                                    ) {
-                                      objectName =
-                                        sequence.activeImageItems.find(
-                                          (pol) =>
-                                            pol.id === animation.polygonId
-                                        )?.name;
-                                    } else if (
-                                      animation.objectType ===
-                                      ObjectType.TextItem
-                                    ) {
-                                      objectName =
-                                        sequence.activeTextItems.find(
-                                          (pol) =>
-                                            pol.id === animation.polygonId
-                                        )?.name;
-                                    } else if (
-                                      animation.objectType ===
-                                      ObjectType.VideoItem
-                                    ) {
-                                      objectName =
-                                        sequence.activeVideoItems.find(
-                                          (pol) =>
-                                            pol.id === animation.polygonId
-                                        )?.name;
-                                    } else if (
-                                      animation.objectType === ObjectType.Cube3D
-                                    ) {
-                                      objectName = sequence.activeCubes3D?.find(
-                                        (pol) => pol.id === animation.polygonId
-                                      )?.name;
-                                    } else if (
-                                      animation.objectType ===
-                                      ObjectType.Sphere3D
-                                    ) {
-                                      objectName =
-                                        sequence.activeSpheres3D?.find(
-                                          (pol) =>
-                                            pol.id === animation.polygonId
-                                        )?.name;
-                                    }
-
-                                    return (
-                                      <ObjectTrack
-                                        key={`objectTrack${animation.id}`}
-                                        type={TrackType.Video}
-                                        trackWidth={
-                                          settings?.dimensions.width || 960
-                                        }
-                                        objectName={objectName}
-                                        objectData={animation}
-                                        pixelsPerSecond={15}
-                                        onSequenceDragEnd={handleObjectDragEnd}
-                                      />
-                                    );
+                                {sequence.polygonMotionPaths.map((animation) => {
+                                  let objectName: any = null
+                                  if (animation.objectType === ObjectType.Polygon) {
+                                    objectName = sequence.activePolygons.find(
+                                      (pol) => pol.id === animation.polygonId
+                                    )?.name
+                                  } else if (animation.objectType === ObjectType.ImageItem) {
+                                    objectName = sequence.activeImageItems.find(
+                                      (pol) => pol.id === animation.polygonId
+                                    )?.name
+                                  } else if (animation.objectType === ObjectType.TextItem) {
+                                    objectName = sequence.activeTextItems.find(
+                                      (pol) => pol.id === animation.polygonId
+                                    )?.name
+                                  } else if (animation.objectType === ObjectType.VideoItem) {
+                                    objectName = sequence.activeVideoItems.find(
+                                      (pol) => pol.id === animation.polygonId
+                                    )?.name
+                                  } else if (animation.objectType === ObjectType.Cube3D) {
+                                    objectName = sequence.activeCubes3D?.find(
+                                      (pol) => pol.id === animation.polygonId
+                                    )?.name
+                                  } else if (animation.objectType === ObjectType.Sphere3D) {
+                                    objectName = sequence.activeSpheres3D?.find(
+                                      (pol) => pol.id === animation.polygonId
+                                    )?.name
                                   }
-                                )}
+
+                                  return (
+                                    <ObjectTrack
+                                      key={`objectTrack${animation.id}`}
+                                      type={TrackType.Video}
+                                      trackWidth={settings?.dimensions.width || 960}
+                                      objectName={objectName}
+                                      objectData={animation}
+                                      pixelsPerSecond={15}
+                                      onSequenceDragEnd={handleObjectDragEnd}
+                                    />
+                                  )
+                                })}
                               </div>
-                            );
+                            )
                           }
                         })}
                     </div>
@@ -2229,14 +2074,9 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                   setSelectedKeyframes={set_selected_keyframes}
                   onKeyframeChanged={() => {}}
                   refreshTimeline={refreshTimeline}
-                  onKeyframeAdded={(
-                    propertyPath,
-                    time,
-                    prevKeyframe,
-                    nextKeyframe
-                  ) => {
+                  onKeyframeAdded={(propertyPath, time, prevKeyframe, nextKeyframe) => {
                     if (!editorStateRef.current) {
-                      return;
+                      return
                     }
 
                     editorStateRef.current.addKeyframe(
@@ -2246,7 +2086,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       time,
                       prevKeyframe,
                       nextKeyframe
-                    );
+                    )
                   }}
                 />
               )}
@@ -2266,14 +2106,9 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                   setSelectedKeyframes={set_selected_keyframes}
                   onKeyframeChanged={() => {}}
                   refreshTimeline={refreshTimeline}
-                  onKeyframeAdded={(
-                    propertyPath,
-                    time,
-                    prevKeyframe,
-                    nextKeyframe
-                  ) => {
+                  onKeyframeAdded={(propertyPath, time, prevKeyframe, nextKeyframe) => {
                     if (!editorStateRef.current) {
-                      return;
+                      return
                     }
 
                     editorStateRef.current.addKeyframe(
@@ -2283,7 +2118,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       time,
                       prevKeyframe,
                       nextKeyframe
-                    );
+                    )
                   }}
                 />
               )}
@@ -2303,14 +2138,9 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                   setSelectedKeyframes={set_selected_keyframes}
                   onKeyframeChanged={() => {}}
                   refreshTimeline={refreshTimeline}
-                  onKeyframeAdded={(
-                    propertyPath,
-                    time,
-                    prevKeyframe,
-                    nextKeyframe
-                  ) => {
+                  onKeyframeAdded={(propertyPath, time, prevKeyframe, nextKeyframe) => {
                     if (!editorStateRef.current) {
-                      return;
+                      return
                     }
 
                     editorStateRef.current.addKeyframe(
@@ -2320,7 +2150,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       time,
                       prevKeyframe,
                       nextKeyframe
-                    );
+                    )
                   }}
                 />
               )}
@@ -2340,14 +2170,9 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                   setSelectedKeyframes={set_selected_keyframes}
                   onKeyframeChanged={() => {}}
                   refreshTimeline={refreshTimeline}
-                  onKeyframeAdded={(
-                    propertyPath,
-                    time,
-                    prevKeyframe,
-                    nextKeyframe
-                  ) => {
+                  onKeyframeAdded={(propertyPath, time, prevKeyframe, nextKeyframe) => {
                     if (!editorStateRef.current) {
-                      return;
+                      return
                     }
 
                     editorStateRef.current.addKeyframe(
@@ -2357,7 +2182,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       time,
                       prevKeyframe,
                       nextKeyframe
-                    );
+                    )
                   }}
                 />
               )}
@@ -2366,5 +2191,5 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         </div>
       </div>
     </>
-  );
-};
+  )
+}

@@ -1,15 +1,15 @@
-"use client";
+'use client'
 
-import { ClientOnly } from "@/components/ClientOnly";
-import ErrorBoundary from "@/components/stunts-app/ErrorBoundary";
-import React from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
-import { Plus } from "@phosphor-icons/react";
-import { RTEEditor } from "@/components/stunts-app/RTEEditor";
+import { ClientOnly } from '../components/ClientOnly'
+import ErrorBoundary from '../components/stunts-app/ErrorBoundary'
+import React from 'react'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
+import { Plus } from '@phosphor-icons/react'
+import { RTEEditor } from '../components/stunts-app/RTEEditor'
 
 export default function Books() {
-  const { projectId } = useParams();
+  const { projectId } = useParams()
 
   return (
     <React.Suspense fallback={<div>Loading...</div>}>
@@ -95,5 +95,5 @@ export default function Books() {
         </ClientOnly>
       </ErrorBoundary>
     </React.Suspense>
-  );
+  )
 }

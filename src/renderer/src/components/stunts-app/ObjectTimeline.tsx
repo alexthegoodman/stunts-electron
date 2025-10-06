@@ -2,7 +2,7 @@
 //   AnimationData,
 //   TimelineSequence,
 //   TrackType,
-// } from "@/engine/animations";
+// } from "../engine/animations";
 // import React, { useState, useCallback } from "react";
 
 // interface TrackProps {
@@ -91,7 +91,7 @@
 //   );
 // };
 
-import React, { useState } from "react";
+import React, { useState } from 'react'
 import {
   DndContext,
   useDraggable,
@@ -99,31 +99,28 @@ import {
   useSensors,
   PointerSensor,
   DragEndEvent,
-  DragStartEvent,
-} from "@dnd-kit/core";
-import {
-  restrictToHorizontalAxis,
-  restrictToWindowEdges,
-} from "@dnd-kit/modifiers";
-import { CSS } from "@dnd-kit/utilities";
-import { AnimationData, TrackType } from "@/engine/animations";
+  DragStartEvent
+} from '@dnd-kit/core'
+import { restrictToHorizontalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers'
+import { CSS } from '@dnd-kit/utilities'
+import { AnimationData, TrackType } from '../../engine/animations'
 
 interface TrackProps {
-  type: TrackType;
-  trackWidth?: number; // Optional width for the track
-  objectName: string | null | undefined;
-  objectData: AnimationData;
-  pixelsPerSecond: number;
-  onSequenceDragEnd: (animation: AnimationData, newStartTimeMs: number) => void;
+  type: TrackType
+  trackWidth?: number // Optional width for the track
+  objectName: string | null | undefined
+  objectData: AnimationData
+  pixelsPerSecond: number
+  onSequenceDragEnd: (animation: AnimationData, newStartTimeMs: number) => void
 }
 
 interface SequenceProps {
-  objectName: string | null | undefined;
-  animation: AnimationData;
-  pixelsPerMs: number;
-  sequenceColor: string;
-  localLeft: number;
-  localWidth: number;
+  objectName: string | null | undefined
+  animation: AnimationData
+  pixelsPerMs: number
+  sequenceColor: string
+  localLeft: number
+  localWidth: number
 }
 
 // Draggable Sequence Component
@@ -133,24 +130,23 @@ const DraggableSequence: React.FC<SequenceProps> = ({
   pixelsPerMs,
   sequenceColor,
   localLeft,
-  localWidth,
+  localWidth
 }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: animation.id,
-      data: animation,
-    });
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: animation.id,
+    data: animation
+  })
 
   return (
     <div
       ref={setNodeRef}
       className={`flex flex-row gap-2 relative h-10 rounded cursor-pointer ${sequenceColor} 
         hover:shadow-lg transition-shadow duration-200
-        flex items-center px-2 select-none ${isDragging ? "opacity-50" : ""}`}
+        flex items-center px-2 select-none ${isDragging ? 'opacity-50' : ''}`}
       style={{
         transform: CSS.Translate.toString(transform),
         left: `${localLeft}px`,
-        width: `${localWidth}px`,
+        width: `${localWidth}px`
       }}
       {...listeners}
       {...attributes}
@@ -158,8 +154,8 @@ const DraggableSequence: React.FC<SequenceProps> = ({
       <span>{objectName}</span>
       {/* <span className="text-xs">({animation.polygonId})</span> */}
     </div>
-  );
-};
+  )
+}
 
 export const ObjectTrack: React.FC<TrackProps> = ({
   type,
@@ -167,49 +163,44 @@ export const ObjectTrack: React.FC<TrackProps> = ({
   objectName,
   objectData,
   pixelsPerSecond,
-  onSequenceDragEnd,
+  onSequenceDragEnd
 }) => {
-  const pixelsPerMs = pixelsPerSecond / 1000;
+  const pixelsPerMs = pixelsPerSecond / 1000
 
-  const [localLeft, setLocalLeft] = useState(
-    objectData.startTimeMs * pixelsPerMs
-  );
-  const [localWidth, setLocalWidth] = useState(
-    objectData.duration * pixelsPerMs
-  );
+  const [localLeft, setLocalLeft] = useState(objectData.startTimeMs * pixelsPerMs)
+  const [localWidth, setLocalWidth] = useState(objectData.duration * pixelsPerMs)
 
-  const trackColor = type === TrackType.Audio ? "bg-slate-600" : "bg-slate-600";
-  const sequenceColor =
-    type === TrackType.Audio ? "bg-blue-400" : "bg-green-400";
+  const trackColor = type === TrackType.Audio ? 'bg-slate-600' : 'bg-slate-600'
+  const sequenceColor = type === TrackType.Audio ? 'bg-blue-400' : 'bg-green-400'
 
   // Set up sensors for drag detection
   const sensors = useSensors(
     useSensor(PointerSensor, {
       // Adjust activation constraints if needed
       activationConstraint: {
-        distance: 5, // 5px movement before drag starts
-      },
+        distance: 5 // 5px movement before drag starts
+      }
     })
-  );
+  )
 
   // Handle drag start
-  const handleDragStart = (event: DragStartEvent) => {};
+  const handleDragStart = (event: DragStartEvent) => {}
 
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, delta, over } = event;
+    const { active, delta, over } = event
 
     if (active) {
-      const animation = active.data.current as AnimationData;
+      const animation = active.data.current as AnimationData
 
       // Calculate new time based on delta
-      const deltaXInMs = Math.round(delta.x / pixelsPerMs);
-      const newStartTimeMs = Math.max(0, animation.startTimeMs + deltaXInMs);
+      const deltaXInMs = Math.round(delta.x / pixelsPerMs)
+      const newStartTimeMs = Math.max(0, animation.startTimeMs + deltaXInMs)
 
-      setLocalLeft(newStartTimeMs * pixelsPerMs);
-      onSequenceDragEnd(animation, newStartTimeMs);
+      setLocalLeft(newStartTimeMs * pixelsPerMs)
+      onSequenceDragEnd(animation, newStartTimeMs)
     }
-  };
+  }
 
   return (
     <DndContext
@@ -218,15 +209,11 @@ export const ObjectTrack: React.FC<TrackProps> = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div
-        className={`relative h-[50px] ${
-          trackWidth === 540 ? "w-[540px]" : "w-[960px]"
-        } mb-1`}
-      >
+      <div className={`relative h-[50px] ${trackWidth === 540 ? 'w-[540px]' : 'w-[960px]'} mb-1`}>
         {/* Track background */}
         <div
           className={`relative ${
-            trackWidth === 540 ? "w-[540px]" : "w-[960px]"
+            trackWidth === 540 ? 'w-[540px]' : 'w-[960px]'
           } h-[50px] ${trackColor}`}
         />
 
@@ -245,5 +232,5 @@ export const ObjectTrack: React.FC<TrackProps> = ({
         </div>
       </div>
     </DndContext>
-  );
-};
+  )
+}

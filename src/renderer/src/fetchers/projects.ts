@@ -73,35 +73,23 @@ export const getSingleProject = async (
   authToken: string | null,
   project_id: string
 ): Promise<SingleProjectResponse> => {
-  // if (!authToken) {
-  //   return {
-  //     project: null,
-  //   };
-  // }
+  const result = await window.api.projects.getSingle(project_id);
 
-  const url = new URL(
-    process.env.NODE_ENV === "production"
-      ? "https://madebycommon.com/api/projects/single"
-      : "http://localhost:3000/api/projects/single"
-  );
-  url.searchParams.set("projectId", project_id);
-
-  const response = await fetch(url.toString(), {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${authToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text(); // Get error details from server
-    throw new Error(
-      `Project request failed: ${response.status} - ${response.statusText} - ${errorText}`
-    ); // Throw error with details
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to get project');
   }
 
-  return response.json();
+  return {
+    project: result.data ? {
+      id: result.data.id,
+      name: result.data.name,
+      fileData: result.data.fileData,
+      docData: result.data.docData,
+      presData: result.data.presData,
+      updatedAt: result.data.updatedAt,
+      createdAt: result.data.createdAt,
+    } : null
+  };
 };
 
 export const getProjects = async (
@@ -111,31 +99,22 @@ export const getProjects = async (
     return [];
   }
 
-  const response = await fetch("/api/projects/all", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${authToken.token}`,
-    },
-  });
+  // TODO: Get userId from auth context or storage
+  const userId = 'current-user-id'; // This should come from your auth system
+  const result = await window.api.projects.getAll(userId);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Projects request failed: ${response.status} - ${response.statusText} - ${errorText}`
-    );
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to get projects');
   }
 
-  const projectsResponse: ProjectsResponse = await response.json();
-
-  const projects: ProjectInfo[] = projectsResponse.projects.map((data) => ({
+  const projects: ProjectInfo[] = result.data.map((data) => ({
     project_id: data.id,
     project_name: data.name,
-    created: DateTime.fromISO(data.createdAt), // Handle nulls and parse with DateTime
+    created: DateTime.fromISO(data.createdAt),
     modified: DateTime.fromISO(data.updatedAt),
   }));
 
-  return projects.sort((a, b) => b.modified.diff(a.modified).milliseconds); // Sort using luxon's diff
+  return projects.sort((a, b) => b.modified.diff(a.modified).milliseconds);
 };
 
 export const createProject = async (
@@ -145,26 +124,22 @@ export const createProject = async (
   emptyDocData: SavedState,
   emptyPresData: SavedState
 ): Promise<CreateProjectResponse> => {
-  const response = await fetch("/api/projects/create", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ name, emptyVideoData, emptyDocData, emptyPresData }),
+  // TODO: Get userId from auth context or storage
+  const userId = 'current-user-id';
+
+  const result = await window.api.projects.create({
+    userId,
+    name,
+    emptyVideoData,
+    emptyDocData,
+    emptyPresData
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(async () => ({
-      error: await response.text(),
-    }));
-    throw new Error(
-      errorData.error ||
-        `Create project request failed: ${response.status} - ${response.statusText}`
-    );
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to create project');
   }
 
-  return response.json();
+  return { newProject: result.data };
 };
 
 export async function saveSequencesData(
@@ -211,23 +186,16 @@ export const updateSequences = async (
   sequences: Sequence[],
   saveTarget: SaveTarget
 ): Promise<UpdateSequencesResponse> => {
-  const response = await fetch("/api/projects/update-sequences", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ projectId, saveTarget, sequences }),
+  const result = await window.api.projects.updateSequences({
+    projectId,
+    fileData: { sequences, saveTarget }
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Update sequences request failed: ${response.status} - ${response.statusText} - ${errorText}`
-    );
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to update sequences');
   }
 
-  return response.json();
+  return { updatedProject: result.data };
 };
 
 export async function saveSettingsData(
@@ -274,23 +242,16 @@ export const updateSettings = async (
   settings: ProjectSettings,
   saveTarget: SaveTarget
 ): Promise<UpdateSequencesResponse> => {
-  const response = await fetch("/api/projects/update-settings", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ projectId, saveTarget, settings }),
+  const result = await window.api.projects.updateSettings({
+    projectId,
+    fileData: { settings, saveTarget }
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Update sequences request failed: ${response.status} - ${response.statusText} - ${errorText}`
-    );
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to update settings');
   }
 
-  return response.json();
+  return { updatedProject: result.data };
 };
 
 export const updateTimeline = async (
@@ -298,23 +259,16 @@ export const updateTimeline = async (
   projectId: string,
   timelineState: SavedTimelineStateConfig
 ): Promise<UpdateTimelineResponse> => {
-  const response = await fetch("/api/projects/update-timeline", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ projectId, timelineState }),
+  const result = await window.api.projects.updateTimeline({
+    projectId,
+    fileData: timelineState
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Create project request failed: ${response.status} - ${response.statusText} - ${errorText}`
-    );
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to update timeline');
   }
 
-  return response.json();
+  return { updatedProject: result.data };
 };
 
 export async function saveTimelineData(
@@ -358,62 +312,34 @@ export const saveImage = async (
   fileName: string,
   data: Blob
 ): Promise<UploadResponse> => {
-  const response = await fetch("/api/upload/image", {
-    method: "POST",
-    headers: {
-      // Remove Content-Type: application/json since we're sending raw binary data
-      Authorization: `Bearer ${token}`,
-      "X-File-Name": fileName,
-    },
-    body: data, // Send the Blob directly as the body
+  const buffer = await data.arrayBuffer();
+
+  const result = await window.api.uploads.saveImage({
+    fileName,
+    buffer,
+    mimeType: data.type
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Save image request failed: ${response.status} - ${response.statusText} - ${errorText}`
-    );
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to save image');
   }
 
-  return response.json();
+  return result.data;
 };
 
 export const getUploadedImage = async (
   token: string,
   filename: string
 ): Promise<Blob> => {
-  const response = await fetch(
-    // `http://localhost:3000/api/media/image?filename=${encodeURIComponent(
-    //   filename
-    // )}`,
-    // for now or forever, just fetch directly from url
-    `${filename}`,
-    {
-      method: "GET",
-      // headers: {
-      //   Authorization: `Bearer ${token}`,
-      // },
-    }
-  );
+  const result = await window.api.uploads.getImage(filename);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Get image request failed: ${response.status} - ${response.statusText} - ${errorText}`
-    );
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to get image');
   }
 
-  // let blob = await response.blob();
-
-  // console.info("blob details", blob.size);
-
-  // return blob;
-
-  const arrayBuffer = await response.arrayBuffer();
-
-  // Create a properly typed Blob specifically for image data
-  return new Blob([arrayBuffer], {
-    type: response.headers.get("Content-Type") || "image/jpeg",
+  // Convert buffer back to Blob
+  return new Blob([result.data.buffer], {
+    type: result.data.mimeType || "image/jpeg",
   });
 };
 
@@ -452,63 +378,38 @@ export const saveVideo = async (
   fileName: string,
   data: Blob
 ): Promise<UploadResponse> => {
-  const response = await fetch("/api/upload/video", {
-    method: "POST",
-    headers: {
-      // Remove Content-Type: application/json since we're sending raw binary data
-      Authorization: `Bearer ${token}`,
-      "X-File-Name": fileName,
-    },
-    body: data, // Send the Blob directly as the body
+  const buffer = await data.arrayBuffer();
+
+  const result = await window.api.uploads.saveVideo({
+    fileName,
+    buffer,
+    mimeType: data.type
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Save video request failed: ${response.status} - ${response.statusText} - ${errorText}`
-    );
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to save video');
   }
 
-  return response.json();
+  return result.data;
 };
 
 export const getUploadedVideo = async (
   token: string,
   filename: string
 ): Promise<Blob> => {
-  const response = await fetch(
-    // `http://localhost:3000/api/media/image?filename=${encodeURIComponent(
-    //   filename
-    // )}`,
-    // for now or forever, just fetch directly from url
-    `${filename}`,
-    {
-      method: "GET",
-      // headers: {
-      //   Authorization: `Bearer ${token}`,
-      // },
-    }
-  );
+  const result = await window.api.uploads.getVideo(filename);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Get video request failed: ${response.status} - ${response.statusText} - ${errorText}`
-    );
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to get video');
   }
 
-  let blob = await response.blob();
+  const blob = new Blob([result.data.buffer], {
+    type: result.data.mimeType || "video/mp4",
+  });
 
   console.info("blob details", blob.size);
 
   return blob;
-
-  // const arrayBuffer = await response.arrayBuffer();
-
-  // // Create a properly typed Blob specifically for image data
-  // return new Blob([arrayBuffer], {
-  //   type: response.headers.get("Content-Type") || "image/jpeg",
-  // });
 };
 
 export async function getUploadedVideoData(
@@ -545,47 +446,28 @@ export const deleteProject = async (
   token: string,
   projectId: string
 ): Promise<{ message: string }> => {
-  const response = await fetch("/api/projects/delete", {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ projectId }),
-  });
+  const result = await window.api.projects.delete(projectId);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Delete project request failed: ${response.status} - ${response.statusText} - ${errorText}`
-    );
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to delete project');
   }
 
-  return response.json();
+  return { message: result.message };
 };
 
 export const createDemoProject = async (
   token: string
 ): Promise<CreateProjectResponse> => {
-  const response = await fetch("/api/projects/create-demo", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  // TODO: Get userId from auth context or storage
+  const userId = 'current-user-id';
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(async () => ({
-      error: await response.text(),
-    }));
-    throw new Error(
-      errorData.error ||
-        `Create demo project request failed: ${response.status} - ${response.statusText}`
-    );
+  const result = await window.api.projects.createDemo(userId);
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to create demo project');
   }
 
-  return response.json();
+  return { newProject: result.data };
 };
 
 export const resizeVideo = async (

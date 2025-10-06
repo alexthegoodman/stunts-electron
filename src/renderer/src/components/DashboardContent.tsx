@@ -1,13 +1,12 @@
-"use client";
+'use client'
 
-import PricingTable from "@/components/PricingTable";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import { WindowsLogo } from "@phosphor-icons/react";
+import useCurrentUser from '../hooks/useCurrentUser'
+import { WindowsLogo } from '@phosphor-icons/react'
 
 export default function DashboardContent() {
-  const { data } = useCurrentUser();
+  const { data } = useCurrentUser()
 
-  console.info("data", data);
+  console.info('data', data)
 
   return (
     <div className="container mx-auto px-4 pt-8 pb-8 flex flex-col gap-4">
@@ -17,12 +16,12 @@ export default function DashboardContent() {
         <img src="/screen1.png" />
 
         <p>
-          You are almost ready to use Stunts! Stunts is your pathway to rapid
-          video creation using your own content. With Stunts generative keyframe
-          animations, you can save hours on manual animating.
+          You are almost ready to use Stunts! Stunts is your pathway to rapid video creation using
+          your own content. With Stunts generative keyframe animations, you can save hours on manual
+          animating.
         </p>
         <p>
-          Have questions? Need help? Contact Alex at{" "}
+          Have questions? Need help? Contact Alex at{' '}
           <a href="mailto:alexthegoodman@gmail.com" target="_blank">
             alexthegoodman@gmail.com
           </a>
@@ -40,5 +39,5 @@ export default function DashboardContent() {
         </a>
       </>
     </div>
-  );
+  )
 }

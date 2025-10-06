@@ -1,154 +1,140 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Play } from "@phosphor-icons/react";
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowLeft, ArrowRight, Play } from '@phosphor-icons/react'
 
 interface CarouselItem {
-  id: string;
-  title: string;
-  description: string;
-  videoUrl: string;
-  thumbnailUrl: string;
-  category: string;
+  id: string
+  title: string
+  description: string
+  videoUrl: string
+  thumbnailUrl: string
+  category: string
 }
 
 interface CreatorCarouselProps {
-  language?: string;
+  language?: string
 }
 
-export default function CreatorCarousel({
-  language = "en",
-}: CreatorCarouselProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+export default function CreatorCarousel({ language = 'en' }: CreatorCarouselProps) {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
 
-  let copy = null;
+  let copy: any = null
   switch (language) {
-    case "en":
+    case 'en':
       copy = {
-        title: "See What Creators Are Making",
-        subtitle: "Real examples from our community of 600+ creators",
+        title: 'See What Creators Are Making',
+        subtitle: 'Real examples from our community of 600+ creators',
         items: [
           {
-            id: "1",
-            title: "Viral Text Hooks",
-            description: "AI-generated keyframes make text pop off the screen",
-            videoUrl: "https://www.youtube.com/shorts/LuXI2KxavjU", // Placeholder - replace with actual videos
-            thumbnailUrl: "/stunts-web.jpeg",
-            category: "Text Animation",
+            id: '1',
+            title: 'Viral Text Hooks',
+            description: 'AI-generated keyframes make text pop off the screen',
+            videoUrl: 'https://www.youtube.com/shorts/LuXI2KxavjU', // Placeholder - replace with actual videos
+            thumbnailUrl: '/stunts-web.jpeg',
+            category: 'Text Animation'
           },
           {
-            id: "2",
-            title: "Product Reveals",
-            description:
-              "Screen capture + auto-zoom for perfect product showcases",
-            videoUrl: "https://www.youtube.com/shorts/LuXI2KxavjU",
-            thumbnailUrl: "/stunts-web.jpeg",
-            category: "Product Demo",
+            id: '2',
+            title: 'Product Reveals',
+            description: 'Screen capture + auto-zoom for perfect product showcases',
+            videoUrl: 'https://www.youtube.com/shorts/LuXI2KxavjU',
+            thumbnailUrl: '/stunts-web.jpeg',
+            category: 'Product Demo'
           },
           {
-            id: "3",
-            title: "Logo Animations",
-            description:
-              "Professional branding that stands out from basic creators",
-            videoUrl: "https://www.youtube.com/shorts/LuXI2KxavjU",
-            thumbnailUrl: "/stunts-web.jpeg",
-            category: "Branding",
+            id: '3',
+            title: 'Logo Animations',
+            description: 'Professional branding that stands out from basic creators',
+            videoUrl: 'https://www.youtube.com/shorts/LuXI2KxavjU',
+            thumbnailUrl: '/stunts-web.jpeg',
+            category: 'Branding'
           },
           {
-            id: "4",
-            title: "Personal Stories",
-            description: "Transform family moments into cinematic memories",
-            videoUrl: "https://www.youtube.com/shorts/LuXI2KxavjU",
-            thumbnailUrl: "/stunts-web.jpeg",
-            category: "Personal",
-          },
-        ],
-      };
-      break;
+            id: '4',
+            title: 'Personal Stories',
+            description: 'Transform family moments into cinematic memories',
+            videoUrl: 'https://www.youtube.com/shorts/LuXI2KxavjU',
+            thumbnailUrl: '/stunts-web.jpeg',
+            category: 'Personal'
+          }
+        ]
+      }
+      break
 
-    case "hi":
+    case 'hi':
       copy = {
-        title: "देखें क्रिएटर्स क्या बना रहे हैं",
-        subtitle: "हमारे 600+ क्रिएटर्स के कम्युनिटी के रियल एक्जाम्पल्स",
+        title: 'देखें क्रिएटर्स क्या बना रहे हैं',
+        subtitle: 'हमारे 600+ क्रिएटर्स के कम्युनिटी के रियल एक्जाम्पल्स',
         items: [
           {
-            id: "1",
-            title: "वायरल टेक्स्ट हुक्स",
-            description:
-              "AI-जेनरेटेड कीफ्रेम्स टेक्स्ट को स्क्रीन से पॉप करवाते हैं",
-            videoUrl: "https://www.youtube.com/shorts/LuXI2KxavjU",
-            thumbnailUrl: "/stunts-web.jpeg",
-            category: "टेक्स्ट एनिमेशन",
+            id: '1',
+            title: 'वायरल टेक्स्ट हुक्स',
+            description: 'AI-जेनरेटेड कीफ्रेम्स टेक्स्ट को स्क्रीन से पॉप करवाते हैं',
+            videoUrl: 'https://www.youtube.com/shorts/LuXI2KxavjU',
+            thumbnailUrl: '/stunts-web.jpeg',
+            category: 'टेक्स्ट एनिमेशन'
           },
           {
-            id: "2",
-            title: "प्रोडक्ट रिवील्स",
-            description:
-              "परफेक्ट प्रोडक्ट शोकेस के लिए स्क्रीन कैप्चर + ऑटो-जूम",
-            videoUrl: "https://www.youtube.com/shorts/LuXI2KxavjU",
-            thumbnailUrl: "/stunts-web.jpeg",
-            category: "प्रोडक्ट डेमो",
+            id: '2',
+            title: 'प्रोडक्ट रिवील्स',
+            description: 'परफेक्ट प्रोडक्ट शोकेस के लिए स्क्रीन कैप्चर + ऑटो-जूम',
+            videoUrl: 'https://www.youtube.com/shorts/LuXI2KxavjU',
+            thumbnailUrl: '/stunts-web.jpeg',
+            category: 'प्रोडक्ट डेमो'
           },
           {
-            id: "3",
-            title: "लोगो एनिमेशन",
-            description:
-              "प्रोफेशनल ब्रांडिंग जो बेसिक क्रिएटर्स से अलग दिखाती है",
-            videoUrl: "https://www.youtube.com/shorts/LuXI2KxavjU",
-            thumbnailUrl: "/stunts-web.jpeg",
-            category: "ब्रांडिंग",
+            id: '3',
+            title: 'लोगो एनिमेशन',
+            description: 'प्रोफेशनल ब्रांडिंग जो बेसिक क्रिएटर्स से अलग दिखाती है',
+            videoUrl: 'https://www.youtube.com/shorts/LuXI2KxavjU',
+            thumbnailUrl: '/stunts-web.jpeg',
+            category: 'ब्रांडिंग'
           },
           {
-            id: "4",
-            title: "पर्सनल स्टोरीज",
-            description:
-              "फैमिली मोमेंट्स को सिनेमैटिक मेमोरीज में ट्रांसफॉर्म करें",
-            videoUrl: "https://www.youtube.com/shorts/LuXI2KxavjU",
-            thumbnailUrl: "/stunts-web.jpeg",
-            category: "पर्सनल",
-          },
-        ],
-      };
-      break;
+            id: '4',
+            title: 'पर्सनल स्टोरीज',
+            description: 'फैमिली मोमेंट्स को सिनेमैटिक मेमोरीज में ट्रांसफॉर्म करें',
+            videoUrl: 'https://www.youtube.com/shorts/LuXI2KxavjU',
+            thumbnailUrl: '/stunts-web.jpeg',
+            category: 'पर्सनल'
+          }
+        ]
+      }
+      break
 
     default:
-      break;
+      break
   }
 
-  const items = copy?.items || [];
+  const items = copy?.items || []
 
   // Auto-play functionality
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (!isAutoPlaying) return
 
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) =>
-        prevIndex === items.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 5000); // Change slide every 5 seconds
+      setCurrentIndex((prevIndex) => (prevIndex === items.length - 1 ? 0 : prevIndex + 1))
+    }, 5000) // Change slide every 5 seconds
 
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, items.length]);
+    return () => clearInterval(interval)
+  }, [isAutoPlaying, items.length])
 
   const goToNext = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === items.length - 1 ? 0 : prevIndex + 1
-    );
-  };
+    setCurrentIndex((prevIndex) => (prevIndex === items.length - 1 ? 0 : prevIndex + 1))
+  }
 
   const goToPrevious = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? items.length - 1 : prevIndex - 1
-    );
-  };
+    setCurrentIndex((prevIndex) => (prevIndex === 0 ? items.length - 1 : prevIndex - 1))
+  }
 
   const goToSlide = (index: number) => {
-    setCurrentIndex(index);
-  };
+    setCurrentIndex(index)
+  }
 
-  if (!items.length) return null;
+  if (!items.length) return null
 
   return (
     <section className="container mx-auto px-4 py-16 bg-gradient-to-br from-slate-900 to-slate-800">
@@ -179,12 +165,8 @@ export default function CreatorCarousel({
                   <div className="inline-block bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-sm font-medium">
                     {items[currentIndex].category}
                   </div>
-                  <h3 className="text-3xl font-bold text-white">
-                    {items[currentIndex].title}
-                  </h3>
-                  <p className="text-gray-300 text-lg">
-                    {items[currentIndex].description}
-                  </p>
+                  <h3 className="text-3xl font-bold text-white">{items[currentIndex].title}</h3>
+                  <p className="text-gray-300 text-lg">{items[currentIndex].description}</p>
                   <a
                     href={items[currentIndex].videoUrl}
                     target="_blank"
@@ -237,9 +219,7 @@ export default function CreatorCarousel({
               key={index}
               onClick={() => goToSlide(index)}
               className={`w-3 h-3 rounded-full transition-all ${
-                index === currentIndex
-                  ? "bg-red-500 scale-125"
-                  : "bg-gray-600 hover:bg-gray-500"
+                index === currentIndex ? 'bg-red-500 scale-125' : 'bg-gray-600 hover:bg-gray-500'
               }`}
             />
           ))}
@@ -249,14 +229,14 @@ export default function CreatorCarousel({
       {/* Call to action */}
       <div className="text-center mt-12">
         <p className="text-gray-300 text-lg mb-6">
-          {language === "hi"
-            ? "इन जैसे कंटेंट बनाने के लिए तैयार हैं?"
-            : "Ready to create content like this?"}
+          {language === 'hi'
+            ? 'इन जैसे कंटेंट बनाने के लिए तैयार हैं?'
+            : 'Ready to create content like this?'}
         </p>
         <button className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full font-semibold transition-all transform hover:scale-105">
-          {language === "hi" ? "आज ही शुरू करें" : "Start Creating Today"}
+          {language === 'hi' ? 'आज ही शुरू करें' : 'Start Creating Today'}
         </button>
       </div>
     </section>
-  );
+  )
 }

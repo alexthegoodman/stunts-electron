@@ -1,65 +1,65 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect } from "react";
-import { Editor } from "@/engine/editor";
-import { BrushType } from "@/engine/brush";
-import { X } from "@phosphor-icons/react";
+import React, { useState, useEffect } from 'react'
+import { Editor } from '../../engine/editor'
+import { BrushType } from '../../engine/brush'
+import { X } from '@phosphor-icons/react'
 
 interface BrushPropertiesProps {
-  editorRef: React.RefObject<Editor | null>;
-  onClose?: () => void;
+  editorRef: React.RefObject<Editor | null>
+  onClose?: () => void
 }
 
 export default function BrushProperties({ editorRef, onClose }: BrushPropertiesProps) {
-  const [brushType, setBrushType] = useState<BrushType>(BrushType.Noise);
-  const [size, setSize] = useState(20);
-  const [opacity, setOpacity] = useState(0.7);
-  const [flow, setFlow] = useState(0.5);
-  const [spacing, setSpacing] = useState(0.25);
-  const [noiseScale, setNoiseScale] = useState(0.01);
-  const [octaves, setOctaves] = useState(4);
-  const [persistence, setPersistence] = useState(0.5);
-  const [primaryColor, setPrimaryColor] = useState("#000000");
-  const [secondaryColor, setSecondaryColor] = useState("#ffffff");
+  const [brushType, setBrushType] = useState<BrushType>(BrushType.Noise)
+  const [size, setSize] = useState(20)
+  const [opacity, setOpacity] = useState(0.7)
+  const [flow, setFlow] = useState(0.5)
+  const [spacing, setSpacing] = useState(0.25)
+  const [noiseScale, setNoiseScale] = useState(0.01)
+  const [octaves, setOctaves] = useState(4)
+  const [persistence, setPersistence] = useState(0.5)
+  const [primaryColor, setPrimaryColor] = useState('#000000')
+  const [secondaryColor, setSecondaryColor] = useState('#ffffff')
 
   // Pattern-specific parameters
-  const [dotDensity, setDotDensity] = useState(10);
-  const [lineAngle, setLineAngle] = useState(0);
-  const [lineSpacing, setLineSpacing] = useState(5);
-  const [cellSize, setCellSize] = useState(50);
+  const [dotDensity, setDotDensity] = useState(10)
+  const [lineAngle, setLineAngle] = useState(0)
+  const [lineSpacing, setLineSpacing] = useState(5)
+  const [cellSize, setCellSize] = useState(50)
 
   useEffect(() => {
-    const editor = editorRef.current;
-    if (!editor || !editor.currentBrush) return;
+    const editor = editorRef.current
+    if (!editor || !editor.currentBrush) return
 
-    const brush = editor.currentBrush;
+    const brush = editor.currentBrush
 
     // Update brush configuration
-    brush.brushType = brushType;
-    brush.size = size;
-    brush.opacity = opacity;
-    brush.flow = flow;
-    brush.spacing = spacing;
-    brush.noiseScale = noiseScale;
-    brush.octaves = octaves;
-    brush.persistence = persistence;
+    brush.brushType = brushType
+    brush.size = size
+    brush.opacity = opacity
+    brush.flow = flow
+    brush.spacing = spacing
+    brush.noiseScale = noiseScale
+    brush.octaves = octaves
+    brush.persistence = persistence
 
     // Convert hex to RGBA
     const hexToRgba = (hex: string) => {
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
-      return [r, g, b, 255] as [number, number, number, number];
-    };
+      const r = parseInt(hex.slice(1, 3), 16)
+      const g = parseInt(hex.slice(3, 5), 16)
+      const b = parseInt(hex.slice(5, 7), 16)
+      return [r, g, b, 255] as [number, number, number, number]
+    }
 
-    brush.primaryColor = hexToRgba(primaryColor);
-    brush.secondaryColor = hexToRgba(secondaryColor);
+    brush.primaryColor = hexToRgba(primaryColor)
+    brush.secondaryColor = hexToRgba(secondaryColor)
 
     // Pattern-specific
-    brush.dotDensity = dotDensity;
-    brush.lineAngle = (lineAngle * Math.PI) / 180; // Convert to radians
-    brush.lineSpacing = lineSpacing;
-    brush.cellSize = cellSize;
+    brush.dotDensity = dotDensity
+    brush.lineAngle = (lineAngle * Math.PI) / 180 // Convert to radians
+    brush.lineSpacing = lineSpacing
+    brush.cellSize = cellSize
   }, [
     editorRef,
     brushType,
@@ -75,8 +75,8 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
     dotDensity,
     lineAngle,
     lineSpacing,
-    cellSize,
-  ]);
+    cellSize
+  ])
 
   return (
     <div className="w-full p-4 theme-bg-primary border-t">
@@ -140,9 +140,7 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">
-          Flow: {(flow * 100).toFixed(0)}%
-        </label>
+        <label className="block text-sm font-medium mb-2">Flow: {(flow * 100).toFixed(0)}%</label>
         <input
           type="range"
           min="0"
@@ -181,9 +179,7 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">
-          Secondary Color
-        </label>
+        <label className="block text-sm font-medium mb-2">Secondary Color</label>
         <input
           type="color"
           value={secondaryColor}
@@ -209,9 +205,7 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">
-          Octaves: {octaves}
-        </label>
+        <label className="block text-sm font-medium mb-2">Octaves: {octaves}</label>
         <input
           type="range"
           min="1"
@@ -240,9 +234,7 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
       {/* Pattern-Specific Controls */}
       {brushType === BrushType.Dots && (
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">
-            Dot Density: {dotDensity}
-          </label>
+          <label className="block text-sm font-medium mb-2">Dot Density: {dotDensity}</label>
           <input
             type="range"
             min="1"
@@ -257,9 +249,7 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
       {brushType === BrushType.Lines && (
         <>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">
-              Line Angle: {lineAngle}°
-            </label>
+            <label className="block text-sm font-medium mb-2">Line Angle: {lineAngle}°</label>
             <input
               type="range"
               min="0"
@@ -270,9 +260,7 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
             />
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">
-              Line Spacing: {lineSpacing}
-            </label>
+            <label className="block text-sm font-medium mb-2">Line Spacing: {lineSpacing}</label>
             <input
               type="range"
               min="1"
@@ -287,9 +275,7 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
 
       {brushType === BrushType.Voronoi && (
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">
-            Cell Size: {cellSize}
-          </label>
+          <label className="block text-sm font-medium mb-2">Cell Size: {cellSize}</label>
           <input
             type="range"
             min="10"
@@ -301,5 +287,5 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
         </div>
       )}
     </div>
-  );
+  )
 }

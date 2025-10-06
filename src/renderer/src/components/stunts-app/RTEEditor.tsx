@@ -1,95 +1,91 @@
-import { AuthToken, getSingleProject } from "@/fetchers/projects";
-import { useLocalStorage } from "@uidotdev/usehooks";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { Layer } from "./layers";
-import { CanvasPipeline } from "@/engine/pipeline";
-import { Editor, rgbToWgpu, Viewport } from "@/engine/editor";
-import { useDevEffectOnce } from "@/hooks/useDevOnce";
-import { testMarkdown } from "@/engine/data";
-import { defaultStyle } from "@/engine/rte";
-import { v4 as uuidv4 } from "uuid";
-import { TextRendererConfig } from "@/engine/text";
+import { AuthToken, getSingleProject } from '../../fetchers/projects'
+import { useLocalStorage } from '@uidotdev/usehooks'
+import { useRouter } from '../../hooks/useRouter'
+import { useEffect, useRef, useState } from 'react'
+import { Layer } from './layers'
+import { CanvasPipeline } from '../../engine/pipeline'
+import { Editor, rgbToWgpu, Viewport } from '../../engine/editor'
+import { useDevEffectOnce } from '../../hooks/useDevOnce'
+import { testMarkdown } from '../../engine/data'
+import { defaultStyle } from '../../engine/rte'
+import { v4 as uuidv4 } from 'uuid'
+import { TextRendererConfig } from '../../engine/text'
 
 export const RTEEditor: React.FC<any> = ({ projectId }) => {
-  const router = useRouter();
-  const [authToken] = useLocalStorage<AuthToken | null>("auth-token", null);
+  const router = useRouter()
+  const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
 
-  let [loading, set_loading] = useState(false);
+  let [loading, set_loading] = useState(false)
 
-  let [layers, set_layers] = useState<Layer[]>([]);
+  let [layers, set_layers] = useState<Layer[]>([])
 
-  let [selected_polygon_id, set_selected_polygon_id] = useState<string | null>(
-    null
-  );
-  let [selected_image_id, set_selected_image_id] = useState<string | null>(
-    null
-  );
+  let [selected_polygon_id, set_selected_polygon_id] = useState<string | null>(null)
+  let [selected_image_id, set_selected_image_id] = useState<string | null>(null)
 
-  const editorRef = useRef<Editor | null>(null);
-  const canvasPipelineRef = useRef<CanvasPipeline | null>(null);
-  const [editorIsSet, setEditorIsSet] = useState(false);
+  const editorRef = useRef<Editor | null>(null)
+  const canvasPipelineRef = useRef<CanvasPipeline | null>(null)
+  const [editorIsSet, setEditorIsSet] = useState(false)
 
   useDevEffectOnce(async () => {
     if (editorIsSet) {
-      return;
+      return
     }
 
-    console.info("Starting Editor...");
+    console.info('Starting Editor...')
 
-    let viewport = new Viewport(900, 1200);
+    let viewport = new Viewport(900, 1200)
 
-    editorRef.current = new Editor(viewport);
+    editorRef.current = new Editor(viewport)
 
-    setEditorIsSet(true);
-  });
+    setEditorIsSet(true)
+  })
 
   useEffect(() => {
-    console.info("remount");
-  }, []);
+    console.info('remount')
+  }, [])
 
   let setupCanvasMouseTracking = (canvas: HTMLCanvasElement) => {
-    let editor = editorRef.current;
+    let editor = editorRef.current
 
     if (!editor) {
-      return;
+      return
     }
 
-    canvas.addEventListener("mousemove", (event: MouseEvent) => {
+    canvas.addEventListener('mousemove', (event: MouseEvent) => {
       // Get the canvas's bounding rectangle
-      const rect = canvas.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect()
 
       // Calculate position relative to the canvas
-      const positionX = event.clientX - rect.left;
-      const positionY = event.clientY - rect.top;
+      const positionX = event.clientX - rect.left
+      const positionY = event.clientY - rect.top
 
-      editor.handle_mouse_move(positionX, positionY);
-    });
+      editor.handle_mouse_move(positionX, positionY)
+    })
 
-    canvas.addEventListener("mousedown", (event) => {
+    canvas.addEventListener('mousedown', (event) => {
       // Get the canvas's bounding rectangle
-      const rect = canvas.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect()
 
       // Calculate position relative to the canvas
-      const positionX = event.clientX - rect.left;
-      const positionY = event.clientY - rect.top;
+      const positionX = event.clientX - rect.left
+      const positionY = event.clientY - rect.top
 
-      editor.handle_mouse_down(positionX, positionY);
-    });
+      editor.handle_mouse_down(positionX, positionY)
+    })
 
-    canvas.addEventListener("mouseup", () => {
-      editor.handle_mouse_up();
-    });
+    canvas.addEventListener('mouseup', () => {
+      editor.handle_mouse_up()
+    })
 
-    canvas.addEventListener("mouseleave", () => {
+    canvas.addEventListener('mouseleave', () => {
       // Handle mouse leaving canvas if needed
-    });
+    })
 
-    window.addEventListener("keydown", (e: KeyboardEvent) => {
-      let editor = editorRef.current;
+    window.addEventListener('keydown', (e: KeyboardEvent) => {
+      let editor = editorRef.current
 
       if (!editor) {
-        return;
+        return
       }
 
       // e.preventDefault();
@@ -105,73 +101,67 @@ export const RTEEditor: React.FC<any> = ({ projectId }) => {
         //   }
 
         // Check if Ctrl key (or Cmd key on Mac) is pressed
-        const isCtrlPressed = e.ctrlKey || e.metaKey;
+        const isCtrlPressed = e.ctrlKey || e.metaKey
 
         // Handle copy (Ctrl+C / Cmd+C)
-        if (isCtrlPressed && e.key === "c") {
-          console.info("copy text");
+        if (isCtrlPressed && e.key === 'c') {
+          console.info('copy text')
           //     const selectedText = window.getSelection().toString();
           //   if (selectedText) {
           //     navigator.clipboard.writeText(selectedText)
           //       .then(() => console.log('Text copied to clipboard'))
           //       .catch(err => console.error('Failed to copy text: ', err));
           //   }
-          e.preventDefault();
+          e.preventDefault()
         }
 
         // Handle paste (Ctrl+V / Cmd+V)
-        else if (isCtrlPressed && e.key === "v") {
-          console.info("paste text");
+        else if (isCtrlPressed && e.key === 'v') {
+          console.info('paste text')
 
           navigator.clipboard
             .readText()
             .then((text) => {
-              console.log("Pasted text:", text);
+              console.log('Pasted text:', text)
 
-              editor.multiPageEditor?.insert(
-                window.__canvasRTEInsertCharacterIndex,
-                text
-              );
+              editor.multiPageEditor?.insert(window.__canvasRTEInsertCharacterIndex, text)
 
               window.__canvasRTEInsertCharacterIndex =
-                window.__canvasRTEInsertCharacterIndex + text.length;
+                window.__canvasRTEInsertCharacterIndex + text.length
               window.__canvasRTEInsertCharacterIndexNl =
-                window.__canvasRTEInsertCharacterIndexNl + text.length;
+                window.__canvasRTEInsertCharacterIndexNl + text.length
 
               // renderCursor();
             })
-            .catch((err) => console.error("Failed to paste text: ", err));
+            .catch((err) => console.error('Failed to paste text: ', err))
 
-          e.preventDefault();
+          e.preventDefault()
         }
 
         // Handle cut (Ctrl+X / Cmd+X)
-        else if (isCtrlPressed && e.key === "x") {
-          console.info("cut text");
+        else if (isCtrlPressed && e.key === 'x') {
+          console.info('cut text')
           // copy then delete
-          e.preventDefault();
+          e.preventDefault()
         }
 
         if (!isCtrlPressed) {
           switch (e.key) {
-            case "Enter":
+            case 'Enter':
               {
-                e.preventDefault();
+                e.preventDefault()
 
-                const character = "\n";
+                const character = '\n'
 
-                editor.multiPageEditor?.insert(
-                  window.__canvasRTEInsertCharacterIndex,
-                  character
-                );
+                editor.multiPageEditor?.insert(window.__canvasRTEInsertCharacterIndex, character)
 
                 // window.__canvasRTEInsertCharacterIndex =
                 //   window.__canvasRTEInsertCharacterIndex + 1;
                 window.__canvasRTEInsertCharacterIndexNl =
-                  window.__canvasRTEInsertCharacterIndexNl + 1;
+                  window.__canvasRTEInsertCharacterIndexNl + 1
               }
-              break;
-            case "Backspace":
+              break
+            case 'Backspace':
               {
                 // if (firstSelectedNode && lastSelectedNode) {
                 //   const firstIndex = parseInt(firstSelectedNode.split("-")[2]);
@@ -230,79 +220,71 @@ export const RTEEditor: React.FC<any> = ({ projectId }) => {
                 // }
                 // renderCursor();
               }
-              break;
-            case "Delete":
+              break
+            case 'Delete':
               {
               }
-              break;
-            case "ArrowLeft":
+              break
+            case 'ArrowLeft':
               {
               }
-              break;
-            case "ArrowRight":
+              break
+            case 'ArrowRight':
               {
               }
-              break;
-            case "ArrowUp":
+              break
+            case 'ArrowUp':
               {
               }
-              break;
-            case "ArrowDown":
+              break
+            case 'ArrowDown':
               {
               }
-              break;
-            case "Escape":
+              break
+            case 'Escape':
               {
                 // setEditorActive(false);
               }
-              break;
-            case "Shift":
+              break
+            case 'Shift':
               {
               }
-              break;
-            case "Meta":
+              break
+            case 'Meta':
               {
               }
-              break;
-            case "Tab":
+              break
+            case 'Tab':
               {
-                const type = "tab";
-                const character = "    ";
+                const type = 'tab'
+                const character = '    '
 
-                editor.multiPageEditor?.insert(
-                  window.__canvasRTEInsertCharacterIndex,
-                  character
-                );
+                editor.multiPageEditor?.insert(window.__canvasRTEInsertCharacterIndex, character)
 
-                window.__canvasRTEInsertCharacterIndex =
-                  window.__canvasRTEInsertCharacterIndex + 1;
+                window.__canvasRTEInsertCharacterIndex = window.__canvasRTEInsertCharacterIndex + 1
                 window.__canvasRTEInsertCharacterIndexNl =
-                  window.__canvasRTEInsertCharacterIndexNl + 1;
+                  window.__canvasRTEInsertCharacterIndexNl + 1
               }
-              break;
+              break
             default:
               {
-                e.preventDefault();
+                e.preventDefault()
 
                 // any other character
-                const type = "character";
-                const character = e.key;
+                const type = 'character'
+                const character = e.key
 
                 // console.info("insert char", character);
 
-                editor.multiPageEditor?.insert(
-                  window.__canvasRTEInsertCharacterIndex,
-                  character
-                );
+                editor.multiPageEditor?.insert(window.__canvasRTEInsertCharacterIndex, character)
 
-                window.__canvasRTEInsertCharacterIndex =
-                  window.__canvasRTEInsertCharacterIndex + 1;
+                window.__canvasRTEInsertCharacterIndex = window.__canvasRTEInsertCharacterIndex + 1
                 window.__canvasRTEInsertCharacterIndexNl =
-                  window.__canvasRTEInsertCharacterIndexNl + 1;
+                  window.__canvasRTEInsertCharacterIndexNl + 1
 
                 // renderCursor();
               }
-              break;
+              break
           }
         }
 
@@ -312,23 +294,23 @@ export const RTEEditor: React.FC<any> = ({ projectId }) => {
         //   setMasterJson(renderable);
         // }
       }
-    });
+    })
 
     // TODO: cleanup event listeners
-  };
+  }
 
   let fetch_data = async () => {
     if (!authToken || !editorRef.current) {
-      return;
+      return
     }
 
-    set_loading(true);
+    set_loading(true)
 
-    let response = await getSingleProject(authToken.token, projectId);
+    let response = await getSingleProject(authToken.token, projectId)
 
-    let docData = response.project?.docData;
+    let docData = response.project?.docData
 
-    console.info("savedState", docData);
+    console.info('savedState', docData)
 
     // if (!docData) {
     //   return;
@@ -347,35 +329,32 @@ export const RTEEditor: React.FC<any> = ({ projectId }) => {
 
     // drop(editor_state);
 
-    console.info("Initializing pipeline...");
+    console.info('Initializing pipeline...')
 
-    let pipeline = new CanvasPipeline();
+    let pipeline = new CanvasPipeline()
 
     canvasPipelineRef.current = await pipeline.new(
       editorRef.current,
       true,
-      "rte-canvas",
+      'rte-canvas',
       {
         width: 900,
-        height: 1200,
+        height: 1200
       },
       true
-    );
+    )
 
-    let windowSize = editorRef.current.camera?.windowSize;
+    let windowSize = editorRef.current.camera?.windowSize
 
     if (!windowSize?.width || !windowSize?.height) {
-      return;
+      return
     }
 
-    canvasPipelineRef.current.recreateDepthView(
-      windowSize?.width,
-      windowSize?.height
-    );
+    canvasPipelineRef.current.recreateDepthView(windowSize?.width, windowSize?.height)
 
-    console.info("Beginning rendering...");
+    console.info('Beginning rendering...')
 
-    canvasPipelineRef.current.beginRendering(editorRef.current);
+    canvasPipelineRef.current.beginRendering(editorRef.current)
 
     // console.info("Restoring objects...");
 
@@ -388,41 +367,41 @@ export const RTEEditor: React.FC<any> = ({ projectId }) => {
     //   }
 
     // set handlers
-    const canvas = document.getElementById("rte-canvas") as HTMLCanvasElement;
-    setupCanvasMouseTracking(canvas);
+    const canvas = document.getElementById('rte-canvas') as HTMLCanvasElement
+    setupCanvasMouseTracking(canvas)
 
-    await editorRef.current.initializeRTE();
+    await editorRef.current.initializeRTE()
 
     if (!editorRef.current.multiPageEditor) {
-      return;
+      return
     }
 
-    console.info("Inserting markdown...");
+    console.info('Inserting markdown...')
 
-    let new_id = uuidv4();
-    let new_text = "Add text here...";
-    let font_family = "Aleo";
+    let new_id = uuidv4()
+    let new_text = 'Add text here...'
+    let font_family = 'Aleo'
 
     let text_config: TextRendererConfig = {
       id: new_id,
-      name: "New Text Area",
+      name: 'New Text Area',
       text: new_text,
       fontFamily: font_family,
       dimensions: [900.0, 1200.0] as [number, number],
       position: {
         x: 0,
-        y: 0,
+        y: 0
       },
       layer: 2,
       color: [20, 20, 20, 255] as [number, number, number, number],
       fontSize: 16,
-      backgroundFill: { type: "Color", value: rgbToWgpu(200, 200, 200, 255) },
-      isCircle: false,
-    };
+      backgroundFill: { type: 'Color', value: rgbToWgpu(200, 200, 200, 255) },
+      isCircle: false
+    }
 
     editorRef.current.initializeTextArea(text_config).then(() => {
       if (!editorRef.current || !editorRef.current.multiPageEditor) {
-        return;
+        return
       }
 
       editorRef.current.multiPageEditor.insert(
@@ -432,13 +411,13 @@ export const RTEEditor: React.FC<any> = ({ projectId }) => {
         defaultStyle
         // editorRef.current,
         // true
-      );
+      )
 
       // let gpuResources = editorRef.current.gpuResources;
 
       if (!editorRef.current.textArea) {
-        console.warn("Text area not created");
-        return;
+        console.warn('Text area not created')
+        return
       }
 
       // editorRef.current.textArea.renderAreaText(gpuResources.device, gpuResources.queue, );
@@ -447,27 +426,27 @@ export const RTEEditor: React.FC<any> = ({ projectId }) => {
       // let test = page.layout.query(0, page.content.length);
       // console.info("multiPageEditor", test);
 
-      editorRef.current.textArea.hidden = false;
-    });
+      editorRef.current.textArea.hidden = false
+    })
 
-    set_loading(false);
-  };
+    set_loading(false)
+  }
 
   useEffect(() => {
     if (editorIsSet) {
-      console.info("Fetch data...");
+      console.info('Fetch data...')
 
-      fetch_data();
+      fetch_data()
     }
-  }, [editorIsSet]);
+  }, [editorIsSet])
 
   useEffect(() => {
     if (editorIsSet) {
       if (!editorRef.current) {
-        return;
+        return
       }
 
-      console.info("Setting event handlers!");
+      console.info('Setting event handlers!')
 
       // set handlers that rely on state
       // editorRef.current.handlePolygonClick = handle_polygon_click;
@@ -477,7 +456,7 @@ export const RTEEditor: React.FC<any> = ({ projectId }) => {
       // editorRef.current.onMouseUp = handle_mouse_up;
       // editorRef.current.onHandleMouseUp = on_handle_mouse_up;
     }
-  }, [editorIsSet]);
+  }, [editorIsSet])
 
   return (
     <>
@@ -490,5 +469,5 @@ export const RTEEditor: React.FC<any> = ({ projectId }) => {
         />
       </div>
     </>
-  );
-};
+  )
+}
