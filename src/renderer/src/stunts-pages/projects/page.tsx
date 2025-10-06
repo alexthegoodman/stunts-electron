@@ -1,10 +1,8 @@
-'use client'
-
-import { ClientOnly } from '../components/ClientOnly'
-import ErrorBoundary from '../components/stunts-app/ErrorBoundary'
-import { ProjectsList } from '../components/stunts-app/ProjectsList'
-import useCurrentUser from '../hooks/useCurrentUser'
-import { useRouter } from 'next/navigation'
+import { ClientOnly } from '../../components/ClientOnly'
+import ErrorBoundary from '../../components/stunts-app/ErrorBoundary'
+import { ProjectsList } from '../../components/stunts-app/ProjectsList'
+import useCurrentUser from '../../hooks/useCurrentUser'
+import { useRouter } from '../../hooks/useRouter'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 

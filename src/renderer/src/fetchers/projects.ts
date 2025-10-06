@@ -474,33 +474,22 @@ export const resizeVideo = async (
   videoFile: File | Blob,
   maxWidth = 1200,
   maxHeight = 900
-) => {
-  // const response = await fetch(
-  //   "https://stunts-inf-api.madebycommon.com/resize-video",
-  //   {
-  //     method: "POST",
-  //     headers: {
-  //       "X-Max-Width": maxWidth.toString(),
-  //       "X-Max-Height": maxHeight.toString(),
-  //     },
-  //     body: videoFile,
-  //   }
-  // );
+): Promise<Blob> => {
+  // Convert video file to ArrayBuffer
+  const buffer = await videoFile.arrayBuffer();
 
-  const formData = new FormData();
-  formData.append("video", videoFile);
-  formData.append("maxWidth", maxWidth.toString());
-  formData.append("maxHeight", maxHeight.toString());
-
-  const response = await fetch("http://localhost:3002/resize-video", {
-    method: "POST",
-    body: formData,
+  const result = await window.api.video.resize({
+    buffer,
+    maxWidth,
+    maxHeight
   });
 
-  if (response.ok) {
-    return await response.blob();
-  } else {
-    const error = await response.json();
-    throw new Error(error.details);
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to resize video');
   }
+
+  // Convert buffer back to Blob
+  return new Blob([result.data.buffer], {
+    type: 'video/mp4'
+  });
 };

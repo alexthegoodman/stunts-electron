@@ -3,6 +3,7 @@ import { registerBrandHandlers } from './brands'
 import { registerSettingsHandlers } from './settings'
 import { registerUploadHandlers } from './uploads'
 import { registerAiGenerationHandlers } from './ai-generation'
+import { registerVideoHandlers } from './video'
 
 /**
  * Register all IPC handlers
@@ -14,6 +15,7 @@ export function registerAllHandlers(): void {
   registerSettingsHandlers()
   registerUploadHandlers()
   registerAiGenerationHandlers()
+  registerVideoHandlers()
 
   console.log('All IPC handlers registered')
 }

@@ -1,8 +1,6 @@
-'use client'
-
-import { ClientOnly } from '../components/ClientOnly'
-import OnboardingCarousel from '../components/OnboardingCarousel'
-import ErrorBoundary from '../components/stunts-app/ErrorBoundary'
+import { ClientOnly } from '../../components/ClientOnly'
+import OnboardingCarousel from '../../components/OnboardingCarousel'
+import ErrorBoundary from '../../components/stunts-app/ErrorBoundary'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 

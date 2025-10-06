@@ -48,6 +48,12 @@ const api = {
     generateContent: (data: { prompt: string; links: any[]; questions: any }) =>
       ipcRenderer.invoke('ai:generateContent', data),
   },
+
+  // Video Processing APIs
+  video: {
+    resize: (data: { buffer: ArrayBuffer; maxWidth: number; maxHeight: number }) =>
+      ipcRenderer.invoke('video:resize', data),
+  },
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -62,31 +62,3 @@ function matchPath(pathname: string, pattern: string, exact = false): boolean {
   const regex = new RegExp(`^${regexPattern}$`);
   return regex.test(cleanPathname);
 }
-
-/**
- * Hook to extract route parameters from the current path
- *
- * @example
- * // For route pattern '/project/:id' and path '/project/123'
- * const params = useParams('/project/:id');
- * console.log(params.id); // '123'
- */
-export function useParams(pattern: string): Record<string, string> {
-  const pathname = usePathname();
-  const cleanPathname = pathname.split('?')[0];
-  const cleanPattern = pattern.split('?')[0];
-
-  const patternParts = cleanPattern.split('/');
-  const pathnameParts = cleanPathname.split('/');
-
-  const params: Record<string, string> = {};
-
-  patternParts.forEach((part, index) => {
-    if (part.startsWith(':')) {
-      const paramName = part.slice(1);
-      params[paramName] = pathnameParts[index] || '';
-    }
-  });
-
-  return params;
-}

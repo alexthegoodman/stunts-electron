@@ -1,16 +1,15 @@
-'use client'
-
-import { NavButton } from '../components/stunts-app/items'
-import { useParams, usePathname } from 'next/navigation'
+import { NavButton } from '../../../components/stunts-app/items'
+import { useParams } from '../../../hooks/useRouter'
+import { usePathname } from '../../../hooks/useRouter'
 
 import { Toaster } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import { ThemeSelector } from '../app/components/ThemeSelector'
+import { ThemeSelector } from '../../../components/ThemeSelector'
 
-export default function ProjectLayout({ children = null }) {
+export default function ProjectLayout({ children = null }: { children: any }) {
   const { t } = useTranslation('common')
 
-  const { projectId } = useParams()
+  const { projectId } = useParams('/project/:projectId')
   const pathname = usePathname()
 
   let hubUrl = `/project/${projectId}`

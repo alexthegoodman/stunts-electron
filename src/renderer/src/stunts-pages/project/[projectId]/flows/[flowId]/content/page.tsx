@@ -1,14 +1,12 @@
-'use client'
-
-import { ClientOnly } from '../components/ClientOnly'
-import ErrorBoundary from '../components/stunts-app/ErrorBoundary'
+import { ClientOnly } from '../../../../../../components/ClientOnly'
+import ErrorBoundary from '../../../../../../components/stunts-app/ErrorBoundary'
 import React, { useState } from 'react'
-import { useParams } from 'next/navigation'
-import { FlowSteps } from '../components/stunts-app/FlowSteps'
-import FlowContent from '../components/stunts-app/FlowContent'
+import { useParams } from '../../../../../../hooks/useRouter'
+import { FlowSteps } from '../../../../../../components/stunts-app/FlowSteps'
+import FlowContent from '../../../../../../components/stunts-app/FlowContent'
 
 export default function Project() {
-  const { projectId, flowId } = useParams()
+  const { projectId, flowId } = useParams('/project/:projectId/flows/:flowId/content')
 
   return (
     <React.Suspense fallback={<div>Loading...</div>}>

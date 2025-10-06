@@ -1,12 +1,10 @@
-'use client'
-
-import { ClientOnly } from '../components/ClientOnly'
-import ErrorBoundary from '../components/stunts-app/ErrorBoundary'
+import { ClientOnly } from '../../../../components/ClientOnly'
+import ErrorBoundary from '../../../../components/stunts-app/ErrorBoundary'
 import React from 'react'
-import { useParams } from 'next/navigation'
+import { useParams } from '../../../../hooks/useRouter'
 
 export default function Slides() {
-  const { projectId } = useParams()
+  const { projectId } = useParams('/project/:projectId/slides')
 
   return (
     <React.Suspense fallback={<div>Loading...</div>}>

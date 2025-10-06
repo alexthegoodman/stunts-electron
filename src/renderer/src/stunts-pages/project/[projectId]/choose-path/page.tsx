@@ -1,15 +1,14 @@
-'use client'
-
-import { ClientOnly } from '../components/ClientOnly'
-import ErrorBoundary from '../components/stunts-app/ErrorBoundary'
+import { ClientOnly } from '../../../../components/ClientOnly'
+import ErrorBoundary from '../../../../components/stunts-app/ErrorBoundary'
 import React from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from '../../../../hooks/useRouter'
+import { useRouter } from '../../../../hooks/useRouter'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Play, PencilSimple } from '@phosphor-icons/react'
 
 export default function ChoosePath() {
   const { t } = useTranslation('common')
-  const { projectId } = useParams()
+  const { projectId } = useParams('/project/:projectId/choose-path')
   const router = useRouter()
 
   const handleFlowChoice = () => {

@@ -1,15 +1,12 @@
-'use client'
-
-import { ClientOnly } from '../components/ClientOnly'
-import ErrorBoundary from '../components/stunts-app/ErrorBoundary'
+import { ClientOnly } from '../../../components/ClientOnly'
+import ErrorBoundary from '../../../components/stunts-app/ErrorBoundary'
 import React, { useEffect, useRef, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { CreateIcon } from '../components/stunts-app/icon'
+import { useParams } from '../../../hooks/useRouter'
+import { useRouter } from '../../../hooks/useRouter'
 import { Check, Plus, X } from '@phosphor-icons/react'
-import { BrandKitList } from '../components/stunts-app/BrandKitList'
-import { FlowSteps } from '../components/stunts-app/FlowSteps'
-import { createFlow } from '../fetchers/flows'
-import { AuthToken, getSingleProject } from '../fetchers/projects'
+import { FlowSteps } from '../../../components/stunts-app/FlowSteps'
+import { createFlow } from '../../../fetchers/flows'
+import { AuthToken, getSingleProject } from '../../../fetchers/projects'
 import { useLocalStorage } from '@uidotdev/usehooks'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -18,7 +15,7 @@ import useSWR from 'swr'
 export default function Project() {
   const { t } = useTranslation('flow')
 
-  const { projectId } = useParams()
+  const { projectId } = useParams('/project/:projectId')
   const router = useRouter()
   const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
   // Store hub alert visible state in local storage

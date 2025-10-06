@@ -54,6 +54,13 @@ declare global {
           questions: any
         }) => Promise<any>
       }
+      video: {
+        resize: (data: {
+          buffer: ArrayBuffer
+          maxWidth: number
+          maxHeight: number
+        }) => Promise<any>
+      }
     }
   }
 }
