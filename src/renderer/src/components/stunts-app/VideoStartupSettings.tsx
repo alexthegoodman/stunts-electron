@@ -4,7 +4,7 @@ import { ClientOnly } from '../../components/ClientOnly'
 import ErrorBoundary from '../../components/stunts-app/ErrorBoundary'
 import { VideoEditor } from '../../components/stunts-app/VideoEditor'
 import React from 'react'
-import { useSearchParams } from '../../hooks/useRouter'
+import { useParams } from '../../hooks/useRouter'
 import useSWR from 'swr'
 import { AuthToken, getSingleProject, saveSettingsData } from '../../fetchers/projects'
 import { useLocalStorage } from '@uidotdev/usehooks'
@@ -23,8 +23,7 @@ export default function VideoStartupSettings() {
 
   const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
 
-  const params = useSearchParams()
-  const projectId = params.get('projectId')
+  const { projectId } = useParams('/project/:projectId/videos')
 
   const [jwtData, saveJwtData] = useLocalStorage<JwtData | null>('jwtData', null)
 
