@@ -1,0 +1,387 @@
+import { app } from 'electron'
+import fs from 'fs/promises'
+import path from 'path'
+import { z } from 'zod'
+
+// Data Models
+export const UserSchema = z.object({
+  id: z.string(),
+  email: z.string().email().optional(),
+  role: z.enum(['USER', 'ADMIN']).default('USER'),
+  userLanguage: z.string().default('en'),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+
+export const ProjectSchema = z.object({
+  id: z.string(),
+  ownerId: z.string(),
+  name: z.string(),
+  fileData: z.any().optional(),
+  docData: z.any().optional(),
+  presData: z.any().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+
+export const BrandKitSchema = z.object({
+  id: z.string(),
+  ownerId: z.string(),
+  primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
+  font: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+
+export type User = z.infer<typeof UserSchema>
+export type Project = z.infer<typeof ProjectSchema>
+export type BrandKit = z.infer<typeof BrandKitSchema>
+
+interface DataStore {
+  users: User[]
+  projects: Project[]
+  brandKits: BrandKit[]
+}
+
+class StorageService {
+  private dataDir: string
+  private dataFile: string
+  private backupDir: string
+  private maxBackups = 10
+
+  constructor() {
+    // Use Documents/Stunts for data storage
+    const documentsPath = app.getPath('documents')
+    this.dataDir = path.join(documentsPath, 'Stunts')
+    this.dataFile = path.join(this.dataDir, 'data.json')
+    this.backupDir = path.join(this.dataDir, 'backups')
+  }
+
+  /**
+   * Initialize storage directories and files
+   */
+  async initialize(): Promise<void> {
+    try {
+      // Create directories if they don't exist
+      await fs.mkdir(this.dataDir, { recursive: true })
+      await fs.mkdir(this.backupDir, { recursive: true })
+
+      // Create data file if it doesn't exist
+      try {
+        await fs.access(this.dataFile)
+      } catch {
+        const initialData: DataStore = {
+          users: [],
+          projects: [],
+          brandKits: []
+        }
+        await this.writeData(initialData)
+      }
+    } catch (error) {
+      console.error('Failed to initialize storage:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Read data from JSON file
+   */
+  private async readData(): Promise<DataStore> {
+    try {
+      const content = await fs.readFile(this.dataFile, 'utf-8')
+      return JSON.parse(content)
+    } catch (error) {
+      console.error('Failed to read data:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Write data to JSON file atomically
+   */
+  private async writeData(data: DataStore): Promise<void> {
+    try {
+      // Write to temporary file first
+      const tempFile = `${this.dataFile}.tmp`
+      await fs.writeFile(tempFile, JSON.stringify(data, null, 2), 'utf-8')
+
+      // Create backup before replacing
+      await this.createBackup()
+
+      // Atomic rename
+      await fs.rename(tempFile, this.dataFile)
+    } catch (error) {
+      console.error('Failed to write data:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Create backup of current data
+   */
+  private async createBackup(): Promise<void> {
+    try {
+      // Check if data file exists
+      try {
+        await fs.access(this.dataFile)
+      } catch {
+        return // No file to backup
+      }
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const backupFile = path.join(this.backupDir, `data-${timestamp}.json`)
+
+      // Copy current data to backup
+      await fs.copyFile(this.dataFile, backupFile)
+
+      // Clean old backups
+      await this.cleanOldBackups()
+    } catch (error) {
+      console.error('Failed to create backup:', error)
+      // Don't throw - backup failure shouldn't prevent writes
+    }
+  }
+
+  /**
+   * Remove old backups keeping only the most recent ones
+   */
+  private async cleanOldBackups(): Promise<void> {
+    try {
+      const files = await fs.readdir(this.backupDir)
+      const backupFiles = files
+        .filter((f) => f.startsWith('data-') && f.endsWith('.json'))
+        .map((f) => path.join(this.backupDir, f))
+
+      // Get file stats with timestamps
+      const filesWithStats = await Promise.all(
+        backupFiles.map(async (file) => ({
+          file,
+          mtime: (await fs.stat(file)).mtime
+        }))
+      )
+
+      // Sort by modification time (newest first)
+      filesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime())
+
+      // Delete old backups
+      const toDelete = filesWithStats.slice(this.maxBackups)
+      await Promise.all(toDelete.map((f) => fs.unlink(f.file)))
+    } catch (error) {
+      console.error('Failed to clean old backups:', error)
+    }
+  }
+
+  // ============ USER OPERATIONS ============
+
+  async getUser(userId: string): Promise<User | null> {
+    const data = await this.readData()
+    return data.users.find((u) => u.id === userId) || null
+  }
+
+  async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
+    const data = await this.readData()
+    const now = new Date().toISOString()
+
+    const user: User = {
+      id: crypto.randomUUID(),
+      ...userData,
+      createdAt: now,
+      updatedAt: now
+    }
+
+    UserSchema.parse(user)
+    data.users.push(user)
+    await this.writeData(data)
+
+    return user
+  }
+
+  async updateUser(userId: string, updates: Partial<User>): Promise<User | null> {
+    const data = await this.readData()
+    const userIndex = data.users.findIndex((u) => u.id === userId)
+
+    if (userIndex === -1) return null
+
+    const updatedUser = {
+      ...data.users[userIndex],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    }
+
+    UserSchema.parse(updatedUser)
+    data.users[userIndex] = updatedUser
+    await this.writeData(data)
+
+    return updatedUser
+  }
+
+  // ============ PROJECT OPERATIONS ============
+
+  async getAllProjects(userId: string): Promise<Project[]> {
+    const data = await this.readData()
+    return data.projects
+      .filter((p) => p.ownerId === userId)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  }
+
+  async getProject(projectId: string): Promise<Project | null> {
+    const data = await this.readData()
+    return data.projects.find((p) => p.id === projectId) || null
+  }
+
+  async createProject(
+    userId: string,
+    projectData: Omit<Project, 'id' | 'ownerId' | 'createdAt' | 'updatedAt'>
+  ): Promise<Project> {
+    const data = await this.readData()
+    const now = new Date().toISOString()
+
+    const project: Project = {
+      id: crypto.randomUUID(),
+      ownerId: userId,
+      ...projectData,
+      createdAt: now,
+      updatedAt: now
+    }
+
+    ProjectSchema.parse(project)
+    data.projects.push(project)
+    await this.writeData(data)
+
+    return project
+  }
+
+  async updateProject(projectId: string, updates: Partial<Project>): Promise<Project | null> {
+    const data = await this.readData()
+    const projectIndex = data.projects.findIndex((p) => p.id === projectId)
+
+    if (projectIndex === -1) return null
+
+    const updatedProject = {
+      ...data.projects[projectIndex],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    }
+
+    ProjectSchema.parse(updatedProject)
+    data.projects[projectIndex] = updatedProject
+    await this.writeData(data)
+
+    return updatedProject
+  }
+
+  async deleteProject(projectId: string): Promise<boolean> {
+    const data = await this.readData()
+    const initialLength = data.projects.length
+
+    data.projects = data.projects.filter((p) => p.id !== projectId)
+
+    if (data.projects.length === initialLength) return false
+
+    await this.writeData(data)
+    return true
+  }
+
+  // ============ BRAND KIT OPERATIONS ============
+
+  async getAllBrandKits(userId: string): Promise<BrandKit[]> {
+    const data = await this.readData()
+    return data.brandKits
+      .filter((b) => b.ownerId === userId)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  }
+
+  async getBrandKit(brandKitId: string): Promise<BrandKit | null> {
+    const data = await this.readData()
+    return data.brandKits.find((b) => b.id === brandKitId) || null
+  }
+
+  async createBrandKit(
+    userId: string,
+    brandKitData: Omit<BrandKit, 'id' | 'ownerId' | 'createdAt' | 'updatedAt'>
+  ): Promise<BrandKit> {
+    const data = await this.readData()
+    const now = new Date().toISOString()
+
+    const brandKit: BrandKit = {
+      id: crypto.randomUUID(),
+      ownerId: userId,
+      ...brandKitData,
+      createdAt: now,
+      updatedAt: now
+    }
+
+    BrandKitSchema.parse(brandKit)
+    data.brandKits.push(brandKit)
+    await this.writeData(data)
+
+    return brandKit
+  }
+
+  async updateBrandKit(brandKitId: string, updates: Partial<BrandKit>): Promise<BrandKit | null> {
+    const data = await this.readData()
+    const brandKitIndex = data.brandKits.findIndex((b) => b.id === brandKitId)
+
+    if (brandKitIndex === -1) return null
+
+    const updatedBrandKit = {
+      ...data.brandKits[brandKitIndex],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    }
+
+    BrandKitSchema.parse(updatedBrandKit)
+    data.brandKits[brandKitIndex] = updatedBrandKit
+    await this.writeData(data)
+
+    return updatedBrandKit
+  }
+
+  async deleteBrandKit(brandKitId: string): Promise<boolean> {
+    const data = await this.readData()
+    const initialLength = data.brandKits.length
+
+    data.brandKits = data.brandKits.filter((b) => b.id !== brandKitId)
+
+    if (data.brandKits.length === initialLength) return false
+
+    await this.writeData(data)
+    return true
+  }
+
+  // ============ UTILITY OPERATIONS ============
+
+  /**
+   * Export all data to a file
+   */
+  async exportData(exportPath: string): Promise<void> {
+    const data = await this.readData()
+    await fs.writeFile(exportPath, JSON.stringify(data, null, 2), 'utf-8')
+  }
+
+  /**
+   * Import data from a file
+   */
+  async importData(importPath: string): Promise<void> {
+    const content = await fs.readFile(importPath, 'utf-8')
+    const data = JSON.parse(content) as DataStore
+
+    // Validate data structure
+    data.users.forEach((u) => UserSchema.parse(u))
+    data.projects.forEach((p) => ProjectSchema.parse(p))
+    data.brandKits.forEach((b) => BrandKitSchema.parse(b))
+
+    await this.writeData(data)
+  }
+
+  /**
+   * Get storage directory path
+   */
+  getStorageDir(): string {
+    return this.dataDir
+  }
+}
+
+// Export singleton instance
+export const storage = new StorageService()
