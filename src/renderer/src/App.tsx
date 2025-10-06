@@ -1,8 +1,9 @@
 import { RouterProvider } from './hooks/useRouter'
 import { Router } from './components/Router'
-import './i18n/config'
+// import './i18n/config'
 
 // Import pages
+import Profiles from './stunts-pages/profiles/page'
 import Projects from './stunts-pages/projects/page'
 import CreateProject from './stunts-pages/create-project/page'
 import SelectLanguage from './stunts-pages/select-language/page'
@@ -21,10 +22,11 @@ import FlowQuestions from './stunts-pages/project/[projectId]/flows/[flowId]/que
 
 function App(): React.JSX.Element {
   return (
-    <RouterProvider initialPath="/projects">
+    <RouterProvider initialPath="/profiles">
       <Router
         routes={[
           // Root routes
+          { path: '/profiles', component: <Profiles /> },
           { path: '/projects', component: <Projects /> },
           { path: '/create-project', component: <CreateProject /> },
           { path: '/select-language', component: <SelectLanguage /> },

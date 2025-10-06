@@ -6,6 +6,7 @@ import { z } from 'zod'
 // Data Models
 export const UserSchema = z.object({
   id: z.string(),
+  name: z.string().default('Guest'),
   email: z.string().email().optional(),
   role: z.enum(['USER', 'ADMIN']).default('USER'),
   userLanguage: z.string().default('en'),
@@ -214,6 +215,47 @@ class StorageService {
     await this.writeData(data)
 
     return updatedUser
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    const data = await this.readData()
+    return data.users
+  }
+
+  async getOrCreateDefaultUser(): Promise<User> {
+    const data = await this.readData()
+
+    // If there's already a user, return the first one
+    if (data.users.length > 0) {
+      return data.users[0]
+    }
+
+    // Otherwise create a default Guest user
+    return await this.createUser({
+      name: 'Guest',
+      email: undefined,
+      role: 'USER',
+      userLanguage: 'en'
+    })
+  }
+
+  async deleteUser(userId: string): Promise<boolean> {
+    const data = await this.readData()
+    const initialLength = data.users.length
+
+    // Don't allow deleting the last user
+    if (data.users.length <= 1) {
+      throw new Error('Cannot delete the last user')
+    }
+
+    data.users = data.users.filter((u) => u.id !== userId)
+
+    if (data.users.length < initialLength) {
+      await this.writeData(data)
+      return true
+    }
+
+    return false
   }
 
   // ============ PROJECT OPERATIONS ============

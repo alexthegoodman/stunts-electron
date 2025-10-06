@@ -40,6 +40,13 @@ const api = {
   settings: {
     get: (userId: string) => ipcRenderer.invoke('settings:get', userId),
     update: (data: { userId: string; settings: any }) => ipcRenderer.invoke('settings:update', data),
+    getUser: (userId: string) => ipcRenderer.invoke('settings:getUser', userId),
+    createUser: (data: { name: string; email?: string; role?: 'USER' | 'ADMIN' }) => ipcRenderer.invoke('settings:createUser', data),
+    updateUser: (data: { userId: string; updates: { name?: string; email?: string; userLanguage?: string } }) =>
+      ipcRenderer.invoke('settings:updateUser', data),
+    deleteUser: (userId: string) => ipcRenderer.invoke('settings:deleteUser', userId),
+    getCurrentUser: () => ipcRenderer.invoke('settings:getCurrentUser'),
+    getAllUsers: () => ipcRenderer.invoke('settings:getAllUsers'),
   },
 
   // AI Generation APIs

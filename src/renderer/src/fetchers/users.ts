@@ -1,4 +1,5 @@
 import { CurrentUser } from '../hooks/useCurrentUser'
+import { getCurrentUserId } from '../lib/getCurrentUserId'
 
 export interface UpdateLanguageResponse {
   updatedUser: CurrentUser
@@ -8,8 +9,7 @@ export const updateUserLanguage = async (
   token: string,
   chosenLanguage: string
 ): Promise<UpdateLanguageResponse> => {
-  // TODO: Get userId from auth context or storage
-  const userId = 'current-user-id'
+  const userId = await getCurrentUserId()
 
   const result = await window.api.settings.update({
     userId,

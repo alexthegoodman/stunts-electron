@@ -1,4 +1,4 @@
-import { saveSequencesData } from '../fetchers/projects'
+import { saveSequencesData } from '../../fetchers/projects'
 import { BackgroundFill, ObjectType } from '../animations'
 import { Editor, InputValue } from '../editor'
 import EditorState from '../editor_state'

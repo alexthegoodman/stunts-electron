@@ -7,6 +7,7 @@ import {
 import { DocState } from "../engine/data";
 import { SaveTarget } from "../engine/editor_state";
 import { DateTime } from "luxon";
+import { getCurrentUserId } from "../lib/getCurrentUserId";
 
 export interface AuthToken {
   token: string;
@@ -99,8 +100,7 @@ export const getProjects = async (
     return [];
   }
 
-  // TODO: Get userId from auth context or storage
-  const userId = 'current-user-id'; // This should come from your auth system
+  const userId = await getCurrentUserId();
   const result = await window.api.projects.getAll(userId);
 
   if (!result.success) {
@@ -124,8 +124,7 @@ export const createProject = async (
   emptyDocData: SavedState,
   emptyPresData: SavedState
 ): Promise<CreateProjectResponse> => {
-  // TODO: Get userId from auth context or storage
-  const userId = 'current-user-id';
+  const userId = await getCurrentUserId();
 
   const result = await window.api.projects.create({
     userId,
@@ -458,8 +457,7 @@ export const deleteProject = async (
 export const createDemoProject = async (
   token: string
 ): Promise<CreateProjectResponse> => {
-  // TODO: Get userId from auth context or storage
-  const userId = 'current-user-id';
+  const userId = await getCurrentUserId();
 
   const result = await window.api.projects.createDemo(userId);
 

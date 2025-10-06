@@ -39,12 +39,30 @@ export function registerSettingsHandlers(): void {
     }
   })
 
+  // Update user
+  ipcMain.handle(
+    'settings:updateUser',
+    async (_event, data: { userId: string; updates: { name?: string; email?: string; userLanguage?: string } }) => {
+      try {
+        const user = await storage.updateUser(data.userId, data.updates)
+        if (!user) {
+          return { success: false, error: 'User not found' }
+        }
+        return { success: true, data: user }
+      } catch (error) {
+        console.error('Failed to update user:', error)
+        return { success: false, error: 'Failed to update user' }
+      }
+    }
+  )
+
   // Create user (for initial setup)
   ipcMain.handle(
     'settings:createUser',
-    async (_event, data: { email?: string; role?: 'USER' | 'ADMIN' }) => {
+    async (_event, data: { name: string; email?: string; role?: 'USER' | 'ADMIN' }) => {
       try {
         const user = await storage.createUser({
+          name: data.name,
           email: data.email,
           role: data.role || 'USER',
           userLanguage: 'en'
@@ -56,6 +74,39 @@ export function registerSettingsHandlers(): void {
       }
     }
   )
+
+  // Get current user (gets or creates the default user)
+  ipcMain.handle('settings:getCurrentUser', async () => {
+    try {
+      const user = await storage.getOrCreateDefaultUser()
+      return { success: true, data: user }
+    } catch (error) {
+      console.error('Failed to get current user:', error)
+      return { success: false, error: 'Failed to get current user' }
+    }
+  })
+
+  // Get all users (for profile selection)
+  ipcMain.handle('settings:getAllUsers', async () => {
+    try {
+      const users = await storage.getAllUsers()
+      return { success: true, data: users }
+    } catch (error) {
+      console.error('Failed to get all users:', error)
+      return { success: false, error: 'Failed to get all users' }
+    }
+  })
+
+  // Delete user/profile
+  ipcMain.handle('settings:deleteUser', async (_event, userId: string) => {
+    try {
+      await storage.deleteUser(userId)
+      return { success: true, message: 'User deleted successfully' }
+    } catch (error) {
+      console.error('Failed to delete user:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to delete user' }
+    }
+  })
 
   // ============ API KEYS ============
 
