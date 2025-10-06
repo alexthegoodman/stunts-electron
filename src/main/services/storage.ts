@@ -303,6 +303,10 @@ class StorageService {
     const updatedProject = {
       ...data.projects[projectIndex],
       ...updates,
+      fileData: {
+        ...data.projects[projectIndex].fileData,
+        ...updates.fileData
+      },
       updatedAt: new Date().toISOString()
     }
 

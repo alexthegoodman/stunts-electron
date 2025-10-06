@@ -20,8 +20,8 @@ export default function Projects() {
       <ErrorBoundary>
         {/* Error Boundary */}
         <ClientOnly>
-          <div className="container mx-auto py-4">
-            <div className="flex flex-row gap-2 mb-2 justify-between w-full items-center">
+          <div className="container mx-auto py-4 h-[100vh]">
+            <div className="flex flex-row gap-2 mb-2 justify-between w-full items-center px-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-lg">{t('Projects')}</h1>
                 <ProfileSwitcher />
@@ -33,8 +33,8 @@ export default function Projects() {
 
               <button
                 onClick={() => router.push('/create-project')}
-                className="group relative w-lg flex justify-center py-2 px-4 border border-transparent
-                text-sm font-medium rounded-md text-white stunts-gradient
+                className="group relative flex justify-center py-2 px-4 border border-transparent
+                text-sm font-medium rounded-md text-white stunts-gradient w-[150px]
                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
                 disabled:opacity-50 disabled:cursor-not-allowed"
               >

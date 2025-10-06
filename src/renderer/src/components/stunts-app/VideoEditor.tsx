@@ -648,6 +648,8 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
       set_loading(true)
 
+      console.info('fetch data ', projectId)
+
       let response = await getSingleProject('', projectId)
 
       localStorage.setItem('stored-project', JSON.stringify({ project_id: projectId }))

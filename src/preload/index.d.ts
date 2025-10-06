@@ -46,26 +46,25 @@ declare global {
         get: (userId: string) => Promise<any>
         update: (data: { userId: string; settings: any }) => Promise<any>
         getUser: (userId: string) => Promise<any>
-        createUser: (data: { name: string; email?: string; role?: 'USER' | 'ADMIN' }) => Promise<any>
-        updateUser: (data: { userId: string; updates: { name?: string; email?: string; userLanguage?: string } }) => Promise<any>
+        createUser: (data: {
+          name: string
+          email?: string
+          role?: 'USER' | 'ADMIN'
+        }) => Promise<any>
+        updateUser: (data: {
+          userId: string
+          updates: { name?: string; email?: string; userLanguage?: string }
+        }) => Promise<any>
         deleteUser: (userId: string) => Promise<any>
         getCurrentUser: () => Promise<any>
         getAllUsers: () => Promise<any>
       }
       aiGeneration: {
         generateImages: (data: { prompts: string[]; userId: string }) => Promise<any>
-        generateContent: (data: {
-          prompt: string
-          links: any[]
-          questions: any
-        }) => Promise<any>
+        generateContent: (data: { prompt: string; links: any[]; questions: any }) => Promise<any>
       }
       video: {
-        resize: (data: {
-          buffer: ArrayBuffer
-          maxWidth: number
-          maxHeight: number
-        }) => Promise<any>
+        resize: (data: { buffer: ArrayBuffer; maxWidth: number; maxHeight: number }) => Promise<any>
       }
     }
   }

@@ -59,23 +59,20 @@ export function registerProjectHandlers(): void {
   )
 
   // Update project
-  ipcMain.handle(
-    'projects:update',
-    async (_event, data: { projectId: string; fileData: any }) => {
-      try {
-        const project = await storage.updateProject(data.projectId, {
-          fileData: data.fileData
-        })
-        if (!project) {
-          return { success: false, error: 'Project not found' }
-        }
-        return { success: true, data: project }
-      } catch (error) {
-        console.error('Failed to update project:', error)
-        return { success: false, error: 'Failed to update project' }
+  ipcMain.handle('projects:update', async (_event, data: { projectId: string; fileData: any }) => {
+    try {
+      const project = await storage.updateProject(data.projectId, {
+        fileData: data.fileData
+      })
+      if (!project) {
+        return { success: false, error: 'Project not found' }
       }
+      return { success: true, data: project }
+    } catch (error) {
+      console.error('Failed to update project:', error)
+      return { success: false, error: 'Failed to update project' }
     }
-  )
+  })
 
   // Update project timeline
   ipcMain.handle(
