@@ -33,7 +33,7 @@ export const AnalyzeLink = ({
   const { object, submit } = useObject({
     api: '/api/flows/extract-data',
     headers: {
-      Authorization: `Bearer ${authToken?.token}`
+      Authorization: `Bearer ${''}`
     },
     schema: dataSchema,
     onFinish: ({ object, error }) => {
@@ -48,10 +48,6 @@ export const AnalyzeLink = ({
 
   // Handle link analysis
   const analyzeLink = async (index: number) => {
-    if (!authToken) {
-      return
-    }
-
     if (!links[index].trim()) return
 
     // Set the analyzing state for this link
@@ -60,7 +56,7 @@ export const AnalyzeLink = ({
     setIsAnalyzing(newIsAnalyzing)
 
     try {
-      const linkData = await scrapeLink(authToken?.token, links[index])
+      const linkData = await scrapeLink('', links[index])
 
       // Handle successful analysis
       console.log(`Analyzed link ${index + 1}: ${links[index]}`, linkData)

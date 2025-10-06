@@ -50,21 +50,17 @@ export const ProjectItem = ({
   const handleDuplicate = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
 
-    if (!authToken) {
-      return
-    }
-
     setLoading(true)
 
     try {
-      const { project } = await getSingleProject(authToken.token, project_id)
+      const { project } = await getSingleProject('', project_id)
 
       if (!project?.fileData || !project.docData || !project.presData) {
         return
       }
 
       await createProject(
-        authToken.token,
+        '',
         project?.name + ' Duplicate',
         project?.fileData,
         project?.docData,
@@ -99,7 +95,7 @@ export const ProjectItem = ({
     setLoading(true)
 
     try {
-      await deleteProject(authToken.token, project_id)
+      await deleteProject('', project_id)
       mutate('projects', () => getProjects(authToken))
       toast.success('Project deleted successfully')
     } catch (error: any) {

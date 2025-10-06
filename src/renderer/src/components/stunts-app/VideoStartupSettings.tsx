@@ -28,15 +28,15 @@ export default function VideoStartupSettings() {
   const [jwtData, saveJwtData] = useLocalStorage<JwtData | null>('jwtData', null)
 
   let fetch_data = async () => {
-    if (!authToken || fileData) {
+    if (fileData) {
       // If we already have fileData or no authToken, skip fetching
-      console.info('No authToken or fileData already set, skipping fetch.')
+      console.info('fileData already set, skipping fetch.')
       return
     }
 
     // setLoading(true);
 
-    let response = await getSingleProject(authToken.token, projectId as string)
+    let response = await getSingleProject('', projectId as string)
 
     let data = response.project?.fileData
 

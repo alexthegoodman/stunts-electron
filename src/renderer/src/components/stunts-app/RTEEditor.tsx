@@ -306,7 +306,7 @@ export const RTEEditor: React.FC<any> = ({ projectId }) => {
 
     set_loading(true)
 
-    let response = await getSingleProject(authToken.token, projectId)
+    let response = await getSingleProject('', projectId)
 
     let docData = response.project?.docData
 
@@ -362,7 +362,7 @@ export const RTEEditor: React.FC<any> = ({ projectId }) => {
     //     editorRef.current.restore_sequence_objects(
     //       sequence,
     //       true
-    //       // authToken.token,
+    //       // "",
     //     );
     //   }
 

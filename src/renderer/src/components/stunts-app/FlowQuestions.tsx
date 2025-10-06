@@ -51,9 +51,7 @@ export default function FlowQuestions({
   const [loading, setLoading] = useState(false)
   const [isVertical, setIsVertical] = useState(true)
 
-  const { data: user } = useSWR('currentUser', () =>
-    getCurrentUser(authToken?.token ? authToken?.token : '')
-  )
+  const { data: user } = useSWR('currentUser', () => getCurrentUser(''))
 
   let {
     data: flow,
@@ -68,7 +66,7 @@ export default function FlowQuestions({
   const { object, submit } = useObject({
     api: '/api/flows/generate-questions',
     headers: {
-      Authorization: `Bearer ${authToken?.token}`,
+      Authorization: `Bearer ${''}`,
       'X-User-Language': `${user?.userLanguage}`
     },
     schema: questionSchema
@@ -271,10 +269,6 @@ export default function FlowQuestions({
   const generateHandler = async () => {
     setLoading(true)
 
-    if (!authToken) {
-      return
-    }
-
     if (!object?.questions) {
       return
     }
@@ -297,11 +291,11 @@ export default function FlowQuestions({
       })
     }
 
-    await updateFlowQuestions(authToken?.token, flowId!, savableQuestions)
+    await updateFlowQuestions('', flowId!, savableQuestions)
 
     //  add the images and text content, generate the layout, then generate the animation, set the theme, finally save
     const videoContent = await generateContent(
-      authToken.token,
+      '',
       user?.userLanguage || 'en',
       flow?.flow.prompt,
       flow?.flow.content.links,

@@ -21,9 +21,7 @@ export const ProjectsList = () => {
   const router = useRouter()
   const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
 
-  const { data: user } = useSWR('currentUser', () =>
-    getCurrentUser(authToken?.token ? authToken?.token : '')
-  )
+  const { data: user } = useSWR('currentUser', () => getCurrentUser(''))
 
   let { data: projects, isLoading, error } = useSWR('projects', () => getProjects(authToken))
 

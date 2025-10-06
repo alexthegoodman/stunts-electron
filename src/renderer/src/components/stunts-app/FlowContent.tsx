@@ -327,7 +327,7 @@ export default function FlowContent({
           // })
 
           // TODO: add correct upload
-          const newBlob = await saveVideo(authToken.token, file.name, resizedVideoBlob)
+          const newBlob = await saveVideo('', file.name, resizedVideoBlob)
 
           let realId =
             'video-' +
@@ -360,7 +360,7 @@ export default function FlowContent({
           //   })
           // })
 
-          const newBlob = await saveImage(authToken.token, file.name, blob)
+          const newBlob = await saveImage('', file.name, blob)
 
           // Get image dimensions from the DOM if available
           const imgElement = document.querySelector(`img[src*="${file.name}"]`) as HTMLImageElement
@@ -380,7 +380,7 @@ export default function FlowContent({
           }
         } else {
           // Use existing saveImage for other file types (text, PDF, DOCX)
-          response = await saveImage(authToken.token, file.name, blob)
+          response = await saveImage('', file.name, blob)
         }
 
         if (response) {
@@ -397,7 +397,7 @@ export default function FlowContent({
       flowContent.links.push(link)
     }
 
-    await updateFlowContent(authToken.token, flowId, flowContent)
+    await updateFlowContent('', flowId, flowContent)
 
     router.push(`/project/${projectId}/flows/${flowId}/questions`)
 

@@ -201,9 +201,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
   const router = useRouter()
   const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
 
-  const { data: user } = useSWR('currentUser', () =>
-    getCurrentUser(authToken?.token ? authToken?.token : '')
-  )
+  const { data: user } = useSWR('currentUser', () => getCurrentUser(''))
 
   let [settings, set_settings] = useState<ProjectSettings | undefined | null>(null)
   let [sequences, set_sequences] = useState<Sequence[]>([])
@@ -642,15 +640,15 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
   let fetch_data = async () => {
     try {
-      if (!authToken || !editorRef.current) {
-        toast.error('You must have an auth token or matching device to access this project')
+      if (!editorRef.current) {
+        toast.error('You must have matching device to access this project')
 
         return
       }
 
       set_loading(true)
 
-      let response = await getSingleProject(authToken.token, projectId)
+      let response = await getSingleProject('', projectId)
 
       localStorage.setItem('stored-project', JSON.stringify({ project_id: projectId }))
 
@@ -728,7 +726,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         await editorRef.current.restore_sequence_objects(
           sequence,
           true
-          // authToken.token,
+          // "",
         )
       }
 
@@ -797,11 +795,11 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       return
     }
 
-    if (!authToken) {
-      toast.error('You must have an auth token')
+    // if (!authToken) {
+    //   toast.error('You must have an auth token')
 
-      return
-    }
+    //   return
+    // }
 
     set_loading(true)
 
@@ -825,12 +823,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
     editorState.savedState.sequences = new_sequences
 
-    let response = await updateSequences(
-      authToken.token,
-      projectId,
-      new_sequences,
-      SaveTarget.Videos
-    )
+    let response = await updateSequences('', projectId, new_sequences, SaveTarget.Videos)
 
     set_quick_access()
 

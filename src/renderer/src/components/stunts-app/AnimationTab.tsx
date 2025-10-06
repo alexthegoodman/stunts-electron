@@ -368,7 +368,7 @@ export default function AnimationTab({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken?.token}`
+          Authorization: `Bearer ${''}`
         },
         body: JSON.stringify({
           prompt: aiAnimationPrompt,

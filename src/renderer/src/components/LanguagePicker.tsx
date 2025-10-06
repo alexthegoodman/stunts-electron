@@ -22,7 +22,7 @@
 //       return;
 //     }
 
-//     await updateUserLanguage(authToken.token, lng);
+//     await updateUserLanguage("", lng);
 
 //     location.reload();
 //   };
@@ -106,7 +106,7 @@ const LanguagePicker = ({
     setSelectedLang(lng)
 
     try {
-      await updateUserLanguage(authToken.token, lng)
+      await updateUserLanguage('', lng)
       // Add a small delay for better UX feedback
       setTimeout(() => {
         // location.reload();

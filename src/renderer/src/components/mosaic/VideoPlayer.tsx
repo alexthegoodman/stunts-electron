@@ -22,9 +22,9 @@ import {
   TimelineSequence,
   TrackType,
   UIKeyframe
-} from '../engine/animations'
+} from '../../engine/animations'
 import { v4 as uuidv4 } from 'uuid'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '../../hooks/useRouter'
 import { useLocalStorage } from '@uidotdev/usehooks'
 import {
   AuthToken,
@@ -34,8 +34,8 @@ import {
   saveTimelineData,
   saveVideo,
   updateSequences
-} from '../fetchers/projects'
-import { useDevEffectOnce } from '../hooks/useDevOnce'
+} from '../../fetchers/projects'
+import { useDevEffectOnce } from '../../hooks/useDevOnce'
 import {
   CANVAS_HORIZ_OFFSET,
   CANVAS_VERT_OFFSET,
@@ -46,14 +46,14 @@ import {
   rgbToWgpu,
   Viewport,
   wgpuToHuman
-} from '../engine/editor'
-import { StVideoConfig } from '../engine/video'
-import { fileToBlob, StImageConfig } from '../engine/image'
-import { TextRendererConfig } from '../engine/text'
-import { PolygonConfig } from '../engine/polygon'
-import EditorState, { SaveTarget } from '../engine/editor_state'
+} from '../../engine/editor'
+import { StVideoConfig } from '../../engine/video'
+import { fileToBlob, StImageConfig } from '../../engine/image'
+import { TextRendererConfig } from '../../engine/text'
+import { PolygonConfig } from '../../engine/polygon'
+import EditorState, { SaveTarget } from '../../engine/editor_state'
 import LayerPanel, { Layer, LayerFromConfig } from '../stunts-app/layers'
-import { CanvasPipeline } from '../engine/pipeline'
+import { CanvasPipeline } from '../../engine/pipeline'
 import {
   ImageProperties,
   KeyframeProperties,
@@ -61,13 +61,13 @@ import {
   TextProperties,
   VideoProperties
 } from '../stunts-app/Properties'
-import { callMotionInference } from '../fetchers/inference'
+import { callMotionInference } from '../../fetchers/inference'
 import KeyframeTimeline from '../stunts-app/KeyframeTimeline'
 import { TimelineTrack } from '../stunts-app/SequenceTimeline'
-import { WebCapture } from '../engine/capture'
+import { WebCapture } from '../../engine/capture'
 import { ToolGrid } from '../stunts-app/ToolGrid'
-import { PageSequence } from '../engine/data'
-import { WindowSize } from '../engine/camera'
+import { PageSequence } from '../../engine/data'
+import { WindowSize } from '../../engine/camera'
 import { ThemePicker } from '../stunts-app/ThemePicker'
 import { ObjectTrack } from '../stunts-app/ObjectTimeline'
 import toast from 'react-hot-toast'
@@ -84,7 +84,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { FlowArrow } from '@phosphor-icons/react/dist/ssr'
 import useSWR from 'swr'
-import { getCurrentUser } from '../hooks/useCurrentUser'
+import { getCurrentUser } from '../../hooks/useCurrentUser'
 
 export const VideoPlayer: React.FC<any> = ({ projectId }) => {
   const { t } = useTranslation('common')
@@ -92,9 +92,7 @@ export const VideoPlayer: React.FC<any> = ({ projectId }) => {
   const router = useRouter()
   const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
 
-  const { data: user } = useSWR('currentUser', () =>
-    getCurrentUser(authToken?.token ? authToken?.token : '')
-  )
+  const { data: user } = useSWR('currentUser', () => getCurrentUser(''))
 
   let [settings, set_settings] = useState<ProjectSettings | undefined | null>(null)
   let [sequences, set_sequences] = useState<Sequence[]>([])
@@ -152,15 +150,15 @@ export const VideoPlayer: React.FC<any> = ({ projectId }) => {
 
   let fetch_data = async () => {
     try {
-      if (!authToken || !editorRef.current) {
-        toast.error('You must have an auth token or matching device to access this project')
+      if (!editorRef.current) {
+        toast.error('You must have matching device to access this project')
 
         return
       }
 
       set_loading(true)
 
-      let response = await getSingleProject(authToken.token, projectId)
+      let response = await getSingleProject('', projectId)
 
       localStorage.setItem('stored-project', JSON.stringify({ project_id: projectId }))
 
@@ -236,7 +234,7 @@ export const VideoPlayer: React.FC<any> = ({ projectId }) => {
         await editorRef.current.restore_sequence_objects(
           sequence,
           true
-          // authToken.token,
+          // "",
         )
       }
 

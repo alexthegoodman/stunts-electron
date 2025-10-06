@@ -23,10 +23,6 @@ const ProjectForm = () => {
   const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
 
   const onSubmit = async (data: { project_name: string }) => {
-    if (!authToken) {
-      return
-    }
-
     // Type the form data
     try {
       let newId = uuidv4().toString()
@@ -68,17 +64,7 @@ const ProjectForm = () => {
         timeline_state: null
       }
 
-      if (!authToken?.token) {
-        throw new Error('No auth token available')
-      }
-
-      const info = await createProject(
-        authToken.token,
-        data.project_name,
-        videoState,
-        docState,
-        presState
-      )
+      const info = await createProject('', data.project_name, videoState, docState, presState)
       // router.push("/projects");
       // go directly to project videos page
       const projectId = info.newProject.id

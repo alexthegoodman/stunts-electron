@@ -17,9 +17,7 @@ function AppInnerLayout({
   children: any
 }) {
   const router = useRouter()
-  const { data, isLoading, error } = useSWR('currentUser', () =>
-    getCurrentUser(authToken?.token ? authToken?.token : '')
-  )
+  const { data, isLoading, error } = useSWR('currentUser', () => getCurrentUser(''))
 
   if (!data || isLoading) {
     return <>Loading user data...</>
@@ -47,9 +45,9 @@ function AppInnerLayout({
 export default function AppLayout({ children = null }) {
   const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
 
-  if (!authToken?.token) {
-    return <>Authenticating...</>
-  }
+  // if (!"") {
+  //   return <>Authenticating...</>
+  // }
 
   return <AppInnerLayout authToken={authToken}>{children}</AppInnerLayout>
 }

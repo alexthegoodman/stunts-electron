@@ -241,10 +241,6 @@ export const ToolGrid = ({
       return
     }
 
-    if (!authToken) {
-      return
-    }
-
     let blob = await fileToBlob(file)
 
     if (!blob) {
@@ -257,7 +253,7 @@ export const ToolGrid = ({
       //   access: "public",
       //   handleUploadUrl: "/api/image/upload",
       //   clientPayload: JSON.stringify({
-      //     token: authToken.token,
+      //     token: "",
       //   }),
       // });
 
@@ -269,7 +265,7 @@ export const ToolGrid = ({
       //   dimensions: { width: 100, height: 100 },
       // };
 
-      let response = await saveImage(authToken?.token, file.name, blob)
+      let response = await saveImage('', file.name, blob)
 
       if (response) {
         let url = response.url
@@ -498,12 +494,12 @@ export const ToolGrid = ({
 
         setUserMessage(`Uploading video: ${name}...`)
 
-        // let response = await saveVideo(authToken.token, name, blob);
+        // let response = await saveVideo("", name, blob);
         // const response = await upload(name, resizedVideoBlob, {
         //   access: "public",
         //   handleUploadUrl: "/api/video/upload",
         //   clientPayload: JSON.stringify({
-        //     token: authToken.token,
+        //     token: "",
         //   }),
         //   // multipart: true,
         //   onUploadProgress: (progress) => {
@@ -511,7 +507,7 @@ export const ToolGrid = ({
         //   },
         // });
 
-        let response = await saveVideo(authToken?.token, name, resizedVideoBlob)
+        let response = await saveVideo('', name, resizedVideoBlob)
 
         setUserMessage('')
 
@@ -734,7 +730,7 @@ export const ToolGrid = ({
 
         setUserMessage(`Uploading mockup video: ${file.name}...`)
 
-        let response = await saveVideo(authToken?.token, file.name, resizedVideoBlob)
+        let response = await saveVideo('', file.name, resizedVideoBlob)
 
         setUserMessage('')
 

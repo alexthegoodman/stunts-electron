@@ -1,8 +1,16 @@
 @import './base.css';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@theme {
+  --color-theme-primary: rgb(var(--theme-primary));
+  --color-theme-secondary: rgb(var(--theme-secondary));
+  --color-theme-accent: rgb(var(--theme-accent));
+  --color-theme-bg-primary: rgb(var(--theme-bg-primary));
+  --color-theme-bg-secondary: rgb(var(--theme-bg-secondary));
+  --color-theme-text-primary: rgb(var(--theme-text-primary));
+  --color-theme-text-secondary: rgb(var(--theme-text-secondary));
+}
 
 @layer utilities {
   .theme-bg-primary {

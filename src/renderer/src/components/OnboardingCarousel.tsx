@@ -171,7 +171,7 @@ export default function OnboardingCarousel() {
     //   const authToken = JSON.parse(authTokenString);
 
     //   // Create a demo project from a template
-    //   const demoProject = await createDemoProject(authToken.token);
+    //   const demoProject = await createDemoProject("");
 
     //   // Store the demo project and navigate to it
     //   localStorage.setItem(

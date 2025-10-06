@@ -55,9 +55,7 @@ export type JwtData = {
 export default function useCurrentUser() {
   const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
 
-  const { data, isLoading, error } = useSWR('currentUser', () =>
-    getCurrentUser(authToken?.token ? authToken?.token : '')
-  )
+  const { data, isLoading, error } = useSWR('currentUser', () => getCurrentUser(''))
 
   //   useEffect(() => {
   //     if (jwtData?.token) {

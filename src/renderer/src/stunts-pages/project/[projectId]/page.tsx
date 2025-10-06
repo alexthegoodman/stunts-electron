@@ -25,9 +25,7 @@ export default function Project() {
     data: project,
     isLoading,
     error
-  } = useSWR(`project-${projectId}`, () =>
-    getSingleProject(authToken?.token || '', projectId as string)
-  )
+  } = useSWR(`project-${projectId}`, () => getSingleProject('', projectId as string))
 
   const [loading, setLoading] = useState<boolean>(false)
   const [prompt, setPrompt] = useState<string>('')
@@ -52,9 +50,9 @@ export default function Project() {
   }, [project])
 
   const handleCreateFlow = async () => {
-    if (!authToken?.token) {
-      return
-    }
+    // if (!"") {
+    //   return
+    // }
 
     if (!prompt) {
       // toast.error("You must enter a prompt / description to begin");
@@ -64,7 +62,7 @@ export default function Project() {
 
     setLoading(true)
 
-    const flow = await createFlow(authToken?.token, prompt, null)
+    const flow = await createFlow('', prompt, null)
 
     router.push(`/project/${projectId}/flows/${flow.newFlow.id}/content`)
   }

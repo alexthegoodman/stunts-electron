@@ -279,10 +279,6 @@ export const DocEditor: React.FC<any> = ({ projectId }) => {
       return
     }
 
-    if (!authToken) {
-      return
-    }
-
     set_loading(true)
 
     let new_sequences = sequences as Sequence[]
@@ -301,7 +297,7 @@ export const DocEditor: React.FC<any> = ({ projectId }) => {
 
     editorState.savedState.sequences = new_sequences
 
-    let response = await updateSequences(authToken.token, projectId, new_sequences, SaveTarget.Docs)
+    let response = await updateSequences('', projectId, new_sequences, SaveTarget.Docs)
 
     if (!previewManagerRef.current) {
       return
@@ -543,7 +539,7 @@ export const DocEditor: React.FC<any> = ({ projectId }) => {
 
     set_loading(true)
 
-    let response = await getSingleProject(authToken.token, projectId)
+    let response = await getSingleProject('', projectId)
 
     let docData = response.project?.docData
 
@@ -620,7 +616,7 @@ export const DocEditor: React.FC<any> = ({ projectId }) => {
       await editorRef.current.restore_sequence_objects(
         sequence,
         sequenceIndex === 0 ? false : true
-        // authToken.token,
+        // "",
       )
     }
 

@@ -96,10 +96,6 @@ export const getSingleProject = async (
 export const getProjects = async (
   authToken: AuthToken | null
 ): Promise<ProjectInfo[]> => {
-  if (!authToken) {
-    return [];
-  }
-
   const userId = await getCurrentUserId();
   const result = await window.api.projects.getAll(userId);
 
@@ -150,32 +146,27 @@ export async function saveSequencesData(
   }
 
   try {
-    // Get stored-project and auth-token from local storage
+    // Get stored-project from local storage
     const storedProjectString = localStorage.getItem("stored-project");
-    const authTokenString = localStorage.getItem("auth-token");
 
-    if (!storedProjectString || !authTokenString) {
+    if (!storedProjectString) {
       throw new Error(
-        "Couldn't get stored project or auth token from local storage"
+        "Couldn't get stored project from local storage"
       );
     }
 
     const storedProject = JSON.parse(storedProjectString);
-    const authToken: AuthToken = JSON.parse(authTokenString);
 
     // Call the updateSequences function
     return await updateSequences(
-      authToken.token,
+      '', // No longer need token
       storedProject.project_id,
       sequences,
       saveTarget
     );
   } catch (error) {
     console.error("Error saving sequences data:", error);
-    // Handle the error appropriately, e.g., return a default response or throw the error
-    throw error; // Re-throw if you want the calling function to handle it
-    // Or return a default/error response:
-    // return { success: false, message: error.message }; // Example
+    throw error;
   }
 }
 
@@ -206,32 +197,27 @@ export async function saveSettingsData(
   }
 
   try {
-    // Get stored-project and auth-token from local storage
+    // Get stored-project from local storage
     const storedProjectString = localStorage.getItem("stored-project");
-    const authTokenString = localStorage.getItem("auth-token");
 
-    if (!storedProjectString || !authTokenString) {
+    if (!storedProjectString) {
       throw new Error(
-        "Couldn't get stored project or auth token from local storage"
+        "Couldn't get stored project from local storage"
       );
     }
 
     const storedProject = JSON.parse(storedProjectString);
-    const authToken: AuthToken = JSON.parse(authTokenString);
 
-    // Call the updateSequences function
+    // Call the updateSettings function
     return await updateSettings(
-      authToken.token,
+      '', // No longer need token
       storedProject.project_id,
       settings,
       saveTarget
     );
   } catch (error) {
     console.error("Error saving settings data:", error);
-    // Handle the error appropriately, e.g., return a default response or throw the error
-    throw error; // Re-throw if you want the calling function to handle it
-    // Or return a default/error response:
-    // return { success: false, message: error.message }; // Example
+    throw error;
   }
 }
 
@@ -278,31 +264,26 @@ export async function saveTimelineData(
   }
 
   try {
-    // Get stored-project and auth-token from local storage
+    // Get stored-project from local storage
     const storedProjectString = localStorage.getItem("stored-project");
-    const authTokenString = localStorage.getItem("auth-token");
 
-    if (!storedProjectString || !authTokenString) {
+    if (!storedProjectString) {
       throw new Error(
-        "Couldn't get stored project or auth token from local storage"
+        "Couldn't get stored project from local storage"
       );
     }
 
     const storedProject = JSON.parse(storedProjectString);
-    const authToken: AuthToken = JSON.parse(authTokenString);
 
-    // Call the updateSequences function
+    // Call the updateTimeline function
     return await updateTimeline(
-      authToken.token,
+      '', // No longer need token
       storedProject.project_id,
       timelineState
     );
   } catch (error) {
     console.error("Error saving timeline data:", error);
-    // Handle the error appropriately, e.g., return a default response or throw the error
-    throw error; // Re-throw if you want the calling function to handle it
-    // Or return a default/error response:
-    // return { success: false, message: error.message }; // Example
+    throw error;
   }
 }
 
@@ -350,25 +331,11 @@ export async function getUploadedImageData(
   }
 
   try {
-    // Get stored-project and auth-token from local storage
-    // const storedProjectString = localStorage.getItem("stored-project");
-    const authTokenString = localStorage.getItem("auth-token");
-
-    if (!authTokenString) {
-      throw new Error("Couldn't get auth token from local storage");
-    }
-
-    // const storedProject = JSON.parse(storedProjectString);
-    const authToken: AuthToken = JSON.parse(authTokenString);
-
-    // Call the updateSequences function
-    return await getUploadedImage(authToken.token, filename);
+    // Call the getUploadedImage function
+    return await getUploadedImage('', filename);
   } catch (error) {
     console.error("Error getting image data:", error);
-    // Handle the error appropriately, e.g., return a default response or throw the error
-    throw error; // Re-throw if you want the calling function to handle it
-    // Or return a default/error response:
-    // return { success: false, message: error.message }; // Example
+    throw error;
   }
 }
 
@@ -419,25 +386,11 @@ export async function getUploadedVideoData(
   }
 
   try {
-    // Get stored-project and auth-token from local storage
-    // const storedProjectString = localStorage.getItem("stored-project");
-    const authTokenString = localStorage.getItem("auth-token");
-
-    if (!authTokenString) {
-      throw new Error("Couldn't get auth token from local storage");
-    }
-
-    // const storedProject = JSON.parse(storedProjectString);
-    const authToken: AuthToken = JSON.parse(authTokenString);
-
-    // Call the updateSequences function
-    return await getUploadedVideo(authToken.token, filename);
+    // Call the getUploadedVideo function
+    return await getUploadedVideo('', filename);
   } catch (error) {
     console.error("Error getting video data:", error);
-    // Handle the error appropriately, e.g., return a default response or throw the error
-    throw error; // Re-throw if you want the calling function to handle it
-    // Or return a default/error response:
-    // return { success: false, message: error.message }; // Example
+    throw error;
   }
 }
 
