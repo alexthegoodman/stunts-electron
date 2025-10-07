@@ -52,6 +52,22 @@ export function create_keyframes_from_mouse_positions(
   console.info('sourceData ', sourceData, mouse_positions, video_dimensions)
 
   if (mouse_positions.length > 0 && sourceData) {
+    zoom_keyframes.push({
+      id: uuidv4().toString(),
+      time: 0,
+      value: {
+        type: 'Zoom',
+        value: {
+          position: [sourceData.bounds.width / 2, sourceData.bounds.height / 2],
+          zoomLevel: 100
+        }
+      },
+      easing: EasingType.Linear,
+      pathType: PathType.Linear,
+      keyType: { type: 'Frame' },
+      curveData: null
+    })
+
     let scaled_positions: any[] = []
     mouse_positions.forEach((mousePos, index) => {
       // Check if mouse position data is valid
@@ -71,7 +87,7 @@ export function create_keyframes_from_mouse_positions(
       // Calculate zoom level: animate from 100 to 135 and back to 100
       // Use sine wave to create smooth in-and-out animation
       const progress = index / (mouse_positions.length - 1 || 1)
-      const zoomLevel = 100 + 35 * Math.sin(progress * Math.PI)
+      const zoomLevel = 100 + 50 * Math.sin(progress * Math.PI)
 
       scaled_positions.push({
         timestamp: mousePos.timestamp,
@@ -96,7 +112,7 @@ export function create_keyframes_from_mouse_positions(
             zoomLevel: scaled.zoomLevel
           }
         },
-        easing: EasingType.EaseOut,
+        easing: EasingType.Linear,
         pathType: PathType.Linear,
         keyType: { type: 'Frame' },
         curveData: null

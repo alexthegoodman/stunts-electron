@@ -11,6 +11,8 @@ export class WebCapture {
   lastMousePosition: { x: number; y: number } | null = null
   captureStartTime: number = 0
   mouseTrackingInterval: number | null = null
+  hoverStartTime: number | null = null
+  hoverStartPosition: { x: number; y: number } | null = null
 
   constructor() {}
 
@@ -84,39 +86,54 @@ export class WebCapture {
   startMouseTracking(): void {
     this.mousePositions = []
     this.lastMousePosition = null
+    this.hoverStartTime = null
+    this.hoverStartPosition = null
     this.captureStartTime = Date.now()
 
     // Poll mouse position every 16ms (~60fps)
-    // TODO: need to instead do a more advanced algorithm where we check if the mouse position has hovered around a certain area for 3 seconds or longer
     this.mouseTrackingInterval = window.setInterval(() => {
       const currentPosition = window.electron.ipcRenderer.invoke('screen:getCursorPosition')
 
       currentPosition
         .then((pos: { x: number; y: number }) => {
-          if (this.lastMousePosition) {
+          const now = Date.now()
+
+          // Check if mouse is within hover radius of the hover start position
+          if (this.hoverStartPosition) {
             const distance = Math.sqrt(
-              Math.pow(pos.x - this.lastMousePosition.x, 2) +
-                Math.pow(pos.y - this.lastMousePosition.y, 2)
+              Math.pow(pos.x - this.hoverStartPosition.x, 2) +
+                Math.pow(pos.y - this.hoverStartPosition.y, 2)
             )
 
-            if (distance >= 200) {
-              const timestamp = Date.now() - this.captureStartTime
-              this.mousePositions.push({
-                x: pos.x,
-                y: pos.y,
-                timestamp
-              })
-              this.lastMousePosition = pos
+            if (distance <= 200) {
+              // Still hovering in the same area
+              const hoverDuration = now - (this.hoverStartTime || now)
+
+              if (hoverDuration >= 2000) {
+                // Hovered for 2+ seconds - record this position
+                const timestamp = now - this.captureStartTime
+                this.mousePositions.push({
+                  x: this.hoverStartPosition.x,
+                  y: this.hoverStartPosition.y,
+                  timestamp
+                })
+
+                // Reset hover tracking to avoid duplicate recordings
+                this.hoverStartTime = null
+                this.hoverStartPosition = null
+              }
+            } else {
+              // Moved outside hover radius - start tracking new position
+              this.hoverStartTime = now
+              this.hoverStartPosition = pos
             }
           } else {
-            // First position
-            this.lastMousePosition = pos
-            this.mousePositions.push({
-              x: pos.x,
-              y: pos.y,
-              timestamp: 0
-            })
+            // First position or starting new hover
+            this.hoverStartTime = now
+            this.hoverStartPosition = pos
           }
+
+          this.lastMousePosition = pos
         })
         .catch((err) => {
           console.error('Error getting cursor position:', err)
