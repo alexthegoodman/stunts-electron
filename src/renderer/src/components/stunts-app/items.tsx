@@ -82,9 +82,9 @@ export const ProjectItem = ({
   const handleDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
 
-    if (!authToken || !user || user.role !== 'ADMIN') {
-      return
-    }
+    // if (!authToken || !user || user.role !== 'ADMIN') {
+    //   return
+    // }
 
     if (
       !confirm(`Are you sure you want to delete "${project_label}"? This action cannot be undone.`)
@@ -128,17 +128,15 @@ export const ProjectItem = ({
       >
         {t('Duplicate')}
       </button>
-      {user?.role === 'ADMIN' && (
-        <button
-          className="w-24 rounded-xl flex items-center justify-center p-2 bg-red-500
+      <button
+        className="w-24 rounded-xl flex items-center justify-center p-2 bg-red-500
                hover:bg-red-600 hover:cursor-pointer 
               active:bg-red-700 transition-colors text-white"
-          disabled={loading}
-          onClick={handleDelete}
-        >
-          {t('Delete')}
-        </button>
-      )}
+        disabled={loading}
+        onClick={handleDelete}
+      >
+        {t('Delete')}
+      </button>
     </div>
   )
 }

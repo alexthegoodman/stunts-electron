@@ -28,10 +28,12 @@ export function create_keyframes_from_mouse_positions(
   sourceData?: {
     id: string
     name: string
-    width: number
-    height: number
-    x: number
-    y: number
+    bounds: {
+      width: number
+      height: number
+      x: number
+      y: number
+    }
     scaleFactor: number
   }
 ): AnimationData {
@@ -47,53 +49,51 @@ export function create_keyframes_from_mouse_positions(
   // Create Zoom keyframes from mouse positions
   let zoom_keyframes: UIKeyframe[] = []
 
-  if (mouse_positions.length > 0) {
-    // Get the first mouse position as reference point (screen coords)
-    const firstMousePos = mouse_positions[0]
+  console.info('sourceData ', sourceData, mouse_positions, video_dimensions)
 
+  if (mouse_positions.length > 0 && sourceData) {
+    let scaled_positions: any[] = []
     mouse_positions.forEach((mousePos, index) => {
-      // Calculate offset from first position (in screen coordinates)
-      const offsetX = mousePos.x - firstMousePos.x
-      const offsetY = mousePos.y - firstMousePos.y
-
-      // Convert screen coordinates to source window relative coordinates if sourceData is available
-      let scaledOffsetX: number
-      let scaledOffsetY: number
-
-      if (sourceData && sourceData.width > 0 && sourceData.height > 0) {
-        // Scale the offset based on the actual source window dimensions
-        // Account for DPI scaling with scaleFactor
-        const sourceWidthScaled = sourceData.width * sourceData.scaleFactor
-        const sourceHeightScaled = sourceData.height * sourceData.scaleFactor
-
-        // Convert screen offset to normalized coordinates (0-1 range) based on source size
-        const normalizedOffsetX = offsetX / sourceWidthScaled
-        const normalizedOffsetY = offsetY / sourceHeightScaled
-
-        // Scale to video display dimensions (800x500 from ToolGrid)
-        scaledOffsetX = normalizedOffsetX * 800
-        scaledOffsetY = normalizedOffsetY * 500
-      } else {
-        // Fallback: Scale the offset to be relative to video dimensions
-        // The video starts at 800x500 (from ToolGrid)
-        scaledOffsetX = (offsetX / video_dimensions[0]) * 800
-        scaledOffsetY = (offsetY / video_dimensions[1]) * 500
+      // Check if mouse position data is valid
+      if (mousePos.x == null || mousePos.y == null) {
+        console.warn('Skipping mouse position with null/undefined coordinates:', mousePos)
+        return
       }
+
+      // Adjust mouse position relative to window bounds
+      let adjustedMouseX = mousePos.x - sourceData.bounds.x
+      let adjustedMouseY = mousePos.y - sourceData.bounds.y
+
+      // Normalize to video dimensions (800x500)
+      let scaledX = (adjustedMouseX / sourceData.bounds.width) * 800
+      let scaledY = (adjustedMouseY / sourceData.bounds.height) * 500
 
       // Calculate zoom level: animate from 100 to 135 and back to 100
       // Use sine wave to create smooth in-and-out animation
       const progress = index / (mouse_positions.length - 1 || 1)
       const zoomLevel = 100 + 35 * Math.sin(progress * Math.PI)
 
+      scaled_positions.push({
+        timestamp: mousePos.timestamp,
+        scaledX,
+        scaledY,
+        zoomLevel
+      })
+    })
+
+    console.info('scaled_positions ', scaled_positions)
+
+    scaled_positions.forEach((scaled, index) => {
       // Create Zoom keyframe with position and zoom level
       zoom_keyframes.push({
         id: uuidv4().toString(),
-        time: Math.min(mousePos.timestamp, durationMs),
+        time: Math.min(scaled.timestamp, durationMs),
         value: {
           type: 'Zoom',
           value: {
-            position: [initial_position.x + scaledOffsetX, initial_position.y + scaledOffsetY],
-            zoomLevel: zoomLevel
+            // position: [initial_position.x + scaledOffsetX, initial_position.y + scaledOffsetY],
+            position: [scaled.scaledX, scaled.scaledY],
+            zoomLevel: scaled.zoomLevel
           }
         },
         easing: EasingType.Linear,

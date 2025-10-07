@@ -135,13 +135,7 @@ export const ToolGrid = ({
 
         // Get mouse positions from webCapture and pass to import_video
         const mousePositions = webCapture.mousePositions
-        await import_video(
-          currentSequenceId,
-          tempResult.data.url,
-          fileName,
-          mousePositions,
-          selectedSourceData
-        )
+        await import_video(currentSequenceId, tempResult.data.url, fileName, mousePositions, source)
       } catch (error: any) {
         console.error('Screen capture error:', error)
         toast.error(error.message || 'Failed to capture screen')
