@@ -34,6 +34,7 @@ import { StVideoConfig } from '../../engine/video'
 import { Description, Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
+import { SourceSelectionModal } from './SourceSelectionModal'
 
 export const ToolGrid = ({
   editorRef,
@@ -63,6 +64,8 @@ export const ToolGrid = ({
   const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
 
   const [isCapturing, setIsCapturing] = useState(false)
+  const [isSourceModalOpen, setIsSourceModalOpen] = useState(false)
+  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -96,7 +99,9 @@ export const ToolGrid = ({
     'star1.png'
   ]
 
-  const handleStartCapture = async () => {
+  const handleSourceSelected = async (sourceId: string) => {
+    setSelectedSourceId(sourceId)
+
     let webCapture = webCaptureRef.current
 
     if (!webCapture || !currentSequenceId) {
@@ -105,32 +110,43 @@ export const ToolGrid = ({
 
     setIsCapturing(true)
 
-    await webCapture.startScreenCapture()
-
-    const blob = await webCapture.startRecording()
-
-    // For screen capture, we need to save blob to temp file first
-    const fileName = uuidv4() + '.mp4'
-    const arrayBuffer = await blob.arrayBuffer()
-    const tempFileName = `temp_${Date.now()}_${fileName}`
-
     try {
-      const tempResult = await window.api.uploads.saveVideo({
-        fileName: tempFileName,
-        buffer: arrayBuffer,
-        mimeType: 'video/mp4'
-      })
+      await webCapture.startScreenCapture(sourceId)
 
-      if (!tempResult.success) {
-        throw new Error(tempResult.error || 'Failed to save temp video')
+      const blob = await webCapture.startRecording()
+
+      // For screen capture, we need to save blob to temp file first
+      const fileName = uuidv4() + '.mp4'
+      const arrayBuffer = await blob.arrayBuffer()
+      const tempFileName = `temp_${Date.now()}_${fileName}`
+
+      try {
+        const tempResult = await window.api.uploads.saveVideo({
+          fileName: tempFileName,
+          buffer: arrayBuffer,
+          mimeType: 'video/mp4'
+        })
+
+        if (!tempResult.success) {
+          throw new Error(tempResult.error || 'Failed to save temp video')
+        }
+
+        await import_video(currentSequenceId, tempResult.data.url, fileName)
+      } catch (error: any) {
+        console.error('Screen capture error:', error)
+        toast.error(error.message || 'Failed to capture screen')
+        setIsCapturing(false)
       }
-
-      await import_video(currentSequenceId, tempResult.data.url, fileName)
     } catch (error: any) {
-      console.error('Screen capture error:', error)
-      toast.error(error.message || 'Failed to capture screen')
+      console.error('Screen capture initialization error:', error)
+      toast.error(error.message || 'Failed to start screen capture')
       setIsCapturing(false)
     }
+  }
+
+  const handleStartCapture = () => {
+    // Open the source selection modal
+    setIsSourceModalOpen(true)
   }
 
   const handleStopCapture = () => {
@@ -1323,6 +1339,12 @@ export const ToolGrid = ({
           />
         )}
       </div>
+
+      <SourceSelectionModal
+        isOpen={isSourceModalOpen}
+        setIsOpen={setIsSourceModalOpen}
+        onSourceSelected={handleSourceSelected}
+      />
     </>
   )
 }

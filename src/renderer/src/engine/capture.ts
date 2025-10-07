@@ -10,16 +10,23 @@ export class WebCapture {
     return isSupported;
   }
 
-  async startScreenCapture(): Promise<void> {
+  async startScreenCapture(sourceId: string): Promise<void> {
     try {
-      this.mediaStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
+      // Use Electron's desktopCapturer via the exposed API
+      // The sourceId should be obtained from the SourceSelectionModal
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({
         audio: false,
+        video: {
+          // @ts-ignore - Electron-specific constraint
+          mandatory: {
+            chromeMediaSource: "desktop",
+            chromeMediaSourceId: sourceId,
+          },
+        },
       });
-      //   return stream;
     } catch (error) {
       console.error("Error accessing screen capture:", error);
-      //   return null;
+      throw error;
     }
   }
 

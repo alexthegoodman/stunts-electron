@@ -75,6 +75,17 @@ declare global {
           outputDir?: string
         }) => Promise<any>
       }
+      screenCapture: {
+        getSources: () => Promise<
+          Array<{
+            id: string
+            name: string
+            thumbnail: string
+            appIcon?: string
+            hwnd?: string
+          }>
+        >
+      }
     }
   }
 }

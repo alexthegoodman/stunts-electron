@@ -66,6 +66,11 @@ const api = {
     resizeFromPath: (data: { inputPath: string; maxWidth: number; maxHeight: number; outputDir?: string }) =>
       ipcRenderer.invoke('video:resizeFromPath', data),
   },
+
+  // Screen Capture APIs
+  screenCapture: {
+    getSources: () => ipcRenderer.invoke('screen-capture:getSources'),
+  },
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
