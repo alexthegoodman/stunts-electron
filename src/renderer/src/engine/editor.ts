@@ -1578,7 +1578,54 @@ export class Editor {
 
       // restored_video.drawVideoFrame(device!, queue).catch(console.error); // Handle potential errors
 
+      if (saved_sequence.polygonMotionPaths) {
+        let objectId = i.id
+        const animationData = saved_sequence.polygonMotionPaths.find(
+          (anim) => anim.polygonId === objectId
+        )
+        if (!animationData) {
+          console.warn(`Couldn't find animation data for object ${objectId}`)
+          return
+        }
+        // add mouse zoom path if available
+        const zoomProperty = animationData.properties.find(
+          (prop) =>
+            // prop.name.startsWith("Position")
+            prop.propertyPath === 'zoom'
+        )
+        if (!zoomProperty) {
+          // console.warn(`Couldn't find zoom property for object ${objectId}`);
+          return
+        } else {
+          console.info('Found zoom property for ', objectId)
+        }
+        // Sort keyframes by time
+        const zoomKeyframes = [...zoomProperty.keyframes].sort((a, b) => a.time - b.time)
+        const initialZoomPosition: [number, number] = animationData.position
+
+        console.info('creating new zoom path', initialZoomPosition)
+
+        const zoomPath = new MotionPath(
+          device!,
+          queue!,
+          this.modelBindGroupLayout!,
+          this.groupBindGroupLayout!,
+          // this.gradientBindGroupLayout,
+          objectId, // good association? no need to drag full zoom path?
+          camera.windowSize,
+          zoomKeyframes,
+          camera,
+          saved_sequence,
+          1,
+          objectId,
+          initialZoomPosition
+        )
+
+        restored_video.mousePath = zoomPath
+      }
+
       this.videoItems.push(restored_video)
+
       console.log('Video restored...')
     }
 
