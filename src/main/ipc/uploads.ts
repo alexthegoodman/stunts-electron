@@ -351,8 +351,10 @@ export function registerUploadHandlers(): void {
   ipcMain.handle('uploads:getVideo', async (_event, fileName: string) => {
     try {
       const uploadsDir = getUploadsDir()
-      const videoPath = path.join(uploadsDir, 'videos', fileName)
+      // const videoPath = path.join(uploadsDir, 'videos', fileName)
+      const videoPath = fileName
 
+      console.info('reading video', videoPath)
       const buffer = await fs.readFile(videoPath)
       const mimeType = getMimeTypeFromBuffer(buffer, 'video') || 'video/mp4'
 

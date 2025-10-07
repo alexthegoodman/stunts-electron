@@ -16,7 +16,9 @@ import { fileToBlob, StImageConfig } from '../../engine/image'
 import {
   AuthToken,
   getUploadedVideoData,
-  resizeAndSaveVideo,
+  resizeVideoFromPath,
+  saveVideoFromPath,
+  selectVideo,
   saveImage
 } from '../../fetchers/projects'
 import { Sequence } from '../../engine/animations'
@@ -64,8 +66,6 @@ export const ToolGrid = ({
   const [uploadProgress, setUploadProgress] = useState(0)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const videoInputRef = useRef<HTMLInputElement | null>(null)
-  const mockupVideoInputRef = useRef<HTMLInputElement | null>(null)
 
   const [generateImageModalOpen, setGenerateImageModalOpen] = useState(false)
   const [generateImagePrompt, setGenerateImagePrompt] = useState('')
@@ -109,7 +109,28 @@ export const ToolGrid = ({
 
     const blob = await webCapture.startRecording()
 
-    await import_video(currentSequenceId, uuidv4() + '.mp4', blob)
+    // For screen capture, we need to save blob to temp file first
+    const fileName = uuidv4() + '.mp4'
+    const arrayBuffer = await blob.arrayBuffer()
+    const tempFileName = `temp_${Date.now()}_${fileName}`
+
+    try {
+      const tempResult = await window.api.uploads.saveVideo({
+        fileName: tempFileName,
+        buffer: arrayBuffer,
+        mimeType: 'video/mp4'
+      })
+
+      if (!tempResult.success) {
+        throw new Error(tempResult.error || 'Failed to save temp video')
+      }
+
+      await import_video(currentSequenceId, tempResult.data.url, fileName)
+    } catch (error: any) {
+      console.error('Screen capture error:', error)
+      toast.error(error.message || 'Failed to capture screen')
+      setIsCapturing(false)
+    }
   }
 
   const handleStopCapture = () => {
@@ -464,7 +485,7 @@ export const ToolGrid = ({
   }
 
   let import_video = useCallback(
-    async (sequence_id: string, name: string, blob: Blob) => {
+    async (sequence_id: string, filePath: string, fileName: string) => {
       let editor = editorRef.current
       let editor_state = editorStateRef.current
 
@@ -472,15 +493,15 @@ export const ToolGrid = ({
         return
       }
 
-      if (!authToken) {
-        return
-      }
-
       try {
-        setUserMessage(`Resizing video: ${name}...`)
+        setUserMessage(`Resizing video: ${fileName}...`)
+        console.info(`Resizing video: ${fileName}...`, filePath)
 
-        // Resize and save video using path-based flow
-        let response = await resizeAndSaveVideo(blob, name)
+        // Resize video from path
+        const { outputPath } = await resizeVideoFromPath(filePath, 1200, 900)
+
+        // Save the resized video
+        const response = await saveVideoFromPath(outputPath, fileName)
 
         setUserMessage('')
 
@@ -489,7 +510,12 @@ export const ToolGrid = ({
 
           console.info('File url:', url)
 
-          // let actualBlob = await getUploadedVideoData(url);
+          // Get the resized video blob
+          const resizedVideoBlob = await getUploadedVideoData(url)
+
+          if (!resizedVideoBlob) {
+            throw new Error('Failed to get resized video blob')
+          }
 
           if (!editor.settings) {
             console.error('Editor settings are not defined.')
@@ -594,14 +620,16 @@ export const ToolGrid = ({
   )
 
   let on_add_video = useCallback(
-    async (sequence_id: string, file: File) => {
-      let blob = await fileToBlob(file)
-
-      if (!blob) {
-        return
+    async (sequence_id: string) => {
+      try {
+        const { filePath, fileName } = await selectVideo()
+        await import_video(sequence_id, filePath, fileName)
+      } catch (error: any) {
+        if (error.message !== 'No file selected') {
+          console.error('Video selection error:', error)
+          toast.error(error.message || 'Failed to select video')
+        }
       }
-
-      await import_video(sequence_id, file.name, blob)
     },
     [import_video]
   )
@@ -669,15 +697,11 @@ export const ToolGrid = ({
   }
 
   const on_add_mockup3d = useCallback(
-    async (sequence_id: string, file: File) => {
+    async (sequence_id: string) => {
       let editor = editorRef.current
       let editor_state = editorStateRef.current
 
       if (!editor || !editor_state) {
-        return
-      }
-
-      if (!authToken) {
         return
       }
 
@@ -686,17 +710,16 @@ export const ToolGrid = ({
         return
       }
 
-      let blob = await fileToBlob(file)
-
-      if (!blob) {
-        return
-      }
-
       try {
-        setUserMessage(`Processing mockup video: ${file.name}...`)
+        const { filePath, fileName } = await selectVideo()
 
-        // Resize and save video using path-based flow
-        let response = await resizeAndSaveVideo(blob, file.name)
+        setUserMessage(`Processing mockup video: ${fileName}...`)
+
+        // Resize video from path
+        const { outputPath } = await resizeVideoFromPath(filePath, 1200, 900)
+
+        // Save the resized video
+        const response = await saveVideoFromPath(outputPath, fileName)
 
         setUserMessage('')
 
@@ -704,6 +727,13 @@ export const ToolGrid = ({
           let url = response.url
 
           console.info('Mockup video url:', url)
+
+          // Get the resized video blob
+          const resizedVideoBlob = await getUploadedVideoData(url)
+
+          if (!resizedVideoBlob) {
+            throw new Error('Failed to get resized video blob')
+          }
 
           const random_number_800 = getRandomNumber(100, editor.settings.dimensions.width)
           const random_number_450 = getRandomNumber(100, editor.settings.dimensions.height)
@@ -930,35 +960,18 @@ export const ToolGrid = ({
         )}
 
         {options.includes('video') && (
-          <>
-            <input
-              type="file"
-              ref={videoInputRef}
-              accept="video/*"
-              style={{ display: 'none' }}
-              aria-label="Select video file to upload"
-              onChange={(e) => {
-                // Handle the selected file here
-                if (!e.target.files || !currentSequenceId) {
-                  return
-                }
-
-                const file = e.target.files[0]
-                if (file) {
-                  // Do something with the file
-                  console.log('Selected file:', file)
-                  on_add_video(currentSequenceId, file)
-                }
-              }}
-            />
-            <OptionButton
-              style={{}}
-              label={t('Add Video')}
-              icon="video"
-              aria-label="Browse and add a video file to the canvas"
-              callback={() => videoInputRef.current?.click()}
-            />
-          </>
+          <OptionButton
+            style={{}}
+            label={t('Add Video')}
+            icon="video"
+            aria-label="Browse and add a video file to the canvas"
+            callback={() => {
+              if (!currentSequenceId) {
+                return
+              }
+              on_add_video(currentSequenceId)
+            }}
+          />
         )}
 
         {options.includes('capture') && (
@@ -1296,33 +1309,18 @@ export const ToolGrid = ({
         )}
 
         {options.includes('mockup3d') && (
-          <>
-            <input
-              type="file"
-              ref={mockupVideoInputRef}
-              accept="video/*"
-              style={{ display: 'none' }}
-              aria-label="Select video file for laptop mockup"
-              onChange={(e) => {
-                if (!e.target.files || !currentSequenceId) {
-                  return
-                }
-
-                const file = e.target.files[0]
-                if (file) {
-                  console.log('Selected mockup video file:', file)
-                  on_add_mockup3d(currentSequenceId, file)
-                }
-              }}
-            />
-            <OptionButton
-              style={{}}
-              label={t('Add Laptop Mockup')}
-              icon="laptop"
-              aria-label="Add a laptop mockup with video screen"
-              callback={() => mockupVideoInputRef.current?.click()}
-            />
-          </>
+          <OptionButton
+            style={{}}
+            label={t('Add Laptop Mockup')}
+            icon="laptop"
+            aria-label="Add a laptop mockup with video screen"
+            callback={() => {
+              if (!currentSequenceId) {
+                return
+              }
+              on_add_mockup3d(currentSequenceId)
+            }}
+          />
         )}
       </div>
     </>
