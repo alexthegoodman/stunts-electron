@@ -474,12 +474,19 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
           }
           case ObjectType.VideoItem: {
             console.info('saving point', point)
+            let videoDimesions = [0, 0]
             s.activeVideoItems.forEach((si) => {
               if (si.id == object_id) {
                 si.position = {
                   x: point.x,
                   y: point.y
                 }
+                videoDimesions = si.dimensions
+              }
+            })
+            s.polygonMotionPaths?.forEach((si) => {
+              if (si.polygonId == object_id) {
+                si.position = [point.x - videoDimesions[0] / 2, point.y - videoDimesions[1] / 2]
               }
             })
             break
@@ -513,6 +520,22 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         // Update motion path positions when objects are moved
         if (s.polygonMotionPaths) {
           s.polygonMotionPaths.forEach((motionPath) => {
+            // if (object_type === ObjectType.VideoItem) {
+            //   console.info('getting there....')
+            //   let si = editor.videoItems.find((si) => {
+            //     if (si.id == object_id) {
+            //       return si
+            //     }
+            //   })
+
+            //   if (si?.mousePath) {
+            //     console.info('setting it!!!!', si?.mousePath.transform.position)
+            //     motionPath.position = [
+            //       si?.mousePath.transform.position[0],
+            //       si?.mousePath.transform.position[1]
+            //     ]
+            //   }
+            // } else
             if (motionPath.polygonId === object_id) {
               let livePath = editor.motionPaths.find((mp) => mp.associatedPolygonId === object_id)
 
@@ -534,9 +557,11 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
     console.info('Position updated!')
 
-    editor?.updateMotionPaths(last_saved_state.sequences[0])
-
     let current_sequence_data = last_saved_state.sequences.find((s) => s.id === current_sequence_id)
+
+    editor?.updateMotionPaths(current_sequence_data!)
+
+    editor.currentSequenceData = current_sequence_data!
 
     if (!current_sequence_data || !selected_keyframes) {
       return null

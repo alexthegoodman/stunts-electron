@@ -5123,6 +5123,12 @@ export class Editor {
         this.dragStart = this.lastTopLeft
 
         video_item.transform.startPosition = vec2.fromValues(this.dragStart.x, this.dragStart.y)
+        if (video_item.mousePath) {
+          video_item.mousePath.transform.startPosition = vec2.fromValues(
+            this.dragStart.x,
+            this.dragStart.y
+          )
+        }
 
         console.info('Video interaction')
 
@@ -6274,21 +6280,48 @@ export class Editor {
       }
     })
 
+    // Get the original position when drag started
+    const originalX2 = video_item.mousePath?.transform.startPosition
+      ? video_item.mousePath?.transform.startPosition[0]
+      : video_item.mousePath?.transform.position[0]
+    const originalY2 = video_item.mousePath?.transform.startPosition
+      ? video_item.mousePath?.transform.startPosition[1]
+      : video_item.mousePath?.transform.position[1]
+
+    // On first drag, store original position
+    if (video_item.mousePath && !video_item.mousePath?.transform.startPosition) {
+      video_item.mousePath.transform.startPosition = vec2.fromValues(
+        video_item.mousePath.transform.position[0],
+        video_item.mousePath.transform.position[1]
+      )
+    }
+
+    // Calculate new position based on original position + total movement
+    let new_position2 = {
+      x:
+        (originalX2 ? roundToGrid(originalX2 + dx, this.gridSnap) : dx) -
+        video_item.dimensions[0] / 2,
+      y:
+        (originalY2 ? roundToGrid(originalY2 + dy, this.gridSnap) : dy) -
+        video_item.dimensions[1] / 2
+    }
+
+    console.info(
+      'originalX2',
+      video_item.mousePath?.transform.position,
+      originalX2,
+      originalY2,
+      new_position2
+    )
+
     // Also check video items for motion paths (self-reference case)
-    // this.videoItems.forEach((videoItem) => {
-    //   if (
-    //     videoItem.mousePath &&
-    //     videoItem.mousePath.associatedPolygonId === video_id
-    //   ) {
-    //     videoItem.mousePath.updateDataFromPosition(
-    //       windowSize,
-    //       device!,
-    //       this.modelBindGroupLayout!,
-    //       new_position,
-    //       camera
-    //     );
-    //   }
-    // });
+    video_item?.mousePath?.updateDataFromPosition(
+      windowSize,
+      device!,
+      this.modelBindGroupLayout!,
+      new_position2,
+      camera
+    )
 
     // this.dragStart = mouse_pos;
     // this.update_guide_lines(poly_index, windowSize);

@@ -1,39 +1,33 @@
-import { mat4, vec2, vec3 } from "gl-matrix";
-import { v4 as uuidv4 } from "uuid";
+import { mat4, vec2, vec3 } from 'gl-matrix'
+import { v4 as uuidv4 } from 'uuid'
 
-import {
-  EasingType,
-  KeyType,
-  KeyframeValue,
-  Sequence,
-  UIKeyframe,
-} from "./animations"; // Import your animation types
-import { Camera, WindowSize } from "./camera"; // Import your camera type
-import { getFullColor, interpolatePosition, rgbToWgpu, Point } from "./editor"; // Import your editor functions and types
-import { Polygon, SavedPoint, Stroke, INTERNAL_LAYER_SPACE } from "./polygon"; // Import your polygon types
-import { matrix4ToRawArray, Transform } from "./transform"; // Import your transform functions and types
-import { getZLayer, Vertex } from "./vertex"; // Import your vertex functions and types
+import { EasingType, KeyType, KeyframeValue, Sequence, UIKeyframe } from './animations' // Import your animation types
+import { Camera, WindowSize } from './camera' // Import your camera type
+import { getFullColor, interpolatePosition, rgbToWgpu, Point } from './editor' // Import your editor functions and types
+import { Polygon, SavedPoint, Stroke, INTERNAL_LAYER_SPACE } from './polygon' // Import your polygon types
+import { matrix4ToRawArray, Transform } from './transform' // Import your transform functions and types
+import { getZLayer, Vertex } from './vertex' // Import your vertex functions and types
 import {
   PolyfillBindGroup,
   PolyfillBindGroupLayout,
   PolyfillBuffer,
   PolyfillDevice,
-  PolyfillQueue,
-} from "./polyfill";
+  PolyfillQueue
+} from './polyfill'
 
 // maybe unnecessary for MotionPath
 export interface MotionPathConfig {
-  id: string;
-  dimensions: [number, number];
-  position: Point;
+  id: string
+  dimensions: [number, number]
+  position: Point
 }
 
 export class MotionPath {
-  public id: string;
-  public transform: Transform;
-  public bindGroup: PolyfillBindGroup;
-  public staticPolygons: Polygon[];
-  public associatedPolygonId: string;
+  public id: string
+  public transform: Transform
+  public bindGroup: PolyfillBindGroup
+  public staticPolygons: Polygon[]
+  public associatedPolygonId: string
 
   constructor(
     device: PolyfillDevice,
@@ -50,48 +44,45 @@ export class MotionPath {
     associatedPolygonId: string,
     initialPosition: [number, number]
   ) {
-    const [fillR, fillG, fillB] = getFullColor(colorIndex);
-    const pathFill = rgbToWgpu(fillR, fillG, fillB, 255.0);
+    const [fillR, fillG, fillB] = getFullColor(colorIndex)
+    const pathFill = rgbToWgpu(fillR, fillG, fillB, 255.0)
 
-    const polygonId = associatedPolygonId;
+    const polygonId = associatedPolygonId
 
-    this.staticPolygons = [];
+    this.staticPolygons = []
 
     // Create path segments between consecutive keyframes
-    let pairsDone = 0;
+    let pairsDone = 0
     for (let i = 0; i < keyframes.length - 1; i++) {
-      const startKf = keyframes[i];
-      const endKf = keyframes[i + 1];
+      const startKf = keyframes[i]
+      const endKf = keyframes[i + 1]
 
-      const startKfId = startKf.id;
-      const endKfId = endKf.id;
+      const startKfId = startKf.id
+      const endKfId = endKf.id
 
       // console.info("keyframes", startKf, endKf);
 
-      let startPos = [0, 0];
-      let endPos = [0, 0];
-      let startPoint: Point = { x: 0, y: 0 };
-      let endPoint: Point = { x: 0, y: 0 };
+      let startPos = [0, 0]
+      let endPos = [0, 0]
+      let startPoint: Point = { x: 0, y: 0 }
+      let endPoint: Point = { x: 0, y: 0 }
 
-      if (
-        startKf.value.type === "Position" &&
-        endKf.value.type === "Position"
-      ) {
-        startPos = startKf.value.value as [number, number];
-        endPos = endKf.value.value as [number, number];
-        startPoint = { x: startPos[0], y: startPos[1] };
-        endPoint = { x: endPos[0], y: endPos[1] };
-      } else if (startKf.value.type === "Zoom" && endKf.value.type === "Zoom") {
-        startPos = startKf.value.value.position as [number, number];
-        endPos = endKf.value.value.position as [number, number];
-        startPoint = { x: startPos[0], y: startPos[1] };
-        endPoint = { x: endPos[0], y: endPos[1] };
+      if (startKf.value.type === 'Position' && endKf.value.type === 'Position') {
+        startPos = startKf.value.value as [number, number]
+        endPos = endKf.value.value as [number, number]
+        startPoint = { x: startPos[0], y: startPos[1] }
+        endPoint = { x: endPos[0], y: endPos[1] }
+      } else if (startKf.value.type === 'Zoom' && endKf.value.type === 'Zoom') {
+        startPos = startKf.value.value.position as [number, number]
+        endPos = endKf.value.value.position as [number, number]
+        startPoint = { x: startPos[0], y: startPos[1] }
+        endPoint = { x: endPos[0], y: endPos[1] }
       } else {
-        continue;
+        continue
       }
 
       // Create intermediate points for curved paths if using non-linear easing
-      const numSegments = startKf.easing === EasingType.Linear ? 1 : 9; // More segments for smooth curves
+      const numSegments = startKf.easing === EasingType.Linear ? 1 : 9 // More segments for smooth curves
 
       // console.info("MotionPath ", startPos, endPos);
 
@@ -110,21 +101,21 @@ export class MotionPath {
           sequence.id,
           pathFill,
           0.0
-        );
+        )
 
-        handle.sourcePolygonId = polygonId;
-        handle.sourceKeyframeId = startKfId;
-        handle.sourcePathId = newId;
+        handle.sourcePolygonId = polygonId
+        handle.sourceKeyframeId = startKfId
+        handle.sourcePathId = newId
 
-        handle.updateGroupPosition(initialPosition);
+        handle.updateGroupPosition(initialPosition)
 
-        this.staticPolygons.push(handle);
+        this.staticPolygons.push(handle)
       }
 
       // handles for remaining keyframes
 
       let handle =
-        endKf.keyType.type === "Frame"
+        endKf.keyType.type === 'Frame'
           ? createPathHandle(
               windowSize,
               device,
@@ -152,40 +143,40 @@ export class MotionPath {
               sequence.id,
               pathFill,
               45.0
-            );
+            )
 
-      handle.sourcePolygonId = polygonId;
-      handle.sourceKeyframeId = endKfId;
-      handle.sourcePathId = newId;
+      handle.sourcePolygonId = polygonId
+      handle.sourceKeyframeId = endKfId
+      handle.sourcePathId = newId
 
-      handle.updateGroupPosition(initialPosition);
+      handle.updateGroupPosition(initialPosition)
 
-      this.staticPolygons.push(handle);
+      this.staticPolygons.push(handle)
 
-      const segmentDuration = (endKf.time - startKf.time) / numSegments;
+      const segmentDuration = (endKf.time - startKf.time) / numSegments
 
       // console.info("Segment duration", segmentDuration);
 
-      let odd = false;
+      let odd = false
       for (let j = 0; j < numSegments; j++) {
-        const t1 = startKf.time + segmentDuration * j;
-        const t2 = startKf.time + segmentDuration * (j + 1);
+        const t1 = startKf.time + segmentDuration * j
+        const t2 = startKf.time + segmentDuration * (j + 1)
 
         // console.info("Segment t", t1, t2);
 
-        const pos1 = interpolatePosition(startKf, endKf, t1);
-        const pos2 = interpolatePosition(startKf, endKf, t2);
+        const pos1 = interpolatePosition(startKf, endKf, t1)
+        const pos2 = interpolatePosition(startKf, endKf, t2)
 
-        const pathStart: Point = { x: pos1[0], y: pos1[1] };
-        const pathEnd: Point = { x: pos2[0], y: pos2[1] };
+        const pathStart: Point = { x: pos1[0], y: pos1[1] }
+        const pathEnd: Point = { x: pos2[0], y: pos2[1] }
 
         // Calculate rotation angle from start to end point
-        const dx = pathEnd.x - pathStart.x;
-        const dy = pathEnd.y - pathStart.y;
-        const rotation = Math.atan2(dy, dx);
+        const dx = pathEnd.x - pathStart.x
+        const dy = pathEnd.y - pathStart.y
+        const rotation = Math.atan2(dy, dx)
 
         // Calculate length of the segment
-        const length = Math.sqrt(dx * dx + dy * dy);
+        const length = Math.sqrt(dx * dx + dy * dy)
 
         // console.info(
         //   "Segment",
@@ -211,16 +202,16 @@ export class MotionPath {
           pathFill,
           rotation,
           length
-        );
+        )
 
-        segment.sourcePathId = newId;
-        segment.updateGroupPosition(initialPosition);
+        segment.sourcePathId = newId
+        segment.updateGroupPosition(initialPosition)
 
-        this.staticPolygons.push(segment);
+        this.staticPolygons.push(segment)
 
         // arrow for indicating direction of motion
         if (odd) {
-          const arrowOrientationOffset = -Math.PI / 2; // for upward-facing arrow
+          const arrowOrientationOffset = -Math.PI / 2 // for upward-facing arrow
           let arrow = createPathArrow(
             windowSize,
             device,
@@ -234,37 +225,35 @@ export class MotionPath {
             sequence.id,
             pathFill,
             rotation + arrowOrientationOffset
-          );
+          )
 
-          arrow.updateGroupPosition(initialPosition);
+          arrow.updateGroupPosition(initialPosition)
 
-          this.staticPolygons.push(arrow);
+          this.staticPolygons.push(arrow)
         }
 
-        odd = !odd;
+        odd = !odd
       }
 
-      pairsDone++;
+      pairsDone++
     }
 
-    const emptyBuffer = mat4.create();
-    const rawMatrix = matrix4ToRawArray(emptyBuffer);
+    const emptyBuffer = mat4.create()
+    const rawMatrix = matrix4ToRawArray(emptyBuffer)
 
     const uniformBuffer = device.createBuffer(
       {
-        label: "MotionPath Uniform Buffer",
+        label: 'MotionPath Uniform Buffer',
         size: rawMatrix.byteLength,
         usage:
-          process.env.NODE_ENV === "test"
-            ? 0
-            : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        mappedAtCreation: true,
+          process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
       },
-      "uniformMatrix4fv"
-    );
+      'uniformMatrix4fv'
+    )
 
-    if (process.env.NODE_ENV !== "test") {
-      new Float32Array(uniformBuffer.getMappedRange()).set(rawMatrix);
+    if (process.env.NODE_ENV !== 'test') {
+      new Float32Array(uniformBuffer.getMappedRange()).set(rawMatrix)
     }
 
     // Now create your bind group with these defaults
@@ -275,16 +264,18 @@ export class MotionPath {
           binding: 0,
           groupIndex: 3,
           resource: {
-            pbuffer: uniformBuffer,
-          },
-        },
-      ],
+            pbuffer: uniformBuffer
+          }
+        }
+      ]
       // label: "Motion Path Bind Group",
-    });
+    })
 
-    if (process.env.NODE_ENV !== "test") {
-      uniformBuffer.unmap();
+    if (process.env.NODE_ENV !== 'test') {
+      uniformBuffer.unmap()
     }
+
+    console.info('joyful position', initialPosition)
 
     const groupTransform = new Transform(
       vec2.fromValues(initialPosition[0], initialPosition[1]), // everything can move relative to this
@@ -294,13 +285,13 @@ export class MotionPath {
       vec2.fromValues(1.0, 1.0),
       uniformBuffer
       //   windowSize
-    );
+    )
 
-    groupTransform.updateUniformBuffer(queue, windowSize);
+    groupTransform.updateUniformBuffer(queue, windowSize)
 
-    this.id = newId;
-    this.transform = groupTransform;
-    this.associatedPolygonId = associatedPolygonId;
+    this.id = newId
+    this.transform = groupTransform
+    this.associatedPolygonId = associatedPolygonId
     // this.dimensions = dynamicDimensions;
   }
 
@@ -311,13 +302,39 @@ export class MotionPath {
     position: Point,
     camera: Camera
   ) {
-    this.transform.updatePosition([position.x, position.y], windowSize);
+    this.transform.updatePosition([position.x, position.y], windowSize)
 
     this.staticPolygons.forEach((p) => {
       // simply provides info to the polygon about its position, does not change the polygon's position
-      p.updateGroupPosition([position.x, position.y]);
-    });
+      // let deltaX = p.activeGroupPosition[0] > 0 ? position.x - p.activeGroupPosition[0] : 0
+      // let deltaY = p.activeGroupPosition[1] > 0 ? position.y - p.activeGroupPosition[1] : 0
+      // p.transform.updatePosition(
+      //   [p.transform.position[0] + deltaX, p.transform.position[1] + deltaY],
+      //   windowSize
+      // )
+      p.updateGroupPosition([position.x, position.y])
+    })
   }
+
+  // public updateDataFromDelta(
+  //   windowSize: WindowSize,
+  //   device: PolyfillDevice,
+  //   bindGroupLayout: PolyfillBindGroupLayout,
+  //   deltaX: number,
+  //   deltaY: number,
+  //   camera: Camera
+  // ) {
+  //   // this.transform.updatePosition([position.x, position.y], windowSize);
+
+  //   this.staticPolygons.forEach((p) => {
+  //     // simply provides info to the polygon about its position, does not change the polygon's position
+  //     p.transform.updatePosition(
+  //       [p.transform.position[0] + deltaX, p.transform.position[1] + deltaY],
+  //       windowSize
+  //     )
+  //     // p.updateGroupPosition([position.x, position.y])
+  //   })
+  // }
 }
 
 /// Creates a path segment using a rotated square
@@ -340,8 +357,8 @@ function createPathSegment(
   // Calculate segment midpoint for position
   const position: Point = {
     x: (start.x + end.x) / 2.0,
-    y: (start.y + end.y) / 2.0,
-  };
+    y: (start.y + end.y) / 2.0
+  }
 
   // Create polygon using default square points
   return new Polygon(
@@ -356,7 +373,7 @@ function createPathSegment(
       { x: 0.0, y: 0.0 },
       { x: 1.0, y: 0.0 },
       { x: 1.0, y: 1.0 },
-      { x: 0.0, y: 1.0 },
+      { x: 0.0, y: 1.0 }
     ],
     [length, thickness], // width = length of segment, height = thickness
     position,
@@ -364,18 +381,18 @@ function createPathSegment(
     0.0,
     // [0.5, 0.8, 1.0, 1.0], // light blue with some transparency
     // fill,
-    { type: "Color", value: fill },
+    { type: 'Color', value: fill },
     {
       thickness: 0.0,
-      fill: rgbToWgpu(0, 0, 0, 255.0),
+      fill: rgbToWgpu(0, 0, 0, 255.0)
     },
     -1.0,
     1, // positive to use INTERNAL_LAYER_SPACE
-    "motion_path_segment",
+    'motion_path_segment',
     uuidv4(),
     selectedSequenceId,
     false
-  );
+  )
 }
 
 /// Creates a path handle for dragging and showing direction
@@ -405,25 +422,25 @@ function createPathHandle(
       { x: 0.0, y: 0.0 },
       { x: 1.0, y: 0.0 },
       { x: 1.0, y: 1.0 },
-      { x: 0.0, y: 1.0 },
+      { x: 0.0, y: 1.0 }
     ],
     [size, size], // width = length of segment, height = thickness
     end,
     rotation,
     0.0,
     // fill,
-    { type: "Color", value: fill },
+    { type: 'Color', value: fill },
     {
       thickness: 0.0,
-      fill: rgbToWgpu(0, 0, 0, 255.0),
+      fill: rgbToWgpu(0, 0, 0, 255.0)
     },
     -1.0,
     1,
-    "motion_path_handle",
+    'motion_path_handle',
     uuidv4(),
     selectedSequenceId,
     false
-  );
+  )
 }
 
 /// Creates arrow for showing direction
@@ -457,7 +474,7 @@ function createPathArrow(
       // { x: 0.5, y: 1.0 },
       { x: 0.0, y: 0.0 },
       { x: 1.0, y: 0.0 },
-      { x: 0.5, y: 1.0 },
+      { x: 0.5, y: 1.0 }
       // { x: 0.0, y: 0.0 },
     ],
     [size, size],
@@ -465,18 +482,18 @@ function createPathArrow(
     rotation,
     0.0,
     // fill,
-    { type: "Color", value: fill },
+    { type: 'Color', value: fill },
     {
       thickness: 0.0,
-      fill: rgbToWgpu(0, 0, 0, 255.0),
+      fill: rgbToWgpu(0, 0, 0, 255.0)
     },
     -1.0,
     1,
-    "motion_path_arrow",
+    'motion_path_arrow',
     uuidv4(),
     selectedSequenceId,
     false
-  );
+  )
 }
 
-export { createPathSegment, createPathHandle, createPathArrow };
+export { createPathSegment, createPathHandle, createPathArrow }
