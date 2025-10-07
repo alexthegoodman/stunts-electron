@@ -1,8 +1,13 @@
-# stunts-electron
+# Stunts Cross-Platform
+
+The motion graphics editor of the future! A bold claim based on high-quality zooms, generative keyframes, perspective, and 3D mockups, as well as a powerful, custom-built 3D engine built on-top of both WebGPU and WebGL. Contributors are more than welcome.
 
 ## Project Setup
 
 ### Install
+
+- Install ffmpeg on your system. It is the only external requirement.
+  Install with either scoop or homebrew
 
 ```bash
 $ npm install
