@@ -253,6 +253,8 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
   const [editorStateSet, setEditorStateSet] = useState(false)
   const [refreshUINow, setRefreshUINow] = useState(Date.now())
   const [project_name, set_project_name] = useState('Loading...')
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [tempProjectName, setTempProjectName] = useState('')
 
   let setupCanvasMouseTracking = (canvas: HTMLCanvasElement) => {
     let editor = editorRef.current
@@ -1272,7 +1274,44 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       )}
 
       <div className="flex flex-row mb-2 gap-4 justify-between w-full">
-        <h1>{project_name}</h1>
+        {isEditingName ? (
+          <input
+            type="text"
+            value={tempProjectName}
+            onChange={(e) => setTempProjectName(e.target.value)}
+            onBlur={() => {
+              if (tempProjectName.trim()) {
+                set_project_name(tempProjectName.trim())
+                // TODO: Save to backend/database here
+              }
+              setIsEditingName(false)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (tempProjectName.trim()) {
+                  set_project_name(tempProjectName.trim())
+                  // TODO: Save to backend/database here
+                }
+                setIsEditingName(false)
+              } else if (e.key === 'Escape') {
+                setIsEditingName(false)
+              }
+            }}
+            autoFocus
+            className="block text-md py-1 px-4"
+          />
+        ) : (
+          <h1
+            onClick={() => {
+              setTempProjectName(project_name)
+              setIsEditingName(true)
+            }}
+            className="cursor-pointer hover:bg-gray-600 transition-colors py-1 px-4 block rounded"
+            title="Click to edit project name"
+          >
+            {project_name}
+          </h1>
+        )}
         {editorStateSet && (
           <ExportVideoButton editorRef={editorRef} editorStateRef={editorStateRef} />
         )}
