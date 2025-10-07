@@ -149,7 +149,8 @@ export default class EditorState {
     selected_sequence_id: string,
     savable_text: SavedStVideoConfig,
     sourceDurationMs: number,
-    mousePositions?: MousePosition[]
+    mousePositions?: MousePosition[],
+    sourceData?: any
   ) {
     let new_motion_path: AnimationData
 
@@ -162,7 +163,8 @@ export default class EditorState {
         savable_text.position,
         savable_text.dimensions,
         mousePositions,
-        sourceDurationMs
+        sourceDurationMs,
+        sourceData
       )
     } else {
       // Otherwise use default keyframes

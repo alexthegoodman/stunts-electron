@@ -14,6 +14,13 @@ interface ScreenSource {
   thumbnail: string;
   appIcon?: string;
   hwnd?: string;
+  bounds?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  scaleFactor?: number;
 }
 
 export function SourceSelectionModal({
@@ -23,10 +30,10 @@ export function SourceSelectionModal({
 }: {
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onSourceSelected: (sourceId: string) => void;
+  onSourceSelected: (source: ScreenSource) => void;
 }) {
   const [sources, setSources] = useState<ScreenSource[]>([]);
-  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const [selectedSource, setSelectedSource] = useState<ScreenSource | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -86,9 +93,9 @@ export function SourceSelectionModal({
               {sources.map((source) => (
                 <div
                   key={source.id}
-                  onClick={() => setSelectedSource(source.id)}
+                  onClick={() => setSelectedSource(source)}
                   className={`cursor-pointer border-2 rounded-lg overflow-hidden transition-all hover:shadow-lg ${
-                    selectedSource === source.id
+                    selectedSource?.id === source.id
                       ? "border-blue-500 shadow-lg"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
@@ -99,7 +106,7 @@ export function SourceSelectionModal({
                       alt={source.name}
                       className="w-full h-full object-cover"
                     />
-                    {selectedSource === source.id && (
+                    {selectedSource?.id === source.id && (
                       <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
                         <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
                           ✓

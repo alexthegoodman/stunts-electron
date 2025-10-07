@@ -66,6 +66,7 @@ export const ToolGrid = ({
   const [isCapturing, setIsCapturing] = useState(false)
   const [isSourceModalOpen, setIsSourceModalOpen] = useState(false)
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null)
+  const [selectedSourceData, setSelectedSourceData] = useState<any | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -99,8 +100,9 @@ export const ToolGrid = ({
     'star1.png'
   ]
 
-  const handleSourceSelected = async (sourceId: string) => {
-    setSelectedSourceId(sourceId)
+  const handleSourceSelected = async (source: any) => {
+    setSelectedSourceId(source.id)
+    setSelectedSourceData(source)
 
     let webCapture = webCaptureRef.current
 
@@ -111,7 +113,7 @@ export const ToolGrid = ({
     setIsCapturing(true)
 
     try {
-      await webCapture.startScreenCapture(sourceId)
+      await webCapture.startScreenCapture(source.id)
 
       const blob = await webCapture.startRecording()
 
@@ -133,7 +135,13 @@ export const ToolGrid = ({
 
         // Get mouse positions from webCapture and pass to import_video
         const mousePositions = webCapture.mousePositions
-        await import_video(currentSequenceId, tempResult.data.url, fileName, mousePositions)
+        await import_video(
+          currentSequenceId,
+          tempResult.data.url,
+          fileName,
+          mousePositions,
+          selectedSourceData
+        )
       } catch (error: any) {
         console.error('Screen capture error:', error)
         toast.error(error.message || 'Failed to capture screen')
@@ -503,7 +511,13 @@ export const ToolGrid = ({
   }
 
   let import_video = useCallback(
-    async (sequence_id: string, filePath: string, fileName: string, mousePositions?: MousePosition[]) => {
+    async (
+      sequence_id: string,
+      filePath: string,
+      fileName: string,
+      mousePositions?: MousePosition[],
+      sourceData?: any
+    ) => {
       let editor = editorRef.current
       let editor_state = editorStateRef.current
 
@@ -549,9 +563,14 @@ export const ToolGrid = ({
 
           let new_id = uuidv4()
 
+          // let position = {
+          //   x: random_number_800 + CANVAS_HORIZ_OFFSET,
+          //   y: random_number_450 + CANVAS_VERT_OFFSET
+          // }
+
           let position = {
-            x: random_number_800 + CANVAS_HORIZ_OFFSET,
-            y: random_number_450 + CANVAS_VERT_OFFSET
+            x: 400 + CANVAS_HORIZ_OFFSET,
+            y: 400 + CANVAS_VERT_OFFSET
           }
 
           let video_config = {
@@ -565,7 +584,28 @@ export const ToolGrid = ({
             layer: layers.length
           }
 
-          await editor.add_video_item(video_config, resizedVideoBlob, new_id, sequence_id, [], null)
+          // Convert source data to SourceData format if available
+          let stored_source_data = null
+          if (sourceData) {
+            stored_source_data = {
+              id: sourceData.id,
+              name: sourceData.name,
+              width: sourceData.bounds?.width || 0,
+              height: sourceData.bounds?.height || 0,
+              x: sourceData.bounds?.x || 0,
+              y: sourceData.bounds?.y || 0,
+              scaleFactor: sourceData.scaleFactor || 1
+            }
+          }
+
+          await editor.add_video_item(
+            video_config,
+            resizedVideoBlob,
+            new_id,
+            sequence_id,
+            mousePositions || [],
+            stored_source_data
+          )
 
           console.info('Adding video: {:?}', new_id)
 
@@ -597,7 +637,8 @@ export const ToolGrid = ({
               // mousePath: video_config.mousePath,
             },
             new_video_item.sourceDurationMs,
-            mousePositions
+            mousePositions,
+            sourceData
           )
 
           console.info('Saved video!')

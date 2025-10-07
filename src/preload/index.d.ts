@@ -83,6 +83,13 @@ declare global {
             thumbnail: string
             appIcon?: string
             hwnd?: string
+            bounds?: {
+              x: number
+              y: number
+              width: number
+              height: number
+            }
+            scaleFactor?: number
           }>
         >
       }
