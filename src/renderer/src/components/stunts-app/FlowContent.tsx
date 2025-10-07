@@ -6,9 +6,9 @@ import toast from 'react-hot-toast'
 import { IFlowContent, scrapeLink, updateFlowContent } from '../../fetchers/flows'
 import {
   AuthToken,
-  resizeVideo,
+  selectVideo,
+  resizeAndSaveVideo,
   saveImage,
-  saveVideo,
   UploadResponse
 } from '../../fetchers/projects'
 import { useLocalStorage } from '@uidotdev/usehooks'
@@ -314,20 +314,9 @@ export default function FlowContent({
         let response
 
         if (file.type.includes('video/')) {
-          // send File to resizeVideo function
-          const resizedVideoBlob = await resizeVideo(file)
-
-          // Use Vercel blob client-side upload for videos
-          // const newBlob = await upload(file.name, resizedVideoBlob, {
-          //   access: 'public',
-          //   handleUploadUrl: '/api/video/upload',
-          //   clientPayload: JSON.stringify({
-          //     token: authToken.token
-          //   })
-          // })
-
-          // TODO: add correct upload
-          const newBlob = await saveVideo('', file.name, resizedVideoBlob)
+          // Resize and save video using path-based flow
+          toast('Processing video...')
+          const newBlob = await resizeAndSaveVideo(blob, file.name)
 
           let realId =
             'video-' +

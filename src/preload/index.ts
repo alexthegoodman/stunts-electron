@@ -32,6 +32,8 @@ const api = {
       ipcRenderer.invoke('uploads:saveImage', data),
     saveVideo: (data: { fileName: string; buffer: ArrayBuffer; mimeType: string }) =>
       ipcRenderer.invoke('uploads:saveVideo', data),
+    saveVideoFromPath: (data: { filePath: string; fileName?: string }) =>
+      ipcRenderer.invoke('uploads:saveVideoFromPath', data),
     getImage: (fileName: string) => ipcRenderer.invoke('uploads:getImage', fileName),
     getVideo: (fileName: string) => ipcRenderer.invoke('uploads:getVideo', fileName),
   },
@@ -60,6 +62,9 @@ const api = {
   video: {
     resize: (data: { buffer: ArrayBuffer; maxWidth: number; maxHeight: number }) =>
       ipcRenderer.invoke('video:resize', data),
+    select: () => ipcRenderer.invoke('video:select'),
+    resizeFromPath: (data: { inputPath: string; maxWidth: number; maxHeight: number; outputDir?: string }) =>
+      ipcRenderer.invoke('video:resizeFromPath', data),
   },
 }
 

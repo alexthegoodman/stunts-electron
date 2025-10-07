@@ -16,9 +16,8 @@ import { fileToBlob, StImageConfig } from '../../engine/image'
 import {
   AuthToken,
   getUploadedVideoData,
-  resizeVideo,
-  saveImage,
-  saveVideo
+  resizeAndSaveVideo,
+  saveImage
 } from '../../fetchers/projects'
 import { Sequence } from '../../engine/animations'
 import { PolygonConfig } from '../../engine/polygon'
@@ -480,34 +479,8 @@ export const ToolGrid = ({
       try {
         setUserMessage(`Resizing video: ${name}...`)
 
-        // send File to resizeVideo function
-        // const resizedVideoBlob =
-        //   process.env.NODE_ENV === "production"
-        //     ? await resizeVideo(blob)
-        //     : blob;
-
-        const resizedVideoBlob = await resizeVideo(blob)
-
-        if (!resizedVideoBlob) {
-          throw new Error('Failed to resize video')
-        }
-
-        setUserMessage(`Uploading video: ${name}...`)
-
-        // let response = await saveVideo("", name, blob);
-        // const response = await upload(name, resizedVideoBlob, {
-        //   access: "public",
-        //   handleUploadUrl: "/api/video/upload",
-        //   clientPayload: JSON.stringify({
-        //     token: "",
-        //   }),
-        //   // multipart: true,
-        //   onUploadProgress: (progress) => {
-        //     setUploadProgress(progress.percentage);
-        //   },
-        // });
-
-        let response = await saveVideo('', name, resizedVideoBlob)
+        // Resize and save video using path-based flow
+        let response = await resizeAndSaveVideo(blob, name)
 
         setUserMessage('')
 
@@ -720,17 +693,10 @@ export const ToolGrid = ({
       }
 
       try {
-        setUserMessage(`Resizing video for mockup: ${file.name}...`)
+        setUserMessage(`Processing mockup video: ${file.name}...`)
 
-        const resizedVideoBlob = await resizeVideo(blob)
-
-        if (!resizedVideoBlob) {
-          throw new Error('Failed to resize video')
-        }
-
-        setUserMessage(`Uploading mockup video: ${file.name}...`)
-
-        let response = await saveVideo('', file.name, resizedVideoBlob)
+        // Resize and save video using path-based flow
+        let response = await resizeAndSaveVideo(blob, file.name)
 
         setUserMessage('')
 

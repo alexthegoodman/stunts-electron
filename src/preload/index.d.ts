@@ -41,6 +41,8 @@ declare global {
         }) => Promise<any>
         getImage: (fileName: string) => Promise<any>
         getVideo: (fileName: string) => Promise<any>
+
+        saveVideoFromPath: (data: { filePath: string; fileName?: string }) => Promise<any>
       }
       settings: {
         get: (userId: string) => Promise<any>
@@ -65,6 +67,13 @@ declare global {
       }
       video: {
         resize: (data: { buffer: ArrayBuffer; maxWidth: number; maxHeight: number }) => Promise<any>
+        select: () => Promise<any>
+        resizeFromPath: (data: {
+          inputPath: string
+          maxWidth: number
+          maxHeight: number
+          outputDir?: string
+        }) => Promise<any>
       }
     }
   }

@@ -348,6 +348,22 @@ export const saveVideo = async (
   return result.data
 }
 
+export const saveVideoFromPath = async (
+  filePath: string,
+  fileName?: string
+): Promise<UploadResponse> => {
+  const result = await window.api.uploads.saveVideoFromPath({
+    filePath,
+    fileName
+  })
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to save video')
+  }
+
+  return result.data
+}
+
 export const getUploadedVideo = async (token: string, filename: string): Promise<Blob> => {
   const result = await window.api.uploads.getVideo(filename)
 
@@ -425,4 +441,78 @@ export const resizeVideo = async (
   return new Blob([result.data.buffer], {
     type: 'video/mp4'
   })
+}
+
+/**
+ * Select a video using native file dialog
+ * Returns the file path without processing
+ */
+export const selectVideo = async (): Promise<{ filePath: string; fileName: string; size: number }> => {
+  const result = await window.api.video.select()
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to select video')
+  }
+
+  return result.data
+}
+
+/**
+ * Resize a video from a file path
+ */
+export const resizeVideoFromPath = async (
+  inputPath: string,
+  maxWidth = 1200,
+  maxHeight = 900,
+  outputDir?: string
+): Promise<{ outputPath: string; fileName: string; size: number }> => {
+  const result = await window.api.video.resizeFromPath({
+    inputPath,
+    maxWidth,
+    maxHeight,
+    outputDir
+  })
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to resize video')
+  }
+
+  return result.data
+}
+
+/**
+ * Resize and save a video from File/Blob (for browser file inputs)
+ * This is a convenience wrapper that handles the temp file creation
+ */
+export const resizeAndSaveVideo = async (
+  videoFile: File | Blob,
+  fileName: string,
+  maxWidth = 1200,
+  maxHeight = 900
+): Promise<UploadResponse> => {
+  // For Electron, we need to write the blob to a temp file first
+  // then use path-based operations
+  const arrayBuffer = await videoFile.arrayBuffer()
+  const tempFileName = `temp_${Date.now()}_${fileName}`
+
+  // Save to temp location first
+  const tempResult = await window.api.uploads.saveVideo({
+    fileName: tempFileName,
+    buffer: arrayBuffer,
+    mimeType: 'video/mp4'
+  })
+
+  if (!tempResult.success) {
+    throw new Error(tempResult.error || 'Failed to save temp video')
+  }
+
+  // Now resize from that path
+  const { outputPath } = await resizeVideoFromPath(
+    tempResult.data.url,
+    maxWidth,
+    maxHeight
+  )
+
+  // Save the resized version
+  return await saveVideoFromPath(outputPath, fileName)
 }

@@ -96,17 +96,18 @@ function calculateNewDimensions(
 }
 
 export async function resizeVideo(
-  inputBuffer: Buffer,
+  inputPath: string,
   maxWidth: number,
-  maxHeight: number
-): Promise<Buffer> {
+  maxHeight: number,
+  outputDir?: string
+): Promise<string> {
   const tempId = uuidv4()
-  const inputPath = path.join(TEMP_DIR, `input_${tempId}.mp4`)
-  const outputPath = path.join(TEMP_DIR, `output_${tempId}.mp4`)
+  const finalOutputDir = outputDir || TEMP_DIR
+  const outputPath = path.join(finalOutputDir, `resized_${tempId}.mp4`)
 
   try {
-    // Write input buffer to temporary file
-    await fs.writeFile(inputPath, inputBuffer)
+    // Validate input file exists
+    await fs.access(inputPath)
 
     // Get original dimensions
     const { width: originalWidth, height: originalHeight } = await getVideoDimensions(inputPath)
@@ -153,17 +154,10 @@ export async function resizeVideo(
 
     console.info('Video processing complete')
 
-    // Read processed video
-    const processedVideo = await fs.readFile(outputPath)
-
-    // Clean up
-    await fs.unlink(inputPath).catch(() => {})
-    await fs.unlink(outputPath).catch(() => {})
-
-    return processedVideo
+    // Return the path to the processed video
+    return outputPath
   } catch (error) {
     // Clean up on error
-    await fs.unlink(inputPath).catch(() => {})
     await fs.unlink(outputPath).catch(() => {})
     throw error
   }
