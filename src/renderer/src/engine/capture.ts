@@ -1,6 +1,16 @@
+export interface MousePosition {
+  x: number;
+  y: number;
+  timestamp: number;
+}
+
 export class WebCapture {
   mediaRecorder: MediaRecorder | null = null;
   mediaStream: MediaStream | null = null;
+  mousePositions: MousePosition[] = [];
+  lastMousePosition: { x: number; y: number } | null = null;
+  captureStartTime: number = 0;
+  mouseTrackingInterval: number | null = null;
 
   constructor() {}
 
@@ -58,6 +68,7 @@ export class WebCapture {
       };
 
       this.mediaRecorder.start();
+      this.startMouseTracking();
     });
   }
 
@@ -67,5 +78,68 @@ export class WebCapture {
     }
 
     this.mediaRecorder.stop();
+    this.stopMouseTracking();
+  }
+
+  startMouseTracking(): void {
+    this.mousePositions = [];
+    this.lastMousePosition = null;
+    this.captureStartTime = Date.now();
+
+    // Poll mouse position every 16ms (~60fps)
+    this.mouseTrackingInterval = window.setInterval(() => {
+      const currentPosition = window.electron.ipcRenderer.invoke('screen:getCursorPosition');
+
+      currentPosition.then((pos: { x: number; y: number }) => {
+        if (this.lastMousePosition) {
+          const distance = Math.sqrt(
+            Math.pow(pos.x - this.lastMousePosition.x, 2) +
+            Math.pow(pos.y - this.lastMousePosition.y, 2)
+          );
+
+          if (distance >= 100) {
+            const timestamp = Date.now() - this.captureStartTime;
+            this.mousePositions.push({
+              x: pos.x,
+              y: pos.y,
+              timestamp
+            });
+            this.lastMousePosition = pos;
+          }
+        } else {
+          // First position
+          this.lastMousePosition = pos;
+          this.mousePositions.push({
+            x: pos.x,
+            y: pos.y,
+            timestamp: 0
+          });
+        }
+      }).catch(err => {
+        console.error('Error getting cursor position:', err);
+      });
+    }, 16);
+  }
+
+  stopMouseTracking(): void {
+    if (this.mouseTrackingInterval !== null) {
+      window.clearInterval(this.mouseTrackingInterval);
+      this.mouseTrackingInterval = null;
+    }
+  }
+
+  getMousePositionsJSON(): string {
+    return JSON.stringify(this.mousePositions, null, 2);
+  }
+
+  saveMousePositionsToFile(fileName: string): void {
+    const json = this.getMousePositionsJSON();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }

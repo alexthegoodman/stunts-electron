@@ -158,6 +158,10 @@ export const ToolGrid = ({
 
     webCapture.stopRecording()
 
+    // Save mouse positions to JSON file
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    webCapture.saveMousePositionsToFile(`mouse-positions-${timestamp}.json`)
+
     setIsCapturing(false)
   }
 

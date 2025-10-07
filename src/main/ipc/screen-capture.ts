@@ -1,4 +1,4 @@
-import { ipcMain, desktopCapturer } from 'electron'
+import { ipcMain, desktopCapturer, screen } from 'electron'
 
 export interface ScreenSource {
   id: string
@@ -29,6 +29,16 @@ export function registerScreenCaptureHandlers(): void {
       return screenSources
     } catch (error) {
       console.error('Error getting screen sources:', error)
+      throw error
+    }
+  })
+
+  ipcMain.handle('screen:getCursorPosition', () => {
+    try {
+      const point = screen.getCursorScreenPoint()
+      return { x: point.x, y: point.y }
+    } catch (error) {
+      console.error('Error getting cursor position:', error)
       throw error
     }
   })
