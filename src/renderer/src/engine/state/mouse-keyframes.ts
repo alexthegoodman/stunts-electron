@@ -96,7 +96,7 @@ export function create_keyframes_from_mouse_positions(
             zoomLevel: scaled.zoomLevel
           }
         },
-        easing: EasingType.Linear,
+        easing: EasingType.EaseOut,
         pathType: PathType.Linear,
         keyType: { type: 'Frame' },
         curveData: null
