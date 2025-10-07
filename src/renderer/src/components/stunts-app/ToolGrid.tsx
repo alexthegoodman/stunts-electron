@@ -10,7 +10,7 @@ import {
 import { OptionButton } from './items'
 import EditorState from '../../engine/editor_state'
 import React, { useCallback, useRef, useState } from 'react'
-import { WebCapture } from '../../engine/capture'
+import { WebCapture, MousePosition } from '../../engine/capture'
 import { v4 as uuidv4 } from 'uuid'
 import { fileToBlob, StImageConfig } from '../../engine/image'
 import {
@@ -131,7 +131,9 @@ export const ToolGrid = ({
           throw new Error(tempResult.error || 'Failed to save temp video')
         }
 
-        await import_video(currentSequenceId, tempResult.data.url, fileName)
+        // Get mouse positions from webCapture and pass to import_video
+        const mousePositions = webCapture.mousePositions
+        await import_video(currentSequenceId, tempResult.data.url, fileName, mousePositions)
       } catch (error: any) {
         console.error('Screen capture error:', error)
         toast.error(error.message || 'Failed to capture screen')
@@ -157,10 +159,6 @@ export const ToolGrid = ({
     }
 
     webCapture.stopRecording()
-
-    // Save mouse positions to JSON file
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-    webCapture.saveMousePositionsToFile(`mouse-positions-${timestamp}.json`)
 
     setIsCapturing(false)
   }
@@ -505,7 +503,7 @@ export const ToolGrid = ({
   }
 
   let import_video = useCallback(
-    async (sequence_id: string, filePath: string, fileName: string) => {
+    async (sequence_id: string, filePath: string, fileName: string, mousePositions?: MousePosition[]) => {
       let editor = editorRef.current
       let editor_state = editorStateRef.current
 
@@ -559,7 +557,7 @@ export const ToolGrid = ({
           let video_config = {
             id: new_id,
             name: 'New Video Item',
-            dimensions: [100, 100] as [number, number],
+            dimensions: [800, 500] as [number, number],
             position,
             // path: new_path.clone(),
             path: url,
@@ -598,7 +596,8 @@ export const ToolGrid = ({
               layer: video_config.layer
               // mousePath: video_config.mousePath,
             },
-            new_video_item.sourceDurationMs
+            new_video_item.sourceDurationMs,
+            mousePositions
           )
 
           console.info('Saved video!')
