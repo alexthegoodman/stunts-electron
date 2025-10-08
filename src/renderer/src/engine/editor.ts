@@ -383,6 +383,7 @@ export class Editor {
   videoCurrentSequencesData: Sequence[] | null
   controlMode: ControlMode
   isPanning: boolean
+  isExporting: boolean = false
 
   // points
   lastMousePos: Point | null
@@ -1578,7 +1579,7 @@ export class Editor {
 
       // restored_video.drawVideoFrame(device!, queue).catch(console.error); // Handle potential errors
 
-      if (saved_sequence.polygonMotionPaths) {
+      if (saved_sequence.polygonMotionPaths && !this.isExporting) {
         let objectId = i.id
         const animationData = saved_sequence.polygonMotionPaths.find(
           (anim) => anim.polygonId === objectId
@@ -2397,6 +2398,10 @@ export class Editor {
               }
               for (const text of this.textItems) {
                 text.hidden = text.currentSequenceId !== currentSequenceId
+
+                if (!text.hidden && text.hasTextAnimation()) {
+                  text.startTextAnimation(0)
+                }
               }
               for (const image of this.imageItems) {
                 image.hidden = image.currentSequenceId !== currentSequenceId
@@ -2409,6 +2414,11 @@ export class Editor {
             }
           } else {
             this.currentSequenceData = sequence
+            for (const text of this.textItems) {
+              if (!text.hidden && text.hasTextAnimation()) {
+                text.startTextAnimation(0)
+              }
+            }
           }
         } else {
           // console.warn("no data");
@@ -2999,8 +3009,8 @@ export class Editor {
               let halfVideoHeight = videoItem.dimensions[1] / 2.0 / this.scaleMultiplier
 
               const scaledCenterPoint: Point = {
-                x: lerpX + 0,
-                y: lerpY + 0
+                x: lerpX * this.scaleMultiplier,
+                y: lerpY * this.scaleMultiplier
               }
 
               videoItem.updateZoom(gpuResources.queue!, zoom, scaledCenterPoint)
