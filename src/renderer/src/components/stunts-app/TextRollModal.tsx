@@ -19,6 +19,14 @@ export interface TextRollConfig {
   intensity: number // animation intensity 0-1
   exitAnimation: boolean // whether to play exit animation
   exitAnimationDuration: number // duration of exit animation in ms
+  // Style Punch properties
+  stylePunchEnabled?: boolean
+  punchWeights?: number[] // e.g., [400, 700, 900]
+  punchSizeMultipliers?: number[] // e.g., [1.2, 1.5, 2.0]
+  punchColors?: [number, number, number, number][] // array of RGBA colors
+  punchItalic?: boolean // enable/disable italic
+  punchDelay?: number // delay before punch starts (ms)
+  punchDuration?: number // transition duration (ms)
 }
 
 interface TextRollModalProps {
@@ -46,6 +54,17 @@ export const TextRollModal: React.FC<TextRollModalProps> = ({ isOpen, onClose, o
   const [exitAnimation, setExitAnimation] = useState(true)
   const [exitAnimationDuration, setExitAnimationDuration] = useState(800)
 
+  // Style Punch state
+  const [stylePunchEnabled, setStylePunchEnabled] = useState(false)
+  const [punchWeights, setPunchWeights] = useState<number[]>([700])
+  const [punchSizeMultipliers, setPunchSizeMultipliers] = useState<number[]>([1.5])
+  const [punchColors, setPunchColors] = useState<[number, number, number, number][]>([
+    [255, 255, 0, 255]
+  ])
+  const [punchItalic, setPunchItalic] = useState(false)
+  const [punchDelay, setPunchDelay] = useState(300)
+  const [punchDuration, setPunchDuration] = useState(500)
+
   const handleConfirm = () => {
     if (!text.trim()) {
       return
@@ -64,7 +83,14 @@ export const TextRollModal: React.FC<TextRollModalProps> = ({ isOpen, onClose, o
       yOffset,
       intensity,
       exitAnimation,
-      exitAnimationDuration
+      exitAnimationDuration,
+      stylePunchEnabled,
+      punchWeights,
+      punchSizeMultipliers,
+      punchColors,
+      punchItalic,
+      punchDelay,
+      punchDuration
     }
 
     onConfirm(config)
@@ -86,6 +112,13 @@ export const TextRollModal: React.FC<TextRollModalProps> = ({ isOpen, onClose, o
     setIntensity(1.0)
     setExitAnimation(true)
     setExitAnimationDuration(800)
+    setStylePunchEnabled(false)
+    setPunchWeights([700])
+    setPunchSizeMultipliers([1.5])
+    setPunchColors([[255, 255, 0, 255]])
+    setPunchItalic(false)
+    setPunchDelay(300)
+    setPunchDuration(500)
     onClose()
   }
 
@@ -376,6 +409,187 @@ export const TextRollModal: React.FC<TextRollModalProps> = ({ isOpen, onClose, o
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
                     The exit animation will play in reverse of the entrance animation
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Style Punch Section */}
+            <div className="border-t pt-4 mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-lg text-gray-700">Style Punch (Last Word)</h3>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={stylePunchEnabled}
+                    onChange={(e) => setStylePunchEnabled(e.target.checked)}
+                    className="mr-2 w-4 h-4"
+                  />
+                  <span className="text-sm text-gray-700">Enable</span>
+                </label>
+              </div>
+
+              {stylePunchEnabled && (
+                <div className="space-y-4">
+                  {/* Font Weights */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Font Weights (select multiple)
+                    </label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[300, 400, 700, 900].map((weight) => (
+                        <label key={weight} className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={punchWeights.includes(weight)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setPunchWeights([...punchWeights, weight])
+                              } else {
+                                setPunchWeights(punchWeights.filter((w) => w !== weight))
+                              }
+                            }}
+                            className="mr-2"
+                          />
+                          <span className="text-sm text-gray-700">
+                            {weight === 300
+                              ? 'Light'
+                              : weight === 400
+                                ? 'Regular'
+                                : weight === 700
+                                  ? 'Bold'
+                                  : 'Black'}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Size Multipliers */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Size Multipliers (select multiple)
+                    </label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[1.2, 1.5, 2.0, 2.5].map((multiplier) => (
+                        <label key={multiplier} className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={punchSizeMultipliers.includes(multiplier)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setPunchSizeMultipliers([...punchSizeMultipliers, multiplier])
+                              } else {
+                                setPunchSizeMultipliers(
+                                  punchSizeMultipliers.filter((m) => m !== multiplier)
+                                )
+                              }
+                            }}
+                            className="mr-2"
+                          />
+                          <span className="text-sm text-gray-700">{multiplier}x</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Colors */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Punch Colors
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {punchColors.map((punchColor, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={rgbToHex(punchColor[0], punchColor[1], punchColor[2])}
+                            onChange={(e) => {
+                              const newColors = [...punchColors]
+                              newColors[index] = hexToRgb(e.target.value)
+                              setPunchColors(newColors)
+                            }}
+                            className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+                          />
+                          {punchColors.length > 1 && (
+                            <button
+                              onClick={() =>
+                                setPunchColors(punchColors.filter((_, i) => i !== index))
+                              }
+                              className="text-red-500 hover:text-red-700 text-xs"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => setPunchColors([...punchColors, [255, 0, 0, 255]])}
+                        className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                      >
+                        + Add Color
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Italic Toggle */}
+                  <div>
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={punchItalic}
+                        onChange={(e) => setPunchItalic(e.target.checked)}
+                        className="mr-2 w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700">Apply Italic</span>
+                    </label>
+                  </div>
+
+                  {/* Timing Controls */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Punch Delay (ms)
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="2000"
+                        step="50"
+                        value={punchDelay}
+                        onChange={(e) => setPunchDelay(Number(e.target.value))}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>0ms</span>
+                        <span className="font-semibold">{punchDelay}ms</span>
+                        <span>2000ms</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Punch Duration (ms)
+                      </label>
+                      <input
+                        type="range"
+                        min="100"
+                        max="2000"
+                        step="50"
+                        value={punchDuration}
+                        onChange={(e) => setPunchDuration(Number(e.target.value))}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>100ms</span>
+                        <span className="font-semibold">{punchDuration}ms</span>
+                        <span>2000ms</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-gray-500 mt-2">
+                    The last word of each text block will randomly receive one style from each
+                    selected category
                   </p>
                 </div>
               )}

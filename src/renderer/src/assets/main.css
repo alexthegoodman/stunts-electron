@@ -264,7 +264,14 @@ select option {
   font-family: 'Aleo';
   src: url('/fonts/aleo/Aleo[wght].ttf') format('truetype');
   font-style: normal;
-  font-weight: normal;
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: 'Aleo';
+  src: url('/fonts/aleo/Aleo-Italic[wght].ttf') format('truetype');
+  font-style: italic;
+  font-weight: 100 900;
 }
 
 @font-face {
@@ -272,6 +279,13 @@ select option {
   src: url('/fonts/amiko/Amiko-Regular.ttf') format('truetype');
   font-style: normal;
   font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Amiko';
+  src: url('/fonts/amiko/Amiko-Bold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: bold;
 }
 
 @font-face {
@@ -317,10 +331,24 @@ select option {
 }
 
 @font-face {
+  font-family: 'Coda';
+  src: url('/fonts/coda/Coda-ExtraBold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 800;
+}
+
+@font-face {
   font-family: 'David Libre';
   src: url('/fonts/davidlibre/DavidLibre-Regular.ttf') format('truetype');
   font-style: normal;
   font-weight: normal;
+}
+
+@font-face {
+  font-family: 'David Libre';
+  src: url('/fonts/davidlibre/DavidLibre-Bold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: bold;
 }
 
 @font-face {
@@ -355,14 +383,28 @@ select option {
   font-family: 'Epilogue';
   src: url('/fonts/epilogue/Epilogue[wght].ttf') format('truetype');
   font-style: normal;
-  font-weight: normal;
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: 'Epilogue';
+  src: url('/fonts/epilogue/Epilogue-Italic[wght].ttf') format('truetype');
+  font-style: italic;
+  font-weight: 100 900;
 }
 
 @font-face {
   font-family: 'Exo';
   src: url('/fonts/exo/Exo[wght].ttf') format('truetype');
   font-style: normal;
-  font-weight: normal;
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: 'Exo';
+  src: url('/fonts/exo/Exo-Italic[wght].ttf') format('truetype');
+  font-style: italic;
+  font-weight: 100 900;
 }
 
 @font-face {
@@ -383,7 +425,14 @@ select option {
   font-family: 'Figtree';
   src: url('/fonts/figtree/Figtree[wght].ttf') format('truetype');
   font-style: normal;
-  font-weight: normal;
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: 'Figtree';
+  src: url('/fonts/figtree/Figtree-Italic[wght].ttf') format('truetype');
+  font-style: italic;
+  font-weight: 100 900;
 }
 
 @font-face {
@@ -404,7 +453,14 @@ select option {
   font-family: 'Gantari';
   src: url('/fonts/gantari/Gantari[wght].ttf') format('truetype');
   font-style: normal;
-  font-weight: normal;
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: 'Gantari';
+  src: url('/fonts/gantari/Gantari-Italic[wght].ttf') format('truetype');
+  font-style: italic;
+  font-weight: 100 900;
 }
 
 @font-face {
@@ -418,7 +474,14 @@ select option {
   font-family: 'Glory';
   src: url('/fonts/glory/Glory[wght].ttf') format('truetype');
   font-style: normal;
-  font-weight: normal;
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: 'Glory';
+  src: url('/fonts/glory/Glory-Italic[wght].ttf') format('truetype');
+  font-style: italic;
+  font-weight: 100 900;
 }
 
 @font-face {
@@ -450,10 +513,38 @@ select option {
 }
 
 @font-face {
+  font-family: 'Inika';
+  src: url('/fonts/inika/Inika-Bold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: bold;
+}
+
+@font-face {
   font-family: 'InriaSans';
   src: url('/fonts/inriasans/InriaSans-Regular.ttf') format('truetype');
   font-style: normal;
   font-weight: normal;
+}
+
+@font-face {
+  font-family: 'InriaSans';
+  src: url('/fonts/inriasans/InriaSans-Bold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: 'InriaSans';
+  src: url('/fonts/inriasans/InriaSans-Italic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'InriaSans';
+  src: url('/fonts/inriasans/InriaSans-BoldItalic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: bold;
 }
 
 @font-face {

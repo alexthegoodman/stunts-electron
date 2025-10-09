@@ -5,6 +5,9 @@ export interface FontInfo {
   path: string
   style: 'Regular' | 'Variable'
   support: string[]
+  boldPath?: string
+  italicPath?: string
+  boldItalicPath?: string
 }
 
 export class FontManager {
@@ -30,13 +33,15 @@ export class FontManager {
         name: 'Aleo',
         path: '/fonts/aleo/Aleo[wght].ttf',
         style: 'Variable',
-        support: ['latin']
+        support: ['latin'],
+        italicPath: '/fonts/aleo/Aleo-Italic[wght].ttf'
       },
       {
         name: 'Amiko',
         path: '/fonts/amiko/Amiko-Regular.ttf',
         style: 'Regular',
-        support: ['latin']
+        support: ['latin'],
+        boldPath: '/fonts/amiko/Amiko-Bold.ttf'
       },
       {
         name: 'Ballet',
@@ -72,13 +77,15 @@ export class FontManager {
         name: 'Coda',
         path: '/fonts/coda/Coda-Regular.ttf',
         style: 'Regular',
-        support: ['latin']
+        support: ['latin'],
+        boldPath: '/fonts/coda/Coda-ExtraBold.ttf'
       },
       {
         name: 'David Libre',
         path: '/fonts/davidlibre/DavidLibre-Regular.ttf',
         style: 'Regular',
-        support: ['latin']
+        support: ['latin'],
+        boldPath: '/fonts/davidlibre/DavidLibre-Bold.ttf'
       },
       {
         name: 'Dorsa',
@@ -108,13 +115,15 @@ export class FontManager {
         name: 'Epilogue',
         path: '/fonts/epilogue/Epilogue[wght].ttf',
         style: 'Variable',
-        support: ['latin']
+        support: ['latin'],
+        italicPath: '/fonts/epilogue/Epilogue-Italic[wght].ttf'
       },
       {
         name: 'Exo',
         path: '/fonts/exo/Exo[wght].ttf',
         style: 'Variable',
-        support: ['latin']
+        support: ['latin'],
+        italicPath: '/fonts/exo/Exo-Italic[wght].ttf'
       },
       {
         name: 'Explora',
@@ -132,7 +141,8 @@ export class FontManager {
         name: 'Figtree',
         path: '/fonts/figtree/Figtree[wght].ttf',
         style: 'Variable',
-        support: ['latin']
+        support: ['latin'],
+        italicPath: '/fonts/figtree/Figtree-Italic[wght].ttf'
       },
       {
         name: 'Flavors',
@@ -151,7 +161,8 @@ export class FontManager {
         name: 'Gantari',
         path: '/fonts/gantari/Gantari[wght].ttf',
         style: 'Variable',
-        support: ['latin']
+        support: ['latin'],
+        italicPath: '/fonts/gantari/Gantari-Italic[wght].ttf'
       },
       {
         name: 'Geo',
@@ -163,7 +174,8 @@ export class FontManager {
         name: 'Glory',
         path: '/fonts/glory/Glory[wght].ttf',
         style: 'Variable',
-        support: ['latin']
+        support: ['latin'],
+        italicPath: '/fonts/glory/Glory-Italic[wght].ttf'
       },
       {
         name: 'HappyMonkey',
@@ -187,13 +199,17 @@ export class FontManager {
         name: 'Inika',
         path: '/fonts/inika/Inika-Regular.ttf',
         style: 'Regular',
-        support: ['latin']
+        support: ['latin'],
+        boldPath: '/fonts/inika/Inika-Bold.ttf'
       },
       {
         name: 'InriaSans',
         path: '/fonts/inriasans/InriaSans-Regular.ttf',
         style: 'Regular',
-        support: ['latin']
+        support: ['latin'],
+        boldPath: '/fonts/inriasans/InriaSans-Bold.ttf',
+        italicPath: '/fonts/inriasans/InriaSans-Italic.ttf',
+        boldItalicPath: '/fonts/inriasans/InriaSans-BoldItalic.ttf'
       },
       {
         name: 'Jaro',
@@ -422,6 +438,53 @@ export class FontManager {
   // Find font info by name
   getFontInfo(name: string): FontInfo | undefined {
     return this.fontData.find((font) => font.name.toLowerCase() === name.toLowerCase())
+  }
+
+  // Check if font supports bold
+  supportsBold(name: string): boolean {
+    const fontInfo = this.getFontInfo(name)
+    if (!fontInfo) return false
+    return fontInfo.style === 'Variable' || !!fontInfo.boldPath
+  }
+
+  // Check if font supports italic
+  supportsItalic(name: string): boolean {
+    const fontInfo = this.getFontInfo(name)
+    if (!fontInfo) return false
+    return !!fontInfo.italicPath
+  }
+
+  // Check if font supports bold italic
+  supportsBoldItalic(name: string): boolean {
+    const fontInfo = this.getFontInfo(name)
+    if (!fontInfo) return false
+    return !!fontInfo.boldItalicPath
+  }
+
+  // Get font path for specific style
+  getFontPath(name: string, options: { bold?: boolean; italic?: boolean } = {}): string | null {
+    const fontInfo = this.getFontInfo(name)
+    if (!fontInfo) return null
+
+    const { bold = false, italic = false } = options
+
+    // Check for bold italic combination
+    if (bold && italic && fontInfo.boldItalicPath) {
+      return fontInfo.boldItalicPath
+    }
+
+    // Check for italic
+    if (italic && fontInfo.italicPath) {
+      return fontInfo.italicPath
+    }
+
+    // Check for bold
+    if (bold && fontInfo.boldPath) {
+      return fontInfo.boldPath
+    }
+
+    // Return regular path
+    return fontInfo.path
   }
 
   // Asynchronously load a font by name

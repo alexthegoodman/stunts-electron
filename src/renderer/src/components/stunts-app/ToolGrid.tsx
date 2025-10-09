@@ -572,7 +572,7 @@ export const ToolGrid = ({
         // Create animation config for entrance
         const animConfig: TextAnimationConfig = {
           id: `text-roll-anim-${new_id}`,
-          type: config.animationType,
+          type: config.stylePunchEnabled ? 'StylePunch' : config.animationType,
           timing: config.animationTiming,
           duration: config.pace,
           delay: 50,
@@ -582,13 +582,26 @@ export const ToolGrid = ({
           startTime: 0,
           loop: false,
           reverse: false,
-          customParams: config.exitAnimation
-            ? {
-                hasExitAnimation: true,
-                exitAnimationDuration: config.exitAnimationDuration,
-                holdDuration: 0 // No hold, text displays during pace
-              }
-            : undefined
+          customParams: {
+            ...(config.exitAnimation
+              ? {
+                  hasExitAnimation: true,
+                  exitAnimationDuration: config.exitAnimationDuration,
+                  holdDuration: 0 // No hold, text displays during pace
+                }
+              : {}),
+            ...(config.stylePunchEnabled
+              ? {
+                  stylePunchEnabled: true,
+                  punchWeights: config.punchWeights,
+                  punchSizeMultipliers: config.punchSizeMultipliers,
+                  punchColors: config.punchColors,
+                  punchItalic: config.punchItalic,
+                  punchDelay: config.punchDelay,
+                  punchDuration: config.punchDuration
+                }
+              : {})
+          }
         }
 
         // Apply animation

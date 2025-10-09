@@ -64,6 +64,8 @@ export interface GlyphRasterConfig {
   // For example, the character to rasterize, font size, etc.
   character: string
   fontSize: number
+  fontWeight?: number // Optional font weight (300, 400, 700, 900)
+  fontItalic?: boolean // Optional italic style
 }
 
 export interface CharRasterConfig {
@@ -120,6 +122,9 @@ export class TextRenderer {
   private textAnimator: TextAnimator | null = null
   private animationConfig: TextAnimationConfig | null = null
   public animationManager: TextAnimationManager
+
+  // Style Punch character tracking
+  private charStyleMap: Map<number, { fontWeight?: number; fontItalic?: boolean }> = new Map()
 
   constructor(
     device: PolyfillDevice,
@@ -720,7 +725,11 @@ export class TextRenderer {
 
     // Use the actual font family name from fontkit, which should support Hindi
     const fontFamily = this.font.familyName || this.fontFamily || 'Arial'
-    ctx.font = `${scaledFontSize}px "${fontFamily}"`
+
+    // Build font string with weight and style
+    const fontWeight = rasterConfig.fontWeight || 400
+    const fontStyle = rasterConfig.fontItalic ? 'italic' : 'normal'
+    ctx.font = `${fontStyle} ${fontWeight} ${scaledFontSize}px "${fontFamily}"`
 
     // console.info(
     //   "Rendering with font:",
@@ -966,25 +975,28 @@ export class TextRenderer {
         const glyph = line.glyphs[i]
         const position = line.positions[i]
 
-        // Create a unique key for the glyph (use glyph ID which is unique for shaped glyphs)
-        const key = `${glyph.id}-${this.fontSize}`
+        // Get character for potential style punch lookup
+        let glyphChar = ''
+        if (glyph.codePoints && glyph.codePoints.length > 0) {
+          glyphChar = String.fromCodePoint(...glyph.codePoints)
+        } else {
+          glyphChar = '?' // Fallback
+        }
+
+        // Check if this character needs style punch rendering
+        const charStyleConfig = this.getCharacterStyleConfig(glyphChar, i)
+
+        // Create a unique key for the glyph (include weight and italic for style punch)
+        const key = `${glyph.id}-${this.fontSize}-${charStyleConfig.fontWeight || 400}-${charStyleConfig.fontItalic || false}`
 
         // Ensure the glyph is in the atlas
         // Glyph cache is reset when new font family chosen
         if (!this.glyphCache.has(key)) {
-          // For complex scripts, use the shaped glyph directly
-          // Get the actual character representation from the shaped glyph
-          let glyphChar = ''
-          if (glyph.codePoints && glyph.codePoints.length > 0) {
-            glyphChar = String.fromCodePoint(...glyph.codePoints)
-          } else {
-            // Fallback: render using glyph path or use a placeholder
-            glyphChar = '?' // This shouldn't happen with proper fonts
-          }
-
           const atlasGlyph = this.addGlyphToAtlas(device, queue, {
             character: glyphChar,
-            fontSize: this.fontSize
+            fontSize: this.fontSize,
+            fontWeight: charStyleConfig.fontWeight,
+            fontItalic: charStyleConfig.fontItalic
           })
           this.glyphCache.set(key, atlasGlyph)
         }
@@ -1543,6 +1555,26 @@ export class TextRenderer {
 
   public applyRainbowFlow(): void {
     this.setTextAnimationFromTemplate('rainbow-flow')
+  }
+
+  // Style Punch methods
+  private getCharacterStyleConfig(
+    char: string,
+    charIndex: number
+  ): { fontWeight?: number; fontItalic?: boolean } {
+    return this.charStyleMap.get(charIndex) || {}
+  }
+
+  public updateCharacterStyle(
+    charIndex: number,
+    fontWeight?: number,
+    fontItalic?: boolean
+  ): void {
+    this.charStyleMap.set(charIndex, { fontWeight, fontItalic })
+  }
+
+  public clearCharacterStyles(): void {
+    this.charStyleMap.clear()
   }
 }
 

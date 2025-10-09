@@ -26,7 +26,8 @@ export enum TextAnimationType {
   Electric = 'Electric',
   Magnetic = 'Magnetic',
   Rainbow = 'Rainbow',
-  Sparkle = 'Sparkle'
+  Sparkle = 'Sparkle',
+  StylePunch = 'StylePunch'
 }
 
 export enum TextAnimationTiming {
@@ -68,6 +69,13 @@ export interface AnimatedCharacter {
   animationDelay: number
   isVisible: boolean
   customData?: Record<string, any>
+  // Style Punch properties
+  isLastWord?: boolean
+  punchWeight?: number
+  punchSizeMultiplier?: number
+  punchColor?: [number, number, number, number]
+  punchItalic?: boolean
+  punchFontApplied?: boolean // Flag to prevent re-rendering every frame
 }
 
 export class TextAnimator {
@@ -91,6 +99,12 @@ export class TextAnimator {
     // Count only renderable characters (excluding spaces and newlines)
     const renderableCharCount = text.split('').filter((c) => c !== '\n').length
 
+    // Detect last word for Style Punch
+    const lastWordIndices = this.getLastWordIndices(text)
+
+    // Get style punch config if enabled
+    const stylePunchConfig = this.getStylePunchConfig()
+
     let charIndex = 0
     let vertexIndex = 0
 
@@ -108,6 +122,8 @@ export class TextAnimator {
       if (charVertices.length === 4) {
         const position = vec2.fromValues(charVertices[0].position[0], charVertices[0].position[1])
 
+        const isLastWord = lastWordIndices.has(i)
+
         const animatedChar: AnimatedCharacter = {
           index: vertexIndex / 4, // Use vertex-based index for updateTextRenderer
           char: char,
@@ -122,7 +138,9 @@ export class TextAnimator {
           animationProgress: 0.0,
           animationDelay: this.calculateCharacterDelay(charIndex, renderableCharCount),
           isVisible: true,
-          customData: {}
+          customData: {},
+          isLastWord: isLastWord,
+          ...(isLastWord && stylePunchConfig ? stylePunchConfig : {})
         }
 
         this.animatedCharacters.push(animatedChar)
@@ -130,6 +148,75 @@ export class TextAnimator {
         charIndex++ // Only increment charIndex for renderable characters
       }
     }
+  }
+
+  private getLastWordIndices(text: string): Set<number> {
+    const indices = new Set<number>()
+
+    // Trim trailing whitespace and newlines
+    const trimmedText = text.trimEnd()
+    if (trimmedText.length === 0) return indices
+
+    // Find the last word by working backwards from the end
+    let lastWordStart = trimmedText.length - 1
+
+    // Skip trailing non-letter characters (like punctuation)
+    while (lastWordStart >= 0 && !/[a-zA-Z0-9]/.test(trimmedText[lastWordStart])) {
+      lastWordStart--
+    }
+
+    if (lastWordStart < 0) return indices
+
+    // Find the start of the last word
+    while (lastWordStart > 0 && /[a-zA-Z0-9]/.test(trimmedText[lastWordStart - 1])) {
+      lastWordStart--
+    }
+
+    // Mark all character indices in the last word
+    for (let i = lastWordStart; i < trimmedText.length; i++) {
+      if (/[a-zA-Z0-9]/.test(trimmedText[i])) {
+        indices.add(i)
+      }
+    }
+
+    return indices
+  }
+
+  private getStylePunchConfig(): {
+    punchWeight?: number
+    punchSizeMultiplier?: number
+    punchColor?: [number, number, number, number]
+    punchItalic?: boolean
+  } | null {
+    const customParams = this.animationConfig.customParams
+    if (!customParams || !customParams.stylePunchEnabled) return null
+
+    const punchWeights = customParams.punchWeights as number[] | undefined
+    const punchSizeMultipliers = customParams.punchSizeMultipliers as number[] | undefined
+    const punchColors = customParams.punchColors as [number, number, number, number][] | undefined
+    const punchItalic = customParams.punchItalic as boolean | undefined
+
+    // Randomly select one option from each array
+    const config: any = {}
+
+    if (punchWeights && punchWeights.length > 0) {
+      config.punchWeight = punchWeights[Math.floor(Math.random() * punchWeights.length)]
+    }
+
+    if (punchSizeMultipliers && punchSizeMultipliers.length > 0) {
+      config.punchSizeMultiplier =
+        punchSizeMultipliers[Math.floor(Math.random() * punchSizeMultipliers.length)]
+    }
+
+    if (punchColors && punchColors.length > 0) {
+      config.punchColor = punchColors[Math.floor(Math.random() * punchColors.length)]
+    }
+
+    if (punchItalic !== undefined) {
+      config.punchItalic = punchItalic
+    }
+
+    return Object.keys(config).length > 0 ? config : null
   }
 
   private calculateCharacterDelay(charIndex: number, totalChars: number): number {
@@ -194,6 +281,9 @@ export class TextAnimator {
       ? entranceDuration + exitAnimationDuration
       : entranceDuration
 
+    // Track if we need to re-render text for font changes
+    let needsFontRerender = false
+
     for (const char of this.animatedCharacters) {
       const charStartTime = char.animationDelay
       const charElapsedTime = elapsedTime - charStartTime
@@ -216,9 +306,24 @@ export class TextAnimator {
         }
 
         this.updateCharacterAnimation(char)
+
+        // Check if this character just triggered font punch
+        if (
+          this.animationConfig.type === TextAnimationType.StylePunch &&
+          char.isLastWord &&
+          char.punchFontApplied &&
+          !needsFontRerender
+        ) {
+          needsFontRerender = true
+        }
       } else {
         this.resetCharacterToInitialState(char)
       }
+    }
+
+    // Apply character styles to TextRenderer if needed for StylePunch
+    if (needsFontRerender && this.animationConfig.type === TextAnimationType.StylePunch) {
+      this.applyStylePunchFonts(textRenderer, queue)
     }
 
     this.updateTextRenderer(queue, textRenderer)
@@ -272,14 +377,16 @@ export class TextAnimator {
 
       case TextAnimationType.Wave:
         // Wave in and settle - amplitude decreases over time
-        const waveOffset = Math.sin(progress * Math.PI * 2 + char.index * 0.5) * 30 * intensity * (1 - progress)
+        const waveOffset =
+          Math.sin(progress * Math.PI * 2 + char.index * 0.5) * 30 * intensity * (1 - progress)
         char.position[1] = char.originalPosition[1] + waveOffset
         char.opacity = Math.min(progress * 1.5, 1.0)
         break
 
       case TextAnimationType.Glow:
         // Glow pulses and settles to normal brightness
-        const glowIntensity = (Math.sin(progress * Math.PI * 4) + 1) * 0.5 * intensity * (1 - progress)
+        const glowIntensity =
+          (Math.sin(progress * Math.PI * 4) + 1) * 0.5 * intensity * (1 - progress)
         char.color[0] = char.originalColor[0] + glowIntensity
         char.color[1] = char.originalColor[1] + glowIntensity
         char.color[2] = char.originalColor[2] + glowIntensity
@@ -318,7 +425,7 @@ export class TextAnimator {
       case TextAnimationType.Rainbow:
         // Rainbow cycle that settles to original color
         const rainbowProgress = progress < 0.7 ? progress / 0.7 : 1.0
-        const colorBlend = progress < 0.7 ? 1.0 : (1.0 - (progress - 0.7) / 0.3)
+        const colorBlend = progress < 0.7 ? 1.0 : 1.0 - (progress - 0.7) / 0.3
         const hue = (rainbowProgress * 360 + char.index * 30) % 360
         const rgb = this.hslToRgb(hue / 360, 1, 0.5)
         char.color[0] = rgb[0] * colorBlend + char.originalColor[0] * (1 - colorBlend)
@@ -341,6 +448,64 @@ export class TextAnimator {
           char.color = [...char.originalColor]
         }
         char.opacity = Math.min(progress * 1.5, 1.0)
+        break
+
+      case TextAnimationType.StylePunch:
+        // Style punch: normal entrance, then transform last word
+        const punchDelay = this.animationConfig.customParams?.punchDelay || 0
+        const punchDuration = this.animationConfig.customParams?.punchDuration || 500
+        const totalDuration = this.animationConfig.duration
+        const timeSinceStart = progress * totalDuration
+
+        if (char.isLastWord) {
+          // Apply font weight/italic changes ONCE when punch effect starts
+          if (
+            timeSinceStart >= punchDelay &&
+            !char.punchFontApplied &&
+            (char.punchWeight || char.punchItalic)
+          ) {
+            // Mark as applied to prevent re-rendering every frame
+            char.punchFontApplied = true
+            // Note: Font re-rendering will be triggered at the TextRenderer level
+          }
+
+          // Apply size multiplier
+          if (char.punchSizeMultiplier) {
+            if (timeSinceStart >= punchDelay) {
+              const punchProgress = Math.min((timeSinceStart - punchDelay) / punchDuration, 1.0)
+              const easedPunchProgress = this.applyEasing(punchProgress)
+              char.scale = 1.0 + (char.punchSizeMultiplier - 1.0) * easedPunchProgress
+            }
+          }
+
+          // Apply color change
+          if (char.punchColor) {
+            if (timeSinceStart >= punchDelay) {
+              const punchProgress = Math.min((timeSinceStart - punchDelay) / punchDuration, 1.0)
+              const easedPunchProgress = this.applyEasing(punchProgress)
+
+              // Blend from original color to punch color (updateTextRenderer will sync to vertices)
+              char.color[0] =
+                char.originalColor[0] +
+                (char.punchColor[0] - char.originalColor[0]) * easedPunchProgress
+              char.color[1] =
+                char.originalColor[1] +
+                (char.punchColor[1] - char.originalColor[1]) * easedPunchProgress
+              char.color[2] =
+                char.originalColor[2] +
+                (char.punchColor[2] - char.originalColor[2]) * easedPunchProgress
+            } else {
+              // Before punch, use original color
+              char.color = [...char.originalColor]
+            }
+          }
+        } else {
+          // Non-last-word characters keep original color
+          char.color = [...char.originalColor]
+        }
+
+        // Ensure opacity is set for all characters
+        char.opacity = progress
         break
 
       default:
@@ -488,6 +653,21 @@ export class TextAnimator {
 
   public isAnimationPlaying(): boolean {
     return this.isPlaying
+  }
+
+  private applyStylePunchFonts(textRenderer: TextRenderer, queue: PolyfillQueue): void {
+    // Apply character styles and trigger re-render
+    for (const char of this.animatedCharacters) {
+      if (char.isLastWord && char.punchFontApplied) {
+        // Update character style in TextRenderer
+        textRenderer.updateCharacterStyle(char.index, char.punchWeight, char.punchItalic)
+      }
+    }
+
+    // Trigger re-render with new font styles
+    if (textRenderer.device) {
+      textRenderer.renderText(textRenderer.device, queue)
+    }
   }
 }
 
