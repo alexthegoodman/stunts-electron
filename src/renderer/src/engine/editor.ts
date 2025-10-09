@@ -204,6 +204,7 @@ import {
   calculateDefaultCurve,
   EasingType,
   getSequenceDuration,
+  getSequencesDuration,
   ObjectType,
   PathType,
   ProjectSettings,
@@ -2369,19 +2370,17 @@ export class Editor {
         continue
       }
 
+      // Find the corresponding sequence data
+      const sequence = videoCurrentSequencesData.find((s) => s.id === ts.sequenceId)
+
       // Find the duration of the sequence
       // const durationMs =
       //   videoCurrentSequencesData.find((s) => s.id === ts.sequenceId)?.durationMs || 0
-      const { startTimeMs, durationMs } = getSequenceDuration(
-        videoCurrentSequencesData.find((s) => s.id === ts.sequenceId)
-      )
+      const { startTimeMs, durationMs } = getSequencesDuration(videoCurrentSequencesData, sequence)
 
       // Check if this sequence should be playing at the current time
       if (currentTimeMs >= startTimeMs && currentTimeMs < startTimeMs + durationMs) {
-        // Find the corresponding sequence data
-        const sequence = videoCurrentSequencesData.find((s) => s.id === ts.sequenceId)
-
-        // console.info("checking mark", sequence);
+        // console.info('checking mark', sequence.id, sequence.name)
 
         if (sequence) {
           // Calculate local time within this sequence

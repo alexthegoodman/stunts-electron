@@ -98,35 +98,40 @@ export interface Sequence {
   activeMockups3D?: SavedMockup3DConfig[]
 }
 
-// export const getSequenceDuration = (sequence: Sequence) => {
-//   let totalMs = 0
-
-//   // Check polygon motion paths
-//   if (sequence.polygonMotionPaths && sequence.polygonMotionPaths.length > 0) {
-//     const maxPolygonEnd = Math.max(
-//       ...sequence.polygonMotionPaths.map((path) => path.startTimeMs + path.duration)
-//     )
-//     totalMs = Math.max(totalMs, maxPolygonEnd)
-//   }
-
-//   return totalMs
-// }
-
 export const getSequenceDuration = (sequence: Sequence) => {
+  let totalMs = 0
+
+  // Check polygon motion paths
+  if (sequence.polygonMotionPaths && sequence.polygonMotionPaths.length > 0) {
+    const maxPolygonEnd = Math.max(
+      ...sequence.polygonMotionPaths.map((path) => path.startTimeMs + path.duration)
+    )
+    totalMs = Math.max(totalMs, maxPolygonEnd)
+  }
+
+  return { durationMs: totalMs, startTimeMs: 0 }
+}
+
+export const getSequencesDuration = (sequences: Sequence[], current_sequence: Sequence) => {
   // If no motion paths, return zeros
-  if (!sequence.polygonMotionPaths || sequence.polygonMotionPaths.length === 0) {
+  if (!current_sequence.polygonMotionPaths || current_sequence.polygonMotionPaths.length === 0) {
     return { startTimeMs: 0, durationMs: 0 }
   }
 
-  const startTimes = sequence.polygonMotionPaths.map((path) => path.startTimeMs)
-  const endTimes = sequence.polygonMotionPaths.map((path) => path.startTimeMs + path.duration)
+  const { durationMs } = getSequenceDuration(current_sequence)
 
-  const minStartMs = Math.min(...startTimes)
-  const maxEndMs = Math.max(...endTimes)
+  let startTimeMs = 0
+  for (let seq of sequences) {
+    if (seq.id === current_sequence.id) {
+      break
+    }
+
+    startTimeMs += getSequenceDuration(seq).durationMs
+  }
 
   return {
-    startTimeMs: minStartMs,
-    durationMs: maxEndMs - minStartMs
+    startTimeMs,
+    durationMs
   }
 }
 

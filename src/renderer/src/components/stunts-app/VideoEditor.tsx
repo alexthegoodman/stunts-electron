@@ -39,7 +39,8 @@ import {
   saveSequencesData,
   saveTimelineData,
   saveVideo,
-  updateSequences
+  updateSequences,
+  updateTimeline
 } from '../../fetchers/projects'
 import { useDevEffectOnce } from '../../hooks/useDevOnce'
 import {
@@ -854,6 +855,19 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     editorState.savedState.sequences = new_sequences
 
     let response = await updateSequences('', projectId, new_sequences, SaveTarget.Videos)
+
+    let new_timeline = tSequences
+    let tId = uuidv4().toString()
+    new_timeline.push({
+      id: tId,
+      sequenceId: newId,
+      trackType: TrackType.Video
+    })
+
+    setTSequences(new_timeline)
+    editorState.savedState.timeline_state.timeline_sequences = new_timeline
+
+    let response2 = await updateTimeline('', projectId, editorState.savedState.timeline_state)
 
     set_quick_access()
 
