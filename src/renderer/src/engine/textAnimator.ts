@@ -84,6 +84,7 @@ export class TextAnimator {
   private currentTime: number = 0
   private isPlaying: boolean = false
   private animationStartTime: number = 0
+  private stylePunchFontsApplied: boolean = false // Track if we've done the font re-render
 
   constructor(textRenderer: TextRenderer, config: TextAnimationConfig) {
     this.animationConfig = config
@@ -140,6 +141,7 @@ export class TextAnimator {
           isVisible: true,
           customData: {},
           isLastWord: isLastWord,
+          punchFontApplied: false,
           ...(isLastWord && stylePunchConfig ? stylePunchConfig : {})
         }
 
@@ -222,6 +224,10 @@ export class TextAnimator {
   private calculateCharacterDelay(charIndex: number, totalChars: number): number {
     const baseDelay = this.animationConfig.delay
 
+    if (this.animationConfig.type === TextAnimationType.StylePunch) {
+      return baseDelay
+    }
+
     switch (this.animationConfig.timing) {
       case TextAnimationTiming.AllAtOnce:
         return 0
@@ -244,8 +250,13 @@ export class TextAnimator {
     this.isPlaying = true
     this.animationStartTime = startTime
     this.currentTime = startTime
+    this.stylePunchFontsApplied = false // Reset font re-render flag
 
     console.info('Starting text animation:', this.animationConfig.id)
+
+    this.animatedCharacters.forEach((ac) => {
+      ac.punchFontApplied = false
+    })
   }
 
   public stopAnimation(): void {
@@ -307,12 +318,12 @@ export class TextAnimator {
 
         this.updateCharacterAnimation(char)
 
-        // Check if this character just triggered font punch
+        // Check if this character just triggered font punch (only once)
         if (
           this.animationConfig.type === TextAnimationType.StylePunch &&
           char.isLastWord &&
           char.punchFontApplied &&
-          !needsFontRerender
+          !this.stylePunchFontsApplied
         ) {
           needsFontRerender = true
         }
@@ -321,9 +332,10 @@ export class TextAnimator {
       }
     }
 
-    // Apply character styles to TextRenderer if needed for StylePunch
+    // Apply character styles to TextRenderer if needed for StylePunch (only once)
     if (needsFontRerender && this.animationConfig.type === TextAnimationType.StylePunch) {
       this.applyStylePunchFonts(textRenderer, queue)
+      this.stylePunchFontsApplied = true // Mark as done
     }
 
     this.updateTextRenderer(queue, textRenderer)
@@ -656,6 +668,7 @@ export class TextAnimator {
   }
 
   private applyStylePunchFonts(textRenderer: TextRenderer, queue: PolyfillQueue): void {
+    console.info('this.animatedCharacters', this.animatedCharacters)
     // Apply character styles and trigger re-render
     for (const char of this.animatedCharacters) {
       if (char.isLastWord && char.punchFontApplied) {

@@ -615,7 +615,12 @@ export const ToolGrid = ({
 
         // Save with animation data
         const savedConfig = textRenderer.toSavedConfig()
-        editor_state.add_saved_text_item(sequence_id, savedConfig, animationStartTime, totalDuration)
+        editor_state.add_saved_text_item(
+          sequence_id,
+          savedConfig,
+          animationStartTime,
+          totalDuration
+        )
 
         let cloned_sequence = editor_state.savedState.sequences.find(
           (seq) => seq.id === sequence_id
