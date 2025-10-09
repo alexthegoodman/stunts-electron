@@ -2408,7 +2408,7 @@ export class Editor {
                   )
 
                   if (savedItem) {
-                    text.startTextAnimation(savedItem.startTimeMs)
+                    text.startTextAnimation(startTimeMs + savedItem.startTimeMs)
                   }
                 }
               }
