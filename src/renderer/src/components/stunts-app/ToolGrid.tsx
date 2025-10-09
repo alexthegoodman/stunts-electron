@@ -110,6 +110,7 @@ export const ToolGrid = ({
     let webCapture = webCaptureRef.current
 
     if (!webCapture || !currentSequenceId) {
+      toast.error('No web capture or sequence id available!')
       return
     }
 

@@ -867,7 +867,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     setTSequences(new_timeline)
     editorState.savedState.timeline_state.timeline_sequences = new_timeline
 
-    let response2 = await updateTimeline('', projectId, editorState.savedState.timeline_state)
+    let response2 = await updateTimeline('', projectId, editorState.savedState)
 
     set_quick_access()
 

@@ -238,11 +238,12 @@ export const updateSettings = async (
 export const updateTimeline = async (
   token: string,
   projectId: string,
-  timelineState: SavedTimelineStateConfig
+  // timelineState: SavedTimelineStateConfig
+  state: any // now just saves whole fileData rather just timeline. sigh
 ): Promise<UpdateTimelineResponse> => {
   const result = await window.api.projects.updateTimeline({
     projectId,
-    fileData: timelineState
+    fileData: state
   })
 
   if (!result.success) {
@@ -447,7 +448,11 @@ export const resizeVideo = async (
  * Select a video using native file dialog
  * Returns the file path without processing
  */
-export const selectVideo = async (): Promise<{ filePath: string; fileName: string; size: number }> => {
+export const selectVideo = async (): Promise<{
+  filePath: string
+  fileName: string
+  size: number
+}> => {
   const result = await window.api.video.select()
 
   if (!result.success) {
@@ -507,11 +512,7 @@ export const resizeAndSaveVideo = async (
   }
 
   // Now resize from that path
-  const { outputPath } = await resizeVideoFromPath(
-    tempResult.data.url,
-    maxWidth,
-    maxHeight
-  )
+  const { outputPath } = await resizeVideoFromPath(tempResult.data.url, maxWidth, maxHeight)
 
   // Save the resized version
   return await saveVideoFromPath(outputPath, fileName)
