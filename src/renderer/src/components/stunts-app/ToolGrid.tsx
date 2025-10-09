@@ -572,7 +572,7 @@ export const ToolGrid = ({
         // Create animation config for entrance
         const animConfig: TextAnimationConfig = {
           id: `text-roll-anim-${new_id}`,
-          type: config.stylePunchEnabled ? 'StylePunch' : config.animationType,
+          type: config.animationType, // Use selected animation type (StylePunch is now a modifier)
           timing: config.animationTiming,
           duration: config.pace,
           delay: 50,

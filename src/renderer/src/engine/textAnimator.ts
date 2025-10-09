@@ -102,6 +102,7 @@ export class TextAnimator {
 
     // Detect last word for Style Punch
     const lastWordIndices = this.getLastWordIndices(text)
+    const numLastWordChars = lastWordIndices.size
 
     // Get style punch config if enabled
     const stylePunchConfig = this.getStylePunchConfig()
@@ -137,7 +138,12 @@ export class TextAnimator {
           originalColor: [...charVertices[0].color] as [number, number, number, number],
           vertices: charVertices,
           animationProgress: 0.0,
-          animationDelay: this.calculateCharacterDelay(charIndex, renderableCharCount),
+          animationDelay: this.calculateCharacterDelay(
+            charIndex,
+            renderableCharCount,
+            isLastWord,
+            numLastWordChars
+          ),
           isVisible: true,
           customData: {},
           isLastWord: isLastWord,
@@ -152,7 +158,6 @@ export class TextAnimator {
     }
   }
 
-  // TODO: does this properly get indices from a second visual line? does it not matter?
   private getLastWordIndices(text: string): Set<number> {
     const indices = new Set<number>()
 
@@ -222,11 +227,16 @@ export class TextAnimator {
     return Object.keys(config).length > 0 ? config : null
   }
 
-  private calculateCharacterDelay(charIndex: number, totalChars: number): number {
+  private calculateCharacterDelay(
+    charIndex: number,
+    totalChars: number,
+    isLastWord: boolean = false,
+    numLastWordChars: number = 0
+  ): number {
     const baseDelay = this.animationConfig.delay
 
-    if (this.animationConfig.type === TextAnimationType.StylePunch) {
-      return baseDelay
+    if (isLastWord && this.animationConfig.customParams?.stylePunchEnabled) {
+      return (totalChars - numLastWordChars) * baseDelay
     }
 
     switch (this.animationConfig.timing) {
@@ -321,7 +331,7 @@ export class TextAnimator {
 
         // Check if this character just triggered font punch (only once)
         if (
-          this.animationConfig.type === TextAnimationType.StylePunch &&
+          this.animationConfig.customParams?.stylePunchEnabled &&
           char.isLastWord &&
           char.punchFontApplied &&
           !this.stylePunchFontsApplied
@@ -334,7 +344,7 @@ export class TextAnimator {
     }
 
     // Apply character styles to TextRenderer if needed for StylePunch (only once)
-    if (needsFontRerender && this.animationConfig.type === TextAnimationType.StylePunch) {
+    if (needsFontRerender && this.animationConfig.customParams?.stylePunchEnabled) {
       this.applyStylePunchFonts(textRenderer, queue)
       this.stylePunchFontsApplied = true // Mark as done
     }
@@ -361,6 +371,7 @@ export class TextAnimator {
     const progress = char.animationProgress
     const intensity = this.animationConfig.intensity
 
+    // First apply the base animation
     switch (this.animationConfig.type) {
       case TextAnimationType.Typewriter:
         char.isVisible = progress > 0
@@ -463,66 +474,51 @@ export class TextAnimator {
         char.opacity = Math.min(progress * 1.5, 1.0)
         break
 
-      case TextAnimationType.StylePunch:
-        // Style punch: normal entrance, then transform last word
-        const punchDelay = this.animationConfig.customParams?.punchDelay || 0
-        const punchDuration = this.animationConfig.customParams?.punchDuration || 500
-        const totalDuration = this.animationConfig.duration
-        const timeSinceStart = progress * totalDuration
-
-        if (char.isLastWord) {
-          // Apply font weight/italic changes ONCE when punch effect starts
-          if (
-            timeSinceStart >= punchDelay &&
-            !char.punchFontApplied &&
-            (char.punchWeight || char.punchItalic)
-          ) {
-            // Mark as applied to prevent re-rendering every frame
-            char.punchFontApplied = true
-            // Note: Font re-rendering will be triggered at the TextRenderer level
-          }
-
-          // Apply size multiplier
-          if (char.punchSizeMultiplier) {
-            if (timeSinceStart >= punchDelay) {
-              const punchProgress = Math.min((timeSinceStart - punchDelay) / punchDuration, 1.0)
-              const easedPunchProgress = this.applyEasing(punchProgress)
-              char.scale = 1.0 + (char.punchSizeMultiplier - 1.0) * easedPunchProgress
-            }
-          }
-
-          // Apply color change
-          if (char.punchColor) {
-            if (timeSinceStart >= punchDelay) {
-              const punchProgress = Math.min((timeSinceStart - punchDelay) / punchDuration, 1.0)
-              const easedPunchProgress = this.applyEasing(punchProgress)
-
-              // Blend from original color to punch color (updateTextRenderer will sync to vertices)
-              char.color[0] =
-                char.originalColor[0] +
-                (char.punchColor[0] - char.originalColor[0]) * easedPunchProgress
-              char.color[1] =
-                char.originalColor[1] +
-                (char.punchColor[1] - char.originalColor[1]) * easedPunchProgress
-              char.color[2] =
-                char.originalColor[2] +
-                (char.punchColor[2] - char.originalColor[2]) * easedPunchProgress
-            } else {
-              // Before punch, use original color
-              char.color = [...char.originalColor]
-            }
-          }
-        } else {
-          // Non-last-word characters keep original color
-          char.color = [...char.originalColor]
-        }
-
-        // Ensure opacity is set for all characters
-        char.opacity = progress
-        break
-
       default:
         break
+    }
+
+    // Apply StylePunch modifier if enabled (works on top of any base animation)
+    if (this.animationConfig.customParams?.stylePunchEnabled && char.isLastWord) {
+      const punchDelay = this.animationConfig.customParams?.punchDelay || 0
+      const punchDuration = this.animationConfig.customParams?.punchDuration || 500
+      const totalDuration = this.animationConfig.duration
+      const timeSinceStart = progress * totalDuration
+
+      // Apply font weight/italic changes ONCE when punch effect starts
+      if (
+        timeSinceStart >= punchDelay &&
+        !char.punchFontApplied &&
+        (char.punchWeight || char.punchItalic)
+      ) {
+        // Mark as applied to prevent re-rendering every frame
+        char.punchFontApplied = true
+        // Note: Font re-rendering will be triggered at the TextRenderer level
+      }
+
+      // Apply size multiplier (multiply with base animation scale)
+      if (char.punchSizeMultiplier) {
+        if (timeSinceStart >= punchDelay) {
+          const punchProgress = Math.min((timeSinceStart - punchDelay) / punchDuration, 1.0)
+          const easedPunchProgress = this.applyEasing(punchProgress)
+          const punchScale = 1.0 + (char.punchSizeMultiplier - 1.0) * easedPunchProgress
+          char.scale *= punchScale // Multiply with existing scale from base animation
+        }
+      }
+
+      // Apply color change (blend with base animation color)
+      if (char.punchColor) {
+        if (timeSinceStart >= punchDelay) {
+          const punchProgress = Math.min((timeSinceStart - punchDelay) / punchDuration, 1.0)
+          const easedPunchProgress = this.applyEasing(punchProgress)
+
+          // Blend from current color (after base animation) to punch color
+          const baseColor = [...char.color]
+          char.color[0] = baseColor[0] + (char.punchColor[0] - baseColor[0]) * easedPunchProgress
+          char.color[1] = baseColor[1] + (char.punchColor[1] - baseColor[1]) * easedPunchProgress
+          char.color[2] = baseColor[2] + (char.punchColor[2] - baseColor[2]) * easedPunchProgress
+        }
+      }
     }
   }
 
