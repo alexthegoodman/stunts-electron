@@ -52,6 +52,7 @@ export class Sphere3D {
   rotation: [number, number, number];
   backgroundFill: BackgroundFill;
   layer: number;
+  layerSpacing: number;
   segments: number;
   hidden: boolean;
   objectType: ObjectType;
@@ -85,6 +86,7 @@ export class Sphere3D {
     this.rotation = config.rotation;
     this.backgroundFill = config.backgroundFill;
     this.layer = config.layer;
+    this.layerSpacing = 0.001;
     this.segments = config.segments || 32;
     this.hidden = false;
     this.objectType = ObjectType.Sphere3D;
@@ -337,7 +339,7 @@ export class Sphere3D {
   }
 
   updateLayer(layer: number) {
-    let layer_index = getZLayer(layer);
+    let layer_index = getZLayer(layer, this.layerSpacing);
     this.layer = layer;
     this.transform.layer = layer_index as number;
   }

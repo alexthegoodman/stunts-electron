@@ -166,6 +166,7 @@ export class ProceduralBrush implements BrushStrokeShape {
   bindGroup: PolyfillBindGroup;
   transform: Transform;
   layer: number;
+  layerSpacing: number;
   objectType: ObjectType;
 
   // Stroke collection
@@ -218,6 +219,7 @@ export class ProceduralBrush implements BrushStrokeShape {
     this.vertices = [];
     this.indices = [];
     this.layer = config.layer;
+    this.layerSpacing = 0.001;
     this.objectType = ObjectType.Polygon; // Treat as polygon-like object for now
 
     this.currentStroke = null;

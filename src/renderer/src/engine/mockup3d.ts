@@ -54,6 +54,7 @@ export class Mockup3D {
   // rotation: [number, number, number];
   backgroundFill: BackgroundFill;
   layer: number;
+  layerSpacing: number;
   hidden: boolean;
   objectType: ObjectType;
 
@@ -93,6 +94,7 @@ export class Mockup3D {
     let rotation = config.rotation;
     this.backgroundFill = config.backgroundFill;
     this.layer = config.layer;
+    this.layerSpacing = 0.001;
     this.hidden = false;
     this.objectType = ObjectType.Mockup3D;
     this.currentSequenceId = currentSequenceId;
@@ -641,7 +643,7 @@ export class Mockup3D {
   }
 
   updateLayer(layer: number) {
-    let layer_index = getZLayer(layer);
+    let layer_index = getZLayer(layer, this.layerSpacing);
     this.layer = layer;
     this.groupTransform.layer = layer_index as number;
   }

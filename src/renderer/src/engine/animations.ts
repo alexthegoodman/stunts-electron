@@ -19,6 +19,7 @@ export interface ProjectSettings {
     width: number // in pixels
     height: number // in pixels
   }
+  layerSpacing?: number // spacing between layers in 3D space
 }
 
 export interface ProjectData {

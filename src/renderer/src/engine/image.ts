@@ -59,6 +59,7 @@ export class StImage {
   indices: number[]
   hidden: boolean
   layer: number
+  layerSpacing: number
   groupBindGroup!: PolyfillBindGroup
   objectType: ObjectType
   isCircle: boolean
@@ -85,6 +86,7 @@ export class StImage {
     this.name = imageConfig.name
     this.url = url
     this.layer = imageConfig.layer
+    this.layerSpacing = 0.001
     this.dimensions = imageConfig.dimensions
     this.vertices = []
     this.indices = []
@@ -594,7 +596,7 @@ export class StImage {
   updateLayer(layerIndex: number): void {
     // let layer = layerIndex - INTERNAL_LAYER_SPACE;
     // let layer_index = -1.0 - getZLayer(layerIndex - INTERNAL_LAYER_SPACE);
-    let layer_index = getZLayer(layerIndex)
+    let layer_index = getZLayer(layerIndex, this.layerSpacing)
     this.layer = layerIndex
     this.transform.layer = layer_index
   }

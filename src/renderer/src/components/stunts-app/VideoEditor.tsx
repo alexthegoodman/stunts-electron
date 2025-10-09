@@ -37,6 +37,7 @@ import {
   getSingleProject,
   saveImage,
   saveSequencesData,
+  saveSettingsData,
   saveTimelineData,
   saveVideo,
   updateSequences,
@@ -754,11 +755,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       // console.info("Restoring objects...");
 
       for (let sequence of cloned_sequences) {
-        await editorRef.current.restore_sequence_objects(
-          sequence,
-          true
-          // "",
-        )
+        await editorRef.current.restore_sequence_objects(sequence, true, cloned_settings)
       }
 
       // set handlers
@@ -1315,44 +1312,126 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       )}
 
       <div className="flex flex-row mb-2 gap-4 justify-between w-full">
-        {isEditingName ? (
-          <input
-            type="text"
-            value={tempProjectName}
-            onChange={(e) => setTempProjectName(e.target.value)}
-            onBlur={() => {
-              if (tempProjectName.trim()) {
-                set_project_name(tempProjectName.trim())
-                // TODO: Save to backend/database here
-              }
-              setIsEditingName(false)
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+        <div className="flex flex-row gap-4 items-center">
+          {isEditingName ? (
+            <input
+              type="text"
+              value={tempProjectName}
+              onChange={(e) => setTempProjectName(e.target.value)}
+              onBlur={() => {
                 if (tempProjectName.trim()) {
                   set_project_name(tempProjectName.trim())
                   // TODO: Save to backend/database here
                 }
                 setIsEditingName(false)
-              } else if (e.key === 'Escape') {
-                setIsEditingName(false)
-              }
-            }}
-            autoFocus
-            className="block text-md py-1 px-4"
-          />
-        ) : (
-          <h1
-            onClick={() => {
-              setTempProjectName(project_name)
-              setIsEditingName(true)
-            }}
-            className="cursor-pointer hover:bg-gray-600 transition-colors py-1 px-4 block rounded"
-            title="Click to edit project name"
-          >
-            {project_name}
-          </h1>
-        )}
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  if (tempProjectName.trim()) {
+                    set_project_name(tempProjectName.trim())
+                    // TODO: Save to backend/database here
+                  }
+                  setIsEditingName(false)
+                } else if (e.key === 'Escape') {
+                  setIsEditingName(false)
+                }
+              }}
+              autoFocus
+              className="block text-md py-1 px-4"
+            />
+          ) : (
+            <h1
+              onClick={() => {
+                setTempProjectName(project_name)
+                setIsEditingName(true)
+              }}
+              className="cursor-pointer hover:bg-gray-600 transition-colors py-1 px-4 block rounded"
+              title="Click to edit project name"
+            >
+              {project_name}
+            </h1>
+          )}
+          <div className="flex flex-row items-center gap-2">
+            <label htmlFor="layer-spacing" className="text-sm text-gray-300">
+              Layer Spacing:
+            </label>
+            <input
+              id="layer-spacing"
+              type="number"
+              step="0.001"
+              min="0"
+              value={settings?.layerSpacing ?? 0.001}
+              onChange={async (e) => {
+                const newSpacing = parseFloat(e.target.value) || 0.001
+                let new_settings = {
+                  ...settings,
+                  layerSpacing: newSpacing
+                }
+                set_settings(new_settings)
+
+                // Update all objects with new layer spacing
+                if (editorRef.current && current_sequence_id) {
+                  const editor = editorRef.current
+                  let gpuResources = editor.gpuResources
+                  // Update all object types
+                  editor.textItems.forEach((textItem) => {
+                    textItem.layerSpacing = newSpacing
+                    textItem.updateLayer(
+                      gpuResources.device,
+                      gpuResources.queue,
+                      editor.camera.windowSize,
+                      textItem.layer
+                    )
+                  })
+                  editor.imageItems.forEach((imageItem) => {
+                    imageItem.layerSpacing = newSpacing
+                    imageItem.updateLayer(imageItem.layer)
+                    imageItem.transform.updateUniformBuffer(
+                      gpuResources.queue,
+                      editor.camera.windowSize
+                    )
+                  })
+                  editor.videoItems.forEach((videoItem) => {
+                    videoItem.layerSpacing = newSpacing
+                    videoItem.updateLayer(videoItem.layer)
+                    videoItem.transform.updateUniformBuffer(
+                      gpuResources.queue,
+                      editor.camera.windowSize
+                    )
+                  })
+                  editor.polygons.forEach((polygon) => {
+                    polygon.layerSpacing = newSpacing
+                    polygon.updateLayer(polygon.layer)
+                    polygon.transform.updateUniformBuffer(
+                      gpuResources.queue,
+                      editor.camera.windowSize
+                    )
+                  })
+                  // editor.brushes.forEach((brush) => {
+                  //   brush.layerSpacing = newSpacing
+                  //   brush.updateLayer(brush.layer)
+                  // })
+                  // editor.cubes3d.forEach((cube) => {
+                  //   cube.layerSpacing = newSpacing
+                  //   cube.updateLayer(cube.layer)
+                  // })
+                  // editor.spheres3d.forEach((sphere) => {
+                  //   sphere.layerSpacing = newSpacing
+                  //   sphere.updateLayer(sphere.layer)
+                  // })
+                  // editor.mockups3d.forEach((mockup) => {
+                  //   mockup.layerSpacing = newSpacing
+                  //   mockup.updateLayer(mockup.layer)
+                  // })
+                }
+
+                await saveSettingsData(new_settings, SaveTarget.Videos)
+              }}
+              className="w-24 px-2 py-1 text-sm bg-gray-700 text-white border border-gray-600 rounded"
+              title="Adjust spacing between layers in 3D space"
+            />
+          </div>
+        </div>
         {editorStateSet && (
           <ExportVideoButton editorRef={editorRef} editorStateRef={editorStateRef} />
         )}

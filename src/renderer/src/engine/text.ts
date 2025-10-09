@@ -98,6 +98,7 @@ export class TextRenderer {
   glyphCache: Map<string, AtlasGlyph>
   hidden: boolean
   layer: number
+  layerSpacing: number
   color: [number, number, number, number]
   fontSize: number
   device: PolyfillDevice
@@ -143,6 +144,7 @@ export class TextRenderer {
     this.name = textConfig.name
     this.text = textConfig.text
     this.layer = textConfig.layer
+    this.layerSpacing = 0.001
     this.color = textConfig.color
     this.fontSize = textConfig.fontSize
     this.device = device
@@ -1120,11 +1122,11 @@ export class TextRenderer {
     // -10.0 to provide 10 spots for internal items on top of objects
     // const adjustedLayerIndex = layerIndex - INTERNAL_LAYER_SPACE;
     // let layer_index = -1.0 - getZLayer(layerIndex - INTERNAL_LAYER_SPACE);
-    let layer_index = getZLayer(layerIndex)
+    let layer_index = getZLayer(layerIndex, this.layerSpacing)
     this.layer = layerIndex
     this.transform.layer = layer_index
     this.backgroundPolygon.layer = layerIndex - 0.5
-    let bg_layer_index = getZLayer(layerIndex - 0.5)
+    let bg_layer_index = getZLayer(layerIndex - 0.5, this.layerSpacing)
     this.backgroundPolygon.transform.layer = bg_layer_index
 
     this.transform.updateUniformBuffer(queue, windowSize)

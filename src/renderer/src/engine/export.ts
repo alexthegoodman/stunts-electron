@@ -424,7 +424,11 @@ export class FullExporter {
     let cloned_sequences = savedState.sequences
 
     for (let [i, sequence] of cloned_sequences.entries()) {
-      await this.editor.restore_sequence_objects(sequence, i === 0 ? false : true)
+      await this.editor.restore_sequence_objects(
+        sequence,
+        i === 0 ? false : true,
+        savedState.settings
+      )
     }
 
     const frameEncoder = async (renderTexture: PolyfillTexture) => {

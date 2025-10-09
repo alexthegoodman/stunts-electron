@@ -124,6 +124,7 @@ export class StVideo {
   indices: Uint32Array;
   hidden: boolean;
   layer: number;
+  layerSpacing: number;
   groupBindGroup!: PolyfillBindGroup;
   groupTransform!: Transform;
   objectType: ObjectType;
@@ -178,6 +179,7 @@ export class StVideo {
     // this.blob = blob;
     this.hidden = true;
     this.layer = videoConfig.layer;
+    this.layerSpacing = 0.001;
     this.currentZoom = 1.0;
     // this.mousePath = videoConfig.mousePath;
     this.gridResolution = [20, 20]; // Default grid resolution
@@ -1152,7 +1154,7 @@ export class StVideo {
   updateLayer(layerIndex: number): void {
     // let layer = layerIndex - INTERNAL_LAYER_SPACE;
     // let layer_index = -1.0 - getZLayer(layerIndex - INTERNAL_LAYER_SPACE);
-    let layer_index = getZLayer(layerIndex);
+    let layer_index = getZLayer(layerIndex, this.layerSpacing);
     this.layer = layer_index;
     this.transform.layer = layer_index;
   }

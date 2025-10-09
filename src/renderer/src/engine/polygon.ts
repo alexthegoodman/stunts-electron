@@ -117,6 +117,7 @@ export class Polygon implements PolygonShape {
   bindGroup: PolyfillBindGroup;
   transform: Transform;
   layer: number;
+  layerSpacing: number;
   objectType: ObjectType;
   // textureView: GPUTextureView;
   isCircle: boolean;
@@ -247,6 +248,7 @@ export class Polygon implements PolygonShape {
     let layer_index = getZLayer(transformLayer);
     this.transformLayer = transformLayer;
     this.layer = transformLayer;
+    this.layerSpacing = 0.001;
     this.transform.layer = layer_index as number;
     // this.layer = transformLayer - INTERNAL_LAYER_SPACE;
   }
@@ -355,7 +357,7 @@ export class Polygon implements PolygonShape {
   updateLayer(layer: number) {
     // -10.0 to provide 10 spots for internal items on top of objects
     // let layer_index = layer - INTERNAL_LAYER_SPACE;
-    let layer_index = getZLayer(layer);
+    let layer_index = getZLayer(layer, this.layerSpacing);
     this.layer = layer - INTERNAL_LAYER_SPACE;
     this.transform.layer = layer_index as number;
 
