@@ -378,6 +378,7 @@ export const PlaySequenceButton: React.FC<{
           let now = Date.now()
           editor.startPlayingTime = now
 
+          editor.videoCurrentSequencesData = editorState.savedState.sequences
           editor.currentSequenceData = selected_sequence_data
           editor.isPlaying = true
 
