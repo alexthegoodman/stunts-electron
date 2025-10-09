@@ -47,14 +47,17 @@ export interface Vertex {
  */
 export function getZLayer(layer: number, layerSpacing: number = 0.001): number {
   // A constant starting position on the Z-axis. This combines the original -1.0 and -5.0.
-  const basePosition = -6.0
+  const basePosition = -12.0 - 1 * layerSpacing
+
+  const layerRel = (-layer - 1) * layerSpacing
 
   // The original code used a constant `INTERNAL_LAYER_SPACE` to offset the start.
   // We keep its effect here. This makes `layer = INTERNAL_LAYER_SPACE` the layer positioned at `basePosition`.
-  const effectiveLayer = layer - INTERNAL_LAYER_SPACE
+  // const effectiveLayer = layer - INTERNAL_LAYER_SPACE
+  const effectiveLayer = -INTERNAL_LAYER_SPACE
 
   // The final Z position is the base, adjusted by the layer number and the desired spacing.
-  const zLayer = basePosition + effectiveLayer * layerSpacing
+  const zLayer = basePosition + effectiveLayer * layerRel
 
   return zLayer
 }

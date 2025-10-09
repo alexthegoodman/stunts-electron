@@ -1328,6 +1328,7 @@ export class Editor {
     cloned_settings: ProjectSettings
   ) {
     const layerSpacing = cloned_settings ? cloned_settings.layerSpacing : 0.001
+    // console.info('layerSpacing restore ', layerSpacing)
     const camera = this.camera! // Non-null assertion, assuming camera is initialized
     const windowSize = camera.windowSize
 

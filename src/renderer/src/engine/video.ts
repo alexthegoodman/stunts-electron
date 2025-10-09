@@ -1,38 +1,34 @@
-import { mat4, vec2 } from "gl-matrix";
-import { v4 as uuidv4 } from "uuid";
-import { Point } from "./editor";
-import { createEmptyGroupTransform, Transform } from "./transform";
-import { getZLayer, Vertex } from "./vertex";
-import {
-  INTERNAL_LAYER_SPACE,
-  SavedPoint,
-  setupGradientBuffers,
-} from "./polygon";
-import MP4Box, { DataStream, MP4ArrayBuffer, MP4VideoTrack } from "mp4box";
-import { WindowSize } from "./camera";
-import { MotionPath } from "./motionpath";
-import { ObjectType } from "./animations";
+import { mat4, vec2 } from 'gl-matrix'
+import { v4 as uuidv4 } from 'uuid'
+import { Point } from './editor'
+import { createEmptyGroupTransform, Transform } from './transform'
+import { getZLayer, Vertex } from './vertex'
+import { INTERNAL_LAYER_SPACE, SavedPoint, setupGradientBuffers } from './polygon'
+import MP4Box, { DataStream, MP4ArrayBuffer, MP4VideoTrack } from 'mp4box'
+import { WindowSize } from './camera'
+import { MotionPath } from './motionpath'
+import { ObjectType } from './animations'
 import {
   PolyfillBindGroup,
   PolyfillBindGroupLayout,
   PolyfillBuffer,
   PolyfillDevice,
   PolyfillQueue,
-  PolyfillTexture,
-} from "./polyfill";
+  PolyfillTexture
+} from './polyfill'
 
 export interface RectInfo {
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
-  width: number;
-  height: number;
+  left: number
+  right: number
+  top: number
+  bottom: number
+  width: number
+  height: number
 }
 export interface WindowInfo {
-  hwnd: number;
-  title: string;
-  rect: RectInfo;
+  hwnd: number
+  title: string
+  rect: RectInfo
 }
 
 export interface MouseTrackingState {
@@ -45,117 +41,117 @@ export interface MouseTrackingState {
 export interface MousePosition {
   // x: number;
   // y: number;
-  point: [number, number, number]; // x, y, time
-  timestamp: number;
+  point: [number, number, number] // x, y, time
+  timestamp: number
 }
 
 export interface SourceData {
-  id: String;
-  name: String;
-  width: number;
-  height: number;
-  x: number;
-  y: number;
-  scaleFactor: number;
+  id: String
+  name: String
+  width: number
+  height: number
+  x: number
+  y: number
+  scaleFactor: number
 }
 export interface SavedStVideoConfig {
-  id: string;
-  name: string;
-  dimensions: [number, number];
-  path: string;
-  position: SavedPoint;
-  layer: number;
-  borderRadius?: number;
+  id: string
+  name: string
+  dimensions: [number, number]
+  path: string
+  position: SavedPoint
+  layer: number
+  borderRadius?: number
   // mousePath: string;
 }
 
 export interface StVideoConfig {
-  id: string;
-  name: string;
-  dimensions: [number, number]; // overrides actual image size
-  position: Point;
-  path: string;
-  layer: number;
-  borderRadius?: number;
+  id: string
+  name: string
+  dimensions: [number, number] // overrides actual image size
+  position: Point
+  path: string
+  layer: number
+  borderRadius?: number
   // mousePath: string;
 }
 
 interface VideoMetadata {
-  duration: number;
-  durationMs: number;
-  width: number;
-  height: number;
-  frameRate: number;
-  trackId?: number;
-  timescale: number;
-  codecs: string;
-  description?: Uint8Array;
+  duration: number
+  durationMs: number
+  width: number
+  height: number
+  frameRate: number
+  trackId?: number
+  timescale: number
+  codecs: string
+  description?: Uint8Array
 }
 
 interface DecodedFrameInfo {
-  timestamp: number;
-  duration: number;
+  timestamp: number
+  duration: number
   // frameData: Uint8ClampedArray;
   // bitmap: ImageBitmap;
-  frame: VideoFrame;
-  width: number;
-  height: number;
+  frame: VideoFrame
+  width: number
+  height: number
 }
 
 export class StVideo {
-  id: string;
-  currentSequenceId: string;
-  name: string;
-  path: string;
+  id: string
+  currentSequenceId: string
+  name: string
+  path: string
   // blob: Blob;
-  sourceDuration: number;
-  sourceDurationMs: number;
-  sourceDimensions: [number, number];
-  sourceFrameRate: number;
+  sourceDuration: number
+  sourceDurationMs: number
+  sourceDimensions: [number, number]
+  sourceFrameRate: number
   // texture!: GPUTexture;
   // textureView!: GPUTextureView;
-  texture!: PolyfillTexture;
-  transform!: Transform;
-  vertexBuffer!: PolyfillBuffer;
-  indexBuffer!: PolyfillBuffer;
-  dimensions: [number, number];
-  bindGroup!: PolyfillBindGroup;
-  vertices: Vertex[];
-  indices: Uint32Array;
-  hidden: boolean;
-  layer: number;
-  layerSpacing: number;
-  groupBindGroup!: PolyfillBindGroup;
-  groupTransform!: Transform;
-  objectType: ObjectType;
-  currentZoom: number;
-  mousePath: MotionPath | undefined;
+  texture!: PolyfillTexture
+  transform!: Transform
+  vertexBuffer!: PolyfillBuffer
+  indexBuffer!: PolyfillBuffer
+  dimensions: [number, number]
+  bindGroup!: PolyfillBindGroup
+  vertices: Vertex[]
+  indices: Uint32Array
+  hidden: boolean
+  layer: number
+  layerSpacing: number
+  groupBindGroup!: PolyfillBindGroup
+  groupTransform!: Transform
+  objectType: ObjectType
+  currentZoom: number
+  mousePath: MotionPath | undefined
   // mousePositions: MousePosition[] | undefined;
-  lastCenterPoint: Point | undefined;
-  lastStartPoint: [number, number, number] | undefined; // x, y, time
-  lastEndPoint: [number, number, number] | undefined;
-  lastShiftTime: number | undefined;
+  lastCenterPoint: Point | undefined
+  lastStartPoint: [number, number, number] | undefined // x, y, time
+  lastEndPoint: [number, number, number] | undefined
+  lastShiftTime: number | undefined
   // sourceData: SourceData | null = null;
-  gridResolution: [number, number];
+  gridResolution: [number, number]
   //   frameTimer: FrameTimer | undefined;
-  dynamicAlpha: number;
-  numFramesDrawn: number;
-  objectTypeShader: number = 3;
+  dynamicAlpha: number
+  numFramesDrawn: number
+  objectTypeShader: number = 3
 
-  private videoDecoder?: VideoDecoder;
-  private mp4File?: MP4Box.MP4File;
-  private sourceBuffer?: MP4ArrayBuffer;
-  private videoMetadata?: VideoMetadata;
-  private isInitialized: boolean = false;
-  private samples: MP4Box.MP4Sample[] = [];
-  private currentSampleIndex: number = 0;
-  private decodingPromise?: Promise<DecodedFrameInfo>;
-  private frameCallback?: (frame: DecodedFrameInfo) => void;
-  private codecString?: string;
+  private videoDecoder?: VideoDecoder
+  private mp4File?: MP4Box.MP4File
+  private sourceBuffer?: MP4ArrayBuffer
+  private videoMetadata?: VideoMetadata
+  private isInitialized: boolean = false
+  private samples: MP4Box.MP4Sample[] = []
+  private currentSampleIndex: number = 0
+  private decodingPromise?: Promise<DecodedFrameInfo>
+  private frameCallback?: (frame: DecodedFrameInfo) => void
+  private codecString?: string
 
-  bytesPerFrame: number | null = null;
-  borderRadius: number;
-  gradientBuffer!: PolyfillBuffer;
+  bytesPerFrame: number | null = null
+  borderRadius: number
+  gradientBuffer!: PolyfillBuffer
   // gradientBindGroup: PolyfillBindGroup;
 
   constructor(
@@ -172,31 +168,31 @@ export class StVideo {
     loadedHidden: boolean,
     objectTypeShader: number = 3
   ) {
-    this.id = videoConfig.id;
-    this.currentSequenceId = currentSequenceId;
-    this.name = videoConfig.name;
-    this.path = videoConfig.path;
+    this.id = videoConfig.id
+    this.currentSequenceId = currentSequenceId
+    this.name = videoConfig.name
+    this.path = videoConfig.path
     // this.blob = blob;
-    this.hidden = true;
-    this.layer = videoConfig.layer;
-    this.layerSpacing = 0.001;
-    this.currentZoom = 1.0;
+    this.hidden = true
+    this.layer = videoConfig.layer
+    this.layerSpacing = 0.001
+    this.currentZoom = 1.0
     // this.mousePath = videoConfig.mousePath;
-    this.gridResolution = [20, 20]; // Default grid resolution
-    this.dynamicAlpha = 0.01;
-    this.numFramesDrawn = 0;
-    this.objectType = ObjectType.VideoItem;
-    this.borderRadius = videoConfig.borderRadius ?? 0.0;
-    this.objectTypeShader = objectTypeShader;
+    this.gridResolution = [20, 20] // Default grid resolution
+    this.dynamicAlpha = 0.01
+    this.numFramesDrawn = 0
+    this.objectType = ObjectType.VideoItem
+    this.borderRadius = videoConfig.borderRadius ?? 0.0
+    this.objectTypeShader = objectTypeShader
 
     // defaults
-    this.sourceDuration = 0;
-    this.sourceDurationMs = 0;
-    this.sourceDimensions = [0, 0];
-    this.sourceFrameRate = 0;
-    this.dimensions = [0, 0];
-    this.vertices = [];
-    this.indices = new Uint32Array();
+    this.sourceDuration = 0
+    this.sourceDurationMs = 0
+    this.sourceDimensions = [0, 0]
+    this.sourceFrameRate = 0
+    this.dimensions = [0, 0]
+    this.vertices = []
+    this.indices = new Uint32Array()
   }
 
   async initialize(
@@ -212,24 +208,22 @@ export class StVideo {
     currentSequenceId: string,
     loadedHidden: boolean
   ) {
-    this.dimensions = videoConfig.dimensions;
+    this.dimensions = videoConfig.dimensions
 
-    const identityMatrix = mat4.create();
+    const identityMatrix = mat4.create()
     let uniformBuffer = device.createBuffer(
       {
         size: 64,
         usage:
-          process.env.NODE_ENV === "test"
-            ? 0
-            : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        mappedAtCreation: true,
+          process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
       },
-      "uniformMatrix4fv"
-    );
+      'uniformMatrix4fv'
+    )
 
-    if (process.env.NODE_ENV !== "test") {
-      new Float32Array(uniformBuffer.getMappedRange()).set(identityMatrix);
-      uniformBuffer.unmap();
+    if (process.env.NODE_ENV !== 'test') {
+      new Float32Array(uniformBuffer.getMappedRange()).set(identityMatrix)
+      uniformBuffer.unmap()
     }
 
     this.transform = new Transform(
@@ -240,14 +234,14 @@ export class StVideo {
       vec2.fromValues(1, 1), // testing
       uniformBuffer
       // window_size,
-    );
+    )
 
     // let layer_index =
     //   -1.0 - getZLayer(videoConfig.layer - INTERNAL_LAYER_SPACE);
-    let layer_index = getZLayer(videoConfig.layer);
-    this.transform.layer = layer_index;
+    let layer_index = getZLayer(videoConfig.layer)
+    this.transform.layer = layer_index
 
-    this.transform.updateUniformBuffer(queue, windowSize);
+    this.transform.updateUniformBuffer(queue, windowSize)
 
     let [gradient, gradientBuffer] = setupGradientBuffers(
       device,
@@ -255,8 +249,8 @@ export class StVideo {
       null,
       this.borderRadius
       // gradientBindGroupLayout
-    );
-    this.gradientBuffer = gradientBuffer;
+    )
+    this.gradientBuffer = gradientBuffer
 
     // this.gradientBindGroup = gradientBindGroup;
 
@@ -264,7 +258,7 @@ export class StVideo {
       device,
       groupBindGroupLayout,
       windowSize
-    );
+    )
 
     // console.info("position", videoConfig.position);
 
@@ -272,51 +266,51 @@ export class StVideo {
       // x: 1.5,
       // y: 1.5,
       x: videoConfig.position.x,
-      y: videoConfig.position.y,
-    };
+      y: videoConfig.position.y
+    }
 
-    group_transform.updatePosition([setPosition.x, setPosition.y], windowSize);
+    group_transform.updatePosition([setPosition.x, setPosition.y], windowSize)
 
     // group_transform.updateRotationYDegrees(0.02);
 
-    group_transform.updateUniformBuffer(queue, windowSize);
+    group_transform.updateUniformBuffer(queue, windowSize)
 
-    this.groupBindGroup = group_bind_group;
-    this.groupTransform = group_transform;
+    this.groupBindGroup = group_bind_group
+    this.groupTransform = group_transform
 
-    if (process.env.NODE_ENV !== "test") {
-      const mediaInfo = await this.initializeMediaSource(blob);
+    if (process.env.NODE_ENV !== 'test') {
+      const mediaInfo = await this.initializeMediaSource(blob)
 
       if (mediaInfo) {
-        const { duration, durationMs, width, height, frameRate } = mediaInfo;
+        const { duration, durationMs, width, height, frameRate } = mediaInfo
 
-        console.info("media info", mediaInfo);
+        console.info('media info', mediaInfo)
 
-        this.sourceDuration = duration;
-        this.sourceDurationMs = durationMs;
-        this.sourceDimensions = [width, height];
-        this.sourceFrameRate = frameRate;
-        this.bytesPerFrame = width * 4 * height;
+        this.sourceDuration = duration
+        this.sourceDurationMs = durationMs
+        this.sourceDimensions = [width, height]
+        this.sourceFrameRate = frameRate
+        this.bytesPerFrame = width * 4 * height
 
         // const textureSize: GPUExtent3DStrict = {
         const textureSize = {
           width: width,
           height: height,
-          depthOrArrayLayers: 1,
-        };
+          depthOrArrayLayers: 1
+        }
 
-        console.info("video texture", textureSize);
+        console.info('video texture', textureSize)
 
         this.texture = device.createTexture({
-          label: "Video Texture",
+          label: 'Video Texture',
           size: textureSize,
           // mipLevelCount: 1,
           // sampleCount: 1,
           // dimension: "2d",
           // format: "bgra8unorm", // Or appropriate format
-          format: "rgba8unorm",
-          usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
-        });
+          format: 'rgba8unorm',
+          usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+        })
         // this.textureView = this.texture.createView();
 
         // const sampler = device.createSampler({
@@ -335,8 +329,8 @@ export class StVideo {
               binding: 0,
               groupIndex: 1,
               resource: {
-                pbuffer: uniformBuffer,
-              },
+                pbuffer: uniformBuffer
+              }
             },
             // { binding: 1, resource: this.textureView },
             { binding: 1, groupIndex: 1, resource: this.texture },
@@ -345,20 +339,20 @@ export class StVideo {
               binding: 0,
               groupIndex: 2,
               resource: {
-                pbuffer: gradientBuffer,
-              },
-            },
-          ],
+                pbuffer: gradientBuffer
+              }
+            }
+          ]
           // label: "Video Bind Group",
-        });
+        })
 
         // uniformBuffer.unmap();
         // this.transform.updateUniformBuffer(queue, windowSize);
         // group_transform.updateUniformBuffer(queue, windowSize);
 
         // // 20x20 grid
-        const rows = this.gridResolution[0];
-        const cols = this.gridResolution[1];
+        const rows = this.gridResolution[0]
+        const cols = this.gridResolution[1]
 
         // Calculate cover texture coordinates
         const { u0, u1, v0, v1 } = this.calculateCoverTextureCoordinates(
@@ -366,9 +360,9 @@ export class StVideo {
           this.dimensions[1],
           this.sourceDimensions[0],
           this.sourceDimensions[1]
-        );
+        )
 
-        this.vertices = [];
+        this.vertices = []
         for (let y = 0; y <= rows; y++) {
           for (let x = 0; x <= cols; x++) {
             // Keep your original position calculation
@@ -376,33 +370,27 @@ export class StVideo {
             // const posY = -0.5 + y / rows;
 
             // Center the position by offsetting by half dimensions
-            const posX =
-              -videoConfig.dimensions[0] / 2 +
-              videoConfig.dimensions[0] * (x / cols);
-            const posY =
-              -videoConfig.dimensions[1] / 2 +
-              videoConfig.dimensions[1] * (y / rows);
+            const posX = -videoConfig.dimensions[0] / 2 + videoConfig.dimensions[0] * (x / cols)
+            const posY = -videoConfig.dimensions[1] / 2 + videoConfig.dimensions[1] * (y / rows)
 
             // Map texture coordinates to properly implement cover
-            const percentX = x / cols; // 0 to 1 across the grid
-            const percentY = y / rows; // 0 to 1 across the grid
+            const percentX = x / cols // 0 to 1 across the grid
+            const percentY = y / rows // 0 to 1 across the grid
 
             // Apply the cover bounds to the texture coordinates
-            const texX = u0 + (u1 - u0) * percentX;
-            const texY = v0 + (v1 - v0) * percentY;
+            const texX = u0 + (u1 - u0) * percentX
+            const texY = v0 + (v1 - v0) * percentY
 
-            const normalizedX =
-              (posX - this.transform.position[0]) / this.dimensions[0];
-            const normalizedY =
-              (posY - this.transform.position[1]) / this.dimensions[1];
+            const normalizedX = (posX - this.transform.position[0]) / this.dimensions[0]
+            const normalizedY = (posY - this.transform.position[1]) / this.dimensions[1]
 
             this.vertices.push({
               position: [posX, posY, 0.0],
               tex_coords: [texX, texY],
               color: [1.0, 1.0, 1.0, 1.0],
               gradient_coords: [normalizedX, normalizedY],
-              object_type: this.objectTypeShader, // OBJECT_TYPE_VIDEO
-            });
+              object_type: this.objectTypeShader // OBJECT_TYPE_VIDEO
+            })
           }
         }
 
@@ -434,16 +422,16 @@ export class StVideo {
         //   }
         // }
 
-        console.info("video vertices", this.vertices);
+        console.info('video vertices', this.vertices)
 
         this.vertexBuffer = device.createBuffer(
           {
-            label: "Vertex Buffer",
+            label: 'Vertex Buffer',
             size: this.vertices.length * 4 * 16,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
           },
-          ""
-        );
+          ''
+        )
 
         queue.writeBuffer(
           this.vertexBuffer,
@@ -454,72 +442,65 @@ export class StVideo {
               ...v.tex_coords,
               ...v.color,
               ...v.gradient_coords,
-              v.object_type,
+              v.object_type
             ])
           )
-        );
+        )
 
         this.indices = new Uint32Array(
           (() => {
-            const indices = [];
+            const indices = []
             for (let y = 0; y < rows; y++) {
               for (let x = 0; x < cols; x++) {
-                const topLeft = y * (cols + 1) + x;
-                const topRight = topLeft + 1;
-                const bottomLeft = (y + 1) * (cols + 1) + x;
-                const bottomRight = bottomLeft + 1;
+                const topLeft = y * (cols + 1) + x
+                const topRight = topLeft + 1
+                const bottomLeft = (y + 1) * (cols + 1) + x
+                const bottomRight = bottomLeft + 1
 
-                indices.push(
-                  bottomRight,
-                  bottomLeft,
-                  topRight,
-                  topRight,
-                  bottomLeft,
-                  topLeft
-                );
+                indices.push(bottomRight, bottomLeft, topRight, topRight, bottomLeft, topLeft)
               }
             }
-            return indices;
+            return indices
           })()
-        );
+        )
 
         this.indexBuffer = device.createBuffer(
           {
-            label: "Index Buffer",
+            label: 'Index Buffer',
             size: this.indices.byteLength,
-            usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+            usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
           },
-          ""
-        );
+          ''
+        )
 
-        queue.writeBuffer(this.indexBuffer, 0, this.indices);
+        queue.writeBuffer(this.indexBuffer, 0, this.indices)
 
         // this.initializeDecoder().then(() => {
         //   // draw initial preview frame
         //   this.drawVideoFrame(device, queue).catch(console.error); // Handle potential errors
         // });
 
-        console.info("prep to decode video");
+        console.info('prep to decode video')
 
         try {
-          await this.initializeDecoder();
+          await this.initializeDecoder()
         } catch (error) {
-          console.error("Error initializing video decoder:", error);
-          throw new Error("Failed to initialize video decoder");
+          console.error('Error initializing video decoder:', error)
+          throw new Error('Failed to initialize video decoder')
         }
 
-        console.info("prep to draw video frame");
+        console.info('prep to draw video frame')
 
         try {
-          await this.drawVideoFrame(device, queue);
+          await this.drawVideoFrame(device, queue)
         } catch (error) {
-          console.error("Error drawing video frame:", error);
-          throw new Error("Failed to draw video frame");
+          console.error('Error drawing video frame:', error)
+          throw new Error('Failed to draw video frame')
         }
 
-        this.hidden = loadedHidden;
+        this.hidden = loadedHidden
 
-        console.info("video loaded");
+        console.info('video loaded')
       }
     }
   }
@@ -531,35 +512,35 @@ export class StVideo {
     imageHeight: number
   ) {
     // Calculate aspect ratios
-    const containerAspect = containerWidth / containerHeight;
-    const imageAspect = imageWidth / imageHeight;
+    const containerAspect = containerWidth / containerHeight
+    const imageAspect = imageWidth / imageHeight
 
     // Initialize texture coordinate variables
     let u0 = 0,
       u1 = 1,
       v0 = 0,
-      v1 = 1;
+      v1 = 1
 
     // If image is wider than container (relative to their heights)
     if (imageAspect > containerAspect) {
       // We need to crop the sides
-      const scaleFactor = containerAspect / imageAspect;
-      const cropAmount = (1 - scaleFactor) / 2;
+      const scaleFactor = containerAspect / imageAspect
+      const cropAmount = (1 - scaleFactor) / 2
 
-      u0 = cropAmount;
-      u1 = 1 - cropAmount;
+      u0 = cropAmount
+      u1 = 1 - cropAmount
     }
     // If image is taller than container (relative to their widths)
     else if (imageAspect < containerAspect) {
       // We need to crop top and bottom
-      const scaleFactor = imageAspect / containerAspect;
-      const cropAmount = (1 - scaleFactor) / 2;
+      const scaleFactor = imageAspect / containerAspect
+      const cropAmount = (1 - scaleFactor) / 2
 
-      v0 = cropAmount;
-      v1 = 1 - cropAmount;
+      v0 = cropAmount
+      v1 = 1 - cropAmount
     }
 
-    return { u0, u1, v0, v1 };
+    return { u0, u1, v0, v1 }
   }
 
   // implementCoverEffect(videoWidth: number, videoHeight: number) {
@@ -622,89 +603,80 @@ export class StVideo {
   //   }
   // }
 
-  private avcDecoderConfig?: Uint8Array;
+  private avcDecoderConfig?: Uint8Array
 
   description(track: MP4VideoTrack) {
     if (!this.mp4File) {
-      return;
+      return
     }
 
-    const trak = this.mp4File.getTrackById(track.id);
+    const trak = this.mp4File.getTrackById(track.id)
 
-    if (
-      !trak.mdia ||
-      !trak.mdia.minf ||
-      !trak.mdia.minf.stbl ||
-      !trak.mdia.minf.stbl.stsd
-    ) {
-      return;
+    if (!trak.mdia || !trak.mdia.minf || !trak.mdia.minf.stbl || !trak.mdia.minf.stbl.stsd) {
+      return
     }
 
     for (const entry of trak.mdia.minf.stbl.stsd.entries) {
-      const box = entry.avcC || entry.hvcC;
+      const box = entry.avcC || entry.hvcC
       // || entry.vpcC || entry.av1C;
       if (box) {
         // console.info("prepare box!");
-        const stream = new DataStream(undefined, 0, DataStream.BIG_ENDIAN);
-        box.write(stream);
-        return new Uint8Array(stream.buffer, 8); // Remove the box header.
+        const stream = new DataStream(undefined, 0, DataStream.BIG_ENDIAN)
+        box.write(stream)
+        return new Uint8Array(stream.buffer, 8) // Remove the box header.
       }
     }
-    throw new Error("avcC, hvcC, vpcC, or av1C box not found");
+    throw new Error('avcC, hvcC, vpcC, or av1C box not found')
   }
 
   async initializeMediaSource(blob: Blob): Promise<VideoMetadata | null> {
     try {
-      this.sourceBuffer = (await blob.arrayBuffer()) as MP4ArrayBuffer;
-      this.sourceBuffer.fileStart = 0;
-      this.mp4File = MP4Box.createFile();
+      this.sourceBuffer = (await blob.arrayBuffer()) as MP4ArrayBuffer
+      this.sourceBuffer.fileStart = 0
+      this.mp4File = MP4Box.createFile()
 
       return new Promise((resolve, reject) => {
         if (!this.mp4File) {
-          reject(new Error("MP4Box not initialized"));
-          return;
+          reject(new Error('MP4Box not initialized'))
+          return
         }
 
         this.mp4File.onError = (error: string) => {
-          reject(new Error(`MP4Box error: ${error}`));
-        };
+          reject(new Error(`MP4Box error: ${error}`))
+        }
 
         this.mp4File.onReady = (info: MP4Box.MP4Info) => {
-          const videoTrack = info.videoTracks[0];
+          const videoTrack = info.videoTracks[0]
 
-          console.info("track length ", info.videoTracks.length);
+          console.info('track length ', info.videoTracks.length)
 
           if (!videoTrack) {
-            reject(new Error("No video track found in the file"));
-            return;
+            reject(new Error('No video track found in the file'))
+            return
           }
 
           // Store codec string for decoder configuration
-          this.codecString = videoTrack.codec;
+          this.codecString = videoTrack.codec
 
-          this.avcDecoderConfig = this.description(videoTrack);
+          this.avcDecoderConfig = this.description(videoTrack)
 
-          console.log("Codec string:", videoTrack.codec);
-          console.log("avcC length:", this.avcDecoderConfig?.length);
+          console.log('Codec string:', videoTrack.codec)
+          console.log('avcC length:', this.avcDecoderConfig?.length)
           if (this.avcDecoderConfig) {
             const firstFewBytes = Array.from(this.avcDecoderConfig.slice(0, 10))
-              .map((byte) => byte.toString(16).padStart(2, "0"))
-              .join("");
-            console.log("First few bytes of avcC:", firstFewBytes);
+              .map((byte) => byte.toString(16).padStart(2, '0'))
+              .join('')
+            console.log('First few bytes of avcC:', firstFewBytes)
           }
 
           this.mp4File!.setExtractionOptions(videoTrack.id, null, {
-            nbSamples: Infinity,
-          });
+            nbSamples: Infinity
+          })
 
-          this.mp4File!.onSamples = (
-            track_id: number,
-            user: any,
-            samples: MP4Box.MP4Sample[]
-          ) => {
+          this.mp4File!.onSamples = (track_id: number, user: any, samples: MP4Box.MP4Sample[]) => {
             // console.info("onSamples");
 
-            this.samples = samples;
+            this.samples = samples
 
             // console.info("original duration", videoTrack.duration);
 
@@ -712,23 +684,23 @@ export class StVideo {
             // const durationMs = videoTrack.duration;
             // const frameRate = samples.length / durationInSeconds;
 
-            const durationInSeconds = info.duration / info.timescale;
-            const durationMs = durationInSeconds * 1000;
-            const frameRate = samples.length / durationInSeconds;
+            const durationInSeconds = info.duration / info.timescale
+            const durationMs = durationInSeconds * 1000
+            const frameRate = samples.length / durationInSeconds
 
             console.info(
-              "samples ",
+              'samples ',
               samples.length,
-              "info ",
+              'info ',
               info.duration,
               info.timescale,
-              "track: ",
+              'track: ',
               videoTrack.duration,
               videoTrack.timescale,
-              "rate: ",
+              'rate: ',
               frameRate,
               durationInSeconds
-            );
+            )
 
             this.videoMetadata = {
               duration: durationInSeconds,
@@ -739,29 +711,29 @@ export class StVideo {
               trackId: videoTrack.id,
               timescale: videoTrack.timescale,
               codecs: videoTrack.codec,
-              description: this.avcDecoderConfig,
-            };
+              description: this.avcDecoderConfig
+            }
 
-            this.isInitialized = true;
-            resolve(this.videoMetadata);
-          };
+            this.isInitialized = true
+            resolve(this.videoMetadata)
+          }
 
-          this.mp4File!.start();
-        };
+          this.mp4File!.start()
+        }
 
         // (this.mp4File as any).fileStart = 0;
         if (!this.sourceBuffer) {
-          return;
+          return
         }
 
-        console.info("append buffer");
+        console.info('append buffer')
 
-        this.mp4File.appendBuffer(this.sourceBuffer);
-      });
+        this.mp4File.appendBuffer(this.sourceBuffer)
+      })
     } catch (error) {
-      console.error("Error initializing media source:", error);
-      this.isInitialized = false;
-      return null;
+      console.error('Error initializing media source:', error)
+      this.isInitialized = false
+      return null
     }
   }
 
@@ -769,21 +741,21 @@ export class StVideo {
     // console.info("initializeDecoder");
 
     if (this.videoDecoder) {
-      console.warn("Video decoder already initialized");
-      return;
+      console.warn('Video decoder already initialized')
+      return
     }
 
     return new Promise((resolve, reject) => {
       if (!this.codecString || !this.videoMetadata) {
-        throw new Error("Codec information not available");
+        throw new Error('Codec information not available')
       }
 
       this.videoDecoder = new VideoDecoder({
         output: async (frame: VideoFrame) => {
           try {
             if (!this.bytesPerFrame) {
-              console.error("No bytesPerFrame set");
-              throw new Error("No bytesPerFrame");
+              console.error('No bytesPerFrame set')
+              throw new Error('No bytesPerFrame')
             }
 
             // console.info(
@@ -813,8 +785,8 @@ export class StVideo {
               // bitmap,
               frame,
               width: frame.displayWidth,
-              height: frame.displayHeight,
-            };
+              height: frame.displayHeight
+            }
 
             // console.info("this.frameCallback", this.frameCallback);
 
@@ -826,18 +798,18 @@ export class StVideo {
             //   frameInfo.frame.displayHeight
             // );
 
-            this.frameCallback?.(frameInfo);
+            this.frameCallback?.(frameInfo)
             // frame.close();
           } catch (error) {
-            console.error("Error processing frame:", error);
-            frame.close();
+            console.error('Error processing frame:', error)
+            frame.close()
           }
         },
         error: (error: DOMException) => {
-          console.error("VideoDecoder error:", error);
-          reject(error);
-        },
-      });
+          console.error('VideoDecoder error:', error)
+          reject(error)
+        }
+      })
 
       // Configure the decoder with the codec information and AVC configuration
       // const colorSpace: VideoColorSpaceInit = {
@@ -857,48 +829,48 @@ export class StVideo {
         // hardwareAcceleration: "prefer-hardware",
         // testing settings for taller videos...
         optimizeForLatency: true,
-        hardwareAcceleration: "no-preference",
+        hardwareAcceleration: 'no-preference',
         // colorSpace: colorSpace,
 
         // Add description for AVC/H.264
-        description: this.avcDecoderConfig,
-      };
+        description: this.avcDecoderConfig
+      }
 
-      this.videoDecoder.configure(config);
+      this.videoDecoder.configure(config)
 
       // console.info("decoder configured");
 
-      resolve();
-    });
+      resolve()
+    })
   }
 
   async seekToTime(timeMs: number): Promise<void> {
     if (!this.isInitialized || !this.samples.length) {
-      throw new Error("Video not initialized");
+      throw new Error('Video not initialized')
     }
 
-    const timescale = this.videoMetadata!.timescale;
-    const timeInTimescale = (timeMs / 1000) * timescale;
+    const timescale = this.videoMetadata!.timescale
+    const timeInTimescale = (timeMs / 1000) * timescale
 
     // Find the nearest keyframe before the desired time
-    let targetIndex = 0;
+    let targetIndex = 0
     for (let i = 0; i < this.samples.length; i++) {
       if (this.samples[i].cts > timeInTimescale) {
-        break;
+        break
       }
       if (this.samples[i].is_sync) {
-        targetIndex = i;
+        targetIndex = i
       }
     }
 
-    this.currentSampleIndex = targetIndex;
+    this.currentSampleIndex = targetIndex
   }
 
   async decodeNextFrame(): Promise<DecodedFrameInfo> {
     // console.info("decodeNextFrame 1");
 
     if (!this.isInitialized || this.currentSampleIndex >= this.samples.length) {
-      throw new Error("No more frames to decode");
+      throw new Error('No more frames to decode')
     }
 
     return new Promise((resolve, reject) => {
@@ -907,18 +879,18 @@ export class StVideo {
       this.frameCallback = (frameInfo: DecodedFrameInfo) => {
         // console.info("decodeNextFrame 3");
 
-        this.frameCallback = undefined;
-        resolve(frameInfo);
-      };
+        this.frameCallback = undefined
+        resolve(frameInfo)
+      }
 
-      let sample = this.samples[this.currentSampleIndex];
+      let sample = this.samples[this.currentSampleIndex]
 
       const chunk = new EncodedVideoChunk({
-        type: sample.is_sync ? "key" : "delta",
+        type: sample.is_sync ? 'key' : 'delta',
         timestamp: sample.cts,
         duration: sample.duration,
-        data: sample.data,
-      });
+        data: sample.data
+      })
 
       // console.log(
       //   "EncodedVideoChunk:",
@@ -936,26 +908,22 @@ export class StVideo {
       //   sample.is_sync
       // );
 
-      this.videoDecoder!.decode(chunk);
+      this.videoDecoder!.decode(chunk)
 
       // console.info("chunk decoded", sample.data.length);
 
-      this.currentSampleIndex++;
-    });
+      this.currentSampleIndex++
+    })
   }
 
-  async drawVideoFrame(
-    device: PolyfillDevice,
-    queue: PolyfillQueue,
-    timeMs?: number
-  ) {
+  async drawVideoFrame(device: PolyfillDevice, queue: PolyfillQueue, timeMs?: number) {
     if (timeMs !== undefined) {
-      await this.seekToTime(timeMs);
+      await this.seekToTime(timeMs)
     }
 
     // console.info("calling decodeNextFrame", this.currentSampleIndex);
 
-    const frameInfo = await this.decodeNextFrame();
+    const frameInfo = await this.decodeNextFrame()
 
     // console.info(
     //   "frame info",
@@ -990,7 +958,7 @@ export class StVideo {
       {
         texture: this.texture,
         mipLevel: 0,
-        origin: { x: 0, y: 0, z: 0 },
+        origin: { x: 0, y: 0, z: 0 }
         // aspect: "all",
       },
       // frameInfo.frameData,
@@ -998,55 +966,51 @@ export class StVideo {
       {
         offset: 0,
         bytesPerRow: frameInfo.width * 4,
-        rowsPerImage: frameInfo.height,
+        rowsPerImage: frameInfo.height
       },
       {
         width: frameInfo.width,
         height: frameInfo.height,
-        depthOrArrayLayers: 1,
+        depthOrArrayLayers: 1
       }
-    );
+    )
 
     // console.info("close frame");
 
-    frameInfo.frame.close();
+    frameInfo.frame.close()
 
     // console.info("texture write succesful");
     // console.log("Texture format:", this.texture.format); // Log texture format
 
-    return frameInfo;
+    return frameInfo
   }
 
   getCurrentTime(): number {
     if (!this.samples[this.currentSampleIndex]) {
-      return 0;
+      return 0
     }
-    return (
-      (this.samples[this.currentSampleIndex].cts /
-        this.videoMetadata!.timescale) *
-      1000
-    );
+    return (this.samples[this.currentSampleIndex].cts / this.videoMetadata!.timescale) * 1000
   }
 
   getTotalFrames(): number {
-    return this.samples.length;
+    return this.samples.length
   }
 
   getCurrentFrame(): number {
-    return this.currentSampleIndex;
+    return this.currentSampleIndex
   }
 
   resetPlayback() {
-    this.currentSampleIndex = 0;
-    this.numFramesDrawn = 0;
+    this.currentSampleIndex = 0
+    this.numFramesDrawn = 0
   }
 
   updateOpacity(queue: PolyfillQueue, opacity: number): void {
-    const newColor: [number, number, number, number] = [1.0, 1.0, 1.0, opacity];
+    const newColor: [number, number, number, number] = [1.0, 1.0, 1.0, opacity]
 
     this.vertices.forEach((v) => {
-      v.color = newColor;
-    });
+      v.color = newColor
+    })
 
     queue.writeBuffer(
       this.vertexBuffer,
@@ -1057,38 +1021,35 @@ export class StVideo {
           ...v.tex_coords,
           ...v.color,
           ...v.gradient_coords,
-          v.object_type,
+          v.object_type
         ])
       )
-    );
+    )
   }
 
   updateBorderRadius(queue: PolyfillQueue, borderRadius: number): void {
-    this.borderRadius = borderRadius;
+    this.borderRadius = borderRadius
 
     // Update the gradient buffer with the new border radius
-    if (process.env.NODE_ENV !== "test") {
-      const gradientData = new Float32Array(this.gradientBuffer.size / 4);
+    if (process.env.NODE_ENV !== 'test') {
+      const gradientData = new Float32Array(this.gradientBuffer.size / 4)
       // The border_radius is at offset 40 + 12 floats = index 52
-      gradientData[52] = borderRadius;
+      gradientData[52] = borderRadius
 
       queue.writeBuffer(
         this.gradientBuffer,
         52 * 4, // byte offset
         gradientData.slice(52, 53)
-      );
+      )
     }
   }
 
-  update(
-    queue: PolyfillQueue,
-    windowSize: { width: number; height: number }
-  ): void {
+  update(queue: PolyfillQueue, windowSize: { width: number; height: number }): void {
     /* ... */
   }
 
   getDimensions(): [number, number] {
-    return [0, 0];
+    return [0, 0]
   }
 
   updateDataFromDimensions(
@@ -1098,14 +1059,14 @@ export class StVideo {
     bindGroupLayout: PolyfillBindGroupLayout,
     dimensions: [number, number]
   ): void {
-    console.info("updateDataFromDimensions", dimensions);
-    this.dimensions = [dimensions[0], dimensions[1]];
+    console.info('updateDataFromDimensions', dimensions)
+    this.dimensions = [dimensions[0], dimensions[1]]
     // this.transform.updateScale([dimensions[0], dimensions[1]]); // old scale way with webgpu
 
-    this.transform.updateUniformBuffer(queue, windowSize);
+    this.transform.updateUniformBuffer(queue, windowSize)
 
-    const rows = this.gridResolution[0];
-    const cols = this.gridResolution[1];
+    const rows = this.gridResolution[0]
+    const cols = this.gridResolution[1]
 
     // Calculate cover texture coordinates
     const { u0, u1, v0, v1 } = this.calculateCoverTextureCoordinates(
@@ -1113,26 +1074,26 @@ export class StVideo {
       this.dimensions[1],
       this.sourceDimensions[0],
       this.sourceDimensions[1]
-    );
+    )
 
-    let n = 0;
+    let n = 0
     for (let y = 0; y <= rows; y++) {
       for (let x = 0; x <= cols; x++) {
         // Center the position by offsetting by half dimensions
-        const posX = -this.dimensions[0] / 2 + this.dimensions[0] * (x / cols);
-        const posY = -this.dimensions[1] / 2 + this.dimensions[1] * (y / rows);
+        const posX = -this.dimensions[0] / 2 + this.dimensions[0] * (x / cols)
+        const posY = -this.dimensions[1] / 2 + this.dimensions[1] * (y / rows)
 
         // Map texture coordinates to properly implement cover
-        const percentX = x / cols; // 0 to 1 across the grid
-        const percentY = y / rows; // 0 to 1 across the grid
+        const percentX = x / cols // 0 to 1 across the grid
+        const percentY = y / rows // 0 to 1 across the grid
         // Apply the cover bounds to the texture coordinates
-        const texX = u0 + (u1 - u0) * percentX;
-        const texY = v0 + (v1 - v0) * percentY;
+        const texX = u0 + (u1 - u0) * percentX
+        const texY = v0 + (v1 - v0) * percentY
 
-        this.vertices[n].position = [posX, posY, 0];
-        this.vertices[n].tex_coords = [texX, texY];
+        this.vertices[n].position = [posX, posY, 0]
+        this.vertices[n].tex_coords = [texX, texY]
 
-        n++;
+        n++
       }
     }
 
@@ -1145,36 +1106,36 @@ export class StVideo {
           ...v.tex_coords,
           ...v.color,
           ...v.gradient_coords,
-          v.object_type,
+          v.object_type
         ])
       )
-    );
+    )
   }
 
   updateLayer(layerIndex: number): void {
     // let layer = layerIndex - INTERNAL_LAYER_SPACE;
     // let layer_index = -1.0 - getZLayer(layerIndex - INTERNAL_LAYER_SPACE);
-    let layer_index = getZLayer(layerIndex, this.layerSpacing);
-    this.layer = layer_index;
-    this.transform.layer = layer_index;
+    let layer_index = getZLayer(layerIndex, this.layerSpacing)
+    this.layer = layerIndex
+    this.transform.layer = layer_index
   }
 
   updateZoom(queue: PolyfillQueue, newZoom: number, centerPoint: Point): void {
     // console.info("updateZoom", newZoom, centerPoint);
 
-    this.currentZoom = newZoom;
-    const [videoWidth, videoHeight] = [this.dimensions[0], this.dimensions[1]];
+    this.currentZoom = newZoom
+    const [videoWidth, videoHeight] = [this.dimensions[0], this.dimensions[1]]
 
-    const uvCenterX = centerPoint.x / videoWidth;
-    const uvCenterY = centerPoint.y / videoHeight;
+    const uvCenterX = centerPoint.x / videoWidth
+    const uvCenterY = centerPoint.y / videoHeight
 
-    const halfWidth = 0.5 / newZoom;
-    const halfHeight = 0.5 / newZoom;
+    const halfWidth = 0.5 / newZoom
+    const halfHeight = 0.5 / newZoom
 
-    let uvMinX = uvCenterX - halfWidth;
-    let uvMaxX = uvCenterX + halfWidth;
-    let uvMinY = uvCenterY - halfHeight;
-    let uvMaxY = uvCenterY + halfHeight;
+    let uvMinX = uvCenterX - halfWidth
+    let uvMaxX = uvCenterX + halfWidth
+    let uvMinY = uvCenterY - halfHeight
+    let uvMaxY = uvCenterY + halfHeight
 
     // console.info(
     //   "pre clamp uv",
@@ -1188,38 +1149,38 @@ export class StVideo {
 
     // Check for clamping and adjust other UVs accordingly to prevent warping
     if (uvMinX < 0.0) {
-      const diff = -uvMinX;
-      uvMinX = 0.0;
-      uvMaxX = Math.min(uvMaxX + diff, 1.0); // Clamp maxX as well
+      const diff = -uvMinX
+      uvMinX = 0.0
+      uvMaxX = Math.min(uvMaxX + diff, 1.0) // Clamp maxX as well
     } else if (uvMaxX > 1.0) {
-      const diff = uvMaxX - 1.0;
-      uvMaxX = 1.0;
-      uvMinX = Math.max(uvMinX - diff, 0.0); // Clamp minX
+      const diff = uvMaxX - 1.0
+      uvMaxX = 1.0
+      uvMinX = Math.max(uvMinX - diff, 0.0) // Clamp minX
     }
 
     if (uvMinY < 0.0) {
-      const diff = -uvMinY;
-      uvMinY = 0.0;
-      uvMaxY = Math.min(uvMaxY + diff, 1.0); // Clamp maxY
+      const diff = -uvMinY
+      uvMinY = 0.0
+      uvMaxY = Math.min(uvMaxY + diff, 1.0) // Clamp maxY
     } else if (uvMaxY > 1.0) {
-      const diff = uvMaxY - 1.0;
-      uvMaxY = 1.0;
-      uvMinY = Math.max(uvMinY - diff, 0.0); // Clamp minY
+      const diff = uvMaxY - 1.0
+      uvMaxY = 1.0
+      uvMinY = Math.max(uvMinY - diff, 0.0) // Clamp minY
     }
 
-    const [rows, cols] = this.gridResolution;
+    const [rows, cols] = this.gridResolution
 
     // Update UV coordinates for each vertex in place
     for (let y = 0; y <= rows; y++) {
-      const vRatio = y / rows;
-      const uvY = uvMinY + (uvMaxY - uvMinY) * vRatio;
+      const vRatio = y / rows
+      const uvY = uvMinY + (uvMaxY - uvMinY) * vRatio
 
       for (let x = 0; x <= cols; x++) {
-        const uRatio = x / cols;
-        const uvX = uvMinX + (uvMaxX - uvMinX) * uRatio;
+        const uRatio = x / cols
+        const uvX = uvMinX + (uvMaxX - uvMinX) * uRatio
 
-        const vertexIndex = y * (cols + 1) + x;
-        this.vertices[vertexIndex].tex_coords = [uvX, uvY];
+        const vertexIndex = y * (cols + 1) + x
+        this.vertices[vertexIndex].tex_coords = [uvX, uvY]
       }
     }
 
@@ -1232,10 +1193,10 @@ export class StVideo {
           ...v.tex_coords,
           ...v.color,
           ...v.gradient_coords,
-          v.object_type,
+          v.object_type
         ])
       )
-    );
+    )
   }
 
   updatePopout(
@@ -1244,43 +1205,43 @@ export class StVideo {
     popoutIntensity: number,
     popoutDimensions: [number, number]
   ): void {
-    const [videoWidth, videoHeight] = [this.dimensions[0], this.dimensions[1]];
+    const [videoWidth, videoHeight] = [this.dimensions[0], this.dimensions[1]]
 
-    const uvMouseX = mousePoint.x / videoWidth;
-    const uvMouseY = mousePoint.y / videoHeight;
+    const uvMouseX = mousePoint.x / videoWidth
+    const uvMouseY = mousePoint.y / videoHeight
 
-    const radiusX = popoutDimensions[0] / (2.0 * videoWidth);
-    const radiusY = popoutDimensions[1] / (2.0 * videoHeight);
+    const radiusX = popoutDimensions[0] / (2.0 * videoWidth)
+    const radiusY = popoutDimensions[1] / (2.0 * videoHeight)
 
     // Create new array of vertices to modify
     const newVertices = this.vertices.map((vertex) => {
-      const dx = vertex.tex_coords[0] - uvMouseX;
-      const dy = vertex.tex_coords[1] - uvMouseY;
+      const dx = vertex.tex_coords[0] - uvMouseX
+      const dy = vertex.tex_coords[1] - uvMouseY
 
       // Check if the vertex is within the popout area
       if (Math.abs(dx) <= radiusX && Math.abs(dy) <= radiusY) {
         // Normalize the coordinates to the popout area
-        const normalizedX = dx / radiusX;
-        const normalizedY = dy / radiusY;
+        const normalizedX = dx / radiusX
+        const normalizedY = dy / radiusY
 
         // Apply the zoom effect by scaling the texture coordinates
-        const newX = uvMouseX + (normalizedX * radiusX) / popoutIntensity;
-        const newY = uvMouseY + (normalizedY * radiusY) / popoutIntensity;
+        const newX = uvMouseX + (normalizedX * radiusX) / popoutIntensity
+        const newY = uvMouseY + (normalizedY * radiusY) / popoutIntensity
 
         // Clamp the texture coordinates to avoid going out of bounds
         return {
           ...vertex,
-          texCoords: [
-            Math.max(0.0, Math.min(1.0, newX)),
-            Math.max(0.0, Math.min(1.0, newY)),
-          ] as [number, number],
-        };
+          texCoords: [Math.max(0.0, Math.min(1.0, newX)), Math.max(0.0, Math.min(1.0, newY))] as [
+            number,
+            number
+          ]
+        }
       }
-      return vertex;
-    });
+      return vertex
+    })
 
     // Update the vertices in the video item
-    this.vertices = newVertices;
+    this.vertices = newVertices
 
     // Write to GPU buffer
     queue.writeBuffer(
@@ -1292,10 +1253,10 @@ export class StVideo {
           ...v.tex_coords,
           ...v.color,
           ...v.gradient_coords,
-          v.object_type,
+          v.object_type
         ])
       )
-    );
+    )
   }
 
   containsPoint(point: Point): boolean {
@@ -1306,19 +1267,19 @@ export class StVideo {
 
     const untranslated: Point = {
       x: point.x - this.groupTransform.position[0], // Access translation from matrix
-      y: point.y - this.groupTransform.position[1],
-    };
+      y: point.y - this.groupTransform.position[1]
+    }
 
     return (
       untranslated.x >= -0.5 * this.dimensions[0] &&
       untranslated.x <= 0.5 * this.dimensions[0] &&
       untranslated.y >= -0.5 * this.dimensions[1] &&
       untranslated.y <= 0.5 * this.dimensions[1]
-    );
+    )
   }
 
   toLocalSpace(worldPoint: Point): Point {
-    return { x: 0, y: 0 };
+    return { x: 0, y: 0 }
   }
 
   toConfig(): StVideoConfig {
@@ -1330,10 +1291,10 @@ export class StVideo {
       dimensions: this.dimensions,
       position: {
         x: this.groupTransform.position[0],
-        y: this.groupTransform.position[1],
+        y: this.groupTransform.position[1]
       },
       layer: this.layer,
-      borderRadius: this.borderRadius,
-    };
+      borderRadius: this.borderRadius
+    }
   }
 }
