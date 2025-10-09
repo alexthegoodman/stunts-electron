@@ -1028,7 +1028,7 @@ const TextAnimationProperties = ({
           <div className="space-y-2">
             {categories.map((category) => (
               <details key={category} className="border border-gray-300 rounded">
-                <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-100 hover:bg-gray-200">
+                <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
                   {category}
                 </summary>
                 <div className="p-2 space-y-1">
@@ -1039,7 +1039,7 @@ const TextAnimationProperties = ({
                       className={`w-full text-left text-xs px-2 py-1.5 rounded transition-colors ${
                         selectedTemplate === template.id
                           ? 'bg-red-500 text-white'
-                          : 'bg-gray-50 hover:bg-gray-100'
+                          : 'bg-gray-600 hover:bg-gray-500'
                       }`}
                     >
                       <div className="font-medium">{template.name}</div>

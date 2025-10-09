@@ -190,7 +190,9 @@ export class TextAnimator {
     const hasExitAnimation = this.animationConfig.customParams?.hasExitAnimation
     const exitAnimationDuration = this.animationConfig.customParams?.exitAnimationDuration || 0
     const entranceDuration = this.getTotalAnimationDuration()
-    const totalWithExit = hasExitAnimation ? entranceDuration + exitAnimationDuration : entranceDuration
+    const totalWithExit = hasExitAnimation
+      ? entranceDuration + exitAnimationDuration
+      : entranceDuration
 
     for (const char of this.animatedCharacters) {
       const charStartTime = char.animationDelay
@@ -262,27 +264,35 @@ export class TextAnimator {
         break
 
       case TextAnimationType.Bounce:
-        const bounceHeight = Math.sin(progress * Math.PI) * 50 * intensity
+        // Bounce in from above and settle - decreasing bounce amplitude
+        const bounceHeight = Math.sin(progress * Math.PI * 3) * 50 * intensity * (1 - progress)
         char.position[1] = char.originalPosition[1] + bounceHeight
+        char.opacity = Math.min(progress * 2, 1.0) // Fade in quickly
         break
 
       case TextAnimationType.Wave:
-        const waveOffset = Math.sin(progress * Math.PI * 2 + char.index * 0.5) * 30 * intensity
+        // Wave in and settle - amplitude decreases over time
+        const waveOffset = Math.sin(progress * Math.PI * 2 + char.index * 0.5) * 30 * intensity * (1 - progress)
         char.position[1] = char.originalPosition[1] + waveOffset
+        char.opacity = Math.min(progress * 1.5, 1.0)
         break
 
       case TextAnimationType.Glow:
-        const glowIntensity = (Math.sin(progress * Math.PI * 4) + 1) * 0.5 * intensity
+        // Glow pulses and settles to normal brightness
+        const glowIntensity = (Math.sin(progress * Math.PI * 4) + 1) * 0.5 * intensity * (1 - progress)
         char.color[0] = char.originalColor[0] + glowIntensity
         char.color[1] = char.originalColor[1] + glowIntensity
         char.color[2] = char.originalColor[2] + glowIntensity
+        char.opacity = Math.min(progress * 1.5, 1.0)
         break
 
       case TextAnimationType.Shake:
-        const shakeX = (Math.random() - 0.5) * 15 * intensity * progress
-        const shakeY = (Math.random() - 0.5) * 15 * intensity * progress
+        // Shake in and settle - amplitude decreases over time
+        const shakeX = (Math.random() - 0.5) * 15 * intensity * (1 - progress)
+        const shakeY = (Math.random() - 0.5) * 15 * intensity * (1 - progress)
         char.position[0] = char.originalPosition[0] + shakeX
         char.position[1] = char.originalPosition[1] + shakeY
+        char.opacity = Math.min(progress * 1.5, 1.0)
         break
 
       case TextAnimationType.PopIn:
@@ -292,33 +302,45 @@ export class TextAnimator {
         break
 
       case TextAnimationType.RollIn:
+        // Roll in and settle - rotation decreases, scale grows to normal
         char.rotation = (1 - progress) * Math.PI * 2
         char.scale = progress
+        char.opacity = Math.min(progress * 1.5, 1.0)
         break
 
       case TextAnimationType.Elastic:
+        // Elastic bounce that settles - already has (1 - progress) decay
         const elasticScale = 1 + Math.sin(progress * Math.PI * 6) * 0.3 * intensity * (1 - progress)
         char.scale = elasticScale
+        char.opacity = Math.min(progress * 1.5, 1.0)
         break
 
       case TextAnimationType.Rainbow:
-        const hue = (progress * 360 + char.index * 30) % 360
+        // Rainbow cycle that settles to original color
+        const rainbowProgress = progress < 0.7 ? progress / 0.7 : 1.0
+        const colorBlend = progress < 0.7 ? 1.0 : (1.0 - (progress - 0.7) / 0.3)
+        const hue = (rainbowProgress * 360 + char.index * 30) % 360
         const rgb = this.hslToRgb(hue / 360, 1, 0.5)
-        char.color[0] = rgb[0]
-        char.color[1] = rgb[1]
-        char.color[2] = rgb[2]
+        char.color[0] = rgb[0] * colorBlend + char.originalColor[0] * (1 - colorBlend)
+        char.color[1] = rgb[1] * colorBlend + char.originalColor[1] * (1 - colorBlend)
+        char.color[2] = rgb[2] * colorBlend + char.originalColor[2] * (1 - colorBlend)
+        char.opacity = Math.min(progress * 1.5, 1.0)
         break
 
       case TextAnimationType.Glitch:
-        if (Math.random() < 0.1 * intensity) {
-          char.position[0] = char.originalPosition[0] + (Math.random() - 0.5) * 20
-          char.color[0] = Math.random()
-          char.color[1] = Math.random()
-          char.color[2] = Math.random()
+        // Glitch effect that settles - decreasing glitch probability
+        const glitchIntensity = (1 - progress) * intensity
+        if (Math.random() < 0.1 * glitchIntensity) {
+          char.position[0] = char.originalPosition[0] + (Math.random() - 0.5) * 20 * glitchIntensity
+          const colorGlitch = 1 - progress * 0.5 // Reduce color distortion over time
+          char.color[0] = char.originalColor[0] * (1 - colorGlitch) + Math.random() * colorGlitch
+          char.color[1] = char.originalColor[1] * (1 - colorGlitch) + Math.random() * colorGlitch
+          char.color[2] = char.originalColor[2] * (1 - colorGlitch) + Math.random() * colorGlitch
         } else {
           char.position[0] = char.originalPosition[0]
           char.color = [...char.originalColor]
         }
+        char.opacity = Math.min(progress * 1.5, 1.0)
         break
 
       default:
