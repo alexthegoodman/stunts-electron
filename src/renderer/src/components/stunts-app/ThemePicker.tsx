@@ -77,7 +77,7 @@ export const ThemePicker = ({
   userLanguage?: string
 }) => {
   return (
-    <>
+    <div className="mt-2">
       <p className="text-xs">Theme Picker</p>
 
       <div className="flex flex-row flex-wrap gap-2">
@@ -288,6 +288,6 @@ export const ThemePicker = ({
           )
         })}
       </div>
-    </>
+    </div>
   )
 }

@@ -7,6 +7,7 @@ import { SavedBrushConfig } from './brush'
 import { SavedCube3DConfig } from './cube3d'
 import { SavedSphere3DConfig } from './sphere3d'
 import { SavedMockup3DConfig } from './mockup3d'
+import { ShaderThemeConfig } from './shader_themes'
 
 export interface SavedState {
   sequences: Sequence[]
@@ -205,7 +206,8 @@ export type KeyframeValue =
 
 export type BackgroundFill =
   | { type: 'Color'; value: [number, number, number, number] }
-  | { type: 'Gradient'; value: GradientDefinition } // For later
+  | { type: 'Gradient'; value: GradientDefinition }
+  | { type: 'Shader'; value: ShaderThemeConfig }
 
 export interface GradientStop {
   offset: number // Position from 0 to 1

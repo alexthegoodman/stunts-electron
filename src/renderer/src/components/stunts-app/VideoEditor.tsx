@@ -84,6 +84,7 @@ import { PageSequence } from '../../engine/data'
 import { WindowSize } from '../../engine/camera'
 import { Camera3D } from '../../engine/3dcamera'
 import { ThemePicker } from './ThemePicker'
+import { ShaderThemePicker } from './ShaderThemePicker'
 import { ObjectTrack } from './ObjectTimeline'
 import { TimelineTicks } from './TimelineTicks'
 import toast from 'react-hot-toast'
@@ -1599,6 +1600,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
               {toolbarTab === 'themes' && current_sequence_id && (
                 <div className="max-h-[35vh] md:max-h-full overflow-scroll">
+                  <ShaderThemePicker
+                    editorRef={editorRef}
+                    editorStateRef={editorStateRef}
+                    currentSequenceId={current_sequence_id}
+                    saveTarget={SaveTarget.Videos}
+                  />
+
                   <ThemePicker
                     editorRef={editorRef}
                     editorStateRef={editorStateRef}

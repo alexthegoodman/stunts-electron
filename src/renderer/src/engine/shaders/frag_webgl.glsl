@@ -38,6 +38,10 @@ layout(std140) uniform bindGroup2_0 {
 // u_end_point.y = dotDensity / lineAngle / cellSize
 // u_center = lineSpacing (for lines brush)
 
+// Shader background detection: When v_object_type == 9.0 (shader background)
+// The u_gradient_type field will determine which shader to use:
+// 0.0 = Night Sky, 1.0 = Network, 2.0 = Day Sky, 3.0 = Rings + Blur
+
 float getOffset(int index) {
     int vec4_index = index / 4;
     int component_index = index % 4;
@@ -179,6 +183,134 @@ float linePattern(vec2 st, float angle, float spacing) {
     return smoothstep(0.45, 0.55, linePos);
 }
 
+// ============ SHADER BACKGROUND FUNCTIONS ============
+
+// Hash function for procedural generation
+float hash_shader(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+}
+
+float starNoise_shader(vec2 uv, float seed) {
+    vec2 i = floor(uv);
+    vec2 f = fract(uv);
+    float a = hash_shader(i + seed);
+    float b = hash_shader(i + vec2(1.0, 0.0) + seed);
+    float c = hash_shader(i + vec2(0.0, 1.0) + seed);
+    float d = hash_shader(i + vec2(1.0, 1.0) + seed);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+}
+
+// Night Sky Shader
+vec4 nightSkyShader(vec2 uv) {
+    float time = u_time;
+    // Extract params from uniform buffer
+    float starDensity = u_num_stops;
+    float starBrightness = u_start_point.x;
+    float nebulaDensity = u_start_point.y;
+    vec4 nebulaColor = u_stop_colors[0];
+    float twinkleSpeed = u_end_point.x;
+
+    vec4 color = vec4(0.0, 0.0, 0.05, 1.0);
+    float stars = starNoise_shader(uv * 200.0 * starDensity, 0.0);
+    stars = pow(stars, 10.0 - starDensity * 8.0);
+    float twinkle = sin(time * twinkleSpeed + hash_shader(uv * 100.0) * 6.28) * 0.5 + 0.5;
+    stars *= twinkle * starBrightness;
+    float nebula = starNoise_shader(uv * 3.0, 1.0) * starNoise_shader(uv * 5.0, 2.0);
+    nebula = pow(nebula, 2.0) * nebulaDensity;
+    color.rgb += vec3(stars);
+    color.rgb = mix(color.rgb, nebulaColor.rgb, nebula * nebulaColor.a);
+    return color;
+}
+
+// Network Shader
+vec4 networkShader(vec2 uv) {
+    float time = u_time;
+    float nodeCount = u_num_stops;
+    float connectionDistance = u_start_point.x;
+    vec4 nodeColor = u_stop_colors[0];
+    vec4 lineColor = u_stop_colors[1];
+    float animationSpeed = u_start_point.y;
+    float nodeSize = u_end_point.x;
+
+    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
+    int count = int(min(nodeCount, 50.0)); // Limit for performance
+
+    for (int i = 0; i < 50; i++) {
+        if (i >= count) break;
+        vec2 seed = vec2(float(i) * 0.123, float(i) * 0.456);
+        vec2 offset = vec2(hash_shader(seed), hash_shader(seed + vec2(1.0, 0.0)));
+        vec2 velocity = (vec2(hash_shader(seed + vec2(1.0, 1.0)), hash_shader(seed + vec2(2.0, 2.0))) - 0.5) * 0.1;
+        vec2 nodePos = fract(offset + velocity * time * animationSpeed);
+
+        float dist = distance(uv, nodePos);
+        float nodeMask = smoothstep(nodeSize, nodeSize * 0.5, dist);
+        color = mix(color, nodeColor, nodeMask * nodeColor.a);
+    }
+
+    return color;
+}
+
+// Day Sky Shader
+vec4 daySkyShader(vec2 uv) {
+    float time = u_time;
+    vec4 skyColor = u_stop_colors[0];
+    float cloudDensity = u_num_stops;
+    float cloudSpeed = u_start_point.x;
+    float sunIntensity = u_start_point.y;
+    vec2 sunPosition = u_center;
+
+    vec4 color = mix(skyColor, vec4(0.6, 0.8, 1.0, 1.0), uv.y);
+
+    vec2 cloudUv = uv + vec2(time * cloudSpeed * 0.05, 0.0);
+    float clouds = starNoise_shader(cloudUv * 3.0, 0.0);
+    clouds = smoothstep(0.4, 0.8, clouds) * cloudDensity;
+    vec4 cloudColor = vec4(1.0, 1.0, 1.0, clouds * 0.8);
+    color = mix(color, cloudColor, cloudColor.a);
+
+    float sunDist = distance(uv, sunPosition);
+    float sun = smoothstep(0.1, 0.0, sunDist);
+    float sunGlow = smoothstep(0.3, 0.0, sunDist) * 0.3;
+    vec4 sunColor = vec4(1.0, 0.95, 0.8, 1.0) * sunIntensity;
+    color = mix(color, sunColor, (sun + sunGlow));
+
+    return color;
+}
+
+// Rings + Blur Shader
+vec4 ringsBlurShader(vec2 uv) {
+    float time = u_time;
+    float ringCount = u_num_stops;
+    vec4 ringColor = u_stop_colors[0];
+    float blurAmount = u_start_point.x;
+    float rotationSpeed = u_start_point.y;
+    float radius = u_end_point.x;
+    float thickness = u_end_point.y;
+
+    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
+    vec2 center = vec2(0.5, 0.5);
+    vec2 pos = uv - center;
+
+    float angle = time * rotationSpeed;
+    float c = cos(angle);
+    float s = sin(angle);
+    pos = vec2(pos.x * c - pos.y * s, pos.x * s + pos.y * c);
+    float dist = length(pos);
+
+    for (float i = 0.0; i < 20.0; i += 1.0) {
+        if (i >= ringCount) break;
+        float ringRadius = radius * (i + 1.0) / ringCount;
+        float ringDist = abs(dist - ringRadius);
+        float blur = thickness * (1.0 + blurAmount);
+        float ring = smoothstep(blur, blur * 0.5, ringDist);
+        float fade = 1.0 - (i / ringCount) * 0.5;
+        vec4 currentRing = ringColor * ring * fade;
+        color = mix(color, currentRing, currentRing.a * ringColor.a);
+    }
+
+    return color;
+}
+
 // Calculate procedural brush color
 vec4 calculateBrushColor(vec2 worldPos) {
     // Decode brush parameters from gradient uniform block
@@ -227,6 +359,18 @@ void main() {
         final_color = proceduralColor;
         // final_color = v_color * proceduralColor;
         // final_color = vec4(0.0,1.0,0.0,1.0);
+    } else if (v_object_type > 8.5 && v_object_type < 9.5) {
+        // Shader background (object_type == 9.0)
+        // u_gradient_type determines which shader: 0=NightSky, 1=Network, 2=DaySky, 3=RingsBlur
+        if (u_gradient_type < 0.5) {
+            final_color = nightSkyShader(v_tex_coords);
+        } else if (u_gradient_type < 1.5) {
+            final_color = networkShader(v_tex_coords);
+        } else if (u_gradient_type < 2.5) {
+            final_color = daySkyShader(v_tex_coords);
+        } else {
+            final_color = ringsBlurShader(v_tex_coords);
+        }
     } else {
         // Image/Video/Text with texture
         final_color = tex_color * v_color;
