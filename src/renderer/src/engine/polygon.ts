@@ -884,7 +884,7 @@ export function getPolygonData(
           // createVertex(point[0], point[1], getZLayer(1.0), polygon.fill, ObjectType.Polygon)
           {
             position: [point[0], point[1], -0.0001],
-            tex_coords: [0, 0],
+            tex_coords: objectType === 9 ? [normalizedX, normalizedY] : [0, 0],
             color: fill,
             gradient_coords: [normalizedX, normalizedY],
             object_type: objectType
