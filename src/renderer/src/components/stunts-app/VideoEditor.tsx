@@ -380,7 +380,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     set_selected_mockup3d_id(mockup_id)
   }
 
-  let handle_polygon_click = (polygon_id: string, polygon_config: PolygonConfig) => {
+  let handle_polygon_click = (polygon_id: string) => {
     select_polygon(polygon_id)
   }
 
@@ -405,15 +405,15 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     select_video(video_id)
   }
 
-  let handle_cube3d_click = (cube_id: string, cube_config: Cube3DConfig) => {
+  let handle_cube3d_click = (cube_id: string) => {
     select_cube3d(cube_id)
   }
 
-  let handle_sphere3d_click = (sphere_id: string, sphere_config: Sphere3DConfig) => {
+  let handle_sphere3d_click = (sphere_id: string) => {
     select_sphere3d(sphere_id)
   }
 
-  let handle_mockup3d_click = (mockup_id: string, mockup_config: Mockup3DConfig) => {
+  let handle_mockup3d_click = (mockup_id: string) => {
     select_mockup3d(mockup_id)
   }
 
@@ -1599,7 +1599,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
               )}
 
               {toolbarTab === 'themes' && current_sequence_id && (
-                <div className="max-h-[35vh] md:max-h-full overflow-scroll">
+                <div className="max-h-[35vh] md:max-h-full overflow-y-scroll overflow-x-hidden">
                   <ShaderThemePicker
                     editorRef={editorRef}
                     editorStateRef={editorStateRef}
@@ -2199,6 +2199,44 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                       objectData={animation}
                                       pixelsPerSecond={15}
                                       onSequenceDragEnd={handleObjectDragEnd}
+                                      onSelectObject={(
+                                        objectType: ObjectType,
+                                        objectId: string
+                                      ) => {
+                                        switch (objectType) {
+                                          case ObjectType.Polygon:
+                                            handle_polygon_click(objectId)
+                                            break
+
+                                          case ObjectType.TextItem:
+                                            handle_text_click(objectId)
+                                            break
+
+                                          case ObjectType.ImageItem:
+                                            handle_image_click(objectId)
+                                            break
+
+                                          case ObjectType.VideoItem:
+                                            handle_video_click(objectId)
+                                            break
+
+                                          case ObjectType.Cube3D:
+                                            handle_cube3d_click(objectId)
+                                            break
+
+                                          case ObjectType.Sphere3D:
+                                            handle_sphere3d_click(objectId)
+                                            break
+
+                                          case ObjectType.Mockup3D:
+                                            handle_mockup3d_click(objectId)
+                                            break
+
+                                          default:
+                                            handle_polygon_click(objectId)
+                                            break
+                                        }
+                                      }}
                                     />
                                   )
                                 })}

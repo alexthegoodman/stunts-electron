@@ -103,7 +103,7 @@ import {
 } from '@dnd-kit/core'
 import { restrictToHorizontalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
-import { AnimationData, TrackType } from '../../engine/animations'
+import { AnimationData, ObjectType, TrackType } from '../../engine/animations'
 
 interface TrackProps {
   type: TrackType
@@ -112,6 +112,7 @@ interface TrackProps {
   objectData: AnimationData
   pixelsPerSecond: number
   onSequenceDragEnd: (animation: AnimationData, newStartTimeMs: number) => void
+  onSelectObject: (objectType: ObjectType, objectId: string) => void
 }
 
 interface SequenceProps {
@@ -121,6 +122,7 @@ interface SequenceProps {
   sequenceColor: string
   localLeft: number
   localWidth: number
+  onSelectObject: (objectType: ObjectType, objectId: string) => void
 }
 
 // Draggable Sequence Component
@@ -130,7 +132,8 @@ const DraggableSequence: React.FC<SequenceProps> = ({
   pixelsPerMs,
   sequenceColor,
   localLeft,
-  localWidth
+  localWidth,
+  onSelectObject
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: animation.id,
@@ -140,7 +143,7 @@ const DraggableSequence: React.FC<SequenceProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-row gap-2 relative h-10 rounded cursor-pointer ${sequenceColor} 
+      className={`flex flex-row justify-between gap-2 relative h-10 rounded cursor-pointer ${sequenceColor} 
         hover:shadow-lg transition-shadow duration-200
         flex items-center px-2 select-none ${isDragging ? 'opacity-50' : ''}`}
       style={{
@@ -153,6 +156,12 @@ const DraggableSequence: React.FC<SequenceProps> = ({
     >
       <span>{objectName}</span>
       {/* <span className="text-xs">({animation.polygonId})</span> */}
+      <div
+        className="bg-black hover:bg-gray-600 pb-1 px-2 rounded"
+        onClick={() => onSelectObject(animation.objectType, animation.polygonId)}
+      >
+        <span className="text-xs">Select</span>
+      </div>
     </div>
   )
 }
@@ -163,7 +172,8 @@ export const ObjectTrack: React.FC<TrackProps> = ({
   objectName,
   objectData,
   pixelsPerSecond,
-  onSequenceDragEnd
+  onSequenceDragEnd,
+  onSelectObject
 }) => {
   const pixelsPerMs = pixelsPerSecond / 1000
 
@@ -227,6 +237,7 @@ export const ObjectTrack: React.FC<TrackProps> = ({
               sequenceColor={sequenceColor}
               localLeft={localLeft}
               localWidth={localWidth}
+              onSelectObject={onSelectObject}
             />
           )}
         </div>
