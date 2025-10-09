@@ -2494,7 +2494,9 @@ export class Editor {
     }
 
     const sequence = this.currentSequenceData
-    const { startTimeMs, durationMs: sequencDurationMs } = getSequenceDuration(sequence)
+    // const { startTimeMs, durationMs: sequencDurationMs } = getSequenceDuration(sequence)
+    const { startTimeMs: sequenceStartTimeMs, durationMs: sequenceDurationMs } =
+      getSequencesDuration(this.videoCurrentSequencesData, sequence)
     if (!sequence || !sequence.polygonMotionPaths) {
       throw new Error("Couldn't get sequence")
     }
@@ -2506,13 +2508,16 @@ export class Editor {
     //   );
     // }
 
+    // if ((totalDt * 1000) < sequenceStartTimeMs)
+
     // Update each animation path
     for (const animation of sequence.polygonMotionPaths) {
       // Group transform position
       const pathGroupPosition = animation.position
 
       // Get current time within animation duration
-      const currentTime = totalDt % (sequencDurationMs / 1000)
+      // const currentTime = totalDt % (sequenceDurationMs / 1000)
+      const currentTime = Math.max(0, totalDt - sequenceStartTimeMs / 1000)
       const startTime = animation.startTimeMs / 1000
       const currentTimeMs = currentTime * 1000
       const startTimeMs = startTime * 1000
