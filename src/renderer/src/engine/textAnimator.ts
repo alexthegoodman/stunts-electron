@@ -152,6 +152,7 @@ export class TextAnimator {
     }
   }
 
+  // TODO: does this properly get indices from a second visual line? does it not matter?
   private getLastWordIndices(text: string): Set<number> {
     const indices = new Set<number>()
 

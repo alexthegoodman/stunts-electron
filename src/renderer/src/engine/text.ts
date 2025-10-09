@@ -966,6 +966,7 @@ export class TextRenderer {
     const startY = -totalHeight / 2.0
 
     let currentY = startY
+    let globalCharIndex = 0 // Track global character index across all lines
 
     // Render each line
     for (const line of lines) {
@@ -983,8 +984,8 @@ export class TextRenderer {
           glyphChar = '?' // Fallback
         }
 
-        // Check if this character needs style punch rendering
-        const charStyleConfig = this.getCharacterStyleConfig(glyphChar, i)
+        // Check if this character needs style punch rendering (use global index)
+        const charStyleConfig = this.getCharacterStyleConfig(glyphChar, globalCharIndex)
 
         // Create a unique key for the glyph (include weight and italic for style punch)
         const key = `${glyph.id}-${this.fontSize}-${charStyleConfig.fontWeight || 400}-${charStyleConfig.fontItalic || false}`
@@ -1070,6 +1071,8 @@ export class TextRenderer {
           baseVertex + 2,
           baseVertex + 3
         )
+
+        globalCharIndex++ // Increment global character index
       }
 
       // Move to the next line
