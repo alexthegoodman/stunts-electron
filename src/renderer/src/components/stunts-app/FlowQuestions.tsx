@@ -316,7 +316,7 @@ export default function FlowQuestions({
       id: currentSequenceId,
       name: 'Sequence #1',
       backgroundFill: { type: 'Color', value: [200, 200, 200, 255] },
-      durationMs: 20000,
+      // durationMs: 20000,
       activePolygons: [],
       polygonMotionPaths: [],
       activeTextItems: [],
@@ -341,8 +341,8 @@ export default function FlowQuestions({
           {
             id: uuidv4(),
             sequenceId: currentSequenceId,
-            trackType: TrackType.Video,
-            startTimeMs: 0
+            trackType: TrackType.Video
+            // startTimeMs: 0
             // duration_ms: 20000,
           }
         ]

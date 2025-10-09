@@ -203,6 +203,7 @@ import {
   BackgroundFill,
   calculateDefaultCurve,
   EasingType,
+  getSequenceDuration,
   ObjectType,
   PathType,
   ProjectSettings,
@@ -2369,11 +2370,14 @@ export class Editor {
       }
 
       // Find the duration of the sequence
-      const durationMs =
-        videoCurrentSequencesData.find((s) => s.id === ts.sequenceId)?.durationMs || 0
+      // const durationMs =
+      //   videoCurrentSequencesData.find((s) => s.id === ts.sequenceId)?.durationMs || 0
+      const { startTimeMs, durationMs } = getSequenceDuration(
+        videoCurrentSequencesData.find((s) => s.id === ts.sequenceId)
+      )
 
       // Check if this sequence should be playing at the current time
-      if (currentTimeMs >= ts.startTimeMs && currentTimeMs < ts.startTimeMs + durationMs) {
+      if (currentTimeMs >= startTimeMs && currentTimeMs < startTimeMs + durationMs) {
         // Find the corresponding sequence data
         const sequence = videoCurrentSequencesData.find((s) => s.id === ts.sequenceId)
 
@@ -2381,7 +2385,7 @@ export class Editor {
 
         if (sequence) {
           // Calculate local time within this sequence
-          const sequenceLocalTime = (currentTimeMs - ts.startTimeMs) / 1000
+          const sequenceLocalTime = (currentTimeMs - startTimeMs) / 1000
 
           if (this.currentSequenceData) {
             // Check id to avoid unnecessary cloning
@@ -2491,7 +2495,8 @@ export class Editor {
     }
 
     const sequence = this.currentSequenceData
-    if (!sequence || !sequence.polygonMotionPaths || !sequence.durationMs) {
+    const { startTimeMs, durationMs: sequencDurationMs } = getSequenceDuration(sequence)
+    if (!sequence || !sequence.polygonMotionPaths) {
       throw new Error("Couldn't get sequence")
     }
 
@@ -2508,7 +2513,7 @@ export class Editor {
       const pathGroupPosition = animation.position
 
       // Get current time within animation duration
-      const currentTime = totalDt % (sequence.durationMs / 1000)
+      const currentTime = totalDt % (sequencDurationMs / 1000)
       const startTime = animation.startTimeMs / 1000
       const currentTimeMs = currentTime * 1000
       const startTimeMs = startTime * 1000

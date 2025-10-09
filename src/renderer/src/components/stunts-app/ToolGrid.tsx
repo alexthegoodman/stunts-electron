@@ -771,7 +771,7 @@ export const ToolGrid = ({
           let saved_state1 = editor_state.savedState
           let updated_sequence1 = saved_state1.sequences.find((s) => s.id == sequence_id)
 
-          updated_sequence1!.durationMs = new_video_item.sourceDurationMs
+          // updated_sequence1!.durationMs = new_video_item.sourceDurationMs
 
           await editor_state.add_saved_video_item(
             sequence_id,

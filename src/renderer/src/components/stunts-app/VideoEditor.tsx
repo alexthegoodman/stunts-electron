@@ -26,7 +26,8 @@ import {
   UIKeyframe,
   KeyframeValue,
   EasingType,
-  PathType
+  PathType,
+  getSequenceDuration
 } from '../../engine/animations'
 import { v4 as uuidv4 } from 'uuid'
 import { useRouter } from '../../hooks/useRouter'
@@ -840,7 +841,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       id: newId,
       name: 'New Sequence',
       backgroundFill: { type: 'Color', value: [200, 200, 200, 255] },
-      durationMs: 20000,
+      // durationMs: 20000,
       activePolygons: [],
       polygonMotionPaths: [],
       activeTextItems: [],
@@ -871,9 +872,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
     let durations = {} as Record<string, number>
     editorState.savedState.sequences.forEach((s) => {
-      if (s.durationMs) {
-        durations[s.id] = s.durationMs
-      }
+      // if (s.durationMs) {
+      //   durations[s.id] = s.durationMs
+      // }
+      durations[s.id] = getSequenceDuration(s).durationMs
     })
 
     setSequenceDurations(durations)
@@ -2053,7 +2055,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                 <TimelineTicks
                                   trackWidth={settings?.dimensions.width || 960}
                                   pixelsPerSecond={15}
-                                  durationMs={sequence.durationMs || 5000}
+                                  durationMs={getSequenceDuration(sequence).durationMs}
                                 />
 
                                 {sequence.polygonMotionPaths.map((animation) => {

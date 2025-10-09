@@ -437,13 +437,13 @@ export default function AnimationTab({
       }
 
       // Update the sequence duration if needed
-      if (animationData.duration > 0) {
-        editor_state.savedState.sequences.forEach((s) => {
-          if (s.id === current_sequence_id) {
-            s.durationMs = Math.max(s.durationMs || 5000, animationData.duration)
-          }
-        })
-      }
+      // if (animationData.duration > 0) {
+      //   editor_state.savedState.sequences.forEach((s) => {
+      //     if (s.id === current_sequence_id) {
+      //       s.durationMs = Math.max(s.durationMs || 5000, animationData.duration)
+      //     }
+      //   })
+      // }
 
       // Save the updated sequences
       saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos)

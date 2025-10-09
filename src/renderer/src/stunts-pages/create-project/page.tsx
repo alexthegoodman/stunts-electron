@@ -31,7 +31,7 @@ const ProjectForm = () => {
         id: newId,
         name: 'Sequence #1',
         backgroundFill: { type: 'Color', value: [200, 200, 200, 255] },
-        durationMs: 20000,
+        // durationMs: 20000,
         activePolygons: [],
         polygonMotionPaths: [],
         activeTextItems: [],
@@ -46,8 +46,8 @@ const ProjectForm = () => {
             {
               id: uuidv4(),
               sequenceId: newId,
-              trackType: TrackType.Video,
-              startTimeMs: 0
+              trackType: TrackType.Video
+              // startTimeMs: 0
               // duration_ms: 20000,
             }
           ]

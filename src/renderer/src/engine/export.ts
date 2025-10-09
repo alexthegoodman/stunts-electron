@@ -2,7 +2,7 @@ import MP4Box, { DataStream, MP4ArrayBuffer, MP4File } from 'mp4box'
 import { Editor, Viewport } from './editor'
 import EditorState from './editor_state'
 import { CanvasPipeline } from './pipeline'
-import { SavedState } from './animations'
+import { getSequenceDuration, SavedState } from './animations'
 import { WindowSize } from './camera'
 import { vec2 } from 'gl-matrix'
 import { PolyfillDevice, PolyfillTexture } from './polyfill'
@@ -442,9 +442,10 @@ export class FullExporter {
     // Calculate total duration from sequences (in milliseconds)
     let totalDurationMs = 0
     cloned_sequences.forEach((s) => {
-      if (s.durationMs) {
-        totalDurationMs += s.durationMs
-      }
+      // if (s.durationMs) {
+      //   totalDurationMs += s.durationMs
+      // }
+      totalDurationMs += getSequenceDuration(s).durationMs
     })
 
     let totalDurationS = totalDurationMs / 1000 // Convert to seconds

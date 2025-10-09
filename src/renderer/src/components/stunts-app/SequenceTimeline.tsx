@@ -64,7 +64,8 @@ export const TimelineTrack: React.FC<TrackProps> = ({
         {tSequences
           .filter((seq) => seq.trackType === type)
           .map((tSequence) => {
-            const left = tSequence.startTimeMs * pixelsPerMs
+            let startTimeMs = 0
+            const left = startTimeMs * pixelsPerMs
             const width = sequenceDurations[tSequence.sequenceId] * pixelsPerMs
 
             return (

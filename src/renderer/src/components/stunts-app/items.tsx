@@ -480,9 +480,10 @@ export const PlayVideoButton: React.FC<{
             return
           }
 
-          let firstTimelineSequence = timelineSequences.reduce((earliest, current) => {
-            return current.startTimeMs < earliest.startTimeMs ? current : earliest
-          })
+          // let firstTimelineSequence = timelineSequences.reduce((earliest, current) => {
+          //   return current.startTimeMs < earliest.startTimeMs ? current : earliest
+          // })
+          let firstTimelineSequence = null
 
           let first_sequence_data = editorState.savedState.sequences.find(
             (s) => s.id === firstTimelineSequence.sequenceId
