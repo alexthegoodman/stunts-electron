@@ -569,7 +569,7 @@ export const ToolGrid = ({
       if (textRenderer) {
         // Calculate animation start time
 
-        // Create animation config
+        // Create animation config for entrance
         const animConfig: TextAnimationConfig = {
           id: `text-roll-anim-${new_id}`,
           type: config.animationType,
@@ -581,16 +581,28 @@ export const ToolGrid = ({
           // startTime: animationStartTime, // TODO: let's use startTimeMs on AnimationData instead of this, so in saved text item
           startTime: 0,
           loop: false,
-          reverse: false
+          reverse: false,
+          customParams: config.exitAnimation
+            ? {
+                hasExitAnimation: true,
+                exitAnimationDuration: config.exitAnimationDuration,
+                holdDuration: 0 // No hold, text displays during pace
+              }
+            : undefined
         }
 
         // Apply animation
         textRenderer.setTextAnimation(animConfig)
         textRenderer.startTextAnimation(animationStartTime)
 
+        // Calculate total duration including exit animation if enabled
+        const totalDuration = config.exitAnimation
+          ? config.pace + config.exitAnimationDuration
+          : config.pace
+
         // Save with animation data
         const savedConfig = textRenderer.toSavedConfig()
-        editor_state.add_saved_text_item(sequence_id, savedConfig, animationStartTime, config.pace)
+        editor_state.add_saved_text_item(sequence_id, savedConfig, animationStartTime, totalDuration)
 
         let cloned_sequence = editor_state.savedState.sequences.find(
           (seq) => seq.id === sequence_id

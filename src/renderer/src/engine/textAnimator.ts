@@ -186,13 +186,32 @@ export class TextAnimator {
     this.currentTime = currentTime
     const elapsedTime = currentTime - this.animationStartTime
 
+    // Check if we have exit animation parameters
+    const hasExitAnimation = this.animationConfig.customParams?.hasExitAnimation
+    const exitAnimationDuration = this.animationConfig.customParams?.exitAnimationDuration || 0
+    const entranceDuration = this.getTotalAnimationDuration()
+    const totalWithExit = hasExitAnimation ? entranceDuration + exitAnimationDuration : entranceDuration
+
     for (const char of this.animatedCharacters) {
       const charStartTime = char.animationDelay
       const charElapsedTime = elapsedTime - charStartTime
 
       if (charElapsedTime >= 0) {
-        const progress = Math.min(charElapsedTime / this.animationConfig.duration, 1.0)
-        char.animationProgress = this.applyEasing(progress)
+        // Determine if we're in entrance or exit phase
+        const charEntranceDuration = this.animationConfig.duration
+        const isInExitPhase = hasExitAnimation && charElapsedTime >= charEntranceDuration
+
+        if (isInExitPhase) {
+          // Exit animation phase - play in reverse
+          const exitElapsedTime = charElapsedTime - charEntranceDuration
+          const exitProgress = Math.min(exitElapsedTime / exitAnimationDuration, 1.0)
+          // Reverse progress: start at 1.0 and go to 0.0
+          char.animationProgress = this.applyEasing(1.0 - exitProgress)
+        } else {
+          // Entrance animation phase
+          const progress = Math.min(charElapsedTime / this.animationConfig.duration, 1.0)
+          char.animationProgress = this.applyEasing(progress)
+        }
 
         this.updateCharacterAnimation(char)
       } else {
@@ -203,7 +222,7 @@ export class TextAnimator {
     this.updateTextRenderer(queue, textRenderer)
 
     // Check if animation is complete
-    if (elapsedTime >= this.getTotalAnimationDuration()) {
+    if (elapsedTime >= totalWithExit) {
       if (this.animationConfig.loop) {
         this.animationStartTime = currentTime
       } else {

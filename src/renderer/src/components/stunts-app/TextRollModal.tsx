@@ -17,6 +17,8 @@ export interface TextRollConfig {
   easing: EasingType
   yOffset: number // vertical offset from center
   intensity: number // animation intensity 0-1
+  exitAnimation: boolean // whether to play exit animation
+  exitAnimationDuration: number // duration of exit animation in ms
 }
 
 interface TextRollModalProps {
@@ -41,6 +43,8 @@ export const TextRollModal: React.FC<TextRollModalProps> = ({ isOpen, onClose, o
   const [easing, setEasing] = useState<EasingType>(EasingType.EaseOut)
   const [yOffset, setYOffset] = useState(0)
   const [intensity, setIntensity] = useState(1.0)
+  const [exitAnimation, setExitAnimation] = useState(true)
+  const [exitAnimationDuration, setExitAnimationDuration] = useState(800)
 
   const handleConfirm = () => {
     if (!text.trim()) {
@@ -58,7 +62,9 @@ export const TextRollModal: React.FC<TextRollModalProps> = ({ isOpen, onClose, o
       color,
       easing,
       yOffset,
-      intensity
+      intensity,
+      exitAnimation,
+      exitAnimationDuration
     }
 
     onConfirm(config)
@@ -78,6 +84,8 @@ export const TextRollModal: React.FC<TextRollModalProps> = ({ isOpen, onClose, o
     setEasing(EasingType.EaseOut)
     setYOffset(0)
     setIntensity(1.0)
+    setExitAnimation(true)
+    setExitAnimationDuration(800)
     onClose()
   }
 
@@ -330,6 +338,47 @@ export const TextRollModal: React.FC<TextRollModalProps> = ({ isOpen, onClose, o
                   className="w-full p-2 border border-gray-300 rounded-md"
                 />
               </div>
+            </div>
+
+            {/* Exit Animation Section */}
+            <div className="border-t pt-4 mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-lg">Exit Animation</h3>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={exitAnimation}
+                    onChange={(e) => setExitAnimation(e.target.checked)}
+                    className="mr-2 w-4 h-4"
+                  />
+                  <span className="text-sm text-gray-700">Enable</span>
+                </label>
+              </div>
+
+              {exitAnimation && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Exit Duration (ms)
+                  </label>
+                  <input
+                    type="range"
+                    min="100"
+                    max="2000"
+                    step="50"
+                    value={exitAnimationDuration}
+                    onChange={(e) => setExitAnimationDuration(Number(e.target.value))}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>100ms</span>
+                    <span className="font-semibold">{exitAnimationDuration}ms</span>
+                    <span>2000ms</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    The exit animation will play in reverse of the entrance animation
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
