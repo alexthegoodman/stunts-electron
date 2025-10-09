@@ -1014,7 +1014,7 @@ export class TextRenderer {
 
         const activeColor = rgbToWgpu(this.color[0], this.color[1], this.color[2], 255.0)
 
-        console.info('pushing 4 vertics ', String.fromCodePoint(...glyph.codePoints))
+        // console.info('pushing 4 vertics ', String.fromCodePoint(...glyph.codePoints))
 
         // Add vertices for the glyph quad
         const baseVertex = vertices.length

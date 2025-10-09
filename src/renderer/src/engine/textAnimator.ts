@@ -94,7 +94,7 @@ export class TextAnimator {
     let charIndex = 0
     let vertexIndex = 0
 
-    console.info('init text', text, 'renderable chars:', renderableCharCount)
+    // console.info('init text', text, 'renderable chars:', renderableCharCount)
 
     for (let i = 0; i < text.length; i++) {
       const char = text[i]
@@ -102,7 +102,7 @@ export class TextAnimator {
         continue // Don't increment charIndex or vertexIndex for spaces/newlines
       }
 
-      console.info('char', char)
+      // console.info('char', char)
 
       const charVertices = textRenderer.vertices.slice(vertexIndex, vertexIndex + 4)
       if (charVertices.length === 4) {
