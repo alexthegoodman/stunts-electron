@@ -77,14 +77,21 @@ export default class EditorState {
     this.savedState = saved_state
   }
 
-  async add_saved_text_item(selected_sequence_id: string, savable_text: SavedTextRendererConfig) {
+  async add_saved_text_item(
+    selected_sequence_id: string,
+    savable_text: SavedTextRendererConfig,
+    animationStartTime: number = 0,
+    desiredDuration: number = 20000
+  ) {
     let new_motion_path = save_default_keyframes(
       this,
       savable_text.id,
       ObjectType.TextItem,
       savable_text.position,
-      20000
+      desiredDuration
     )
+
+    new_motion_path.startTimeMs = animationStartTime
 
     let saved_state = this.savedState
 

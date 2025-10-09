@@ -2400,7 +2400,13 @@ export class Editor {
                 text.hidden = text.currentSequenceId !== currentSequenceId
 
                 if (!text.hidden && text.hasTextAnimation()) {
-                  text.startTextAnimation(0)
+                  const savedItem = this.currentSequenceData?.polygonMotionPaths?.find(
+                    (mp) => mp.polygonId === text.id
+                  )
+
+                  if (savedItem) {
+                    text.startTextAnimation(savedItem.startTimeMs)
+                  }
                 }
               }
               for (const image of this.imageItems) {
@@ -2416,7 +2422,13 @@ export class Editor {
             this.currentSequenceData = sequence
             for (const text of this.textItems) {
               if (!text.hidden && text.hasTextAnimation()) {
-                text.startTextAnimation(0)
+                const savedItem = this.currentSequenceData?.polygonMotionPaths?.find(
+                  (mp) => mp.polygonId === text.id
+                )
+
+                if (savedItem) {
+                  text.startTextAnimation(savedItem.startTimeMs)
+                }
               }
             }
           }

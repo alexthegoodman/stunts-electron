@@ -237,6 +237,14 @@ input.rcp-field-input {
   font-size: 12px;
 }
 
+select {
+  color: black;
+}
+
+select option {
+  color: black;
+}
+
 /* Define each font using @font-face */
 @font-face {
   font-family: 'Actor';

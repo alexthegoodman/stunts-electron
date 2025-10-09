@@ -1464,6 +1464,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       'square',
                       'circle',
                       'text',
+                      'textRoll',
                       'image',
                       'video',
                       'capture',

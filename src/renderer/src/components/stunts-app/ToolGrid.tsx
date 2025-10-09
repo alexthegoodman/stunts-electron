@@ -35,6 +35,8 @@ import { Description, Dialog, DialogPanel, DialogTitle } from '@headlessui/react
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { SourceSelectionModal } from './SourceSelectionModal'
+import { TextRollModal, TextRollConfig } from './TextRollModal'
+import { TextAnimationConfig, createTextAnimationPreset } from '../../engine/textAnimator'
 
 export const ToolGrid = ({
   editorRef,
@@ -77,6 +79,7 @@ export const ToolGrid = ({
   const [userMessage, setUserMessage] = useState('')
 
   const [stickerModalOpen, setStickerModalOpen] = useState(false)
+  const [textRollModalOpen, setTextRollModalOpen] = useState(false)
 
   const availableStickers = [
     'airplane1.png',
@@ -502,6 +505,131 @@ export const ToolGrid = ({
     setLayers(layers)
 
     // drop(editor);
+  }
+
+  const on_add_text_roll = async (sequence_id: string, config: TextRollConfig) => {
+    let editor = editorRef.current
+    let editor_state = editorStateRef.current
+
+    if (!editor || !editor_state) {
+      return
+    }
+
+    if (!editor.settings) {
+      console.error('Editor settings are not defined.')
+      return
+    }
+
+    // Parse text lines
+    const lines = config.text.split('\n').filter((line) => line.trim())
+
+    if (lines.length === 0) {
+      toast.error('Please enter at least one line of text')
+      return
+    }
+
+    // Get center position
+    const centerX = editor.settings.dimensions.width / 2 + CANVAS_HORIZ_OFFSET
+    const centerY = editor.settings.dimensions.height / 2 + CANVAS_VERT_OFFSET + config.yOffset
+
+    const createdTextIds: string[] = []
+
+    // Create each text block
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim()
+
+      const animationStartTime = i * (config.staggerDelay + config.pace)
+      const new_id = uuidv4()
+
+      const position = {
+        x: centerX,
+        y: centerY
+      }
+
+      const text_config: TextRendererConfig = {
+        id: new_id,
+        name: `Text Roll ${i + 1}`,
+        text: line,
+        fontFamily: config.fontFamily,
+        dimensions: [300.0, 100.0] as [number, number],
+        position,
+        layer: layers.length + i,
+        color: config.color,
+        fontSize: config.fontSize,
+        backgroundFill: { type: 'Color', value: rgbToWgpu(0, 0, 0, 0) }, // Transparent background
+        isCircle: false,
+        hiddenBackground: true
+      }
+
+      await editor.add_text_item(text_config, line, new_id, sequence_id)
+
+      // Find the created text renderer
+      const textRenderer = editor.textItems.find((t) => t.id === text_config.id)
+
+      if (textRenderer) {
+        // Calculate animation start time
+
+        // Create animation config
+        const animConfig: TextAnimationConfig = {
+          id: `text-roll-anim-${new_id}`,
+          type: config.animationType,
+          timing: config.animationTiming,
+          duration: config.pace,
+          delay: 50,
+          intensity: config.intensity,
+          easing: config.easing,
+          // startTime: animationStartTime, // TODO: let's use startTimeMs on AnimationData instead of this, so in saved text item
+          startTime: 0,
+          loop: false,
+          reverse: false
+        }
+
+        // Apply animation
+        textRenderer.setTextAnimation(animConfig)
+        textRenderer.startTextAnimation(animationStartTime)
+
+        // Save with animation data
+        const savedConfig = textRenderer.toSavedConfig()
+        editor_state.add_saved_text_item(sequence_id, savedConfig, animationStartTime, config.pace)
+
+        let cloned_sequence = editor_state.savedState.sequences.find(
+          (seq) => seq.id === sequence_id
+        )
+        editor.currentSequenceData = cloned_sequence!
+
+        // Add to layers
+        editor.textItems.forEach((text) => {
+          if (!text.hidden && text.id === text_config.id) {
+            let text_config_layer: TextRendererConfig = text.toConfig()
+            let new_layer: Layer = LayerFromConfig.fromTextConfig(text_config_layer)
+            layers.push(new_layer)
+          }
+        })
+
+        createdTextIds.push(new_id)
+      }
+    }
+
+    // Update editor state
+    let saved_state = editor_state.savedState
+    let updated_sequence = saved_state.sequences.find((s) => s.id == sequence_id)
+
+    let sequence_cloned = updated_sequence
+
+    if (!sequence_cloned) {
+      return
+    }
+
+    if (set_sequences) {
+      set_sequences(saved_state.sequences)
+    }
+
+    editor.currentSequenceData = sequence_cloned
+    editor.updateMotionPaths(sequence_cloned)
+
+    setLayers([...layers])
+
+    toast.success(`Created ${lines.length} text blocks!`)
   }
 
   let import_video = useCallback(
@@ -1376,12 +1504,35 @@ export const ToolGrid = ({
             }}
           />
         )}
+
+        {options.includes('textRoll') && (
+          <OptionButton
+            style={{}}
+            label={t('Add Text Roll')}
+            icon="text"
+            aria-label="Create animated text roll with multiple text blocks"
+            callback={() => {
+              setTextRollModalOpen(true)
+            }}
+          />
+        )}
       </div>
 
       <SourceSelectionModal
         isOpen={isSourceModalOpen}
         setIsOpen={setIsSourceModalOpen}
         onSourceSelected={handleSourceSelected}
+      />
+
+      <TextRollModal
+        isOpen={textRollModalOpen}
+        onClose={() => setTextRollModalOpen(false)}
+        onConfirm={(config) => {
+          if (!currentSequenceId) {
+            return
+          }
+          on_add_text_roll(currentSequenceId, config)
+        }}
       />
     </>
   )

@@ -384,7 +384,13 @@ export const PlaySequenceButton: React.FC<{
           // Start all text animations with relative time (0 = start of sequence)
           for (const textItem of editor.textItems) {
             if (!textItem.hidden && textItem.hasTextAnimation()) {
-              textItem.startTextAnimation(0)
+              const savedItem = editorState.savedState.sequences
+                .find((seq) => seq.id === selected_sequence_id)
+                ?.polygonMotionPaths?.find((mp) => mp.polygonId === textItem.id)
+
+              if (savedItem) {
+                textItem.startTextAnimation(savedItem.startTimeMs)
+              }
             }
           }
 
