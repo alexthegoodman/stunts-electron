@@ -551,7 +551,7 @@ export const ToolGrid = ({
         name: `Text Roll ${i + 1}`,
         text: line,
         fontFamily: config.fontFamily,
-        dimensions: [300.0, 100.0] as [number, number],
+        dimensions: [editor.camera?.windowSize.width! / 2.0, 100.0] as [number, number],
         position,
         layer: layers.length + i,
         color: config.color,
