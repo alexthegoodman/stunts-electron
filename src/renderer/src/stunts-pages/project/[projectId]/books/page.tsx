@@ -2,7 +2,7 @@ import { ClientOnly } from '../../../../components/ClientOnly'
 import ErrorBoundary from '../../../../components/stunts-app/ErrorBoundary'
 import React from 'react'
 import { useParams } from '../../../../hooks/useRouter'
-import { RTEEditor } from '../../../../components/stunts-app/RTEEditor'
+// import { RTEEditor } from '../../../../components/stunts-app/RTEEditor'
 
 export default function Books() {
   const { projectId } = useParams('/project/:projectId/books')
@@ -14,7 +14,7 @@ export default function Books() {
         {/* Error Boundary */}
         <ClientOnly>
           <div className="mx-auto flex flex-row">
-            <RTEEditor projectId={projectId} />
+            {/* <RTEEditor projectId={projectId} /> */}
             {/* <aside className="pr-4">
               <ul className="flex flex-col">
                 <li className="mb-2">
