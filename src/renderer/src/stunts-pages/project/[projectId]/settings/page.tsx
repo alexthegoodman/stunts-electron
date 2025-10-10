@@ -1,9 +1,12 @@
+import { ApiKeySettings } from '@renderer/components/ApiKeySettings'
+
 export default function ProjectSettings() {
   return (
     <div className="flex flex-col gap-2">
+      <ApiKeySettings />
       <h1 className="text-xl">Licenses & Notices</h1>
       <h2 className="text-md">Font Notices</h2>
-      <p className="text-sm" style={{ whiteSpace: "pre" }}>{`
+      <p className="text-sm" style={{ whiteSpace: 'pre' }}>{`
 Copyright (c) 2011, Thomas Junold <hallo@buerofueraufmerksamkeit.de>, 
 with Reserved Font Name "Actor".
 
@@ -141,5 +144,5 @@ Copyright 2013 The WindSong Project Authors (https://github.com/googlefonts/wind
 Copyright 2024 The Zain Project Authors (https://github.com/googlefonts/zain)
       `}</p>
     </div>
-  );
+  )
 }

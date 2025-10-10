@@ -1568,7 +1568,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
               )}
 
               {toolbarTab === 'animations' && (
-                <div className="max-h-[35vh] md:max-h-full overflow-scroll">
+                <div className="max-h-[35vh] md:max-h-full overflow-y-scroll overflow-x-hidden">
                   <AnimationTab
                     editorRef={editorRef}
                     editorStateRef={editorStateRef}

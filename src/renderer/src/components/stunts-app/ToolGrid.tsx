@@ -879,21 +879,27 @@ export const ToolGrid = ({
     setIsGeneratingImage(true)
 
     try {
-      const response = await fetch('/api/image/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ prompt: generateImagePrompt })
-      })
+      // Use Electron IPC to generate image
+      const result = await window.api.ai.generateImage(generateImagePrompt)
 
-      if (!response.ok) {
-        throw new Error('Failed to generate image')
+      if (!result.success) {
+        // Check if it's an API key error
+        if (result.error?.includes('API key')) {
+          toast.error(
+            'Replicate API key not configured. Please add your API key in Settings.',
+            { duration: 5000 }
+          )
+        } else {
+          throw new Error(result.error || 'Failed to generate image')
+        }
+        return
       }
 
-      const imageBlob = await response.blob()
+      // The result contains the file path, we need to read it as a File
+      const imageResponse = await fetch(`file://${result.data.url}`)
+      const imageBlob = await imageResponse.blob()
 
-      const file = new File([imageBlob], `generated-${Date.now()}.jpg`, {
+      const file = new File([imageBlob], result.data.fileName, {
         type: 'image/jpeg'
       })
 

@@ -60,10 +60,31 @@ declare global {
         deleteUser: (userId: string) => Promise<any>
         getCurrentUser: () => Promise<any>
         getAllUsers: () => Promise<any>
+        getApiKeys: () => Promise<any>
+        updateApiKey: (data: { service: 'openai' | 'replicate'; apiKey: string }) => Promise<any>
+        getApiKey: (service: 'openai' | 'replicate') => Promise<any>
+        deleteApiKey: (service: 'openai' | 'replicate') => Promise<any>
+        hasApiKey: (service: 'openai' | 'replicate') => Promise<any>
       }
-      aiGeneration: {
-        generateImages: (data: { prompts: string[]; userId: string }) => Promise<any>
-        generateContent: (data: { prompt: string; links: any[]; questions: any }) => Promise<any>
+      ai: {
+        generateImage: (prompt: string) => Promise<any>
+        generateImageBulk: (prompts: string[]) => Promise<any>
+        generateContent: (data: { context: string; language: string }) => Promise<any>
+        generateQuestions: (context: string) => Promise<any>
+        scrapeLink: (url: string) => Promise<any>
+        extractData: (content: string) => Promise<any>
+        generateAnimation: (data: {
+          prompt: string
+          duration: number
+          style: string
+          objectsData: Array<{
+            id: string
+            objectType: string
+            dimensions: { width: number; height: number }
+            position: { x: number; y: number }
+          }>
+          canvasSize: { width: number; height: number }
+        }) => Promise<any>
       }
       video: {
         resize: (data: { buffer: ArrayBuffer; maxWidth: number; maxHeight: number }) => Promise<any>

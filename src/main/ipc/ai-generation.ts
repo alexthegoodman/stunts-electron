@@ -230,4 +230,147 @@ export function registerAiGenerationHandlers(): void {
       return { success: false, error: 'Failed to extract data' }
     }
   })
+
+  // Generate AI animation using OpenAI
+  ipcMain.handle(
+    'ai:generateAnimation',
+    async (
+      _event,
+      data: {
+        prompt: string
+        duration: number
+        style: string
+        objectsData: Array<{
+          id: string
+          objectType: string
+          dimensions: { width: number; height: number }
+          position: { x: number; y: number }
+        }>
+        canvasSize: { width: number; height: number }
+      }
+    ) => {
+      try {
+        const openaiKey = await apiKeys.getKey('openai')
+        if (!openaiKey) {
+          return { success: false, error: 'OpenAI API key not configured' }
+        }
+
+        // Validate required fields
+        if (
+          !data.prompt ||
+          !data.objectsData ||
+          !Array.isArray(data.objectsData) ||
+          data.objectsData.length === 0
+        ) {
+          return {
+            success: false,
+            error: 'Missing required fields: prompt and objectsData'
+          }
+        }
+
+        // Default values
+        const animationDuration = data.duration || 3000
+        const animationStyle = data.style || 'smooth'
+
+        // Create animation schema
+        const animationSchema = z.object({
+          duration: z.number().describe('Total animation duration in milliseconds'),
+          style: z
+            .string()
+            .describe("Animation style: 'smooth', 'bouncy', 'quick', 'dramatic', 'subtle'"),
+          animations: z.array(
+            z.object({
+              objectId: z
+                .string()
+                .describe("The ID of the object to animate (e.g., 'text-1', 'polygon-2')"),
+              properties: z.array(
+                z.object({
+                  propertyName: z
+                    .string()
+                    .describe(
+                      "The property to animate: 'Position', 'ScaleX', 'ScaleY', 'Rotation', 'Opacity'"
+                    ),
+                  keyframes: z.array(
+                    z.object({
+                      time: z.number().describe('Time in milliseconds when this keyframe occurs'),
+                      value: z
+                        .union([z.number(), z.array(z.number()).length(2)])
+                        .describe(
+                          'Value at this keyframe. Use [x, y] for position, single number for others. Scale/opacity: 0-100+'
+                        ),
+                      easing: z
+                        .string()
+                        .describe("Easing type: 'Linear', 'EaseIn', 'EaseOut', 'EaseInOut'")
+                    })
+                  )
+                })
+              ),
+              description: z.string().describe('Brief description of what this animation does')
+            })
+          )
+        })
+
+        // Create a comprehensive prompt for the AI
+        const objectsInfo = data.objectsData
+          .map(
+            (obj: any) =>
+              `ID: ${obj.id}, Type: ${obj.objectType}, Dimensions: ${obj.dimensions.width}x${obj.dimensions.height}, Position: (${obj.position.x}, ${obj.position.y})`
+          )
+          .join('\n- ')
+
+        const systemPrompt = `You are an expert animation designer. Create engaging keyframe animations based on the user's description.
+
+Available objects to animate:
+- ${objectsInfo}
+
+Canvas size: ${data.canvasSize ? `${data.canvasSize.width}x${data.canvasSize.height}` : '550x900'}
+Requested duration: ${animationDuration}ms
+Requested style: ${animationStyle}
+
+Animation Properties Available:
+- position: [x, y] coordinates
+- scaleX: scale factor (100 = normal, 200 = double size, 50 = half size)
+- scaleY: scale factor (100 = normal, 200 = double size, 50 = half size)
+- rotation: rotation in degrees (0-360)
+- opacity: transparency (0 = invisible, 100 = fully visible)
+
+Easing Options: Linear, EaseIn, EaseOut, EaseInOut
+
+Guidelines:
+- Create smooth, visually appealing animations
+- Use appropriate easing for the style requested
+- Consider the canvas size when setting position values
+- Create at least 2-3 keyframes per property for smooth motion
+- Match the animation style (smooth = gentle curves, bouncy = overshoot, quick = fast transitions, dramatic = large movements, subtle = small changes)
+- Use object types to inform animation choices (text objects may need different animations than images or shapes)
+- Consider object dimensions when creating scale animations (larger objects may need different scaling than smaller ones)
+- Use current positions as ending points for animations
+- Ensure animations keep objects within canvas boundaries based on their dimensions
+
+User Request: ${data.prompt}`
+
+        const openai = createOpenAI({
+          apiKey: openaiKey
+        })
+
+        const object = await generateObject({
+          model: openai('gpt-4o-mini'),
+          schema: animationSchema,
+          prompt: systemPrompt,
+          temperature: 1 // Add some creativity while maintaining consistency
+        })
+
+        const result = object.toJsonResponse()
+        const jsonData = await result.json()
+
+        return {
+          success: true,
+          data: jsonData
+        }
+      } catch (error) {
+        console.error('Failed to generate animation:', error)
+        return { success: false, error: 'Failed to generate animation' }
+      }
+    }
+  )
 }

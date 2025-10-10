@@ -49,13 +49,35 @@ const api = {
     deleteUser: (userId: string) => ipcRenderer.invoke('settings:deleteUser', userId),
     getCurrentUser: () => ipcRenderer.invoke('settings:getCurrentUser'),
     getAllUsers: () => ipcRenderer.invoke('settings:getAllUsers'),
+    getApiKeys: () => ipcRenderer.invoke('settings:getApiKeys'),
+    updateApiKey: (data: { service: 'openai' | 'replicate'; apiKey: string }) =>
+      ipcRenderer.invoke('settings:updateApiKey', data),
+    getApiKey: (service: 'openai' | 'replicate') => ipcRenderer.invoke('settings:getApiKey', service),
+    deleteApiKey: (service: 'openai' | 'replicate') => ipcRenderer.invoke('settings:deleteApiKey', service),
+    hasApiKey: (service: 'openai' | 'replicate') => ipcRenderer.invoke('settings:hasApiKey', service),
   },
 
   // AI Generation APIs
-  aiGeneration: {
-    generateImages: (data: { prompts: string[]; userId: string }) => ipcRenderer.invoke('ai:generateImages', data),
-    generateContent: (data: { prompt: string; links: any[]; questions: any }) =>
+  ai: {
+    generateImage: (prompt: string) => ipcRenderer.invoke('ai:generateImage', prompt),
+    generateImageBulk: (prompts: string[]) => ipcRenderer.invoke('ai:generateImageBulk', prompts),
+    generateContent: (data: { context: string; language: string }) =>
       ipcRenderer.invoke('ai:generateContent', data),
+    generateQuestions: (context: string) => ipcRenderer.invoke('ai:generateQuestions', context),
+    scrapeLink: (url: string) => ipcRenderer.invoke('ai:scrapeLink', url),
+    extractData: (content: string) => ipcRenderer.invoke('ai:extractData', content),
+    generateAnimation: (data: {
+      prompt: string
+      duration: number
+      style: string
+      objectsData: Array<{
+        id: string
+        objectType: string
+        dimensions: { width: number; height: number }
+        position: { x: number; y: number }
+      }>
+      canvasSize: { width: number; height: number }
+    }) => ipcRenderer.invoke('ai:generateAnimation', data),
   },
 
   // Video Processing APIs

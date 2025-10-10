@@ -363,30 +363,17 @@ export default function AnimationTab({
           }
         : { width: 550, height: 900 }
 
-      // Call the AI API
-      let response = await fetch('/api/projects/generate-animation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${''}`
-        },
-        body: JSON.stringify({
-          prompt: aiAnimationPrompt,
-          duration: aiAnimationDuration,
-          style: aiAnimationStyle,
-          objectsData: objectsData,
-          canvasSize: canvasSize
-        })
+      // Call the AI API via Electron IPC
+      let result = await window.api.ai.generateAnimation({
+        prompt: aiAnimationPrompt,
+        duration: aiAnimationDuration,
+        style: aiAnimationStyle,
+        objectsData: objectsData,
+        canvasSize: canvasSize
       })
 
-      if (!response.ok) {
-        throw new Error(`Failed to generate animation: ${response.statusText}`)
-      }
-
-      let result = await response.json()
-
       if (!result.success || !result.data) {
-        throw new Error('Invalid response from AI animation generator')
+        throw new Error(result.error || 'Invalid response from AI animation generator')
       }
 
       // Apply the generated animation to the editor
@@ -862,19 +849,21 @@ export default function AnimationTab({
                         </button> */}
 
                 {/* AI-Powered Animation Generation */}
-                <div className="mt-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                <div className="mt-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <MagicWand size={16} className="text-purple-600" />
-                    <h4 className="text-sm font-medium text-purple-900">AI Animation Generator</h4>
+                    <h4 className="flex flex-row bg-white px-1 rounded text-sm font-medium text-purple-900">
+                      <MagicWand size={16} className="text-purple-600 mr-1" />
+                      AI Animation Generator
+                    </h4>
                   </div>
 
                   <div className="space-y-3">
                     <div>
-                      <label className="text-xs text-gray-600 block mb-1">
+                      <label className="text-xs text-white block mb-1">
                         Describe your animation:
                       </label>
                       <textarea
-                        className="w-full text-xs border rounded px-2 py-1 h-16 resize-none"
+                        className="w-full text-black text-xs border rounded px-2 py-1 h-16 resize-none bg-white"
                         placeholder="e.g., Make the text bounce excitedly, then fade out slowly..."
                         value={aiAnimationPrompt}
                         onChange={(e) => setAiAnimationPrompt(e.target.value)}
@@ -883,9 +872,9 @@ export default function AnimationTab({
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-gray-600 block mb-1">Duration</label>
+                        <label className="text-xs text-white block mb-1">Duration</label>
                         <select
-                          className="text-xs border rounded px-2 py-1 w-full"
+                          className="text-white text-xs border rounded px-2 py-1 w-full"
                           value={aiAnimationDuration}
                           onChange={(e) => setAiAnimationDuration(Number(e.target.value))}
                         >
@@ -898,9 +887,9 @@ export default function AnimationTab({
                       </div>
 
                       <div>
-                        <label className="text-xs text-gray-600 block mb-1">Style</label>
+                        <label className="text-xs text-white block mb-1">Style</label>
                         <select
-                          className="text-xs border rounded px-2 py-1 w-full"
+                          className="text-white text-xs border rounded px-2 py-1 w-full"
                           value={aiAnimationStyle}
                           onChange={(e) => setAiAnimationStyle(e.target.value)}
                         >
