@@ -30,31 +30,18 @@ import {
   updatePositionX,
   updatePositionY,
   updateTextContent,
+  updateTextColor,
   updateWidth,
   updateTextAnimation,
-  removeTextAnimation,
-  updateCube3DWidth,
-  updateCube3DHeight,
-  updateCube3DDepth,
-  updateCube3DRotationX,
-  updateCube3DRotationY,
-  updateCube3DRotationZ,
-  updateSphere3DRadius,
-  updateSphere3DRotationX,
-  updateSphere3DRotationY,
-  updateSphere3DRotationZ,
-  updateMockup3DWidth,
-  updateMockup3DHeight,
-  updateMockup3DDepth,
-  updateMockup3DRotationX,
-  updateMockup3DRotationY,
-  updateMockup3DRotationZ
+  removeTextAnimation
 } from '../../../engine/state/properties'
 import { FontFamilySelector } from '../FontFamilySelector'
 import { TextAnimationManager } from '@renderer/engine/textAnimationManager'
 import { AnimationOptions } from './KeyframeProperties'
 import { RepeatProperties } from './RepeatProperties'
 import { ColorProperties } from './ColorProperties'
+import { ColorService, useColor } from 'react-color-palette'
+import { ColorPicker } from '../ColorPicker'
 
 export const TextProperties = ({
   editorRef,
@@ -79,6 +66,9 @@ export const TextProperties = ({
   const [fontSize, setFontSize] = useState(28)
   const [fontFamily, setFontFamily] = useState('Aleo')
   const [showTextProps, setShowTextProps] = useState(false)
+  const [textColor, setTextColor] = useState<[number, number, number, number]>([255, 255, 255, 255])
+  const [color, setColor] = useColor('rgba(255, 255, 255, 1)')
+  const [colorSet, setColorSet] = useState(false)
 
   useEffect(() => {
     let editor = editorRef.current
@@ -99,6 +89,7 @@ export const TextProperties = ({
     let backgroundFill = currentObject?.backgroundFill
     let fontSize = currentObject?.fontSize
     let fontFamily = currentObject?.fontFamily
+    let color = currentObject?.color
 
     if (width) {
       setDefaultWidth(width)
@@ -124,9 +115,53 @@ export const TextProperties = ({
     if (fontFamily) {
       setFontFamily(fontFamily)
     }
+    if (color) {
+      setTextColor(color)
+    }
 
     setDefaultsSet(true)
   }, [currentTextId])
+
+  // // Initialize color picker from text color
+  useEffect(() => {
+    if (textColor) {
+      setColor(
+        ColorService.convert('rgb', {
+          r: textColor[0],
+          g: textColor[1],
+          b: textColor[2],
+          a: textColor[3]
+        })
+      )
+    }
+  }, [textColor])
+
+  // Update text color when color picker changes
+  useEffect(() => {
+    let editor = editorRef.current
+    let editorState = editorStateRef.current
+
+    if (!editor || !editorState || !color || !colorSet) {
+      return
+    }
+
+    const newColor: [number, number, number, number] = [
+      color.rgb.r,
+      color.rgb.g,
+      color.rgb.b,
+      color.rgb.a
+    ]
+
+    // Only update if color actually changed
+    if (
+      textColor[0] !== color.rgb.r ||
+      textColor[1] !== color.rgb.g ||
+      textColor[2] !== color.rgb.b ||
+      textColor[3] !== color.rgb.a
+    ) {
+      updateTextColor(editorState, editor, currentTextId, newColor)
+    }
+  }, [color])
 
   if (!defaultsSet) {
     return <></>
@@ -224,6 +259,21 @@ export const TextProperties = ({
                     }
 
                     updateTextContent(editorState, editor, currentTextId, value)
+                  }}
+                />
+              </div>
+            </details>
+            <details open={false} className="border border-gray-300 rounded">
+              <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+                Text Color
+              </summary>
+              <div className="p-2 space-y-1">
+                <ColorPicker
+                  label="Select Text Color"
+                  color={color}
+                  setColor={(c) => {
+                    setColorSet(true)
+                    setColor(c)
                   }}
                 />
               </div>

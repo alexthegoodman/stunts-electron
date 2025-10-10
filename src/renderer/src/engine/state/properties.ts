@@ -717,6 +717,25 @@ export function updateTextContent(
   saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
 }
 
+export function updateTextColor(
+  editorState: EditorState,
+  editor: Editor,
+  objectId: string,
+  value: [number, number, number, number]
+) {
+  editor.update_text_color(objectId, value)
+
+  editorState.savedState.sequences.forEach((s) => {
+    s.activeTextItems.forEach((p) => {
+      if (p.id == objectId) {
+        p.color = value
+      }
+    })
+  })
+
+  saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+}
+
 export function updateTextAnimation(
   editorState: EditorState,
   editor: Editor,
