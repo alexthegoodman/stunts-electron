@@ -756,98 +756,163 @@ export const PolygonProperties = ({
           </button>
           <h5>Update Polygon</h5>
         </div>
-        <div className="flex flex-row gap-2">
-          <DebouncedInput
-            id="polygon_x"
-            label="X"
-            placeholder="X"
-            initialValue={positionX.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Position
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="polygon_x"
+                label="X"
+                placeholder="X"
+                initialValue={positionX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-              if (!editorState || !editor) {
-                return
-              }
+                  if (!editorState || !editor) {
+                    return
+                  }
 
-              updatePositionX(
-                editorState,
-                editor,
-                currentPolygonId,
-                ObjectType.Polygon,
-                parseInt(value)
-              )
-            }}
-          />
-          <DebouncedInput
-            id="polygon_y"
-            label="Y"
-            placeholder="Y"
-            initialValue={positionY.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
+                  updatePositionX(
+                    editorState,
+                    editor,
+                    currentPolygonId,
+                    ObjectType.Polygon,
+                    parseInt(value)
+                  )
+                }}
+              />
+              <DebouncedInput
+                id="polygon_y"
+                label="Y"
+                placeholder="Y"
+                initialValue={positionY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-              if (!editorState || !editor) {
-                return
-              }
+                  if (!editorState || !editor) {
+                    return
+                  }
 
-              updatePositionY(
-                editorState,
-                editor,
-                currentPolygonId,
-                ObjectType.Polygon,
-                parseInt(value)
-              )
-            }}
-          />
-        </div>
-        <div className="flex flex-row gap-2">
-          <DebouncedInput
-            id="polygon_width"
-            label="Width"
-            placeholder="Width"
-            initialValue={defaultWidth.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
+                  updatePositionY(
+                    editorState,
+                    editor,
+                    currentPolygonId,
+                    ObjectType.Polygon,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+          </div>
+        </details>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Size & Shape
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="polygon_width"
+                label="Width"
+                placeholder="Width"
+                initialValue={defaultWidth.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-              if (!editorState || !editor) {
-                return
-              }
+                  if (!editorState || !editor) {
+                    return
+                  }
 
-              updateWidth(
-                editorState,
-                editor,
-                currentPolygonId,
-                ObjectType.Polygon,
-                parseInt(value)
-              )
-            }}
-          />
-          <DebouncedInput
-            id="polygon_height"
-            label="Height"
-            placeholder="Height"
-            initialValue={defaultHeight.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
+                  updateWidth(
+                    editorState,
+                    editor,
+                    currentPolygonId,
+                    ObjectType.Polygon,
+                    parseInt(value)
+                  )
+                }}
+              />
+              <DebouncedInput
+                id="polygon_height"
+                label="Height"
+                placeholder="Height"
+                initialValue={defaultHeight.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-              if (!editorState || !editor) {
-                return
-              }
+                  if (!editorState || !editor) {
+                    return
+                  }
 
-              updateHeight(
-                editorState,
-                editor,
-                currentPolygonId,
-                ObjectType.Polygon,
-                parseInt(value)
-              )
-            }}
-          />
-        </div>
+                  updateHeight(
+                    editorState,
+                    editor,
+                    currentPolygonId,
+                    ObjectType.Polygon,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+            <DebouncedInput
+              id="polygon_border_radius"
+              label="Border Radius"
+              placeholder="Border Radius"
+              initialValue={defaultBorderRadius.toString()}
+              onDebounce={(value) => {
+                let editor = editorRef.current
+                let editorState = editorStateRef.current
+
+                if (!editorState || !editor) {
+                  return
+                }
+
+                updateBorderRadius(
+                  editorState,
+                  editor,
+                  currentPolygonId,
+                  ObjectType.Polygon,
+                  parseInt(value)
+                )
+              }}
+            />
+            <div>
+              <input
+                type="checkbox"
+                id="is_circle"
+                name="is_circle"
+                checked={is_circle}
+                onChange={(ev) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  updateIsCircle(
+                    editorState,
+                    editor,
+                    currentPolygonId,
+                    ObjectType.Polygon,
+                    ev.target.checked
+                  )
+
+                  set_is_circle(ev.target.checked)
+                }}
+              />
+              <label htmlFor="is_circle" className="text-xs">
+                Is Circle
+              </label>
+            </div>
+          </div>
+        </details>
         <AnimationOptions
           editorRef={editorRef}
           editorStateRef={editorStateRef}
@@ -855,70 +920,35 @@ export const PolygonProperties = ({
           currentObjectId={currentPolygonId}
           objectType={ObjectType.Polygon}
         />
-        <DebouncedInput
-          id="polygon_border_radius"
-          label="Border Radius"
-          placeholder="Border Radius"
-          initialValue={defaultBorderRadius.toString()}
-          onDebounce={(value) => {
-            let editor = editorRef.current
-            let editorState = editorStateRef.current
-
-            if (!editorState || !editor) {
-              return
-            }
-
-            updateBorderRadius(
-              editorState,
-              editor,
-              currentPolygonId,
-              ObjectType.Polygon,
-              parseInt(value)
-            )
-          }}
-        />
-        <input
-          type="checkbox"
-          id="is_circle"
-          name="is_circle"
-          checked={is_circle}
-          onChange={(ev) => {
-            let editor = editorRef.current
-            let editorState = editorStateRef.current
-
-            if (!editorState || !editor) {
-              return
-            }
-
-            updateIsCircle(
-              editorState,
-              editor,
-              currentPolygonId,
-              ObjectType.Polygon,
-              ev.target.checked
-            )
-
-            set_is_circle(ev.target.checked)
-          }}
-        />
-        <label htmlFor="is_circle" className="text-xs">
-          Is Circle
-        </label>
-        <ColorProperties
-          editorRef={editorRef}
-          editorStateRef={editorStateRef}
-          currentSequenceId={currentSequenceId}
-          currentObjectId={currentPolygonId}
-          objectType={ObjectType.Polygon}
-          defaultColor={defaultFill as BackgroundFill}
-        />
-        <RepeatProperties
-          editorRef={editorRef}
-          editorStateRef={editorStateRef}
-          currentSequenceId={currentSequenceId}
-          currentObjectId={currentPolygonId}
-          objectType={ObjectType.Polygon}
-        />
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Color
+          </summary>
+          <div className="p-2 space-y-1">
+            <ColorProperties
+              editorRef={editorRef}
+              editorStateRef={editorStateRef}
+              currentSequenceId={currentSequenceId}
+              currentObjectId={currentPolygonId}
+              objectType={ObjectType.Polygon}
+              defaultColor={defaultFill as BackgroundFill}
+            />
+          </div>
+        </details>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Repeat
+          </summary>
+          <div className="p-2 space-y-1">
+            <RepeatProperties
+              editorRef={editorRef}
+              editorStateRef={editorStateRef}
+              currentSequenceId={currentSequenceId}
+              currentObjectId={currentPolygonId}
+              objectType={ObjectType.Polygon}
+            />
+          </div>
+        </details>
       </div>
     </>
   )
@@ -1159,181 +1189,213 @@ export const TextProperties = ({
         </button>
         {showTextProps ? (
           <section>
-            <DebouncedInput
-              id="text_font_size"
-              label="Font Size"
-              placeholder="Font Size"
-              initialValue={fontSize.toString()}
-              onDebounce={(value) => {
-                let editor = editorRef.current
-                let editorState = editorStateRef.current
+            <details open={false} className="border border-gray-300 rounded">
+              <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+                Text Content
+              </summary>
+              <div className="p-2 space-y-1">
+                <DebouncedInput
+                  id="text_font_size"
+                  label="Font Size"
+                  placeholder="Font Size"
+                  initialValue={fontSize.toString()}
+                  onDebounce={(value) => {
+                    let editor = editorRef.current
+                    let editorState = editorStateRef.current
 
-                if (!editorState || !editor) {
-                  return
-                }
+                    if (!editorState || !editor) {
+                      return
+                    }
 
-                console.info('double call?')
+                    console.info('double call?')
 
-                updateFontSize(
-                  editorState,
-                  editor,
-                  currentTextId,
-                  ObjectType.TextItem,
-                  parseInt(value)
-                )
-              }}
-            />
-            <div className="flex flex-col gap-1 mb-2">
-              <label htmlFor="font_family" className="text-xs">
-                Font Family
-              </label>
-              <FontFamilySelector
-                value={fontFamily}
-                onChange={async (ev) => {
-                  let editor = editorRef.current
-                  let editorState = editorStateRef.current
+                    updateFontSize(
+                      editorState,
+                      editor,
+                      currentTextId,
+                      ObjectType.TextItem,
+                      parseInt(value)
+                    )
+                  }}
+                />
+                <div className="flex flex-col gap-1 mb-2">
+                  <label htmlFor="font_family" className="text-xs">
+                    Font Family
+                  </label>
+                  <FontFamilySelector
+                    value={fontFamily}
+                    onChange={async (ev) => {
+                      let editor = editorRef.current
+                      let editorState = editorStateRef.current
 
-                  if (!editorState || !editor) {
-                    return
-                  }
+                      if (!editorState || !editor) {
+                        return
+                      }
 
-                  const newFontFamily = ev.target.value
-                  setFontFamily(newFontFamily)
+                      const newFontFamily = ev.target.value
+                      setFontFamily(newFontFamily)
 
-                  await updateFontFamily(editorState, editor, currentTextId, newFontFamily)
-                }}
-                style={{ fontFamily: fontFamily }}
-              />
-            </div>
-            <DebouncedTextarea
-              id="text_content"
-              label="Content"
-              placeholder="Content"
-              initialValue={defaultContent.toString()}
-              onDebounce={(value) => {
-                let editor = editorRef.current
-                let editorState = editorStateRef.current
+                      await updateFontFamily(editorState, editor, currentTextId, newFontFamily)
+                    }}
+                    style={{ fontFamily: fontFamily }}
+                  />
+                </div>
+                <DebouncedTextarea
+                  id="text_content"
+                  label="Content"
+                  placeholder="Content"
+                  initialValue={defaultContent.toString()}
+                  onDebounce={(value) => {
+                    let editor = editorRef.current
+                    let editorState = editorStateRef.current
 
-                if (!editorState || !editor) {
-                  return
-                }
+                    if (!editorState || !editor) {
+                      return
+                    }
 
-                updateTextContent(editorState, editor, currentTextId, value)
-              }}
-            />
-            <div className="flex flex-row gap-2">
-              <DebouncedInput
-                id="text_width"
-                label="Width"
-                placeholder="Width"
-                initialValue={defaultWidth.toString()}
-                onDebounce={(value) => {
-                  let editor = editorRef.current
-                  let editorState = editorStateRef.current
+                    updateTextContent(editorState, editor, currentTextId, value)
+                  }}
+                />
+              </div>
+            </details>
+            <details open={false} className="border border-gray-300 rounded">
+              <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+                Size & Shape
+              </summary>
+              <div className="p-2 space-y-1">
+                <div className="flex flex-row gap-2">
+                  <DebouncedInput
+                    id="text_width"
+                    label="Width"
+                    placeholder="Width"
+                    initialValue={defaultWidth.toString()}
+                    onDebounce={(value) => {
+                      let editor = editorRef.current
+                      let editorState = editorStateRef.current
 
-                  if (!editorState || !editor) {
-                    return
-                  }
+                      if (!editorState || !editor) {
+                        return
+                      }
 
-                  console.info('double call?')
+                      console.info('double call?')
 
-                  updateWidth(
-                    editorState,
-                    editor,
-                    currentTextId,
-                    ObjectType.TextItem,
-                    parseInt(value)
-                  )
-                }}
-              />
-              <DebouncedInput
-                id="text_height"
-                label="Height"
-                placeholder="height"
-                initialValue={defaultHeight.toString()}
-                onDebounce={(value) => {
-                  let editor = editorRef.current
-                  let editorState = editorStateRef.current
+                      updateWidth(
+                        editorState,
+                        editor,
+                        currentTextId,
+                        ObjectType.TextItem,
+                        parseInt(value)
+                      )
+                    }}
+                  />
+                  <DebouncedInput
+                    id="text_height"
+                    label="Height"
+                    placeholder="height"
+                    initialValue={defaultHeight.toString()}
+                    onDebounce={(value) => {
+                      let editor = editorRef.current
+                      let editorState = editorStateRef.current
 
-                  if (!editorState || !editor) {
-                    return
-                  }
+                      if (!editorState || !editor) {
+                        return
+                      }
 
-                  console.info('height debounce')
+                      console.info('height debounce')
 
-                  updateHeight(
-                    editorState,
-                    editor,
-                    currentTextId,
-                    ObjectType.TextItem,
-                    parseInt(value)
-                  )
-                }}
-              />
-            </div>
-            <input
-              type="checkbox"
-              id="is_circle"
-              name="is_circle"
-              checked={is_circle}
-              onChange={(ev) => {
-                let editor = editorRef.current
-                let editorState = editorStateRef.current
+                      updateHeight(
+                        editorState,
+                        editor,
+                        currentTextId,
+                        ObjectType.TextItem,
+                        parseInt(value)
+                      )
+                    }}
+                  />
+                </div>
+                <div>
+                  <input
+                    type="checkbox"
+                    id="is_circle"
+                    name="is_circle"
+                    checked={is_circle}
+                    onChange={(ev) => {
+                      let editor = editorRef.current
+                      let editorState = editorStateRef.current
 
-                if (!editorState || !editor) {
-                  return
-                }
+                      if (!editorState || !editor) {
+                        return
+                      }
 
-                updateIsCircle(
-                  editorState,
-                  editor,
-                  currentTextId,
-                  ObjectType.TextItem,
-                  ev.target.checked
-                )
+                      updateIsCircle(
+                        editorState,
+                        editor,
+                        currentTextId,
+                        ObjectType.TextItem,
+                        ev.target.checked
+                      )
 
-                set_is_circle(ev.target.checked)
-              }}
-            />
-            <label htmlFor="is_circle" className="text-xs">
-              Is Circle
-            </label>
-            <input
-              type="checkbox"
-              id="hidden_background"
-              name="hidden_background"
-              checked={hidden_background}
-              onChange={(ev) => {
-                let editor = editorRef.current
-                let editorState = editorStateRef.current
+                      set_is_circle(ev.target.checked)
+                    }}
+                  />
+                  <label htmlFor="is_circle" className="text-xs">
+                    Is Circle
+                  </label>
+                </div>
+              </div>
+            </details>
+            <details open={false} className="border border-gray-300 rounded">
+              <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+                Background & Color
+              </summary>
+              <div className="p-2 space-y-1">
+                <div>
+                  <input
+                    type="checkbox"
+                    id="hidden_background"
+                    name="hidden_background"
+                    checked={hidden_background}
+                    onChange={(ev) => {
+                      let editor = editorRef.current
+                      let editorState = editorStateRef.current
 
-                if (!editorState || !editor) {
-                  return
-                }
+                      if (!editorState || !editor) {
+                        return
+                      }
 
-                updateHiddenBackground(editorState, editor, currentTextId, ev.target.checked)
+                      updateHiddenBackground(editorState, editor, currentTextId, ev.target.checked)
 
-                set_hidden_background(ev.target.checked)
-              }}
-            />
-            <label htmlFor="hidden_background" className="text-xs">
-              Hide Background
-            </label>
-            <ColorProperties
-              editorRef={editorRef}
-              editorStateRef={editorStateRef}
-              currentSequenceId={currentSequenceId}
-              currentObjectId={currentTextId}
-              objectType={ObjectType.Polygon}
-              defaultColor={defaultFill as BackgroundFill}
-            />
-            <RepeatProperties
-              editorRef={editorRef}
-              editorStateRef={editorStateRef}
-              currentSequenceId={currentSequenceId}
-              currentObjectId={currentTextId}
-              objectType={ObjectType.TextItem}
-            />
+                      set_hidden_background(ev.target.checked)
+                    }}
+                  />
+                  <label htmlFor="hidden_background" className="text-xs">
+                    Hide Background
+                  </label>
+                </div>
+                <ColorProperties
+                  editorRef={editorRef}
+                  editorStateRef={editorStateRef}
+                  currentSequenceId={currentSequenceId}
+                  currentObjectId={currentTextId}
+                  objectType={ObjectType.Polygon}
+                  defaultColor={defaultFill as BackgroundFill}
+                />
+              </div>
+            </details>
+            <details open={false} className="border border-gray-300 rounded">
+              <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+                Repeat
+              </summary>
+              <div className="p-2 space-y-1">
+                <RepeatProperties
+                  editorRef={editorRef}
+                  editorStateRef={editorStateRef}
+                  currentSequenceId={currentSequenceId}
+                  currentObjectId={currentTextId}
+                  objectType={ObjectType.TextItem}
+                />
+              </div>
+            </details>
           </section>
         ) : (
           <></>
@@ -1429,76 +1491,112 @@ export const ImageProperties = ({
           </button>
           <h5>Update Image</h5>
         </div>
-        <div className="flex flex-row gap-2">
-          <DebouncedInput
-            id="image_width"
-            label="Width"
-            placeholder="Width"
-            initialValue={defaultWidth.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Size & Shape
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="image_width"
+                label="Width"
+                placeholder="Width"
+                initialValue={defaultWidth.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-              if (!editorState || !editor) {
-                return
-              }
+                  if (!editorState || !editor) {
+                    return
+                  }
 
-              updateWidth(
-                editorState,
-                editor,
-                currentImageId,
-                ObjectType.ImageItem,
-                parseInt(value)
-              )
-            }}
-          />
-          <DebouncedInput
-            id="image_height"
-            label="Height"
-            placeholder="Height"
-            initialValue={defaultHeight.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
+                  updateWidth(
+                    editorState,
+                    editor,
+                    currentImageId,
+                    ObjectType.ImageItem,
+                    parseInt(value)
+                  )
+                }}
+              />
+              <DebouncedInput
+                id="image_height"
+                label="Height"
+                placeholder="Height"
+                initialValue={defaultHeight.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-              if (!editorState || !editor) {
-                return
-              }
+                  if (!editorState || !editor) {
+                    return
+                  }
 
-              updateHeight(
-                editorState,
-                editor,
-                currentImageId,
-                ObjectType.ImageItem,
-                parseInt(value)
-              )
-            }}
-          />
-        </div>
-        <div className="flex flex-row gap-2">
-          <DebouncedInput
-            id="image_border_radius"
-            label="Border Radius"
-            placeholder="Border Radius"
-            initialValue={defaultBorderRadius.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
+                  updateHeight(
+                    editorState,
+                    editor,
+                    currentImageId,
+                    ObjectType.ImageItem,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="image_border_radius"
+                label="Border Radius"
+                placeholder="Border Radius"
+                initialValue={defaultBorderRadius.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-              if (!editorState || !editor) {
-                return
-              }
+                  if (!editorState || !editor) {
+                    return
+                  }
 
-              updateBorderRadius(
-                editorState,
-                editor,
-                currentImageId,
-                ObjectType.ImageItem,
-                parseFloat(value)
-              )
-            }}
-          />
-        </div>
+                  updateBorderRadius(
+                    editorState,
+                    editor,
+                    currentImageId,
+                    ObjectType.ImageItem,
+                    parseFloat(value)
+                  )
+                }}
+              />
+            </div>
+            <div>
+              <input
+                type="checkbox"
+                id="is_circle"
+                name="is_circle"
+                checked={is_circle}
+                onChange={(ev) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  updateIsCircle(
+                    editorState,
+                    editor,
+                    currentImageId,
+                    ObjectType.ImageItem,
+                    ev.target.checked
+                  )
+
+                  set_is_circle(ev.target.checked)
+                }}
+              />
+              <label htmlFor="is_circle" className="text-xs">
+                Is Circle
+              </label>
+            </div>
+          </div>
+        </details>
         <AnimationOptions
           editorRef={editorRef}
           editorStateRef={editorStateRef}
@@ -1506,40 +1604,20 @@ export const ImageProperties = ({
           currentObjectId={currentImageId}
           objectType={ObjectType.ImageItem}
         />
-        <input
-          type="checkbox"
-          id="is_circle"
-          name="is_circle"
-          checked={is_circle}
-          onChange={(ev) => {
-            let editor = editorRef.current
-            let editorState = editorStateRef.current
-
-            if (!editorState || !editor) {
-              return
-            }
-
-            updateIsCircle(
-              editorState,
-              editor,
-              currentImageId,
-              ObjectType.ImageItem,
-              ev.target.checked
-            )
-
-            set_is_circle(ev.target.checked)
-          }}
-        />
-        <label htmlFor="is_circle" className="text-xs">
-          Is Circle
-        </label>
-        <RepeatProperties
-          editorRef={editorRef}
-          editorStateRef={editorStateRef}
-          currentSequenceId={currentSequenceId}
-          currentObjectId={currentImageId}
-          objectType={ObjectType.ImageItem}
-        />
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Repeat
+          </summary>
+          <div className="p-2 space-y-1">
+            <RepeatProperties
+              editorRef={editorRef}
+              editorStateRef={editorStateRef}
+              currentSequenceId={currentSequenceId}
+              currentObjectId={currentImageId}
+              objectType={ObjectType.ImageItem}
+            />
+          </div>
+        </details>
       </div>
     </>
   )
@@ -1613,76 +1691,83 @@ export const VideoProperties = ({
           </button>
           <h5>Update Video</h5>
         </div>
-        <div className="flex flex-row gap-2">
-          <DebouncedInput
-            id="video_width"
-            label="Width"
-            placeholder="Width"
-            initialValue={defaultWidth.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Size & Border
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="video_width"
+                label="Width"
+                placeholder="Width"
+                initialValue={defaultWidth.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-              if (!editorState || !editor) {
-                return
-              }
+                  if (!editorState || !editor) {
+                    return
+                  }
 
-              updateWidth(
-                editorState,
-                editor,
-                currentVideoId,
-                ObjectType.VideoItem,
-                parseInt(value)
-              )
-            }}
-          />
-          <DebouncedInput
-            id="video_height"
-            label="Height"
-            placeholder="height"
-            initialValue={defaultHeight.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
+                  updateWidth(
+                    editorState,
+                    editor,
+                    currentVideoId,
+                    ObjectType.VideoItem,
+                    parseInt(value)
+                  )
+                }}
+              />
+              <DebouncedInput
+                id="video_height"
+                label="Height"
+                placeholder="height"
+                initialValue={defaultHeight.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-              if (!editorState || !editor) {
-                return
-              }
+                  if (!editorState || !editor) {
+                    return
+                  }
 
-              updateHeight(
-                editorState,
-                editor,
-                currentVideoId,
-                ObjectType.VideoItem,
-                parseInt(value)
-              )
-            }}
-          />
-        </div>
-        <div className="flex flex-row gap-2">
-          <DebouncedInput
-            id="video_border_radius"
-            label="Border Radius"
-            placeholder="Border Radius"
-            initialValue={defaultBorderRadius.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
+                  updateHeight(
+                    editorState,
+                    editor,
+                    currentVideoId,
+                    ObjectType.VideoItem,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="video_border_radius"
+                label="Border Radius"
+                placeholder="Border Radius"
+                initialValue={defaultBorderRadius.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-              if (!editorState || !editor) {
-                return
-              }
+                  if (!editorState || !editor) {
+                    return
+                  }
 
-              updateBorderRadius(
-                editorState,
-                editor,
-                currentVideoId,
-                ObjectType.VideoItem,
-                parseFloat(value)
-              )
-            }}
-          />
-        </div>
+                  updateBorderRadius(
+                    editorState,
+                    editor,
+                    currentVideoId,
+                    ObjectType.VideoItem,
+                    parseFloat(value)
+                  )
+                }}
+              />
+            </div>
+          </div>
+        </details>
         <AnimationOptions
           editorRef={editorRef}
           editorStateRef={editorStateRef}
@@ -1841,229 +1926,235 @@ export const AnimationOptions = ({
           </button>
 
           {/** Perspective Animation Panel */}
-          <div className="flex flex-col gap-2 p-2 border rounded">
-            <p className="text-xs font-semibold">Perspective Animation</p>
-
-            <div className="flex flex-row gap-3">
-              <label className="flex items-center gap-1 text-xs">
-                <input
-                  type="checkbox"
-                  checked={perspectiveX}
-                  onChange={(e) => setPerspectiveX(e.target.checked)}
-                />
-                X Axis (top/bottom)
-              </label>
-              <label className="flex items-center gap-1 text-xs">
-                <input
-                  type="checkbox"
-                  checked={perspectiveY}
-                  onChange={(e) => setPerspectiveY(e.target.checked)}
-                />
-                Y Axis (left/right)
-              </label>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-gray-600">Degrees:</label>
-              <input
-                type="number"
-                value={perspectiveDegrees}
-                onChange={(e) => setPerspectiveDegrees(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1"
-                min="0"
-                max="90"
-              />
-            </div>
-
-            <div className="flex flex-row gap-3">
-              <label className="flex items-center gap-1 text-xs">
-                <input
-                  type="checkbox"
-                  checked={perspectiveFadeIn}
-                  onChange={(e) => setPerspectiveFadeIn(e.target.checked)}
-                />
-                Fade In
-              </label>
-              <label className="flex items-center gap-1 text-xs">
-                <input
-                  type="checkbox"
-                  checked={perspectiveFadeOut}
-                  onChange={(e) => setPerspectiveFadeOut(e.target.checked)}
-                />
-                Fade Out
-              </label>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <p className="text-xs text-gray-600">Animation Direction:</p>
-              <label className="flex items-center gap-1 text-xs">
-                <input
-                  type="radio"
-                  name="perspectiveDirection"
-                  checked={!perspectiveAnimateTo}
-                  onChange={() => setPerspectiveAnimateTo(false)}
-                />
-                Animate FROM perspective
-              </label>
-              <label className="flex items-center gap-1 text-xs">
-                <input
-                  type="radio"
-                  name="perspectiveDirection"
-                  checked={perspectiveAnimateTo}
-                  onChange={() => setPerspectiveAnimateTo(true)}
-                />
-                Animate TO perspective
-              </label>
-            </div>
-
-            <div className="flex flex-row gap-2">
-              <button
-                className="text-xs rounded-md text-white stunts-gradient px-2 py-1 flex-1"
-                onClick={async () => {
-                  let editor = editorRef.current
-                  let editorState = editorStateRef.current
-
-                  if (!editorState || !editor) {
-                    return
-                  }
-
-                  let currentSequence = editorState.savedState.sequences.find(
-                    (s) => s.id === currentSequenceId
-                  )
-
-                  if (!currentSequence || !currentSequence?.polygonMotionPaths) {
-                    return
-                  }
-
-                  let current_animation_data = currentSequence?.polygonMotionPaths.find(
-                    (p) => p.polygonId === currentObjectId
-                  )
-
-                  if (!current_animation_data) {
-                    return
-                  }
-
-                  let newAnimationData = save_configurable_perspective_keyframes(
-                    editorState,
-                    currentObjectId,
-                    objectType,
-                    current_animation_data,
-                    {
-                      applyX: perspectiveX,
-                      applyY: perspectiveY,
-                      degrees: perspectiveDegrees,
-                      fadeIn: perspectiveFadeIn,
-                      fadeOut: perspectiveFadeOut,
-                      animateTo: perspectiveAnimateTo
-                    }
-                  )
-
-                  editorState.savedState.sequences.forEach((s) => {
-                    if (s.id == currentSequenceId) {
-                      if (s.polygonMotionPaths) {
-                        let currentIndex = s.polygonMotionPaths.findIndex(
-                          (p) => p.id === current_animation_data.id
-                        )
-                        s.polygonMotionPaths[currentIndex] = newAnimationData
-                      }
-                    }
-                  })
-
-                  let sequences = editorState.savedState.sequences
-
-                  await saveSequencesData(sequences, editorState.saveTarget)
-                }}
-              >
-                Apply Perspective Animation
-              </button>
-              <button
-                className="text-xs rounded-md bg-gray-500 hover:bg-gray-600 text-white px-2 py-1"
-                onClick={async () => {
-                  let editor = editorRef.current
-                  let editorState = editorStateRef.current
-
-                  if (!editorState || !editor) {
-                    return
-                  }
-
-                  let currentSequence = editorState.savedState.sequences.find(
-                    (s) => s.id === currentSequenceId
-                  )
-
-                  if (!currentSequence || !currentSequence?.polygonMotionPaths) {
-                    return
-                  }
-
-                  let current_animation_data = currentSequence?.polygonMotionPaths.find(
-                    (p) => p.polygonId === currentObjectId
-                  )
-
-                  if (!current_animation_data) {
-                    return
-                  }
-
-                  // Remove perspectiveX and perspectiveY properties
-                  let properties = current_animation_data.properties.filter(
-                    (p) => p.propertyPath !== 'perspectiveX' && p.propertyPath !== 'perspectiveY'
-                  )
-
-                  let newAnimationData = {
-                    ...current_animation_data,
-                    properties: properties
-                  }
-
-                  editorState.savedState.sequences.forEach((s) => {
-                    if (s.id == currentSequenceId) {
-                      if (s.polygonMotionPaths) {
-                        let currentIndex = s.polygonMotionPaths.findIndex(
-                          (p) => p.id === current_animation_data.id
-                        )
-                        s.polygonMotionPaths[currentIndex] = newAnimationData
-                      }
-                    }
-                  })
-
-                  let sequences = editorState.savedState.sequences
-
-                  await saveSequencesData(sequences, editorState.saveTarget)
-                }}
-              >
-                Clear Perspective
-              </button>
-            </div>
-          </div>
-
-          {/** Spin Animation Panel */}
-          <div className="flex flex-col gap-2 p-2 border rounded">
-            <p className="text-xs font-semibold">Spin Animation</p>
-
-            <div className="flex flex-col gap-2">
-              <p className="text-xs text-gray-600">Spin Axes:</p>
+          <details open={false} className="border border-gray-300 rounded">
+            <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+              Perspective
+            </summary>
+            <div className="p-2 space-y-1">
               <div className="flex flex-row gap-3">
                 <label className="flex items-center gap-1 text-xs">
                   <input
                     type="checkbox"
-                    checked={spinAxisX}
-                    onChange={(e) => setSpinAxisX(e.target.checked)}
+                    checked={perspectiveX}
+                    onChange={(e) => setPerspectiveX(e.target.checked)}
                   />
-                  X Axis (vertical)
+                  X Axis (top/bottom)
                 </label>
                 <label className="flex items-center gap-1 text-xs">
                   <input
                     type="checkbox"
-                    checked={spinAxisY}
-                    onChange={(e) => setSpinAxisY(e.target.checked)}
+                    checked={perspectiveY}
+                    onChange={(e) => setPerspectiveY(e.target.checked)}
                   />
-                  Y Axis (horizontal)
+                  Y Axis (left/right)
+                </label>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-600">Degrees:</label>
+                <input
+                  type="number"
+                  value={perspectiveDegrees}
+                  onChange={(e) => setPerspectiveDegrees(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1"
+                  min="0"
+                  max="90"
+                />
+              </div>
+
+              <div className="flex flex-row gap-3">
+                <label className="flex items-center gap-1 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={perspectiveFadeIn}
+                    onChange={(e) => setPerspectiveFadeIn(e.target.checked)}
+                  />
+                  Fade In
                 </label>
                 <label className="flex items-center gap-1 text-xs">
                   <input
                     type="checkbox"
-                    checked={spinAxisZ}
-                    onChange={(e) => setSpinAxisZ(e.target.checked)}
+                    checked={perspectiveFadeOut}
+                    onChange={(e) => setPerspectiveFadeOut(e.target.checked)}
                   />
-                  Z Axis (roll)
+                  Fade Out
                 </label>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <p className="text-xs text-gray-600">Animation Direction:</p>
+                <label className="flex items-center gap-1 text-xs">
+                  <input
+                    type="radio"
+                    name="perspectiveDirection"
+                    checked={!perspectiveAnimateTo}
+                    onChange={() => setPerspectiveAnimateTo(false)}
+                  />
+                  Animate FROM perspective
+                </label>
+                <label className="flex items-center gap-1 text-xs">
+                  <input
+                    type="radio"
+                    name="perspectiveDirection"
+                    checked={perspectiveAnimateTo}
+                    onChange={() => setPerspectiveAnimateTo(true)}
+                  />
+                  Animate TO perspective
+                </label>
+              </div>
+
+              <div className="flex flex-row gap-2">
+                <button
+                  className="text-xs rounded-md text-white stunts-gradient px-2 py-1 flex-1"
+                  onClick={async () => {
+                    let editor = editorRef.current
+                    let editorState = editorStateRef.current
+
+                    if (!editorState || !editor) {
+                      return
+                    }
+
+                    let currentSequence = editorState.savedState.sequences.find(
+                      (s) => s.id === currentSequenceId
+                    )
+
+                    if (!currentSequence || !currentSequence?.polygonMotionPaths) {
+                      return
+                    }
+
+                    let current_animation_data = currentSequence?.polygonMotionPaths.find(
+                      (p) => p.polygonId === currentObjectId
+                    )
+
+                    if (!current_animation_data) {
+                      return
+                    }
+
+                    let newAnimationData = save_configurable_perspective_keyframes(
+                      editorState,
+                      currentObjectId,
+                      objectType,
+                      current_animation_data,
+                      {
+                        applyX: perspectiveX,
+                        applyY: perspectiveY,
+                        degrees: perspectiveDegrees,
+                        fadeIn: perspectiveFadeIn,
+                        fadeOut: perspectiveFadeOut,
+                        animateTo: perspectiveAnimateTo
+                      }
+                    )
+
+                    editorState.savedState.sequences.forEach((s) => {
+                      if (s.id == currentSequenceId) {
+                        if (s.polygonMotionPaths) {
+                          let currentIndex = s.polygonMotionPaths.findIndex(
+                            (p) => p.id === current_animation_data.id
+                          )
+                          s.polygonMotionPaths[currentIndex] = newAnimationData
+                        }
+                      }
+                    })
+
+                    let sequences = editorState.savedState.sequences
+
+                    await saveSequencesData(sequences, editorState.saveTarget)
+                  }}
+                >
+                  Apply Perspective Animation
+                </button>
+                <button
+                  className="text-xs rounded-md bg-gray-500 hover:bg-gray-600 text-white px-2 py-1"
+                  onClick={async () => {
+                    let editor = editorRef.current
+                    let editorState = editorStateRef.current
+
+                    if (!editorState || !editor) {
+                      return
+                    }
+
+                    let currentSequence = editorState.savedState.sequences.find(
+                      (s) => s.id === currentSequenceId
+                    )
+
+                    if (!currentSequence || !currentSequence?.polygonMotionPaths) {
+                      return
+                    }
+
+                    let current_animation_data = currentSequence?.polygonMotionPaths.find(
+                      (p) => p.polygonId === currentObjectId
+                    )
+
+                    if (!current_animation_data) {
+                      return
+                    }
+
+                    // Remove perspectiveX and perspectiveY properties
+                    let properties = current_animation_data.properties.filter(
+                      (p) => p.propertyPath !== 'perspectiveX' && p.propertyPath !== 'perspectiveY'
+                    )
+
+                    let newAnimationData = {
+                      ...current_animation_data,
+                      properties: properties
+                    }
+
+                    editorState.savedState.sequences.forEach((s) => {
+                      if (s.id == currentSequenceId) {
+                        if (s.polygonMotionPaths) {
+                          let currentIndex = s.polygonMotionPaths.findIndex(
+                            (p) => p.id === current_animation_data.id
+                          )
+                          s.polygonMotionPaths[currentIndex] = newAnimationData
+                        }
+                      }
+                    })
+
+                    let sequences = editorState.savedState.sequences
+
+                    await saveSequencesData(sequences, editorState.saveTarget)
+                  }}
+                >
+                  Clear Perspective
+                </button>
+              </div>
+            </div>
+          </details>
+
+          {/** Spin Animation Panel */}
+          <details open={false} className="border border-gray-300 rounded">
+            <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+              Spin
+            </summary>
+            <div className="p-2 space-y-1">
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-gray-600">Spin Axes:</p>
+                <div className="flex flex-row gap-3">
+                  <label className="flex items-center gap-1 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={spinAxisX}
+                      onChange={(e) => setSpinAxisX(e.target.checked)}
+                    />
+                    X Axis (vertical)
+                  </label>
+                  <label className="flex items-center gap-1 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={spinAxisY}
+                      onChange={(e) => setSpinAxisY(e.target.checked)}
+                    />
+                    Y Axis (horizontal)
+                  </label>
+                  <label className="flex items-center gap-1 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={spinAxisZ}
+                      onChange={(e) => setSpinAxisZ(e.target.checked)}
+                    />
+                    Z Axis (roll)
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -2210,1010 +2301,1050 @@ export const AnimationOptions = ({
                 Clear Spin
               </button>
             </div>
-          </div>
+          </details>
 
-          <div className="flex flex-col gap-2 border-t pt-2 mt-2">
-            <h3 className="text-xs font-semibold text-gray-700">Scale & Fade Pulse</h3>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600 w-24">Start Scale:</label>
-              <input
-                type="number"
-                value={pulseStartScale}
-                onChange={(e) => setPulseStartScale(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="10"
-                max="500"
-              />
-              <span className="text-xs text-gray-500">%</span>
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600 w-24">Target Scale:</label>
-              <input
-                type="number"
-                value={pulseTargetScale}
-                onChange={(e) => setPulseTargetScale(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="10"
-                max="500"
-              />
-              <span className="text-xs text-gray-500">%</span>
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600 w-24">Ripples:</label>
-              <input
-                type="number"
-                value={pulseRippleCount}
-                onChange={(e) => setPulseRippleCount(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="0"
-                max="5"
-              />
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600 w-24">Ripple Intensity:</label>
-              <input
-                type="number"
-                value={pulseRippleIntensity}
-                onChange={(e) => setPulseRippleIntensity(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="0"
-                max="50"
-              />
-              <span className="text-xs text-gray-500">%</span>
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600 w-24">Duration:</label>
-              <input
-                type="number"
-                value={pulseDuration}
-                onChange={(e) => setPulseDuration(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-20"
-                min="500"
-                max="20000"
-                step="500"
-              />
-              <span className="text-xs text-gray-500">ms</span>
-            </div>
-            <div className="flex flex-row items-center gap-4">
-              <label className="flex items-center gap-1 text-xs">
+          <details open={false} className="border border-gray-300 rounded">
+            <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+              Scale & Fade Pulse
+            </summary>
+            <div className="p-2 space-y-1">
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600 w-24">Start Scale:</label>
                 <input
-                  type="checkbox"
-                  checked={pulseFadeIn}
-                  onChange={(e) => setPulseFadeIn(e.target.checked)}
-                  className="rounded"
+                  type="number"
+                  value={pulseStartScale}
+                  onChange={(e) => setPulseStartScale(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="10"
+                  max="500"
                 />
-                Fade In
-              </label>
-              <label className="flex items-center gap-1 text-xs">
+                <span className="text-xs text-gray-500">%</span>
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600 w-24">Target Scale:</label>
                 <input
-                  type="checkbox"
-                  checked={pulseFadeOut}
-                  onChange={(e) => setPulseFadeOut(e.target.checked)}
-                  className="rounded"
+                  type="number"
+                  value={pulseTargetScale}
+                  onChange={(e) => setPulseTargetScale(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="10"
+                  max="500"
                 />
-                Fade Out
-              </label>
-            </div>
-            <button
-              className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
-              onClick={async () => {
-                let editor = editorRef.current
-                let editorState = editorStateRef.current
+                <span className="text-xs text-gray-500">%</span>
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600 w-24">Ripples:</label>
+                <input
+                  type="number"
+                  value={pulseRippleCount}
+                  onChange={(e) => setPulseRippleCount(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="0"
+                  max="5"
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600 w-24">Ripple Intensity:</label>
+                <input
+                  type="number"
+                  value={pulseRippleIntensity}
+                  onChange={(e) => setPulseRippleIntensity(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="0"
+                  max="50"
+                />
+                <span className="text-xs text-gray-500">%</span>
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600 w-24">Duration:</label>
+                <input
+                  type="number"
+                  value={pulseDuration}
+                  onChange={(e) => setPulseDuration(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-20"
+                  min="500"
+                  max="20000"
+                  step="500"
+                />
+                <span className="text-xs text-gray-500">ms</span>
+              </div>
+              <div className="flex flex-row items-center gap-4">
+                <label className="flex items-center gap-1 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={pulseFadeIn}
+                    onChange={(e) => setPulseFadeIn(e.target.checked)}
+                    className="rounded"
+                  />
+                  Fade In
+                </label>
+                <label className="flex items-center gap-1 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={pulseFadeOut}
+                    onChange={(e) => setPulseFadeOut(e.target.checked)}
+                    className="rounded"
+                  />
+                  Fade Out
+                </label>
+              </div>
+              <button
+                className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
+                onClick={async () => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-                if (!editorState || !editor) {
-                  return
-                }
-
-                let currentSequence = editorState.savedState.sequences.find(
-                  (s) => s.id === currentSequenceId
-                )
-
-                if (!currentSequence || !currentSequence?.polygonMotionPaths) {
-                  return
-                }
-
-                let current_animation_data = currentSequence?.polygonMotionPaths.find(
-                  (p) => p.polygonId === currentObjectId
-                )
-
-                if (!current_animation_data) {
-                  return
-                }
-
-                const config: ScaleFadePulseConfig = {
-                  startScale: pulseStartScale,
-                  targetScale: pulseTargetScale,
-                  rippleCount: pulseRippleCount,
-                  rippleIntensity: pulseRippleIntensity,
-                  durationMs: pulseDuration,
-                  fadeIn: pulseFadeIn,
-                  fadeOut: pulseFadeOut
-                }
-
-                let newAnimationData = save_scale_fade_pulse_keyframes(
-                  editorState,
-                  currentObjectId,
-                  objectType,
-                  current_animation_data,
-                  config
-                )
-
-                editorState.savedState.sequences.forEach((s) => {
-                  if (s.id == currentSequenceId) {
-                    if (s.polygonMotionPaths) {
-                      let currentIndex = s.polygonMotionPaths.findIndex(
-                        (p) => p.id === current_animation_data.id
-                      )
-                      s.polygonMotionPaths[currentIndex] = newAnimationData
-                    }
+                  if (!editorState || !editor) {
+                    return
                   }
-                })
 
-                let sequences = editorState.savedState.sequences
+                  let currentSequence = editorState.savedState.sequences.find(
+                    (s) => s.id === currentSequenceId
+                  )
 
-                await saveSequencesData(sequences, editorState.saveTarget)
-              }}
-            >
-              Apply Scale & Fade Pulse
-            </button>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Radius:</label>
-              <input
-                type="number"
-                value={circularRadius}
-                onChange={(e) => setCircularRadius(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="1"
-                max="1000"
-              />
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Rotation:</label>
-              <input
-                type="number"
-                value={circularRotation}
-                onChange={(e) => setCircularRotation(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="0"
-                max="360"
-              />
-              <span className="text-xs text-gray-500">°</span>
-            </div>
-            <button
-              className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
-              onClick={async () => {
-                let editor = editorRef.current
-                let editorState = editorStateRef.current
-
-                if (!editorState || !editor) {
-                  return
-                }
-
-                let currentSequence = editorState.savedState.sequences.find(
-                  (s) => s.id === currentSequenceId
-                )
-
-                if (!currentSequence || !currentSequence?.polygonMotionPaths) {
-                  return
-                }
-
-                let currentObject: any = null
-                switch (objectType) {
-                  case ObjectType.Polygon:
-                    currentObject = currentSequence.activePolygons.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.TextItem:
-                    currentObject = currentSequence.activeTextItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.ImageItem:
-                    currentObject = currentSequence.activeImageItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.VideoItem:
-                    currentObject = currentSequence.activeVideoItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                }
-
-                let current_animation_data = currentSequence?.polygonMotionPaths.find(
-                  (p) => p.polygonId === currentObjectId
-                )
-
-                if (!current_animation_data) {
-                  return
-                }
-
-                let newAnimationData = save_circular_motion_keyframes(
-                  editorState,
-                  currentObjectId,
-                  objectType,
-                  current_animation_data,
-                  [currentObject?.position.x || 0, currentObject?.position.y || 0],
-                  circularRadius,
-                  circularRotation
-                )
-
-                let sequence_cloned: any = null
-
-                editorState.savedState.sequences.forEach((s) => {
-                  if (s.id == currentSequenceId) {
-                    sequence_cloned = s
-
-                    if (s.polygonMotionPaths) {
-                      let currentIndex = s.polygonMotionPaths.findIndex(
-                        (p) => p.id === current_animation_data.id
-                      )
-                      s.polygonMotionPaths[currentIndex] = newAnimationData
-                    }
+                  if (!currentSequence || !currentSequence?.polygonMotionPaths) {
+                    return
                   }
-                })
 
-                if (!sequence_cloned) {
-                  return
-                }
+                  let current_animation_data = currentSequence?.polygonMotionPaths.find(
+                    (p) => p.polygonId === currentObjectId
+                  )
 
-                let sequences = editorState.savedState.sequences
+                  if (!current_animation_data) {
+                    return
+                  }
 
-                await saveSequencesData(sequences, editorState.saveTarget)
+                  const config: ScaleFadePulseConfig = {
+                    startScale: pulseStartScale,
+                    targetScale: pulseTargetScale,
+                    rippleCount: pulseRippleCount,
+                    rippleIntensity: pulseRippleIntensity,
+                    durationMs: pulseDuration,
+                    fadeIn: pulseFadeIn,
+                    fadeOut: pulseFadeOut
+                  }
 
-                // update motion path preview
-                editor.updateMotionPaths(sequence_cloned)
-              }}
-            >
-              Transform Motion Path to Circle
-            </button>
-          </div>
+                  let newAnimationData = save_scale_fade_pulse_keyframes(
+                    editorState,
+                    currentObjectId,
+                    objectType,
+                    current_animation_data,
+                    config
+                  )
+
+                  editorState.savedState.sequences.forEach((s) => {
+                    if (s.id == currentSequenceId) {
+                      if (s.polygonMotionPaths) {
+                        let currentIndex = s.polygonMotionPaths.findIndex(
+                          (p) => p.id === current_animation_data.id
+                        )
+                        s.polygonMotionPaths[currentIndex] = newAnimationData
+                      }
+                    }
+                  })
+
+                  let sequences = editorState.savedState.sequences
+
+                  await saveSequencesData(sequences, editorState.saveTarget)
+                }}
+              >
+                Apply Scale & Fade Pulse
+              </button>
+            </div>
+          </details>
+
+          <details open={false} className="border border-gray-300 rounded">
+            <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+              Circular Motion
+            </summary>
+            <div className="p-2 space-y-1">
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Radius:</label>
+                <input
+                  type="number"
+                  value={circularRadius}
+                  onChange={(e) => setCircularRadius(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="1"
+                  max="1000"
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Rotation:</label>
+                <input
+                  type="number"
+                  value={circularRotation}
+                  onChange={(e) => setCircularRotation(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="0"
+                  max="360"
+                />
+                <span className="text-xs text-gray-500">°</span>
+              </div>
+              <button
+                className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
+                onClick={async () => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  let currentSequence = editorState.savedState.sequences.find(
+                    (s) => s.id === currentSequenceId
+                  )
+
+                  if (!currentSequence || !currentSequence?.polygonMotionPaths) {
+                    return
+                  }
+
+                  let currentObject: any = null
+                  switch (objectType) {
+                    case ObjectType.Polygon:
+                      currentObject = currentSequence.activePolygons.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.TextItem:
+                      currentObject = currentSequence.activeTextItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.ImageItem:
+                      currentObject = currentSequence.activeImageItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.VideoItem:
+                      currentObject = currentSequence.activeVideoItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                  }
+
+                  let current_animation_data = currentSequence?.polygonMotionPaths.find(
+                    (p) => p.polygonId === currentObjectId
+                  )
+
+                  if (!current_animation_data) {
+                    return
+                  }
+
+                  let newAnimationData = save_circular_motion_keyframes(
+                    editorState,
+                    currentObjectId,
+                    objectType,
+                    current_animation_data,
+                    [currentObject?.position.x || 0, currentObject?.position.y || 0],
+                    circularRadius,
+                    circularRotation
+                  )
+
+                  let sequence_cloned: any = null
+
+                  editorState.savedState.sequences.forEach((s) => {
+                    if (s.id == currentSequenceId) {
+                      sequence_cloned = s
+
+                      if (s.polygonMotionPaths) {
+                        let currentIndex = s.polygonMotionPaths.findIndex(
+                          (p) => p.id === current_animation_data.id
+                        )
+                        s.polygonMotionPaths[currentIndex] = newAnimationData
+                      }
+                    }
+                  })
+
+                  if (!sequence_cloned) {
+                    return
+                  }
+
+                  let sequences = editorState.savedState.sequences
+
+                  await saveSequencesData(sequences, editorState.saveTarget)
+
+                  // update motion path preview
+                  editor.updateMotionPaths(sequence_cloned)
+                }}
+              >
+                Transform Motion Path to Circle
+              </button>
+            </div>
+          </details>
 
           {/* Pendulum Swing Animation */}
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Swing Width:</label>
-              <input
-                type="number"
-                value={pendulumWidth}
-                onChange={(e) => setPendulumWidth(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="10"
-                max="500"
-              />
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Periods:</label>
-              <input
-                type="number"
-                value={pendulumPeriods}
-                onChange={(e) => setPendulumPeriods(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="1"
-                max="10"
-                step="0.5"
-              />
-            </div>
-            <button
-              className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
-              onClick={async () => {
-                let editor = editorRef.current
-                let editorState = editorStateRef.current
+          <details open={false} className="border border-gray-300 rounded">
+            <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+              Pendulum Swing
+            </summary>
+            <div className="p-2 space-y-1">
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Swing Width:</label>
+                <input
+                  type="number"
+                  value={pendulumWidth}
+                  onChange={(e) => setPendulumWidth(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="10"
+                  max="500"
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Periods:</label>
+                <input
+                  type="number"
+                  value={pendulumPeriods}
+                  onChange={(e) => setPendulumPeriods(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="1"
+                  max="10"
+                  step="0.5"
+                />
+              </div>
+              <button
+                className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
+                onClick={async () => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-                if (!editorState || !editor) {
-                  return
-                }
-
-                let currentSequence = editorState.savedState.sequences.find(
-                  (s) => s.id === currentSequenceId
-                )
-
-                if (!currentSequence || !currentSequence?.polygonMotionPaths) {
-                  return
-                }
-
-                let currentObject: any = null
-                switch (objectType) {
-                  case ObjectType.Polygon:
-                    currentObject = currentSequence.activePolygons.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.TextItem:
-                    currentObject = currentSequence.activeTextItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.ImageItem:
-                    currentObject = currentSequence.activeImageItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.VideoItem:
-                    currentObject = currentSequence.activeVideoItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                }
-
-                let current_animation_data = currentSequence?.polygonMotionPaths.find(
-                  (p) => p.polygonId === currentObjectId
-                )
-
-                if (!current_animation_data) {
-                  return
-                }
-
-                let newAnimationData = save_pendulum_swing_keyframes(
-                  editorState,
-                  currentObjectId,
-                  objectType,
-                  current_animation_data,
-                  [currentObject?.position.x || 0, currentObject?.position.y || 0],
-                  pendulumWidth,
-                  pendulumPeriods
-                )
-
-                let sequence_cloned: any = null
-
-                editorState.savedState.sequences.forEach((s) => {
-                  if (s.id == currentSequenceId) {
-                    sequence_cloned = s
-
-                    if (s.polygonMotionPaths) {
-                      let currentIndex = s.polygonMotionPaths.findIndex(
-                        (p) => p.id === current_animation_data.id
-                      )
-                      s.polygonMotionPaths[currentIndex] = newAnimationData
-                    }
+                  if (!editorState || !editor) {
+                    return
                   }
-                })
 
-                if (!sequence_cloned) {
-                  return
-                }
+                  let currentSequence = editorState.savedState.sequences.find(
+                    (s) => s.id === currentSequenceId
+                  )
 
-                let sequences = editorState.savedState.sequences
+                  if (!currentSequence || !currentSequence?.polygonMotionPaths) {
+                    return
+                  }
 
-                await saveSequencesData(sequences, editorState.saveTarget)
+                  let currentObject: any = null
+                  switch (objectType) {
+                    case ObjectType.Polygon:
+                      currentObject = currentSequence.activePolygons.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.TextItem:
+                      currentObject = currentSequence.activeTextItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.ImageItem:
+                      currentObject = currentSequence.activeImageItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.VideoItem:
+                      currentObject = currentSequence.activeVideoItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                  }
 
-                // update motion path preview
-                editor.updateMotionPaths(sequence_cloned)
-              }}
-            >
-              Transform Motion Path to Pendulum Swing
-            </button>
-          </div>
+                  let current_animation_data = currentSequence?.polygonMotionPaths.find(
+                    (p) => p.polygonId === currentObjectId
+                  )
+
+                  if (!current_animation_data) {
+                    return
+                  }
+
+                  let newAnimationData = save_pendulum_swing_keyframes(
+                    editorState,
+                    currentObjectId,
+                    objectType,
+                    current_animation_data,
+                    [currentObject?.position.x || 0, currentObject?.position.y || 0],
+                    pendulumWidth,
+                    pendulumPeriods
+                  )
+
+                  let sequence_cloned: any = null
+
+                  editorState.savedState.sequences.forEach((s) => {
+                    if (s.id == currentSequenceId) {
+                      sequence_cloned = s
+
+                      if (s.polygonMotionPaths) {
+                        let currentIndex = s.polygonMotionPaths.findIndex(
+                          (p) => p.id === current_animation_data.id
+                        )
+                        s.polygonMotionPaths[currentIndex] = newAnimationData
+                      }
+                    }
+                  })
+
+                  if (!sequence_cloned) {
+                    return
+                  }
+
+                  let sequences = editorState.savedState.sequences
+
+                  await saveSequencesData(sequences, editorState.saveTarget)
+
+                  // update motion path preview
+                  editor.updateMotionPaths(sequence_cloned)
+                }}
+              >
+                Transform Motion Path to Pendulum Swing
+              </button>
+            </div>
+          </details>
 
           {/* Figure-8 Infinity Animation */}
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Width:</label>
-              <input
-                type="number"
-                value={figureEightWidth}
-                onChange={(e) => setFigureEightWidth(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="50"
-                max="500"
-              />
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Height:</label>
-              <input
-                type="number"
-                value={figureEightHeight}
-                onChange={(e) => setFigureEightHeight(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="25"
-                max="300"
-              />
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Loops:</label>
-              <input
-                type="number"
-                value={figureEightLoops}
-                onChange={(e) => setFigureEightLoops(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="1"
-                max="5"
-              />
-            </div>
-            <button
-              className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
-              onClick={async () => {
-                let editor = editorRef.current
-                let editorState = editorStateRef.current
+          <details open={false} className="border border-gray-300 rounded">
+            <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+              Figure-8 Infinity
+            </summary>
+            <div className="p-2 space-y-1">
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Width:</label>
+                <input
+                  type="number"
+                  value={figureEightWidth}
+                  onChange={(e) => setFigureEightWidth(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="50"
+                  max="500"
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Height:</label>
+                <input
+                  type="number"
+                  value={figureEightHeight}
+                  onChange={(e) => setFigureEightHeight(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="25"
+                  max="300"
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Loops:</label>
+                <input
+                  type="number"
+                  value={figureEightLoops}
+                  onChange={(e) => setFigureEightLoops(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="1"
+                  max="5"
+                />
+              </div>
+              <button
+                className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
+                onClick={async () => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-                if (!editorState || !editor) {
-                  return
-                }
-
-                let currentSequence = editorState.savedState.sequences.find(
-                  (s) => s.id === currentSequenceId
-                )
-
-                if (!currentSequence || !currentSequence?.polygonMotionPaths) {
-                  return
-                }
-
-                let currentObject: any = null
-                switch (objectType) {
-                  case ObjectType.Polygon:
-                    currentObject = currentSequence.activePolygons.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.TextItem:
-                    currentObject = currentSequence.activeTextItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.ImageItem:
-                    currentObject = currentSequence.activeImageItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.VideoItem:
-                    currentObject = currentSequence.activeVideoItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                }
-
-                let current_animation_data = currentSequence?.polygonMotionPaths.find(
-                  (p) => p.polygonId === currentObjectId
-                )
-
-                if (!current_animation_data) {
-                  return
-                }
-
-                let newAnimationData = save_figure_eight_keyframes(
-                  editorState,
-                  currentObjectId,
-                  objectType,
-                  current_animation_data,
-                  [currentObject?.position.x || 0, currentObject?.position.y || 0],
-                  figureEightWidth,
-                  figureEightHeight,
-                  figureEightLoops
-                )
-
-                let sequence_cloned: any = null
-
-                editorState.savedState.sequences.forEach((s) => {
-                  if (s.id == currentSequenceId) {
-                    sequence_cloned = s
-
-                    if (s.polygonMotionPaths) {
-                      let currentIndex = s.polygonMotionPaths.findIndex(
-                        (p) => p.id === current_animation_data.id
-                      )
-                      s.polygonMotionPaths[currentIndex] = newAnimationData
-                    }
+                  if (!editorState || !editor) {
+                    return
                   }
-                })
 
-                if (!sequence_cloned) {
-                  return
-                }
+                  let currentSequence = editorState.savedState.sequences.find(
+                    (s) => s.id === currentSequenceId
+                  )
 
-                let sequences = editorState.savedState.sequences
+                  if (!currentSequence || !currentSequence?.polygonMotionPaths) {
+                    return
+                  }
 
-                await saveSequencesData(sequences, editorState.saveTarget)
+                  let currentObject: any = null
+                  switch (objectType) {
+                    case ObjectType.Polygon:
+                      currentObject = currentSequence.activePolygons.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.TextItem:
+                      currentObject = currentSequence.activeTextItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.ImageItem:
+                      currentObject = currentSequence.activeImageItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.VideoItem:
+                      currentObject = currentSequence.activeVideoItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                  }
 
-                // update motion path preview
-                editor.updateMotionPaths(sequence_cloned)
-              }}
-            >
-              Transform Motion Path to Figure-8 Infinity
-            </button>
-          </div>
+                  let current_animation_data = currentSequence?.polygonMotionPaths.find(
+                    (p) => p.polygonId === currentObjectId
+                  )
+
+                  if (!current_animation_data) {
+                    return
+                  }
+
+                  let newAnimationData = save_figure_eight_keyframes(
+                    editorState,
+                    currentObjectId,
+                    objectType,
+                    current_animation_data,
+                    [currentObject?.position.x || 0, currentObject?.position.y || 0],
+                    figureEightWidth,
+                    figureEightHeight,
+                    figureEightLoops
+                  )
+
+                  let sequence_cloned: any = null
+
+                  editorState.savedState.sequences.forEach((s) => {
+                    if (s.id == currentSequenceId) {
+                      sequence_cloned = s
+
+                      if (s.polygonMotionPaths) {
+                        let currentIndex = s.polygonMotionPaths.findIndex(
+                          (p) => p.id === current_animation_data.id
+                        )
+                        s.polygonMotionPaths[currentIndex] = newAnimationData
+                      }
+                    }
+                  })
+
+                  if (!sequence_cloned) {
+                    return
+                  }
+
+                  let sequences = editorState.savedState.sequences
+
+                  await saveSequencesData(sequences, editorState.saveTarget)
+
+                  // update motion path preview
+                  editor.updateMotionPaths(sequence_cloned)
+                }}
+              >
+                Transform Motion Path to Figure-8 Infinity
+              </button>
+            </div>
+          </details>
 
           {/* Ripple Effect Animation */}
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Max Scale:</label>
-              <input
-                type="number"
-                value={rippleMaxScale}
-                onChange={(e) => setRippleMaxScale(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="1.5"
-                max="10"
-                step="0.5"
-              />
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Ripples:</label>
-              <input
-                type="number"
-                value={rippleCount}
-                onChange={(e) => setRippleCount(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="1"
-                max="5"
-              />
-            </div>
-            <button
-              className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
-              onClick={async () => {
-                let editor = editorRef.current
-                let editorState = editorStateRef.current
+          <details open={false} className="border border-gray-300 rounded">
+            <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+              Ripple Effect
+            </summary>
+            <div className="p-2 space-y-1">
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Max Scale:</label>
+                <input
+                  type="number"
+                  value={rippleMaxScale}
+                  onChange={(e) => setRippleMaxScale(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="1.5"
+                  max="10"
+                  step="0.5"
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Ripples:</label>
+                <input
+                  type="number"
+                  value={rippleCount}
+                  onChange={(e) => setRippleCount(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="1"
+                  max="5"
+                />
+              </div>
+              <button
+                className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
+                onClick={async () => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-                if (!editorState || !editor) {
-                  return
-                }
-
-                let currentSequence = editorState.savedState.sequences.find(
-                  (s) => s.id === currentSequenceId
-                )
-
-                if (!currentSequence || !currentSequence?.polygonMotionPaths) {
-                  return
-                }
-
-                let currentObject: any = null
-                switch (objectType) {
-                  case ObjectType.Polygon:
-                    currentObject = currentSequence.activePolygons.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.TextItem:
-                    currentObject = currentSequence.activeTextItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.ImageItem:
-                    currentObject = currentSequence.activeImageItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.VideoItem:
-                    currentObject = currentSequence.activeVideoItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                }
-
-                let current_animation_data = currentSequence?.polygonMotionPaths.find(
-                  (p) => p.polygonId === currentObjectId
-                )
-
-                if (!current_animation_data) {
-                  return
-                }
-
-                let newAnimationData = save_ripple_effect_keyframes(
-                  editorState,
-                  currentObjectId,
-                  objectType,
-                  current_animation_data,
-                  [currentObject?.position.x || 0, currentObject?.position.y || 0],
-                  rippleMaxScale,
-                  rippleCount
-                )
-
-                let sequence_cloned: any = null
-
-                editorState.savedState.sequences.forEach((s) => {
-                  if (s.id == currentSequenceId) {
-                    sequence_cloned = s
-
-                    if (s.polygonMotionPaths) {
-                      let currentIndex = s.polygonMotionPaths.findIndex(
-                        (p) => p.id === current_animation_data.id
-                      )
-                      s.polygonMotionPaths[currentIndex] = newAnimationData
-                    }
+                  if (!editorState || !editor) {
+                    return
                   }
-                })
 
-                if (!sequence_cloned) {
-                  return
-                }
+                  let currentSequence = editorState.savedState.sequences.find(
+                    (s) => s.id === currentSequenceId
+                  )
 
-                let sequences = editorState.savedState.sequences
+                  if (!currentSequence || !currentSequence?.polygonMotionPaths) {
+                    return
+                  }
 
-                await saveSequencesData(sequences, editorState.saveTarget)
+                  let currentObject: any = null
+                  switch (objectType) {
+                    case ObjectType.Polygon:
+                      currentObject = currentSequence.activePolygons.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.TextItem:
+                      currentObject = currentSequence.activeTextItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.ImageItem:
+                      currentObject = currentSequence.activeImageItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.VideoItem:
+                      currentObject = currentSequence.activeVideoItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                  }
 
-                // update motion path preview
-                editor.updateMotionPaths(sequence_cloned)
-              }}
-            >
-              Transform Motion Path to Ripple Effect
-            </button>
-          </div>
+                  let current_animation_data = currentSequence?.polygonMotionPaths.find(
+                    (p) => p.polygonId === currentObjectId
+                  )
+
+                  if (!current_animation_data) {
+                    return
+                  }
+
+                  let newAnimationData = save_ripple_effect_keyframes(
+                    editorState,
+                    currentObjectId,
+                    objectType,
+                    current_animation_data,
+                    [currentObject?.position.x || 0, currentObject?.position.y || 0],
+                    rippleMaxScale,
+                    rippleCount
+                  )
+
+                  let sequence_cloned: any = null
+
+                  editorState.savedState.sequences.forEach((s) => {
+                    if (s.id == currentSequenceId) {
+                      sequence_cloned = s
+
+                      if (s.polygonMotionPaths) {
+                        let currentIndex = s.polygonMotionPaths.findIndex(
+                          (p) => p.id === current_animation_data.id
+                        )
+                        s.polygonMotionPaths[currentIndex] = newAnimationData
+                      }
+                    }
+                  })
+
+                  if (!sequence_cloned) {
+                    return
+                  }
+
+                  let sequences = editorState.savedState.sequences
+
+                  await saveSequencesData(sequences, editorState.saveTarget)
+
+                  // update motion path preview
+                  editor.updateMotionPaths(sequence_cloned)
+                }}
+              >
+                Transform Motion Path to Ripple Effect
+              </button>
+            </div>
+          </details>
 
           {/* Spiral Motion Animation */}
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Max Radius:</label>
-              <input
-                type="number"
-                value={spiralMaxRadius}
-                onChange={(e) => setSpiralMaxRadius(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="50"
-                max="400"
-              />
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Turns:</label>
-              <input
-                type="number"
-                value={spiralTurns}
-                onChange={(e) => setSpiralTurns(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="1"
-                max="10"
-                step="0.5"
-              />
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Type:</label>
-              <select
-                value={spiralExpanding ? 'expanding' : 'contracting'}
-                onChange={(e) => setSpiralExpanding(e.target.value === 'expanding')}
-                className="text-xs border rounded px-2 py-1 w-24"
-              >
-                <option value="expanding">Expanding</option>
-                <option value="contracting">Contracting</option>
-              </select>
-            </div>
-            <button
-              className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
-              onClick={async () => {
-                let editor = editorRef.current
-                let editorState = editorStateRef.current
+          <details open={false} className="border border-gray-300 rounded">
+            <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+              Spiral Motion
+            </summary>
+            <div className="p-2 space-y-1">
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Max Radius:</label>
+                <input
+                  type="number"
+                  value={spiralMaxRadius}
+                  onChange={(e) => setSpiralMaxRadius(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="50"
+                  max="400"
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Turns:</label>
+                <input
+                  type="number"
+                  value={spiralTurns}
+                  onChange={(e) => setSpiralTurns(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="1"
+                  max="10"
+                  step="0.5"
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Type:</label>
+                <select
+                  value={spiralExpanding ? 'expanding' : 'contracting'}
+                  onChange={(e) => setSpiralExpanding(e.target.value === 'expanding')}
+                  className="text-xs border rounded px-2 py-1 w-24"
+                >
+                  <option value="expanding">Expanding</option>
+                  <option value="contracting">Contracting</option>
+                </select>
+              </div>
+              <button
+                className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
+                onClick={async () => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-                if (!editorState || !editor) {
-                  return
-                }
-
-                let currentSequence = editorState.savedState.sequences.find(
-                  (s) => s.id === currentSequenceId
-                )
-
-                if (!currentSequence || !currentSequence?.polygonMotionPaths) {
-                  return
-                }
-
-                let currentObject: any = null
-                switch (objectType) {
-                  case ObjectType.Polygon:
-                    currentObject = currentSequence.activePolygons.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.TextItem:
-                    currentObject = currentSequence.activeTextItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.ImageItem:
-                    currentObject = currentSequence.activeImageItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.VideoItem:
-                    currentObject = currentSequence.activeVideoItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                }
-
-                let current_animation_data = currentSequence?.polygonMotionPaths.find(
-                  (p) => p.polygonId === currentObjectId
-                )
-
-                if (!current_animation_data) {
-                  return
-                }
-
-                let newAnimationData = save_spiral_motion_keyframes(
-                  editorState,
-                  currentObjectId,
-                  objectType,
-                  current_animation_data,
-                  [currentObject?.position.x || 0, currentObject?.position.y || 0],
-                  spiralMaxRadius,
-                  spiralTurns,
-                  spiralExpanding ? 'outward' : 'inward'
-                )
-
-                let sequence_cloned: any = null
-
-                editorState.savedState.sequences.forEach((s) => {
-                  if (s.id == currentSequenceId) {
-                    sequence_cloned = s
-
-                    if (s.polygonMotionPaths) {
-                      let currentIndex = s.polygonMotionPaths.findIndex(
-                        (p) => p.id === current_animation_data.id
-                      )
-                      s.polygonMotionPaths[currentIndex] = newAnimationData
-                    }
+                  if (!editorState || !editor) {
+                    return
                   }
-                })
 
-                if (!sequence_cloned) {
-                  return
-                }
+                  let currentSequence = editorState.savedState.sequences.find(
+                    (s) => s.id === currentSequenceId
+                  )
 
-                let sequences = editorState.savedState.sequences
+                  if (!currentSequence || !currentSequence?.polygonMotionPaths) {
+                    return
+                  }
 
-                await saveSequencesData(sequences, editorState.saveTarget)
+                  let currentObject: any = null
+                  switch (objectType) {
+                    case ObjectType.Polygon:
+                      currentObject = currentSequence.activePolygons.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.TextItem:
+                      currentObject = currentSequence.activeTextItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.ImageItem:
+                      currentObject = currentSequence.activeImageItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.VideoItem:
+                      currentObject = currentSequence.activeVideoItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                  }
 
-                // update motion path preview
-                editor.updateMotionPaths(sequence_cloned)
-              }}
-            >
-              Transform Motion Path to Spiral Motion
-            </button>
-          </div>
+                  let current_animation_data = currentSequence?.polygonMotionPaths.find(
+                    (p) => p.polygonId === currentObjectId
+                  )
+
+                  if (!current_animation_data) {
+                    return
+                  }
+
+                  let newAnimationData = save_spiral_motion_keyframes(
+                    editorState,
+                    currentObjectId,
+                    objectType,
+                    current_animation_data,
+                    [currentObject?.position.x || 0, currentObject?.position.y || 0],
+                    spiralMaxRadius,
+                    spiralTurns,
+                    spiralExpanding ? 'outward' : 'inward'
+                  )
+
+                  let sequence_cloned: any = null
+
+                  editorState.savedState.sequences.forEach((s) => {
+                    if (s.id == currentSequenceId) {
+                      sequence_cloned = s
+
+                      if (s.polygonMotionPaths) {
+                        let currentIndex = s.polygonMotionPaths.findIndex(
+                          (p) => p.id === current_animation_data.id
+                        )
+                        s.polygonMotionPaths[currentIndex] = newAnimationData
+                      }
+                    }
+                  })
+
+                  if (!sequence_cloned) {
+                    return
+                  }
+
+                  let sequences = editorState.savedState.sequences
+
+                  await saveSequencesData(sequences, editorState.saveTarget)
+
+                  // update motion path preview
+                  editor.updateMotionPaths(sequence_cloned)
+                }}
+              >
+                Transform Motion Path to Spiral Motion
+              </button>
+            </div>
+          </details>
 
           {/* Bouncing Ball Animation */}
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Bounce Height:</label>
-              <input
-                type="number"
-                value={bounceHeight}
-                onChange={(e) => setBounceHeight(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="50"
-                max="500"
-              />
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Bounces:</label>
-              <input
-                type="number"
-                value={bounceCount}
-                onChange={(e) => setBounceCount(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="1"
-                max="10"
-              />
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Damping:</label>
-              <input
-                type="number"
-                value={bounceDamping}
-                onChange={(e) => setBounceDamping(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="0.1"
-                max="1.0"
-                step="0.1"
-              />
-            </div>
-            <button
-              className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
-              onClick={async () => {
-                let editor = editorRef.current
-                let editorState = editorStateRef.current
+          <details open={false} className="border border-gray-300 rounded">
+            <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+              Bouncing Ball
+            </summary>
+            <div className="p-2 space-y-1">
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Bounce Height:</label>
+                <input
+                  type="number"
+                  value={bounceHeight}
+                  onChange={(e) => setBounceHeight(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="50"
+                  max="500"
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Bounces:</label>
+                <input
+                  type="number"
+                  value={bounceCount}
+                  onChange={(e) => setBounceCount(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="1"
+                  max="10"
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Damping:</label>
+                <input
+                  type="number"
+                  value={bounceDamping}
+                  onChange={(e) => setBounceDamping(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="0.1"
+                  max="1.0"
+                  step="0.1"
+                />
+              </div>
+              <button
+                className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
+                onClick={async () => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-                if (!editorState || !editor) {
-                  return
-                }
-
-                let currentSequence = editorState.savedState.sequences.find(
-                  (s) => s.id === currentSequenceId
-                )
-
-                if (!currentSequence || !currentSequence?.polygonMotionPaths) {
-                  return
-                }
-
-                let currentObject: any = null
-                switch (objectType) {
-                  case ObjectType.Polygon:
-                    currentObject = currentSequence.activePolygons.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.TextItem:
-                    currentObject = currentSequence.activeTextItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.ImageItem:
-                    currentObject = currentSequence.activeImageItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.VideoItem:
-                    currentObject = currentSequence.activeVideoItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                }
-
-                let current_animation_data = currentSequence?.polygonMotionPaths.find(
-                  (p) => p.polygonId === currentObjectId
-                )
-
-                if (!current_animation_data) {
-                  return
-                }
-
-                let newAnimationData = save_bouncing_ball_keyframes(
-                  editorState,
-                  currentObjectId,
-                  objectType,
-                  current_animation_data,
-                  [currentObject?.position.x || 0, currentObject?.position.y || 0],
-                  bounceHeight,
-                  bounceCount,
-                  bounceDamping
-                )
-
-                let sequence_cloned: any = null
-
-                editorState.savedState.sequences.forEach((s) => {
-                  if (s.id == currentSequenceId) {
-                    sequence_cloned = s
-
-                    if (s.polygonMotionPaths) {
-                      let currentIndex = s.polygonMotionPaths.findIndex(
-                        (p) => p.id === current_animation_data.id
-                      )
-                      s.polygonMotionPaths[currentIndex] = newAnimationData
-                    }
+                  if (!editorState || !editor) {
+                    return
                   }
-                })
 
-                if (!sequence_cloned) {
-                  return
-                }
+                  let currentSequence = editorState.savedState.sequences.find(
+                    (s) => s.id === currentSequenceId
+                  )
 
-                let sequences = editorState.savedState.sequences
+                  if (!currentSequence || !currentSequence?.polygonMotionPaths) {
+                    return
+                  }
 
-                await saveSequencesData(sequences, editorState.saveTarget)
+                  let currentObject: any = null
+                  switch (objectType) {
+                    case ObjectType.Polygon:
+                      currentObject = currentSequence.activePolygons.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.TextItem:
+                      currentObject = currentSequence.activeTextItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.ImageItem:
+                      currentObject = currentSequence.activeImageItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.VideoItem:
+                      currentObject = currentSequence.activeVideoItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                  }
 
-                // update motion path preview
-                editor.updateMotionPaths(sequence_cloned)
-              }}
-            >
-              Transform Motion Path to Bouncing Ball
-            </button>
-          </div>
+                  let current_animation_data = currentSequence?.polygonMotionPaths.find(
+                    (p) => p.polygonId === currentObjectId
+                  )
+
+                  if (!current_animation_data) {
+                    return
+                  }
+
+                  let newAnimationData = save_bouncing_ball_keyframes(
+                    editorState,
+                    currentObjectId,
+                    objectType,
+                    current_animation_data,
+                    [currentObject?.position.x || 0, currentObject?.position.y || 0],
+                    bounceHeight,
+                    bounceCount,
+                    bounceDamping
+                  )
+
+                  let sequence_cloned: any = null
+
+                  editorState.savedState.sequences.forEach((s) => {
+                    if (s.id == currentSequenceId) {
+                      sequence_cloned = s
+
+                      if (s.polygonMotionPaths) {
+                        let currentIndex = s.polygonMotionPaths.findIndex(
+                          (p) => p.id === current_animation_data.id
+                        )
+                        s.polygonMotionPaths[currentIndex] = newAnimationData
+                      }
+                    }
+                  })
+
+                  if (!sequence_cloned) {
+                    return
+                  }
+
+                  let sequences = editorState.savedState.sequences
+
+                  await saveSequencesData(sequences, editorState.saveTarget)
+
+                  // update motion path preview
+                  editor.updateMotionPaths(sequence_cloned)
+                }}
+              >
+                Transform Motion Path to Bouncing Ball
+              </button>
+            </div>
+          </details>
 
           {/* Floating Bubbles Animation */}
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Rise Height:</label>
-              <input
-                type="number"
-                value={bubbleRiseHeight}
-                onChange={(e) => setBubbleRiseHeight(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="100"
-                max="600"
-              />
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Drift Width:</label>
-              <input
-                type="number"
-                value={bubbleDriftWidth}
-                onChange={(e) => setBubbleDriftWidth(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="10"
-                max="200"
-              />
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-xs text-gray-600">Floatiness:</label>
-              <input
-                type="number"
-                value={bubbleFloatiness}
-                onChange={(e) => setBubbleFloatiness(Number(e.target.value))}
-                className="text-xs border rounded px-2 py-1 w-16"
-                min="1"
-                max="5"
-                step="0.5"
-              />
-            </div>
-            <button
-              className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
-              onClick={async () => {
-                let editor = editorRef.current
-                let editorState = editorStateRef.current
+          <details open={false} className="border border-gray-300 rounded">
+            <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+              Floating Bubbles
+            </summary>
+            <div className="p-2 space-y-1">
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Rise Height:</label>
+                <input
+                  type="number"
+                  value={bubbleRiseHeight}
+                  onChange={(e) => setBubbleRiseHeight(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="100"
+                  max="600"
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Drift Width:</label>
+                <input
+                  type="number"
+                  value={bubbleDriftWidth}
+                  onChange={(e) => setBubbleDriftWidth(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="10"
+                  max="200"
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <label className="text-xs text-gray-600">Floatiness:</label>
+                <input
+                  type="number"
+                  value={bubbleFloatiness}
+                  onChange={(e) => setBubbleFloatiness(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1 w-16"
+                  min="1"
+                  max="5"
+                  step="0.5"
+                />
+              </div>
+              <button
+                className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
+                onClick={async () => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
 
-                if (!editorState || !editor) {
-                  return
-                }
-
-                let currentSequence = editorState.savedState.sequences.find(
-                  (s) => s.id === currentSequenceId
-                )
-
-                if (!currentSequence || !currentSequence?.polygonMotionPaths) {
-                  return
-                }
-
-                let currentObject: any = null
-                switch (objectType) {
-                  case ObjectType.Polygon:
-                    currentObject = currentSequence.activePolygons.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.TextItem:
-                    currentObject = currentSequence.activeTextItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.ImageItem:
-                    currentObject = currentSequence.activeImageItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                  case ObjectType.VideoItem:
-                    currentObject = currentSequence.activeVideoItems.find(
-                      (p) => p.id === currentObjectId
-                    )
-                    break
-                }
-
-                let current_animation_data = currentSequence?.polygonMotionPaths.find(
-                  (p) => p.polygonId === currentObjectId
-                )
-
-                if (!current_animation_data) {
-                  return
-                }
-
-                let newAnimationData = save_floating_bubbles_keyframes(
-                  editorState,
-                  currentObjectId,
-                  objectType,
-                  current_animation_data,
-                  [currentObject?.position.x || 0, currentObject?.position.y || 0],
-                  bubbleRiseHeight,
-                  bubbleDriftWidth
-                  // bubbleFloatiness
-                )
-
-                let sequence_cloned: any = null
-
-                editorState.savedState.sequences.forEach((s) => {
-                  if (s.id == currentSequenceId) {
-                    sequence_cloned = s
-
-                    if (s.polygonMotionPaths) {
-                      let currentIndex = s.polygonMotionPaths.findIndex(
-                        (p) => p.id === current_animation_data.id
-                      )
-                      s.polygonMotionPaths[currentIndex] = newAnimationData
-                    }
+                  if (!editorState || !editor) {
+                    return
                   }
-                })
 
-                if (!sequence_cloned) {
-                  return
-                }
+                  let currentSequence = editorState.savedState.sequences.find(
+                    (s) => s.id === currentSequenceId
+                  )
 
-                let sequences = editorState.savedState.sequences
+                  if (!currentSequence || !currentSequence?.polygonMotionPaths) {
+                    return
+                  }
 
-                await saveSequencesData(sequences, editorState.saveTarget)
+                  let currentObject: any = null
+                  switch (objectType) {
+                    case ObjectType.Polygon:
+                      currentObject = currentSequence.activePolygons.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.TextItem:
+                      currentObject = currentSequence.activeTextItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.ImageItem:
+                      currentObject = currentSequence.activeImageItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                    case ObjectType.VideoItem:
+                      currentObject = currentSequence.activeVideoItems.find(
+                        (p) => p.id === currentObjectId
+                      )
+                      break
+                  }
 
-                // update motion path preview
-                editor.updateMotionPaths(sequence_cloned)
-              }}
-            >
-              Transform Motion Path to Floating Bubbles
-            </button>
-          </div>
+                  let current_animation_data = currentSequence?.polygonMotionPaths.find(
+                    (p) => p.polygonId === currentObjectId
+                  )
+
+                  if (!current_animation_data) {
+                    return
+                  }
+
+                  let newAnimationData = save_floating_bubbles_keyframes(
+                    editorState,
+                    currentObjectId,
+                    objectType,
+                    current_animation_data,
+                    [currentObject?.position.x || 0, currentObject?.position.y || 0],
+                    bubbleRiseHeight,
+                    bubbleDriftWidth
+                    // bubbleFloatiness
+                  )
+
+                  let sequence_cloned: any = null
+
+                  editorState.savedState.sequences.forEach((s) => {
+                    if (s.id == currentSequenceId) {
+                      sequence_cloned = s
+
+                      if (s.polygonMotionPaths) {
+                        let currentIndex = s.polygonMotionPaths.findIndex(
+                          (p) => p.id === current_animation_data.id
+                        )
+                        s.polygonMotionPaths[currentIndex] = newAnimationData
+                      }
+                    }
+                  })
+
+                  if (!sequence_cloned) {
+                    return
+                  }
+
+                  let sequences = editorState.savedState.sequences
+
+                  await saveSequencesData(sequences, editorState.saveTarget)
+
+                  // update motion path preview
+                  editor.updateMotionPaths(sequence_cloned)
+                }}
+              >
+                Transform Motion Path to Floating Bubbles
+              </button>
+            </div>
+          </details>
         </section>
       ) : (
         <></>
@@ -3831,136 +3962,157 @@ export const Cube3DProperties = ({
           </button>
           <h5>Update 3D Cube</h5>
         </div>
-        <div className="flex flex-row gap-2">
-          <DebouncedInput
-            id="cube_x"
-            label="X"
-            placeholder="X"
-            initialValue={positionX.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updatePositionX(
-                editorState,
-                editor,
-                currentCubeId,
-                ObjectType.Cube3D,
-                parseInt(value)
-              )
-            }}
-          />
-          <DebouncedInput
-            id="cube_y"
-            label="Y"
-            placeholder="Y"
-            initialValue={positionY.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updatePositionY(
-                editorState,
-                editor,
-                currentCubeId,
-                ObjectType.Cube3D,
-                parseInt(value)
-              )
-            }}
-          />
-        </div>
-        <div className="flex flex-row gap-2">
-          <DebouncedInput
-            id="cube_width"
-            label="Width"
-            placeholder="Width"
-            initialValue={defaultWidth.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateCube3DWidth(editorState, editor, currentCubeId, parseFloat(value))
-            }}
-          />
-          <DebouncedInput
-            id="cube_height"
-            label="Height"
-            placeholder="Height"
-            initialValue={defaultHeight.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateCube3DHeight(editorState, editor, currentCubeId, parseFloat(value))
-            }}
-          />
-          <DebouncedInput
-            id="cube_depth"
-            label="Depth"
-            placeholder="Depth"
-            initialValue={defaultDepth.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateCube3DDepth(editorState, editor, currentCubeId, parseFloat(value))
-            }}
-          />
-        </div>
-        <div className="flex flex-row gap-2 mt-2">
-          <DebouncedInput
-            id="cube_rotation_x"
-            label="Rotation X"
-            placeholder="Rotation X"
-            initialValue={rotationX.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateCube3DRotationX(editorState, editor, currentCubeId, parseFloat(value))
-            }}
-          />
-          <DebouncedInput
-            id="cube_rotation_y"
-            label="Rotation Y"
-            placeholder="Rotation Y"
-            initialValue={rotationY.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateCube3DRotationY(editorState, editor, currentCubeId, parseFloat(value))
-            }}
-          />
-          <DebouncedInput
-            id="cube_rotation_z"
-            label="Rotation Z"
-            placeholder="Rotation Z"
-            initialValue={rotationZ.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateCube3DRotationZ(editorState, editor, currentCubeId, parseFloat(value))
-            }}
-          />
-        </div>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Position
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="cube_x"
+                label="X"
+                placeholder="X"
+                initialValue={positionX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updatePositionX(
+                    editorState,
+                    editor,
+                    currentCubeId,
+                    ObjectType.Cube3D,
+                    parseInt(value)
+                  )
+                }}
+              />
+              <DebouncedInput
+                id="cube_y"
+                label="Y"
+                placeholder="Y"
+                initialValue={positionY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updatePositionY(
+                    editorState,
+                    editor,
+                    currentCubeId,
+                    ObjectType.Cube3D,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+          </div>
+        </details>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Size
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="cube_width"
+                label="Width"
+                placeholder="Width"
+                initialValue={defaultWidth.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateCube3DWidth(editorState, editor, currentCubeId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="cube_height"
+                label="Height"
+                placeholder="Height"
+                initialValue={defaultHeight.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateCube3DHeight(editorState, editor, currentCubeId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="cube_depth"
+                label="Depth"
+                placeholder="Depth"
+                initialValue={defaultDepth.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateCube3DDepth(editorState, editor, currentCubeId, parseFloat(value))
+                }}
+              />
+            </div>
+          </div>
+        </details>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Rotation
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2 mt-2">
+              <DebouncedInput
+                id="cube_rotation_x"
+                label="Rotation X"
+                placeholder="Rotation X"
+                initialValue={rotationX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateCube3DRotationX(editorState, editor, currentCubeId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="cube_rotation_y"
+                label="Rotation Y"
+                placeholder="Rotation Y"
+                initialValue={rotationY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateCube3DRotationY(editorState, editor, currentCubeId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="cube_rotation_z"
+                label="Rotation Z"
+                placeholder="Rotation Z"
+                initialValue={rotationZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateCube3DRotationZ(editorState, editor, currentCubeId, parseFloat(value))
+                }}
+              />
+            </div>
+          </div>
+        </details>
         <AnimationOptions
           editorRef={editorRef}
           editorStateRef={editorStateRef}
@@ -4035,108 +4187,129 @@ export const Sphere3DProperties = ({
           </button>
           <h5>Update 3D Sphere</h5>
         </div>
-        <div className="flex flex-row gap-2">
-          <DebouncedInput
-            id="sphere_x"
-            label="X"
-            placeholder="X"
-            initialValue={positionX.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updatePositionX(
-                editorState,
-                editor,
-                currentSphereId,
-                ObjectType.Sphere3D,
-                parseInt(value)
-              )
-            }}
-          />
-          <DebouncedInput
-            id="sphere_y"
-            label="Y"
-            placeholder="Y"
-            initialValue={positionY.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updatePositionY(
-                editorState,
-                editor,
-                currentSphereId,
-                ObjectType.Sphere3D,
-                parseInt(value)
-              )
-            }}
-          />
-        </div>
-        <div className="flex flex-row gap-2">
-          <DebouncedInput
-            id="sphere_radius"
-            label="Radius"
-            placeholder="Radius"
-            initialValue={defaultRadius.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateSphere3DRadius(editorState, editor, currentSphereId, parseFloat(value))
-            }}
-          />
-        </div>
-        <div className="flex flex-row gap-2 mt-2">
-          <DebouncedInput
-            id="sphere_rotation_x"
-            label="Rotation X"
-            placeholder="Rotation X"
-            initialValue={rotationX.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateSphere3DRotationX(editorState, editor, currentSphereId, parseFloat(value))
-            }}
-          />
-          <DebouncedInput
-            id="sphere_rotation_y"
-            label="Rotation Y"
-            placeholder="Rotation Y"
-            initialValue={rotationY.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateSphere3DRotationY(editorState, editor, currentSphereId, parseFloat(value))
-            }}
-          />
-          <DebouncedInput
-            id="sphere_rotation_z"
-            label="Rotation Z"
-            placeholder="Rotation Z"
-            initialValue={rotationZ.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateSphere3DRotationZ(editorState, editor, currentSphereId, parseFloat(value))
-            }}
-          />
-        </div>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Position
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="sphere_x"
+                label="X"
+                placeholder="X"
+                initialValue={positionX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updatePositionX(
+                    editorState,
+                    editor,
+                    currentSphereId,
+                    ObjectType.Sphere3D,
+                    parseInt(value)
+                  )
+                }}
+              />
+              <DebouncedInput
+                id="sphere_y"
+                label="Y"
+                placeholder="Y"
+                initialValue={positionY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updatePositionY(
+                    editorState,
+                    editor,
+                    currentSphereId,
+                    ObjectType.Sphere3D,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+          </div>
+        </details>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Size
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="sphere_radius"
+                label="Radius"
+                placeholder="Radius"
+                initialValue={defaultRadius.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateSphere3DRadius(editorState, editor, currentSphereId, parseFloat(value))
+                }}
+              />
+            </div>
+          </div>
+        </details>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Rotation
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2 mt-2">
+              <DebouncedInput
+                id="sphere_rotation_x"
+                label="Rotation X"
+                placeholder="Rotation X"
+                initialValue={rotationX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateSphere3DRotationX(editorState, editor, currentSphereId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="sphere_rotation_y"
+                label="Rotation Y"
+                placeholder="Rotation Y"
+                initialValue={rotationY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateSphere3DRotationY(editorState, editor, currentSphereId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="sphere_rotation_z"
+                label="Rotation Z"
+                placeholder="Rotation Z"
+                initialValue={rotationZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateSphere3DRotationZ(editorState, editor, currentSphereId, parseFloat(value))
+                }}
+              />
+            </div>
+          </div>
+        </details>
         <AnimationOptions
           editorRef={editorRef}
           editorStateRef={editorStateRef}
@@ -4218,136 +4391,157 @@ export const Mockup3DProperties = ({
           </button>
           <h5>Update Laptop Mockup</h5>
         </div>
-        <div className="flex flex-row gap-2">
-          <DebouncedInput
-            id="mockup_x"
-            label="X"
-            placeholder="X"
-            initialValue={positionX.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updatePositionX(
-                editorState,
-                editor,
-                currentMockupId,
-                ObjectType.Mockup3D,
-                parseInt(value)
-              )
-            }}
-          />
-          <DebouncedInput
-            id="mockup_y"
-            label="Y"
-            placeholder="Y"
-            initialValue={positionY.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updatePositionY(
-                editorState,
-                editor,
-                currentMockupId,
-                ObjectType.Mockup3D,
-                parseInt(value)
-              )
-            }}
-          />
-        </div>
-        <div className="flex flex-row gap-2">
-          <DebouncedInput
-            id="mockup_width"
-            label="Width"
-            placeholder="Width"
-            initialValue={defaultWidth.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateMockup3DWidth(editorState, editor, currentMockupId, parseFloat(value))
-            }}
-          />
-          <DebouncedInput
-            id="mockup_height"
-            label="Height"
-            placeholder="Height"
-            initialValue={defaultHeight.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateMockup3DHeight(editorState, editor, currentMockupId, parseFloat(value))
-            }}
-          />
-          <DebouncedInput
-            id="mockup_depth"
-            label="Depth"
-            placeholder="Depth"
-            initialValue={defaultDepth.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateMockup3DDepth(editorState, editor, currentMockupId, parseFloat(value))
-            }}
-          />
-        </div>
-        <div className="flex flex-row gap-2 mt-2">
-          <DebouncedInput
-            id="mockup_rotation_x"
-            label="Rotation X"
-            placeholder="Rotation X"
-            initialValue={rotationX.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateMockup3DRotationX(editorState, editor, currentMockupId, parseFloat(value))
-            }}
-          />
-          <DebouncedInput
-            id="mockup_rotation_y"
-            label="Rotation Y"
-            placeholder="Rotation Y"
-            initialValue={rotationY.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateMockup3DRotationY(editorState, editor, currentMockupId, parseFloat(value))
-            }}
-          />
-          <DebouncedInput
-            id="mockup_rotation_z"
-            label="Rotation Z"
-            placeholder="Rotation Z"
-            initialValue={rotationZ.toString()}
-            onDebounce={(value) => {
-              let editor = editorRef.current
-              let editorState = editorStateRef.current
-              if (!editorState || !editor) {
-                return
-              }
-              updateMockup3DRotationZ(editorState, editor, currentMockupId, parseFloat(value))
-            }}
-          />
-        </div>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Position
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="mockup_x"
+                label="X"
+                placeholder="X"
+                initialValue={positionX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updatePositionX(
+                    editorState,
+                    editor,
+                    currentMockupId,
+                    ObjectType.Mockup3D,
+                    parseInt(value)
+                  )
+                }}
+              />
+              <DebouncedInput
+                id="mockup_y"
+                label="Y"
+                placeholder="Y"
+                initialValue={positionY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updatePositionY(
+                    editorState,
+                    editor,
+                    currentMockupId,
+                    ObjectType.Mockup3D,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+          </div>
+        </details>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Size
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="mockup_width"
+                label="Width"
+                placeholder="Width"
+                initialValue={defaultWidth.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateMockup3DWidth(editorState, editor, currentMockupId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="mockup_height"
+                label="Height"
+                placeholder="Height"
+                initialValue={defaultHeight.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateMockup3DHeight(editorState, editor, currentMockupId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="mockup_depth"
+                label="Depth"
+                placeholder="Depth"
+                initialValue={defaultDepth.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateMockup3DDepth(editorState, editor, currentMockupId, parseFloat(value))
+                }}
+              />
+            </div>
+          </div>
+        </details>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Rotation
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2 mt-2">
+              <DebouncedInput
+                id="mockup_rotation_x"
+                label="Rotation X"
+                placeholder="Rotation X"
+                initialValue={rotationX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateMockup3DRotationX(editorState, editor, currentMockupId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="mockup_rotation_y"
+                label="Rotation Y"
+                placeholder="Rotation Y"
+                initialValue={rotationY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateMockup3DRotationY(editorState, editor, currentMockupId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="mockup_rotation_z"
+                label="Rotation Z"
+                placeholder="Rotation Z"
+                initialValue={rotationZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateMockup3DRotationZ(editorState, editor, currentMockupId, parseFloat(value))
+                }}
+              />
+            </div>
+          </div>
+        </details>
         <AnimationOptions
           editorRef={editorRef}
           editorStateRef={editorStateRef}
