@@ -864,7 +864,9 @@ export default function AnimationTab({
                       </label>
                       <textarea
                         className="w-full text-black text-xs border rounded px-2 py-1 h-16 resize-none bg-white"
-                        placeholder="e.g., Make the text bounce excitedly, then fade out slowly..."
+                        placeholder={`IMAGINE: you have added a picture of a rocket to the scene. 
+EXAMPLE PROMPT: the image, which is a rocket, needs lift off to the upper-right corner of the canvas
+WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                         value={aiAnimationPrompt}
                         onChange={(e) => setAiAnimationPrompt(e.target.value)}
                       />

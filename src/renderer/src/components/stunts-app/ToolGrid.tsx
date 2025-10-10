@@ -885,22 +885,25 @@ export const ToolGrid = ({
       if (!result.success) {
         // Check if it's an API key error
         if (result.error?.includes('API key')) {
-          toast.error(
-            'Replicate API key not configured. Please add your API key in Settings.',
-            { duration: 5000 }
-          )
+          toast.error('Replicate API key not configured. Please add your API key in Settings.', {
+            duration: 5000
+          })
         } else {
           throw new Error(result.error || 'Failed to generate image')
         }
         return
       }
 
-      // The result contains the file path, we need to read it as a File
-      const imageResponse = await fetch(`file://${result.data.url}`)
-      const imageBlob = await imageResponse.blob()
+      // The result contains the file path, get the image data using uploads API
+      const imageData = await window.api.uploads.getImage(result.data.url)
 
-      const file = new File([imageBlob], result.data.fileName, {
-        type: 'image/jpeg'
+      if (!imageData.success) {
+        throw new Error('Failed to load generated image')
+      }
+
+      // Create a File from the buffer
+      const file = new File([imageData.data.buffer], result.data.fileName, {
+        type: imageData.data.mimeType
       })
 
       await on_add_image(currentSequenceId, file)
@@ -1291,7 +1294,7 @@ export const ToolGrid = ({
                 className="relative z-50"
               >
                 <div className="fixed inset-0 bg-black/25" />
-                <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
+                <div className="text-black fixed inset-0 flex w-screen items-center justify-center p-4">
                   <DialogPanel className="max-w-lg space-y-4 border bg-white p-12 rounded-lg">
                     <DialogTitle className="font-bold">Generate New Image</DialogTitle>
                     <Description>

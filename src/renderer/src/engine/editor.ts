@@ -4351,6 +4351,22 @@ export class Editor {
                 )
                 break
               }
+              case 'positionX': {
+                selected_image.transform.position[0] = new_value
+                selected_image.transform.updateUniformBuffer(
+                  this.gpuResources.queue!,
+                  this.camera.windowSize
+                )
+                break
+              }
+              case 'positionY': {
+                selected_image.transform.position[1] = new_value
+                selected_image.transform.updateUniformBuffer(
+                  this.gpuResources.queue!,
+                  this.camera.windowSize
+                )
+                break
+              }
             }
           }
         }

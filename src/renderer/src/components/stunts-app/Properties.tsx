@@ -362,6 +362,8 @@ export const ImageProperties = ({
   const [defaultHeight, setDefaultHeight] = useState(0)
   const [is_circle, set_is_circle] = useState(false)
   const [defaultBorderRadius, setDefaultBorderRadius] = useState(0)
+  const [positionX, setPositionX] = useState(0)
+  const [positionY, setPositionY] = useState(0)
 
   useEffect(() => {
     let editor = editorRef.current
@@ -378,6 +380,8 @@ export const ImageProperties = ({
     let height = currentObject?.dimensions[1]
     let isCircle = currentObject?.isCircle
     let borderRadius = currentObject?.borderRadius
+    let posX = currentObject.position.x
+    let posY = currentObject.position.y
 
     if (width) {
       setDefaultWidth(width)
@@ -390,6 +394,12 @@ export const ImageProperties = ({
     }
     if (typeof borderRadius !== 'undefined' && borderRadius !== null) {
       setDefaultBorderRadius(borderRadius)
+    }
+    if (posX) {
+      setPositionX(posX)
+    }
+    if (posY) {
+      setPositionY(posY)
     }
 
     setDefaultsSet(true)
@@ -520,6 +530,59 @@ export const ImageProperties = ({
               <label htmlFor="is_circle" className="text-xs">
                 Is Circle
               </label>
+            </div>
+          </div>
+        </details>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Position
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="image_x"
+                label="X"
+                placeholder="X"
+                initialValue={positionX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  updatePositionX(
+                    editorState,
+                    editor,
+                    currentImageId,
+                    ObjectType.ImageItem,
+                    parseInt(value)
+                  )
+                }}
+              />
+              <DebouncedInput
+                id="image_y"
+                label="Y"
+                placeholder="Y"
+                initialValue={positionY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  updatePositionY(
+                    editorState,
+                    editor,
+                    currentImageId,
+                    ObjectType.ImageItem,
+                    parseInt(value)
+                  )
+                }}
+              />
             </div>
           </div>
         </details>

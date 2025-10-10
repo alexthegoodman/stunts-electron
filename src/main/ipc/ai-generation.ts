@@ -340,7 +340,7 @@ Guidelines:
 - Create smooth, visually appealing animations
 - Use appropriate easing for the style requested
 - Consider the canvas size when setting position values
-- Create at least 2-3 keyframes per property for smooth motion
+- Create at least up to 3-7 keyframes per object
 - Match the animation style (smooth = gentle curves, bouncy = overshoot, quick = fast transitions, dramatic = large movements, subtle = small changes)
 - Use object types to inform animation choices (text objects may need different animations than images or shapes)
 - Consider object dimensions when creating scale animations (larger objects may need different scaling than smaller ones)
@@ -348,6 +348,8 @@ Guidelines:
 - Ensure animations keep objects within canvas boundaries based on their dimensions
 
 User Request: ${data.prompt}`
+
+        console.info('Calling OpenAI: ', systemPrompt)
 
         const openai = createOpenAI({
           apiKey: openaiKey
