@@ -213,7 +213,7 @@ export class Model3D {
 
     // Create transform
     this.transform = new Transform(
-      vec2.fromValues(this.position.x, this.position.y),
+      vec3.fromValues(this.position.x, this.position.y, this.position.z ?? 0),
       0, // 2D rotation (we'll handle 3D rotation separately)
       vec2.fromValues(this.scale[0], this.scale[1]),
       uniformBuffer
@@ -505,7 +505,8 @@ export class Model3D {
       path: this.path,
       position: {
         x: this.transform.position[0] - CANVAS_HORIZ_OFFSET,
-        y: this.transform.position[1] - CANVAS_VERT_OFFSET
+        y: this.transform.position[1] - CANVAS_VERT_OFFSET,
+        z: this.transform.position[2]
       },
       rotation: this.rotation,
       scale: this.scale,

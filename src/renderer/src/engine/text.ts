@@ -1,4 +1,4 @@
-import { mat4, vec2 } from 'gl-matrix'
+import { mat4, vec2, vec3 } from 'gl-matrix'
 import * as fontkit from 'fontkit'
 import { createEmptyGroupTransform, Transform } from './transform'
 import { Camera, WindowSize } from './camera'
@@ -32,7 +32,7 @@ export interface TextRendererConfig {
   fontFamily: string
   fontSize: number
   dimensions: [number, number]
-  position: { x: number; y: number }
+  position: { x: number; y: number; z?: number }
   layer: number
   color: [number, number, number, number]
   // backgroundFill: [number, number, number, number];
@@ -48,7 +48,7 @@ export interface SavedTextRendererConfig {
   fontFamily: string
   fontSize: number
   dimensions: [number, number]
-  position: { x: number; y: number }
+  position: { x: number; y: number; z?: number }
   layer: number
   color: [number, number, number, number]
   // backgroundFill?: [number, number, number, number];
@@ -255,7 +255,7 @@ export class TextRenderer {
     // console.info("text config", textConfig);
 
     this.transform = new Transform(
-      vec2.fromValues(textConfig.position.x, textConfig.position.y),
+      vec3.fromValues(textConfig.position.x, textConfig.position.y, textConfig.position.z ?? 0),
       0.0,
       vec2.fromValues(1.0, 1.0),
       this.uniformBuffer
@@ -1403,7 +1403,8 @@ export class TextRenderer {
       dimensions: this.dimensions,
       position: {
         x: this.transform.position[0] - CANVAS_HORIZ_OFFSET,
-        y: this.transform.position[1] - CANVAS_VERT_OFFSET
+        y: this.transform.position[1] - CANVAS_VERT_OFFSET,
+        z: this.transform.position[2]
       },
       layer: this.layer,
       color: this.color,
@@ -1423,7 +1424,8 @@ export class TextRenderer {
       dimensions: this.dimensions,
       position: {
         x: this.transform.position[0] - CANVAS_HORIZ_OFFSET,
-        y: this.transform.position[1] - CANVAS_VERT_OFFSET
+        y: this.transform.position[1] - CANVAS_VERT_OFFSET,
+        z: this.transform.position[2]
       },
       layer: this.layer,
       color: this.color,
@@ -1570,11 +1572,7 @@ export class TextRenderer {
     return this.charStyleMap.get(charIndex) || {}
   }
 
-  public updateCharacterStyle(
-    charIndex: number,
-    fontWeight?: number,
-    fontItalic?: boolean
-  ): void {
+  public updateCharacterStyle(charIndex: number, fontWeight?: number, fontItalic?: boolean): void {
     this.charStyleMap.set(charIndex, { fontWeight, fontItalic })
   }
 

@@ -238,7 +238,8 @@ export function updatePositionX(
           if (p.id == objectId) {
             p.position = {
               x: value,
-              y: p.position.y
+              y: p.position.y,
+              z: p.position.z
             }
           }
         })
@@ -258,7 +259,8 @@ export function updatePositionX(
           if (p.id == objectId) {
             p.position = {
               x: value,
-              y: p.position.y
+              y: p.position.y,
+              z: p.position.z
             }
           }
         })
@@ -277,7 +279,8 @@ export function updatePositionX(
           if (p.id == objectId) {
             p.position = {
               x: value,
-              y: p.position.y
+              y: p.position.y,
+              z: p.position.z
             }
           }
         })
@@ -371,7 +374,8 @@ export function updatePositionY(
           if (p.id == objectId) {
             p.position = {
               x: p.position.x,
-              y: value
+              y: value,
+              z: p.position.z
             }
           }
         })
@@ -391,7 +395,8 @@ export function updatePositionY(
           if (p.id == objectId) {
             p.position = {
               x: p.position.x,
-              y: value
+              y: value,
+              z: p.position.z
             }
           }
         })
@@ -410,7 +415,8 @@ export function updatePositionY(
           if (p.id == objectId) {
             p.position = {
               x: p.position.x,
-              y: value
+              y: value,
+              z: p.position.z
             }
           }
         })
@@ -476,6 +482,136 @@ export function updatePositionY(
             sp.position = {
               x: sp.position.x,
               y: value
+            }
+          }
+        })
+      })
+
+      saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+      break
+    }
+  }
+}
+
+export function updatePositionZ(
+  editorState: EditorState,
+  editor: Editor,
+  objectId: string,
+  objectType: ObjectType,
+  value: number
+) {
+  switch (objectType) {
+    case ObjectType.Polygon: {
+      editor.update_polygon(objectId, 'positionZ', InputValue.Number, value)
+
+      editorState.savedState.sequences.forEach((s) => {
+        s.activePolygons.forEach((p) => {
+          if (p.id == objectId) {
+            p.position = {
+              x: p.position.x,
+              y: p.position.y,
+              z: value
+            }
+          }
+        })
+      })
+
+      saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+      break
+    }
+    case ObjectType.TextItem: {
+      editor.update_text(objectId, 'positionZ', InputValue.Number, value)
+
+      editorState.savedState.sequences.forEach((s) => {
+        s.activeTextItems.forEach((p) => {
+          if (p.id == objectId) {
+            p.position = {
+              x: p.position.x,
+              y: p.position.y,
+              z: value
+            }
+          }
+        })
+      })
+
+      saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+      break
+    }
+    case ObjectType.ImageItem: {
+      editor.update_image(objectId, 'positionZ', InputValue.Number, value)
+
+      editorState.savedState.sequences.forEach((s) => {
+        s.activeImageItems.forEach((p) => {
+          if (p.id == objectId) {
+            p.position = {
+              x: p.position.x,
+              y: p.position.y,
+              z: value
+            }
+          }
+        })
+      })
+
+      saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+      break
+    }
+    case ObjectType.VideoItem: {
+      editor.update_video(objectId, 'positionZ', InputValue.Number, value)
+
+      editorState.savedState.sequences.forEach((s) => {
+        s.activeVideoItems.forEach((p) => {
+          if (p.id == objectId) {
+            p.position = {
+              x: p.position.x,
+              y: p.position.y,
+              z: value
+            }
+          }
+        })
+      })
+
+      saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+      break
+    }
+    case ObjectType.Cube3D: {
+      let cube = editor.cubes3D.find((c) => c.id === objectId)
+      if (cube && editor.camera) {
+        cube.transform.updatePosition([cube.transform.position[0], cube.transform.position[1], value], editor.camera.windowSize)
+        cube.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+      }
+
+      editorState.savedState.sequences.forEach((s) => {
+        s.activeCubes3D?.forEach((c) => {
+          if (c.id == objectId) {
+            c.position = {
+              x: c.position.x,
+              y: c.position.y,
+              z: value
+            }
+          }
+        })
+      })
+
+      saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+      break
+    }
+    case ObjectType.Sphere3D: {
+      let sphere = editor.spheres3D.find((s) => s.id === objectId)
+      if (sphere && editor.camera) {
+        sphere.transform.updatePosition(
+          [sphere.transform.position[0], sphere.transform.position[1], value],
+          editor.camera.windowSize
+        )
+        sphere.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+      }
+
+      editorState.savedState.sequences.forEach((s) => {
+        s.activeSpheres3D?.forEach((sp) => {
+          if (sp.id == objectId) {
+            sp.position = {
+              x: sp.position.x,
+              y: sp.position.y,
+              z: value
             }
           }
         })

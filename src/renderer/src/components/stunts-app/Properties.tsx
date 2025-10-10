@@ -33,6 +33,7 @@ import {
   updateIsCircle,
   updatePositionX,
   updatePositionY,
+  updatePositionZ,
   updateTextContent,
   updateWidth,
   updateTextAnimation,
@@ -77,6 +78,7 @@ export const PolygonProperties = ({
   const [defaultBorderRadius, setDefaultBorderRadius] = useState(0)
   const [positionX, setPositionX] = useState(0)
   const [positionY, setPositionY] = useState(0)
+  const [positionZ, setPositionZ] = useState(0)
   const [is_circle, set_is_circle] = useState(false)
   const [defaultFill, setDefaultFill] = useState<BackgroundFill | null>(null)
 
@@ -97,6 +99,7 @@ export const PolygonProperties = ({
     let isCircle = currentObject?.isCircle
     let positionX = currentObject?.position.x
     let positionY = currentObject?.position.y
+    let positionZ = currentObject?.position.z ?? 0
     let backgroundFill = currentObject?.backgroundFill
 
     if (width) {
@@ -116,6 +119,9 @@ export const PolygonProperties = ({
     }
     if (positionY) {
       setPositionY(positionY)
+    }
+    if (typeof positionZ !== 'undefined' && positionZ !== null) {
+      setPositionZ(positionZ)
     }
     if (backgroundFill) {
       setDefaultFill(backgroundFill)
@@ -188,6 +194,30 @@ export const PolygonProperties = ({
                   }
 
                   updatePositionY(
+                    editorState,
+                    editor,
+                    currentPolygonId,
+                    ObjectType.Polygon,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="polygon_z"
+                label="Z"
+                placeholder="Z"
+                initialValue={positionZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  updatePositionZ(
                     editorState,
                     editor,
                     currentPolygonId,

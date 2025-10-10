@@ -42,6 +42,7 @@ export interface PolygonConfig {
 export interface SavedPoint {
   x: number
   y: number
+  z?: number
 }
 
 export interface SavedStroke {
@@ -693,7 +694,8 @@ export class Polygon implements PolygonShape {
       rotation: this.transform.rotation,
       position: {
         x: this.transform.position[0] - CANVAS_HORIZ_OFFSET,
-        y: this.transform.position[1] - CANVAS_VERT_OFFSET
+        y: this.transform.position[1] - CANVAS_VERT_OFFSET,
+        z: this.transform.position[2]
       },
       borderRadius: this.borderRadius,
       stroke: this.stroke,
@@ -1061,7 +1063,7 @@ export function getPolygonData(
   // gradientBuffer.unmap();
 
   const transform = new Transform(
-    vec2.fromValues(polygon.position.x, polygon.position.y),
+    vec3.fromValues(polygon.position.x, polygon.position.y, polygon.position.z ?? 0),
     polygon.rotation,
     // 0,
     vec2.fromValues(1, 1),

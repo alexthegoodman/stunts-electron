@@ -1,4 +1,4 @@
-import { mat4, vec2 } from 'gl-matrix'
+import { mat4, vec2, vec3 } from 'gl-matrix'
 import { v4 as uuidv4 } from 'uuid' // Make sure you have uuid installed
 import { getZLayer, Vertex } from './vertex'
 import { createEmptyGroupTransform, Transform } from './transform'
@@ -134,13 +134,18 @@ export class StImage {
     }
 
     this.transform = new Transform(
-      vec2.fromValues(imageConfig.position.x, imageConfig.position.y),
+      vec3.fromValues(imageConfig.position.x, imageConfig.position.y, imageConfig.position.z ?? 0),
       0.0,
       vec2.fromValues(imageConfig.dimensions[0], imageConfig.dimensions[1]), // Apply scaling here instead of resizing image
       uniformBuffer
     )
 
-    console.info('image spot', imageConfig.position.x, imageConfig.position.y)
+    console.info(
+      'image spot',
+      imageConfig.position.x,
+      imageConfig.position.y,
+      imageConfig.position.z ?? 0
+    )
 
     // -10.0 to provide 10 spots for internal items on top of objects
     let layer_index = getZLayer(imageConfig.layer)
@@ -649,7 +654,8 @@ export class StImage {
       dimensions: this.dimensions,
       position: {
         x: this.transform.position[0], // Access position from matrix
-        y: this.transform.position[1]
+        y: this.transform.position[1],
+        z: this.transform.position[2]
       },
       layer: this.layer,
       isCircle: this.isCircle,

@@ -1,4 +1,4 @@
-import { mat4, vec2 } from 'gl-matrix'
+import { mat4, vec2, vec3 } from 'gl-matrix'
 import { v4 as uuidv4 } from 'uuid'
 import { Point } from './editor'
 import { createEmptyGroupTransform, Transform } from './transform'
@@ -227,8 +227,8 @@ export class StVideo {
     }
 
     this.transform = new Transform(
-      // vec2.fromValues(videoConfig.position.x, videoConfig.position.y),
-      vec2.fromValues(0, 0),
+      // vec3.fromValues(videoConfig.position.x, videoConfig.position.y, videoConfig.position.z ?? 0),
+      vec3.fromValues(0, 0, 0),
       0.0,
       // vec2.fromValues(videoConfig.dimensions[0], videoConfig.dimensions[1]), // Apply scaling here instead of resizing image
       vec2.fromValues(1, 1), // testing

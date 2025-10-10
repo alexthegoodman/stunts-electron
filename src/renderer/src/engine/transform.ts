@@ -10,17 +10,17 @@ import {
 } from "./polyfill";
 
 export class Transform {
-  position: vec2;
-  startPosition: vec2;
+  position: vec3;
+  startPosition: vec3;
   rotation: number; // Rotation angle in radians
   rotationX: number;
   rotationY: number;
   scale: vec2;
   uniformBuffer: PolyfillBuffer;
-  layer: number;
+  layer: number; // deprecated - kept for backward compatibility during migration
 
   constructor(
-    position: vec2,
+    position: vec3,
     rotation: number, // Accepts angle in radians
     scale: vec2,
     uniformBuffer: PolyfillBuffer
@@ -33,17 +33,18 @@ export class Transform {
     this.rotationY = 0;
     this.scale = scale;
     this.uniformBuffer = uniformBuffer;
-    this.layer = 0.0;
+    this.layer = 0.0; // deprecated
   }
 
   updateTransform(windowSize: WindowSize): mat4 {
     const x = this.position[0];
     const y = this.position[1];
+    const z = this.position[2];
 
     // Create individual transformation matrices
     const translation = mat4.fromTranslation(
       mat4.create(),
-      vec3.fromValues(x, y, this.layer)
+      vec3.fromValues(x, y, z)
     );
     const rotation = mat4.fromQuat(
       mat4.create(),
@@ -77,8 +78,13 @@ export class Transform {
     );
   }
 
-  updatePosition(position: [number, number], windowSize: WindowSize) {
-    this.position = vec2.fromValues(position[0], position[1]);
+  updatePosition(position: [number, number] | [number, number, number], windowSize: WindowSize) {
+    if (position.length === 3) {
+      this.position = vec3.fromValues(position[0], position[1], position[2]);
+    } else {
+      // Backward compatibility: keep existing Z coordinate
+      this.position = vec3.fromValues(position[0], position[1], this.position[2]);
+    }
   }
 
   updateRotation(angle: number) {
@@ -119,8 +125,14 @@ export class Transform {
     this.scale[1] = scaleY;
   }
 
-  translate(translation: vec2) {
-    vec2.add(this.position, this.position, translation);
+  translate(translation: vec2 | vec3) {
+    if (translation.length === 3) {
+      vec3.add(this.position, this.position, translation as vec3);
+    } else {
+      // 2D translation: keep Z unchanged
+      const translation3 = vec3.fromValues(translation[0], translation[1], 0);
+      vec3.add(this.position, this.position, translation3);
+    }
   }
 
   rotate(angle: number) {
@@ -268,7 +280,7 @@ export function createEmptyGroupTransform(
   // uniformBuffer.unmap();
 
   const groupTransform = new Transform(
-    vec2.fromValues(0.0, 0.0),
+    vec3.fromValues(0.0, 0.0, 0.0),
     0.0,
     vec2.fromValues(1.0, 1.0),
     uniformBuffer
