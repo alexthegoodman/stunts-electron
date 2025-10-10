@@ -108,8 +108,8 @@ export const ProjectItem = ({
   return (
     <div className="flex flex-row gap-2">
       <button
-        className="w-64 rounded-xl flex items-center justify-start p-2
-             hover:bg-gray-200 hover:cursor-pointer 
+        className="custom-color w-84 rounded flex items-center justify-start p-2
+             hover:bg-slate-600 hover:cursor-pointer 
             active:bg-[#edda4] transition-colors"
         disabled={loading}
         onClick={handleSubmit}
@@ -119,24 +119,26 @@ export const ProjectItem = ({
         </div>
         <span>{project_label}</span>
       </button>
-      <button
-        className="w-32 rounded-xl flex items-center justify-start p-2
+      <div className="flex flex-row gap-2">
+        <button
+          className="w-24 text-xs rounded flex items-center justify-center p-1
              hover:bg-gray-200 hover:cursor-pointer 
-            active:bg-[#edda4] transition-colors"
-        disabled={loading}
-        onClick={handleDuplicate}
-      >
-        {t('Duplicate')}
-      </button>
-      <button
-        className="w-24 rounded-xl flex items-center justify-center p-2 bg-red-500
+            active:bg-[#edda4] transition-colors h-6"
+          disabled={loading}
+          onClick={handleDuplicate}
+        >
+          {t('Duplicate')}
+        </button>
+        <button
+          className="custom-color w-24 text-xs rounded flex items-center justify-center p-1 bg-red-500
                hover:bg-red-600 hover:cursor-pointer 
-              active:bg-red-700 transition-colors text-white"
-        disabled={loading}
-        onClick={handleDelete}
-      >
-        {t('Delete')}
-      </button>
+              active:bg-red-700 transition-colors text-white h-6"
+          disabled={loading}
+          onClick={handleDelete}
+        >
+          {t('Delete')}
+        </button>
+      </div>
     </div>
   )
 }

@@ -41,7 +41,7 @@
   }
 }
 
-button:hover {
+button:not(.custom-color):hover {
   background-color: rgb(var(--theme-text-secondary));
   color: rgb(var(--theme-bg-primary));
 }

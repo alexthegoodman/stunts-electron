@@ -21,7 +21,7 @@ export default function Projects() {
         {/* Error Boundary */}
         <ClientOnly>
           <div className="container mx-auto py-4 h-[100vh]">
-            <div className="flex flex-row gap-2 mb-2 justify-between w-full items-center px-4">
+            <div className="flex flex-row gap-2 mb-2 justify-between w-full items-center">
               <div className="flex items-center gap-4">
                 <h1 className="text-lg">{t('Projects')}</h1>
                 <ProfileSwitcher />

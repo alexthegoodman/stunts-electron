@@ -232,6 +232,8 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
   let [panX, setPanX] = useState(0)
   let [panY, setPanY] = useState(0)
 
+  let [zoom, setZoom] = useState(0)
+
   // Text Animation state
   let [selectedTextId, setSelectedTextId] = useState<string | null>(null)
 
@@ -1354,7 +1356,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
             </h1>
           )}
           <div className="flex flex-row items-center gap-2">
-            <label htmlFor="layer-spacing" className="text-sm text-gray-300">
+            <label htmlFor="layer-spacing" className="text-xs text-gray-300">
               Layer Spacing:
             </label>
             {settings && (
@@ -1364,7 +1366,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                 // step="0.001"
                 // min="0"
                 // value={settings?.layerSpacing ?? 0.001}
-                initialValue={settings?.layerSpacing ?? 0.001}
+                initialValue={(settings?.layerSpacing as unknown as string) ?? '0.001'}
                 onDebounce={async (value) => {
                   const newSpacing = parseFloat(value) || 0.001
                   let new_settings = {
@@ -1431,8 +1433,9 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
                   await saveSettingsData(new_settings, SaveTarget.Videos)
                 }}
-                className="w-24 px-2 py-1 text-sm bg-gray-700 text-white border border-gray-600 rounded"
-                title="Adjust spacing between layers in 3D space"
+                // className="w-24 px-2 py-1 text-sm bg-gray-700 text-white border border-gray-600 rounded"
+                label=""
+                placeholder="0.01"
               />
             )}
           </div>
@@ -1513,21 +1516,21 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                   label={'Sequences'}
                 />
                 {/** Probably just for testing and verification */}
-                {/* <button
+                <button
                   className="min-w-[45px] h-[45px] flex flex-col justify-center items-center border-0 rounded-[15px]
         shadow-[0_0_15px_4px_rgba(0,0,0,0.16)] transition-colors duration-200 ease-in-out
          hover:cursor-pointer focus-visible:border-2 focus-visible:border-blue-500 z-10"
                   onClick={() => {
-                    if (toolbarTab === "camera") {
-                      setToolbarTab("none");
+                    if (toolbarTab === 'camera') {
+                      setToolbarTab('none')
                     } else {
-                      setToolbarTab("camera");
+                      setToolbarTab('camera')
                     }
                   }}
                 >
                   <CameraRotate />
                   <span className="text-xs">Camera</span>
-                </button> */}
+                </button>
               </div>
             </div>
 
@@ -1755,11 +1758,31 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
               )}
 
               {toolbarTab === 'camera' && (
-                <div className="p-4">
+                <div className="text-white">
                   <h5 className="text-lg font-semibold mb-4">Camera Controls</h5>
 
-                  <div className="space-y-4">
-                    <div>
+                  <div className="">
+                    <label className="block text-sm font-medium">Zoom</label>
+                    <input
+                      type="range"
+                      min="-25"
+                      max="25"
+                      step="0.1"
+                      value={zoom}
+                      className="w-full"
+                      onChange={(e) => {
+                        const editor = editorRef.current
+                        if (editor && editor.camera) {
+                          const newValue = parseFloat(e.target.value)
+                          const delta = newValue - zoom
+                          editor.camera.update_zoom(delta)
+                          editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
+                          setZoom(newValue)
+                        }
+                      }}
+                    />
+
+                    {/* <div>
                       <label className="block text-sm font-medium mb-2">Orbit Horizontal</label>
                       <input
                         type="range"
@@ -1807,73 +1830,68 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       <div className="text-xs text-gray-500 mt-1">
                         Rotate camera around target (vertical)
                       </div>
+                    </div> */}
+
+                    {/* <h6 className="text-sm font-medium mb-3">Pan Camera</h6> */}
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Pan Horizontal (X)</label>
+                      <input
+                        type="range"
+                        min="-10"
+                        max="10"
+                        step="0.1"
+                        value={panX}
+                        className="w-full"
+                        onChange={(e) => {
+                          const editor = editorRef.current
+                          if (editor && editor.camera) {
+                            const newValue = parseFloat(e.target.value)
+                            const deltaX = newValue - panX
+                            editor.camera.pan(vec2.fromValues(deltaX, 0))
+                            editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
+                            setPanX(newValue)
+                          }
+                        }}
+                      />
                     </div>
 
-                    <div className="border-t pt-4 mt-4">
-                      <h6 className="text-sm font-medium mb-3">Pan Camera</h6>
-
-                      <div className="mb-3">
-                        <label className="block text-sm font-medium mb-2">Pan Horizontal (X)</label>
-                        <input
-                          type="range"
-                          min="-10"
-                          max="10"
-                          step="0.1"
-                          value={panX}
-                          className="w-full"
-                          onChange={(e) => {
-                            const editor = editorRef.current
-                            if (editor && editor.camera) {
-                              const newValue = parseFloat(e.target.value)
-                              const deltaX = newValue - panX
-                              editor.camera.pan(vec2.fromValues(deltaX, 0))
-                              editor.cameraBinding?.update(
-                                editor.gpuResources?.queue!,
-                                editor.camera
-                              )
-                              setPanX(newValue)
-                            }
-                          }}
-                        />
-                        <div className="text-xs text-gray-500 mt-1">Move camera left/right</div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Pan Vertical (Y)</label>
-                        <input
-                          type="range"
-                          min="-10"
-                          max="10"
-                          step="0.1"
-                          value={panY}
-                          className="w-full"
-                          onChange={(e) => {
-                            const editor = editorRef.current
-                            if (editor && editor.camera) {
-                              const newValue = parseFloat(e.target.value)
-                              const deltaY = newValue - panY
-                              editor.camera.pan(vec2.fromValues(0, deltaY))
-                              editor.cameraBinding?.update(
-                                editor.gpuResources?.queue!,
-                                editor.camera
-                              )
-                              setPanY(newValue)
-                            }
-                          }}
-                        />
-                        <div className="text-xs text-gray-500 mt-1">Move camera up/down</div>
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Pan Vertical (Y)</label>
+                      <input
+                        type="range"
+                        min="-10"
+                        max="10"
+                        step="0.1"
+                        value={panY}
+                        className="w-full"
+                        onChange={(e) => {
+                          const editor = editorRef.current
+                          if (editor && editor.camera) {
+                            const newValue = parseFloat(e.target.value)
+                            const deltaY = newValue - panY
+                            editor.camera.pan(vec2.fromValues(0, deltaY))
+                            editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
+                            setPanY(newValue)
+                          }
+                        }}
+                      />
                     </div>
+
+                    <hr className="invisible py-2" />
 
                     <button
-                      className="w-full py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                      className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
                       onClick={() => {
                         const editor = editorRef.current
                         if (editor && editor.camera) {
+                          // Reset zoom
+                          editor.camera.reset_zoom()
+
                           // Reset orbit
                           const orbitDeltaX = -orbitX
                           const orbitDeltaY = -orbitY
-                          ;(editor.camera as Camera3D).orbit(orbitDeltaX, orbitDeltaY)
+                          editor.camera.orbit(orbitDeltaX, orbitDeltaY)
 
                           // Reset pan
                           const panDeltaX = -panX
@@ -1887,6 +1905,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                           setOrbitY(0)
                           setPanX(0)
                           setPanY(0)
+                          setZoom(0)
                         }
                       }}
                     >
