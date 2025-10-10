@@ -53,7 +53,13 @@ import {
   updateMockup3DDepth,
   updateMockup3DRotationX,
   updateMockup3DRotationY,
-  updateMockup3DRotationZ
+  updateMockup3DRotationZ,
+  updateModel3DScaleX,
+  updateModel3DScaleY,
+  updateModel3DScaleZ,
+  updateModel3DRotationX,
+  updateModel3DRotationY,
+  updateModel3DRotationZ
 } from '../../engine/state/properties'
 import { AnimationOptions } from './properties/KeyframeProperties'
 import { ColorProperties } from './properties/ColorProperties'
@@ -394,6 +400,7 @@ export const ImageProperties = ({
   const [defaultBorderRadius, setDefaultBorderRadius] = useState(0)
   const [positionX, setPositionX] = useState(0)
   const [positionY, setPositionY] = useState(0)
+  const [positionZ, setPositionZ] = useState(0)
 
   useEffect(() => {
     let editor = editorRef.current
@@ -412,6 +419,7 @@ export const ImageProperties = ({
     let borderRadius = currentObject?.borderRadius
     let posX = currentObject.position.x
     let posY = currentObject.position.y
+    let posZ = currentObject.position.z ?? 0
 
     if (width) {
       setDefaultWidth(width)
@@ -430,6 +438,9 @@ export const ImageProperties = ({
     }
     if (posY) {
       setPositionY(posY)
+    }
+    if (typeof posZ !== 'undefined' && posZ !== null) {
+      setPositionZ(posZ)
     }
 
     setDefaultsSet(true)
@@ -614,6 +625,30 @@ export const ImageProperties = ({
                 }}
               />
             </div>
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="image_z"
+                label="Z"
+                placeholder="Z"
+                initialValue={positionZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  updatePositionZ(
+                    editorState,
+                    editor,
+                    currentImageId,
+                    ObjectType.ImageItem,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
           </div>
         </details>
         <AnimationOptions
@@ -659,6 +694,9 @@ export const VideoProperties = ({
   const [defaultWidth, setDefaultWidth] = useState(0)
   const [defaultHeight, setDefaultHeight] = useState(0)
   const [defaultBorderRadius, setDefaultBorderRadius] = useState(0)
+  const [positionX, setPositionX] = useState(0)
+  const [positionY, setPositionY] = useState(0)
+  const [positionZ, setPositionZ] = useState(0)
 
   useEffect(() => {
     let editor = editorRef.current
@@ -674,6 +712,9 @@ export const VideoProperties = ({
     let width = currentObject?.dimensions[0]
     let height = currentObject?.dimensions[1]
     let borderRadius = currentObject?.borderRadius
+    let posX = currentObject?.position.x
+    let posY = currentObject?.position.y
+    let posZ = currentObject?.position.z ?? 0
 
     if (width) {
       setDefaultWidth(width)
@@ -683,6 +724,15 @@ export const VideoProperties = ({
     }
     if (typeof borderRadius !== 'undefined' && borderRadius !== null) {
       setDefaultBorderRadius(borderRadius)
+    }
+    if (posX) {
+      setPositionX(posX)
+    }
+    if (posY) {
+      setPositionY(posY)
+    }
+    if (typeof posZ !== 'undefined' && posZ !== null) {
+      setPositionZ(posZ)
     }
 
     setDefaultsSet(true)
@@ -787,6 +837,83 @@ export const VideoProperties = ({
             </div>
           </div>
         </details>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Position
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="video_x"
+                label="X"
+                placeholder="X"
+                initialValue={positionX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  updatePositionX(
+                    editorState,
+                    editor,
+                    currentVideoId,
+                    ObjectType.VideoItem,
+                    parseInt(value)
+                  )
+                }}
+              />
+              <DebouncedInput
+                id="video_y"
+                label="Y"
+                placeholder="Y"
+                initialValue={positionY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  updatePositionY(
+                    editorState,
+                    editor,
+                    currentVideoId,
+                    ObjectType.VideoItem,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="video_z"
+                label="Z"
+                placeholder="Z"
+                initialValue={positionZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  updatePositionZ(
+                    editorState,
+                    editor,
+                    currentVideoId,
+                    ObjectType.VideoItem,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+          </div>
+        </details>
         <AnimationOptions
           editorRef={editorRef}
           editorStateRef={editorStateRef}
@@ -818,6 +945,7 @@ export const Cube3DProperties = ({
   const [defaultDepth, setDefaultDepth] = useState(0)
   const [positionX, setPositionX] = useState(0)
   const [positionY, setPositionY] = useState(0)
+  const [positionZ, setPositionZ] = useState(0)
   const [rotationX, setRotationX] = useState(0)
   const [rotationY, setRotationY] = useState(0)
   const [rotationZ, setRotationZ] = useState(0)
@@ -842,6 +970,7 @@ export const Cube3DProperties = ({
       setDefaultDepth(currentObject.dimensions[2])
       setPositionX(currentObject.position.x)
       setPositionY(currentObject.position.y)
+      setPositionZ(currentObject.position.z ?? 0)
       setRotationX(currentObject.rotation[0])
       setRotationY(currentObject.rotation[1])
       setRotationZ(currentObject.rotation[2])
@@ -906,6 +1035,28 @@ export const Cube3DProperties = ({
                     return
                   }
                   updatePositionY(
+                    editorState,
+                    editor,
+                    currentCubeId,
+                    ObjectType.Cube3D,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="cube_z"
+                label="Z"
+                placeholder="Z"
+                initialValue={positionZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updatePositionZ(
                     editorState,
                     editor,
                     currentCubeId,
@@ -1048,6 +1199,7 @@ export const Sphere3DProperties = ({
   const [defaultRadius, setDefaultRadius] = useState(0)
   const [positionX, setPositionX] = useState(0)
   const [positionY, setPositionY] = useState(0)
+  const [positionZ, setPositionZ] = useState(0)
   const [rotationX, setRotationX] = useState(0)
   const [rotationY, setRotationY] = useState(0)
   const [rotationZ, setRotationZ] = useState(0)
@@ -1068,6 +1220,7 @@ export const Sphere3DProperties = ({
       setDefaultRadius(currentObject.radius)
       setPositionX(currentObject.position.x)
       setPositionY(currentObject.position.y)
+      setPositionZ(currentObject.position.z ?? 0)
       setRotationX(currentObject.rotation[0])
       setRotationY(currentObject.rotation[1])
       setRotationZ(currentObject.rotation[2])
@@ -1131,6 +1284,28 @@ export const Sphere3DProperties = ({
                     return
                   }
                   updatePositionY(
+                    editorState,
+                    editor,
+                    currentSphereId,
+                    ObjectType.Sphere3D,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="sphere_z"
+                label="Z"
+                placeholder="Z"
+                initialValue={positionZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updatePositionZ(
                     editorState,
                     editor,
                     currentSphereId,
@@ -1247,6 +1422,7 @@ export const Mockup3DProperties = ({
   const [defaultDepth, setDefaultDepth] = useState(0)
   const [positionX, setPositionX] = useState(0)
   const [positionY, setPositionY] = useState(0)
+  const [positionZ, setPositionZ] = useState(0)
   const [rotationX, setRotationX] = useState(0)
   const [rotationY, setRotationY] = useState(0)
   const [rotationZ, setRotationZ] = useState(0)
@@ -1271,6 +1447,7 @@ export const Mockup3DProperties = ({
       setDefaultDepth(currentObject.dimensions[2])
       setPositionX(currentObject.position.x)
       setPositionY(currentObject.position.y)
+      setPositionZ(currentObject.position.z ?? 0)
       setRotationX(currentObject.rotation[0])
       setRotationY(currentObject.rotation[1])
       setRotationZ(currentObject.rotation[2])
@@ -1335,6 +1512,28 @@ export const Mockup3DProperties = ({
                     return
                   }
                   updatePositionY(
+                    editorState,
+                    editor,
+                    currentMockupId,
+                    ObjectType.Mockup3D,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="mockup_z"
+                label="Z"
+                placeholder="Z"
+                initialValue={positionZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updatePositionZ(
                     editorState,
                     editor,
                     currentMockupId,
@@ -1454,6 +1653,261 @@ export const Mockup3DProperties = ({
           currentSequenceId={currentSequenceId}
           currentObjectId={currentMockupId}
           objectType={ObjectType.Mockup3D}
+        />
+      </div>
+    </>
+  )
+}
+
+export const Model3DProperties = ({
+  editorRef,
+  editorStateRef,
+  currentSequenceId,
+  currentModelId,
+  handleGoBack
+}: {
+  editorRef: React.RefObject<Editor | null>
+  editorStateRef: React.RefObject<EditorState | null>
+  currentSequenceId: string
+  currentModelId: string
+  handleGoBack: () => void
+}) => {
+  const [defaultsSet, setDefaultsSet] = useState(false)
+  const [scaleX, setScaleX] = useState(1)
+  const [scaleY, setScaleY] = useState(1)
+  const [scaleZ, setScaleZ] = useState(1)
+  const [positionX, setPositionX] = useState(0)
+  const [positionY, setPositionY] = useState(0)
+  const [positionZ, setPositionZ] = useState(0)
+  const [rotationX, setRotationX] = useState(0)
+  const [rotationY, setRotationY] = useState(0)
+  const [rotationZ, setRotationZ] = useState(0)
+  const [defaultFill, setDefaultFill] = useState<BackgroundFill | null>(null)
+  const [modelName, setModelName] = useState('')
+
+  useEffect(() => {
+    let editor = editorRef.current
+    let editorState = editorStateRef.current
+
+    if (!editor || !editorState) {
+      return
+    }
+
+    let currentSequence = editorState.savedState.sequences.find((s) => s.id === currentSequenceId)
+    let currentObject = currentSequence?.activeModels3D?.find((m) => m.id === currentModelId)
+
+    if (currentObject) {
+      setScaleX(currentObject.scale[0])
+      setScaleY(currentObject.scale[1])
+      setScaleZ(currentObject.scale[2])
+      setPositionX(currentObject.position.x)
+      setPositionY(currentObject.position.y)
+      setPositionZ(currentObject.position.z ?? 0)
+      setRotationX(currentObject.rotation[0])
+      setRotationY(currentObject.rotation[1])
+      setRotationZ(currentObject.rotation[2])
+      setDefaultFill(currentObject.backgroundFill)
+      setModelName(currentObject.name || '')
+    }
+
+    setDefaultsSet(true)
+  }, [currentModelId])
+
+  if (!defaultsSet) {
+    return <></>
+  }
+
+  return (
+    <>
+      <div>
+        <div className="flex flex-row items-center">
+          <button
+            className="flex flex-col justify-center items-center text-xs w-[35px] h-[35px] text-center rounded hover:bg-gray-200 hover:cursor-pointer active:bg-[#edda4] transition-colors mr-2"
+            onClick={() => handleGoBack()}
+          >
+            <CreateIcon icon="arrow-left" size="24px" />
+          </button>
+          <h5>Update 3D Model{modelName ? `: ${modelName}` : ''}</h5>
+        </div>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Position
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="model_x"
+                label="X"
+                placeholder="X"
+                initialValue={positionX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updatePositionX(
+                    editorState,
+                    editor,
+                    currentModelId,
+                    ObjectType.Model3D,
+                    parseInt(value)
+                  )
+                }}
+              />
+              <DebouncedInput
+                id="model_y"
+                label="Y"
+                placeholder="Y"
+                initialValue={positionY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updatePositionY(
+                    editorState,
+                    editor,
+                    currentModelId,
+                    ObjectType.Model3D,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="model_z"
+                label="Z"
+                placeholder="Z"
+                initialValue={positionZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updatePositionZ(
+                    editorState,
+                    editor,
+                    currentModelId,
+                    ObjectType.Model3D,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+          </div>
+        </details>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Scale
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="model_scale_x"
+                label="Scale X"
+                placeholder="Scale X"
+                initialValue={scaleX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateModel3DScaleX(editorState, editor, currentModelId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="model_scale_y"
+                label="Scale Y"
+                placeholder="Scale Y"
+                initialValue={scaleY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateModel3DScaleY(editorState, editor, currentModelId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="model_scale_z"
+                label="Scale Z"
+                placeholder="Scale Z"
+                initialValue={scaleZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateModel3DScaleZ(editorState, editor, currentModelId, parseFloat(value))
+                }}
+              />
+            </div>
+          </div>
+        </details>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Rotation
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2 mt-2">
+              <DebouncedInput
+                id="model_rotation_x"
+                label="Rotation X"
+                placeholder="Rotation X"
+                initialValue={rotationX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateModel3DRotationX(editorState, editor, currentModelId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="model_rotation_y"
+                label="Rotation Y"
+                placeholder="Rotation Y"
+                initialValue={rotationY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateModel3DRotationY(editorState, editor, currentModelId, parseFloat(value))
+                }}
+              />
+              <DebouncedInput
+                id="model_rotation_z"
+                label="Rotation Z"
+                placeholder="Rotation Z"
+                initialValue={rotationZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+                  if (!editorState || !editor) {
+                    return
+                  }
+                  updateModel3DRotationZ(editorState, editor, currentModelId, parseFloat(value))
+                }}
+              />
+            </div>
+          </div>
+        </details>
+        <AnimationOptions
+          editorRef={editorRef}
+          editorStateRef={editorStateRef}
+          currentSequenceId={currentSequenceId}
+          currentObjectId={currentModelId}
+          objectType={ObjectType.Model3D}
         />
       </div>
     </>

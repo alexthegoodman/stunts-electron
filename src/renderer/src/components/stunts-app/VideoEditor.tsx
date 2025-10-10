@@ -71,7 +71,8 @@ import {
   VideoProperties,
   Cube3DProperties,
   Sphere3DProperties,
-  Mockup3DProperties
+  Mockup3DProperties,
+  Model3DProperties
 } from './Properties'
 import BrushProperties from './BrushProperties'
 import { callMotionInference } from '../../fetchers/inference'
@@ -245,6 +246,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
   let [selected_cube3d_id, set_selected_cube3d_id] = useState<string | null>(null)
   let [selected_sphere3d_id, set_selected_sphere3d_id] = useState<string | null>(null)
   let [selected_mockup3d_id, set_selected_mockup3d_id] = useState<string | null>(null)
+  let [selected_model3d_id, set_selected_model3d_id] = useState<string | null>(null)
   let [selected_keyframes, set_selected_keyframes] = useState<string[] | null>(null)
 
   let [tSequences, setTSequences] = useState<TimelineSequence[]>([])
@@ -320,6 +322,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     set_selected_cube3d_id(null)
     set_selected_sphere3d_id(null)
     set_selected_mockup3d_id(null)
+    set_selected_model3d_id(null)
   }
 
   let select_text = (text_id: string) => {
@@ -342,6 +345,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     set_selected_cube3d_id(null)
     set_selected_sphere3d_id(null)
     set_selected_mockup3d_id(null)
+    set_selected_model3d_id(null)
   }
 
   let select_video = (video_id: string) => {
@@ -352,6 +356,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     set_selected_cube3d_id(null)
     set_selected_sphere3d_id(null)
     set_selected_mockup3d_id(null)
+    set_selected_model3d_id(null)
   }
 
   let select_cube3d = (cube_id: string) => {
@@ -362,6 +367,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     set_selected_cube3d_id(cube_id)
     set_selected_sphere3d_id(null)
     set_selected_mockup3d_id(null)
+    set_selected_model3d_id(null)
   }
 
   let select_sphere3d = (sphere_id: string) => {
@@ -372,6 +378,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     set_selected_cube3d_id(null)
     set_selected_sphere3d_id(sphere_id)
     set_selected_mockup3d_id(null)
+    set_selected_model3d_id(null)
   }
 
   let select_mockup3d = (mockup_id: string) => {
@@ -382,6 +389,18 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     set_selected_cube3d_id(null)
     set_selected_sphere3d_id(null)
     set_selected_mockup3d_id(mockup_id)
+    set_selected_model3d_id(null)
+  }
+
+  let select_model3d = (model_id: string) => {
+    set_selected_polygon_id(null)
+    set_selected_text_id(null)
+    set_selected_image_id(null)
+    set_selected_video_id(null)
+    set_selected_cube3d_id(null)
+    set_selected_sphere3d_id(null)
+    set_selected_mockup3d_id(null)
+    set_selected_model3d_id(model_id)
   }
 
   let handle_polygon_click = (polygon_id: string) => {
@@ -419,6 +438,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
   let handle_mockup3d_click = (mockup_id: string) => {
     select_mockup3d(mockup_id)
+  }
+
+  let handle_model3d_click = (model_id: string) => {
+    select_model3d(model_id)
   }
 
   let handle_mouse_up = (object_id: string, point: Point): [Sequence, string[]] | null => {
@@ -518,6 +541,19 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                 si.position = {
                   x: point.x,
                   y: point.y
+                }
+              }
+            })
+            break
+          }
+          case ObjectType.Model3D: {
+            console.info('saving point', point)
+            s.activeModels3D?.forEach((si) => {
+              if (si.id == object_id) {
+                si.position = {
+                  x: point.x,
+                  y: point.y,
+                  z: si.position.z ?? 0
                 }
               }
             })
@@ -2042,6 +2078,21 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                         </>
                       )}
 
+                      {selected_model3d_id && (
+                        <>
+                          <Model3DProperties
+                            key={'props' + selected_model3d_id}
+                            editorRef={editorRef}
+                            editorStateRef={editorStateRef}
+                            currentSequenceId={current_sequence_id}
+                            currentModelId={selected_model3d_id}
+                            handleGoBack={() => {
+                              set_selected_model3d_id(null)
+                            }}
+                          />
+                        </>
+                      )}
+
                       {editorRef.current?.brushDrawingMode && refreshUINow && (
                         <>
                           <BrushProperties
@@ -2258,7 +2309,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                             break
 
                                           case ObjectType.Model3D:
-                                            // handle_mockup3d_click(objectId)
+                                            handle_model3d_click(objectId)
                                             break
 
                                           default:

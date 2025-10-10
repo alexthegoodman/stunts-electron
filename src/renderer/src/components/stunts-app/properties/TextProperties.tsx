@@ -29,6 +29,7 @@ import {
   updateIsCircle,
   updatePositionX,
   updatePositionY,
+  updatePositionZ,
   updateTextContent,
   updateTextColor,
   updateWidth,
@@ -69,6 +70,9 @@ export const TextProperties = ({
   const [textColor, setTextColor] = useState<[number, number, number, number]>([255, 255, 255, 255])
   const [color, setColor] = useColor('rgba(255, 255, 255, 1)')
   const [colorSet, setColorSet] = useState(false)
+  const [positionX, setPositionX] = useState(0)
+  const [positionY, setPositionY] = useState(0)
+  const [positionZ, setPositionZ] = useState(0)
 
   useEffect(() => {
     let editor = editorRef.current
@@ -90,6 +94,9 @@ export const TextProperties = ({
     let fontSize = currentObject?.fontSize
     let fontFamily = currentObject?.fontFamily
     let color = currentObject?.color
+    let posX = currentObject?.position.x
+    let posY = currentObject?.position.y
+    let posZ = currentObject?.position.z ?? 0
 
     if (width) {
       setDefaultWidth(width)
@@ -117,6 +124,15 @@ export const TextProperties = ({
     }
     if (color) {
       setTextColor(color)
+    }
+    if (posX) {
+      setPositionX(posX)
+    }
+    if (posY) {
+      setPositionY(posY)
+    }
+    if (typeof posZ !== 'undefined' && posZ !== null) {
+      setPositionZ(posZ)
     }
 
     setDefaultsSet(true)
@@ -186,6 +202,83 @@ export const TextProperties = ({
           <h5>Update Text</h5>
         </div>
 
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Position
+          </summary>
+          <div className="p-2 space-y-1">
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="text_x"
+                label="X"
+                placeholder="X"
+                initialValue={positionX.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  updatePositionX(
+                    editorState,
+                    editor,
+                    currentTextId,
+                    ObjectType.TextItem,
+                    parseInt(value)
+                  )
+                }}
+              />
+              <DebouncedInput
+                id="text_y"
+                label="Y"
+                placeholder="Y"
+                initialValue={positionY.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  updatePositionY(
+                    editorState,
+                    editor,
+                    currentTextId,
+                    ObjectType.TextItem,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+            <div className="flex flex-row gap-2">
+              <DebouncedInput
+                id="text_z"
+                label="Z"
+                placeholder="Z"
+                initialValue={positionZ.toString()}
+                onDebounce={(value) => {
+                  let editor = editorRef.current
+                  let editorState = editorStateRef.current
+
+                  if (!editorState || !editor) {
+                    return
+                  }
+
+                  updatePositionZ(
+                    editorState,
+                    editor,
+                    currentTextId,
+                    ObjectType.TextItem,
+                    parseInt(value)
+                  )
+                }}
+              />
+            </div>
+          </div>
+        </details>
         <button
           className="text-xs rounded-md text-white stunts-gradient px-2 py-1 w-full mb-3"
           onClick={() => setShowTextProps(!showTextProps)}

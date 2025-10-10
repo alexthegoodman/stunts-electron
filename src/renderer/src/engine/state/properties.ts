@@ -1304,3 +1304,141 @@ export function updateMockup3DRotationZ(
 
   saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
 }
+
+export function updateModel3DScaleX(
+  editorState: EditorState,
+  editor: Editor,
+  objectId: string,
+  value: number
+) {
+  let model = editor.models3D.find((m) => m.id === objectId)
+  if (model && editor.camera) {
+    model.scale = [value, model.scale[1], model.scale[2]]
+    model.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+  }
+
+  editorState.savedState.sequences.forEach((s) => {
+    s.activeModels3D?.forEach((m) => {
+      if (m.id == objectId) {
+        m.scale = [value, m.scale[1], m.scale[2]]
+      }
+    })
+  })
+
+  saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+}
+
+export function updateModel3DScaleY(
+  editorState: EditorState,
+  editor: Editor,
+  objectId: string,
+  value: number
+) {
+  let model = editor.models3D.find((m) => m.id === objectId)
+  if (model && editor.camera) {
+    model.scale = [model.scale[0], value, model.scale[2]]
+    model.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+  }
+
+  editorState.savedState.sequences.forEach((s) => {
+    s.activeModels3D?.forEach((m) => {
+      if (m.id == objectId) {
+        m.scale = [m.scale[0], value, m.scale[2]]
+      }
+    })
+  })
+
+  saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+}
+
+export function updateModel3DScaleZ(
+  editorState: EditorState,
+  editor: Editor,
+  objectId: string,
+  value: number
+) {
+  let model = editor.models3D.find((m) => m.id === objectId)
+  if (model && editor.camera) {
+    model.scale = [model.scale[0], model.scale[1], value]
+    model.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+  }
+
+  editorState.savedState.sequences.forEach((s) => {
+    s.activeModels3D?.forEach((m) => {
+      if (m.id == objectId) {
+        m.scale = [m.scale[0], m.scale[1], value]
+      }
+    })
+  })
+
+  saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+}
+
+export function updateModel3DRotationX(
+  editorState: EditorState,
+  editor: Editor,
+  objectId: string,
+  value: number
+) {
+  let model = editor.models3D.find((m) => m.id === objectId)
+  if (model && editor.camera) {
+    model.rotation = [value, model.rotation[1], model.rotation[2]]
+    model.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+  }
+
+  editorState.savedState.sequences.forEach((s) => {
+    s.activeModels3D?.forEach((m) => {
+      if (m.id == objectId) {
+        m.rotation = [value, m.rotation[1], m.rotation[2]]
+      }
+    })
+  })
+
+  saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+}
+
+export function updateModel3DRotationY(
+  editorState: EditorState,
+  editor: Editor,
+  objectId: string,
+  value: number
+) {
+  let model = editor.models3D.find((m) => m.id === objectId)
+  if (model && editor.camera) {
+    model.rotation = [model.rotation[0], value, model.rotation[2]]
+    model.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+  }
+
+  editorState.savedState.sequences.forEach((s) => {
+    s.activeModels3D?.forEach((m) => {
+      if (m.id == objectId) {
+        m.rotation = [m.rotation[0], value, m.rotation[2]]
+      }
+    })
+  })
+
+  saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+}
+
+export function updateModel3DRotationZ(
+  editorState: EditorState,
+  editor: Editor,
+  objectId: string,
+  value: number
+) {
+  let model = editor.models3D.find((m) => m.id === objectId)
+  if (model && editor.camera) {
+    model.rotation = [model.rotation[0], model.rotation[1], value]
+    model.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+  }
+
+  editorState.savedState.sequences.forEach((s) => {
+    s.activeModels3D?.forEach((m) => {
+      if (m.id == objectId) {
+        m.rotation = [m.rotation[0], m.rotation[1], value]
+      }
+    })
+  })
+
+  saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+}

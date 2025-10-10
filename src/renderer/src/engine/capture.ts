@@ -105,7 +105,7 @@ export class WebCapture {
                 Math.pow(pos.y - this.hoverStartPosition.y, 2)
             )
 
-            if (distance <= 200) {
+            if (distance <= 400) {
               // Still hovering in the same area
               const hoverDuration = now - (this.hoverStartTime || now)
 
