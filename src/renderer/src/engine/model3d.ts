@@ -69,7 +69,8 @@ export class Model3D {
     config: Model3DConfig,
     currentSequenceId: string,
     vertices: Vertex[],
-    indices: number[]
+    indices: number[],
+    textureImage: ImageData | null
   ) {
     this.id = config.id
     this.name = config.name
@@ -159,7 +160,19 @@ export class Model3D {
     }
 
     // Create texture
-    const textureSize = { width: 1, height: 1, depthOrArrayLayers: 1 }
+    let textureSize: { width: number; height: number; depthOrArrayLayers: number }
+    let textureData: Uint8Array
+
+    if (textureImage) {
+      // Use the GLB texture
+      textureSize = { width: textureImage.width, height: textureImage.height, depthOrArrayLayers: 1 }
+      textureData = new Uint8Array(textureImage.data.buffer)
+    } else {
+      // Fallback to white pixel
+      textureSize = { width: 1, height: 1, depthOrArrayLayers: 1 }
+      textureData = new Uint8Array([255, 255, 255, 255])
+    }
+
     const texture = device.createTexture({
       label: 'Model3D Texture',
       size: textureSize,
@@ -170,15 +183,14 @@ export class Model3D {
           : GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
     })
 
-    const whitePixel = new Uint8Array([255, 255, 255, 255])
     queue.writeTexture(
       {
         texture,
         mipLevel: 0,
         origin: { x: 0, y: 0, z: 0 }
       },
-      whitePixel,
-      { offset: 0, bytesPerRow: 4, rowsPerImage: undefined },
+      textureData,
+      { offset: 0, bytesPerRow: textureSize.width * 4, rowsPerImage: textureSize.height },
       textureSize
     )
 
@@ -246,7 +258,10 @@ export class Model3D {
     modelData: ArrayBuffer
   ): Promise<Model3D> {
     // Parse the GLB model first
-    const [vertices, indices] = await Model3D.parseGLBModel(modelData, config.backgroundFill)
+    const [vertices, indices, textureImage] = await Model3D.parseGLBModel(
+      modelData,
+      config.backgroundFill
+    )
 
     // Create the instance
     return new Model3D(
@@ -259,16 +274,18 @@ export class Model3D {
       config,
       currentSequenceId,
       vertices,
-      indices
+      indices,
+      textureImage
     )
   }
 
   private static async parseGLBModel(
     modelData: ArrayBuffer,
     backgroundFill: BackgroundFill
-  ): Promise<[Vertex[], number[]]> {
+  ): Promise<[Vertex[], number[], ImageData | null]> {
     const vertices: Vertex[] = []
     const indices: number[] = []
+    let textureImage: ImageData | null = null
 
     try {
       // Use the official @loaders.gl/gltf loader
@@ -278,6 +295,32 @@ export class Model3D {
       // Get color from fill
       const color: [number, number, number, number] =
         backgroundFill.type === 'Color' ? backgroundFill.value : [0.7, 0.7, 0.75, 1.0]
+
+      // Extract texture from materials if available
+      if (gltf.materials && gltf.materials.length > 0) {
+        const material = gltf.materials[0]
+        if (material.pbrMetallicRoughness?.baseColorTexture) {
+          const textureIndex = material.pbrMetallicRoughness.baseColorTexture.index
+          const texture = gltf.textures?.[textureIndex]
+          if (texture?.source !== undefined) {
+            const imageIndex = texture.source
+            const image = gltf.images?.[imageIndex]
+            if (image && gltfData.images && gltfData.images[imageIndex]) {
+              const imageData = gltfData.images[imageIndex]
+              // loaders.gl provides the image as an ImageBitmap or HTMLImageElement
+              if (imageData instanceof ImageBitmap || imageData instanceof HTMLImageElement) {
+                // Convert to ImageData using OffscreenCanvas
+                const canvas = new OffscreenCanvas(imageData.width, imageData.height)
+                const ctx = canvas.getContext('2d')
+                if (ctx) {
+                  ctx.drawImage(imageData, 0, 0)
+                  textureImage = ctx.getImageData(0, 0, canvas.width, canvas.height)
+                }
+              }
+            }
+          }
+        }
+      }
 
       // Process all meshes
       if (gltf.meshes && gltf.meshes.length > 0) {
@@ -394,13 +437,15 @@ export class Model3D {
 
       if (vertices.length === 0) {
         console.warn('No vertices found in GLB, using fallback geometry')
-        return Model3D.getFallbackGeometry(backgroundFill)
+        const [fallbackVertices, fallbackIndices] = Model3D.getFallbackGeometry(backgroundFill)
+        return [fallbackVertices, fallbackIndices, null]
       }
 
-      return [vertices, indices]
+      return [vertices, indices, textureImage]
     } catch (error) {
       console.error('Error parsing GLB model:', error)
-      return Model3D.getFallbackGeometry(backgroundFill)
+      const [fallbackVertices, fallbackIndices] = Model3D.getFallbackGeometry(backgroundFill)
+      return [fallbackVertices, fallbackIndices, null]
     }
   }
 
