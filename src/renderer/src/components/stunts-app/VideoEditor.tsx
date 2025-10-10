@@ -5,6 +5,7 @@ import { vec2 } from 'gl-matrix'
 import {
   DebouncedInput,
   ExportVideoButton,
+  MiniSquareButton,
   NavButton,
   OptionButton,
   PlaySequenceButton,
@@ -1456,10 +1457,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         >
           <Stack size={"20px"} /> {t("Actions")}
         </button> */}
-                <button
-                  className="min-w-[45px] h-[45px] flex flex-col justify-center items-center border-0 rounded-[15px]
-        shadow-[0_0_15px_4px_rgba(0,0,0,0.16)] transition-colors duration-200 ease-in-out 
-        hover:cursor-pointer focus-visible:border-2 focus-visible:border-blue-500 z-10"
+                <MiniSquareButton
                   onClick={() => {
                     if (toolbarTab === 'tools') {
                       setToolbarTab('none')
@@ -1467,14 +1465,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       setToolbarTab('tools')
                     }
                   }}
-                >
-                  <Toolbox />
-                  <span className="text-xs">Tools</span>
-                </button>
-                <button
-                  className="min-w-[45px] h-[45px] flex flex-col justify-center items-center border-0 rounded-[15px]
-        shadow-[0_0_15px_4px_rgba(0,0,0,0.16)] transition-colors duration-200 ease-in-out 
-        hover:cursor-pointer focus-visible:border-2 focus-visible:border-blue-500 z-10"
+                  icon={'toolbox'}
+                  label={'Tools'}
+                />
+                <MiniSquareButton
                   onClick={() => {
                     if (toolbarTab === 'animations') {
                       setToolbarTab('none')
@@ -1482,14 +1476,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       setToolbarTab('animations')
                     }
                   }}
-                >
-                  <WaveSawtooth />
-                  <span className="text-xs">Animations</span>
-                </button>
-                <button
-                  className="min-w-[45px] h-[45px] flex flex-col justify-center items-center border-0 rounded-[15px]
-        shadow-[0_0_15px_4px_rgba(0,0,0,0.16)] transition-colors duration-200 ease-in-out 
-        hover:cursor-pointer focus-visible:border-2 focus-visible:border-blue-500 z-10"
+                  icon="wave"
+                  label={'Animations'}
+                />
+                <MiniSquareButton
                   onClick={() => {
                     if (toolbarTab === 'themes') {
                       setToolbarTab('none')
@@ -1497,14 +1487,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       setToolbarTab('themes')
                     }
                   }}
-                >
-                  <Palette />
-                  <span className="text-xs">Themes</span>
-                </button>
-                <button
-                  className="min-w-[45px] h-[45px] flex flex-col justify-center items-center border-0 rounded-[15px]
-        shadow-[0_0_15px_4px_rgba(0,0,0,0.16)] transition-colors duration-200 ease-in-out 
-         hover:cursor-pointer focus-visible:border-2 focus-visible:border-blue-500 z-10"
+                  icon={'palette'}
+                  label={'Themes'}
+                />
+                <MiniSquareButton
                   onClick={() => {
                     if (toolbarTab === 'layers') {
                       setToolbarTab('none')
@@ -1512,14 +1498,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       setToolbarTab('layers')
                     }
                   }}
-                >
-                  <Stack />
-                  <span className="text-xs">Layers</span>
-                </button>
-                <button
-                  className="min-w-[45px] h-[45px] flex flex-col justify-center items-center border-0 rounded-[15px]
-        shadow-[0_0_15px_4px_rgba(0,0,0,0.16)] transition-colors duration-200 ease-in-out
-         hover:cursor-pointer focus-visible:border-2 focus-visible:border-blue-500 z-10"
+                  icon={'stack'}
+                  label={'Layers'}
+                />
+                <MiniSquareButton
                   onClick={() => {
                     if (toolbarTab === 'sequences') {
                       setToolbarTab('none')
@@ -1527,10 +1509,9 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       setToolbarTab('sequences')
                     }
                   }}
-                >
-                  <FlowArrow />
-                  <span className="text-xs">Sequences</span>
-                </button>
+                  icon="flow-arrow"
+                  label={'Sequences'}
+                />
                 {/** Probably just for testing and verification */}
                 {/* <button
                   className="min-w-[45px] h-[45px] flex flex-col justify-center items-center border-0 rounded-[15px]
