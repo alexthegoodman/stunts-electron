@@ -669,7 +669,7 @@ export const ToolGrid = ({
       sequence_id: string,
       filePath: string,
       fileName: string,
-      mousePositions?: MousePosition[],
+      mousePositions?: any[],
       sourceData?: any
     ) => {
       let editor = editorRef.current

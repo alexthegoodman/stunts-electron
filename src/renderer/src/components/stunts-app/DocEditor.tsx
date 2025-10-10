@@ -25,8 +25,9 @@ import { PolygonConfig } from '../../engine/polygon'
 import { WindowSize } from '../../engine/camera'
 import { PreviewManager } from '../../engine/preview'
 import { ThemePicker } from './ThemePicker'
-import { ImageProperties, PolygonProperties, TextProperties } from './Properties'
+import { ImageProperties, PolygonProperties } from './Properties'
 import { callLayoutInference } from '../../fetchers/inference'
+import { TextProperties } from './properties/TextProperties'
 
 let docCanvasSize: WindowSize = {
   width: 900,

@@ -67,9 +67,7 @@ import LayerPanel, { Layer, LayerFromConfig } from './layers'
 import { CanvasPipeline } from '../../engine/pipeline'
 import {
   ImageProperties,
-  KeyframeProperties,
   PolygonProperties,
-  TextProperties,
   VideoProperties,
   Cube3DProperties,
   Sphere3DProperties,
@@ -111,6 +109,8 @@ import { Disclosure } from '@headlessui/react'
 
 import AnimationTab from './AnimationTab'
 import { Mockup3DConfig } from '../../engine/mockup3d'
+import { TextProperties } from './properties/TextProperties'
+import { KeyframeProperties } from './properties/KeyframeProperties'
 
 export function update_keyframe(
   editor_state: EditorState,
