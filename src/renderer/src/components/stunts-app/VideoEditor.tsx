@@ -111,6 +111,7 @@ import AnimationTab from './AnimationTab'
 import { Mockup3DConfig } from '../../engine/mockup3d'
 import { TextProperties } from './properties/TextProperties'
 import { KeyframeProperties } from './properties/KeyframeProperties'
+import { Model3DConfig } from '@renderer/engine/model3d'
 
 export function update_keyframe(
   editor_state: EditorState,
@@ -995,6 +996,9 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       editor?.mockups3D.forEach((t) => {
         t.hidden = true
       })
+      editor?.models3D.forEach((t) => {
+        t.hidden = true
+      })
 
       saved_sequence.activePolygons.forEach((ap) => {
         let polygon = editor.polygons.find((p) => p.id == ap.id)
@@ -1060,6 +1064,15 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         }
 
         mockup.hidden = false
+      })
+      saved_sequence.activeModels3D?.forEach((ap) => {
+        let model = editor.models3D.find((p) => p.id == ap.id)
+
+        if (!model) {
+          return
+        }
+
+        model.hidden = false
       })
 
       if (!editor.camera) {
@@ -1148,6 +1161,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         if (!mockup.hidden) {
           let mockup_config: Mockup3DConfig = mockup.toConfig()
           let new_layer: Layer = LayerFromConfig.fromMockup3DConfig(mockup_config)
+          new_layers.push(new_layer)
+        }
+      })
+      editor.models3D.forEach((model) => {
+        if (!model.hidden) {
+          let model_config: Model3DConfig = model.toConfig()
+          let new_layer: Layer = LayerFromConfig.fromModel3DConfig(model_config)
           new_layers.push(new_layer)
         }
       })
@@ -2189,6 +2209,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                     objectName = sequence.activeSpheres3D?.find(
                                       (pol) => pol.id === animation.polygonId
                                     )?.name
+                                  } else if (animation.objectType === ObjectType.Model3D) {
+                                    objectName = sequence.activeModels3D?.find(
+                                      (pol) => pol.id === animation.polygonId
+                                    )?.name
                                   }
 
                                   return (
@@ -2233,8 +2257,11 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                             handle_mockup3d_click(objectId)
                                             break
 
+                                          case ObjectType.Model3D:
+                                            // handle_mockup3d_click(objectId)
+                                            break
+
                                           default:
-                                            handle_polygon_click(objectId)
                                             break
                                         }
                                       }}

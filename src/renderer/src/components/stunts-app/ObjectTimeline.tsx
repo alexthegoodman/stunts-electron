@@ -154,7 +154,7 @@ const DraggableSequence: React.FC<SequenceProps> = ({
       {...listeners}
       {...attributes}
     >
-      <span>{objectName}</span>
+      <span className="truncate">{objectName}</span>
       {/* <span className="text-xs">({animation.polygonId})</span> */}
       <div
         className="bg-black hover:bg-gray-600 pb-1 px-2 rounded"

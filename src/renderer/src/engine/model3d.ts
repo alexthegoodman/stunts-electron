@@ -59,7 +59,7 @@ export class Model3D {
   transform: Transform
   currentSequenceId: string
 
-  constructor(
+  private constructor(
     windowSize: WindowSize,
     device: PolyfillDevice,
     queue: PolyfillQueue,
@@ -68,7 +68,8 @@ export class Model3D {
     camera: Camera,
     config: Model3DConfig,
     currentSequenceId: string,
-    modelData: ArrayBuffer
+    vertices: Vertex[],
+    indices: number[]
   ) {
     this.id = config.id
     this.name = config.name
@@ -86,16 +87,22 @@ export class Model3D {
     this.objectType = ObjectType.Model3D
     this.currentSequenceId = currentSequenceId
 
-    // Parse the GLB model
-    const [vertices, indices] = this.parseGLBModel(modelData)
     this.vertices = vertices
     this.indices = indices
+
+    const vertexSize = vertices.length * vertexByteSize * 100
+
+    console.info('Model3D vertices count ', this.vertices.length, this.indices.length)
+    const maxIndex = Math.max(...indices)
+    console.log('Max index:', maxIndex)
+    console.log('Vertex count:', vertices.length / vertexSize) // vertexSize = floats per vertex
+    console.log('Is valid?', maxIndex < vertices.length / vertexSize)
 
     // Create vertex buffer
     this.vertexBuffer = device.createBuffer(
       {
         label: 'Model3D Vertex Buffer',
-        size: vertices.length * vertexByteSize,
+        size: vertexSize,
         usage: process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
       },
       ''
@@ -124,7 +131,7 @@ export class Model3D {
     this.indexBuffer = device.createBuffer(
       {
         label: 'Model3D Index Buffer',
-        size: indices.length * Uint32Array.BYTES_PER_ELEMENT,
+        size: indices.length * Uint32Array.BYTES_PER_ELEMENT * 100,
         usage: process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
       },
       ''
@@ -227,105 +234,159 @@ export class Model3D {
     this.groupBindGroup = tmp_group_bind_group
   }
 
-  private parseGLBModel(modelData: ArrayBuffer): [Vertex[], number[]] {
+  static async create(
+    windowSize: WindowSize,
+    device: PolyfillDevice,
+    queue: PolyfillQueue,
+    bindGroupLayout: PolyfillBindGroupLayout,
+    groupBindGroupLayout: PolyfillBindGroupLayout,
+    camera: Camera,
+    config: Model3DConfig,
+    currentSequenceId: string,
+    modelData: ArrayBuffer
+  ): Promise<Model3D> {
+    // Parse the GLB model first
+    const [vertices, indices] = await Model3D.parseGLBModel(modelData, config.backgroundFill)
+
+    // Create the instance
+    return new Model3D(
+      windowSize,
+      device,
+      queue,
+      bindGroupLayout,
+      groupBindGroupLayout,
+      camera,
+      config,
+      currentSequenceId,
+      vertices,
+      indices
+    )
+  }
+
+  private static async parseGLBModel(
+    modelData: ArrayBuffer,
+    backgroundFill: BackgroundFill
+  ): Promise<[Vertex[], number[]]> {
     const vertices: Vertex[] = []
     const indices: number[] = []
 
     try {
-      // Parse the GLB using DataView
-      const view = new DataView(modelData)
+      // Use the official @loaders.gl/gltf loader
+      const gltfData = await load(modelData, GLTFLoader)
+      const gltf = gltfData.json
 
-      // Check GLB magic number (0x46546C67 = "glTF")
-      const magic = view.getUint32(0, true)
-      if (magic !== 0x46546c67) {
-        console.error('Invalid GLB file: wrong magic number')
-        return this.getFallbackGeometry()
-      }
+      // Get color from fill
+      const color: [number, number, number, number] =
+        backgroundFill.type === 'Color' ? backgroundFill.value : [0.7, 0.7, 0.75, 1.0]
 
-      // Get JSON chunk
-      const jsonChunkLength = view.getUint32(12, true)
-      const jsonChunkType = view.getUint32(16, true)
-
-      if (jsonChunkType !== 0x4e4f534a) {
-        // "JSON"
-        console.error('Invalid GLB: expected JSON chunk')
-        return this.getFallbackGeometry()
-      }
-
-      const jsonStart = 20
-      const jsonBytes = new Uint8Array(modelData, jsonStart, jsonChunkLength)
-      const jsonString = new TextDecoder().decode(jsonBytes)
-      const gltf = JSON.parse(jsonString)
-
-      // Get binary chunk
-      const binaryChunkStart = jsonStart + jsonChunkLength
-      const binaryChunkLength = view.getUint32(binaryChunkStart, true)
-      const binaryChunkType = view.getUint32(binaryChunkStart + 4, true)
-
-      if (binaryChunkType !== 0x004e4942) {
-        // "BIN\0"
-        console.error('Invalid GLB: expected BIN chunk')
-        return this.getFallbackGeometry()
-      }
-
-      const binaryData = new Uint8Array(modelData, binaryChunkStart + 8, binaryChunkLength)
-
-      // Process meshes
+      // Process all meshes
       if (gltf.meshes && gltf.meshes.length > 0) {
-        const mesh = gltf.meshes[0]
+        for (const mesh of gltf.meshes) {
+          if (!mesh.primitives) continue
 
-        for (const primitive of mesh.primitives) {
-          const positionAccessorIndex = primitive.attributes.POSITION
-          const normalAccessorIndex = primitive.attributes.NORMAL
-          const texcoordAccessorIndex = primitive.attributes.TEXCOORD_0
-          const indicesAccessorIndex = primitive.indices
+          for (const primitive of mesh.primitives) {
+            const attributes = primitive.attributes
+            const startIndex = vertices.length
 
-          // Get position data
-          const positions = this.getAccessorData(gltf, binaryData, positionAccessorIndex)
-          const normals =
-            normalAccessorIndex !== undefined
-              ? this.getAccessorData(gltf, binaryData, normalAccessorIndex)
-              : null
-          const texcoords =
-            texcoordAccessorIndex !== undefined
-              ? this.getAccessorData(gltf, binaryData, texcoordAccessorIndex)
-              : null
+            // Get position data - need to get from accessors and bufferViews
+            const positionAccessorIndex = attributes.POSITION
+            if (positionAccessorIndex === undefined) continue
 
-          // Get color from fill
-          const color: [number, number, number, number] =
-            this.backgroundFill.type === 'Color' ? this.backgroundFill.value : [0.7, 0.7, 0.75, 1.0]
+            const positionAccessor = gltf.accessors![positionAccessorIndex]
+            const positionBufferView = gltf.bufferViews![positionAccessor.bufferView!]
 
-          // Create vertices
-          const vertexCount = positions.length / 3
-          const startIndex = vertices.length
+            // Get the buffer data
+            const buffer = gltfData.buffers[positionBufferView.buffer || 0]
+            const bufferData = buffer.arrayBuffer
 
-          for (let i = 0; i < vertexCount; i++) {
-            const px = positions[i * 3]
-            const py = positions[i * 3 + 1]
-            const pz = positions[i * 3 + 2]
+            // Extract position data
+            const positionOffset =
+              (positionBufferView.byteOffset || 0) + (positionAccessor.byteOffset || 0)
+            const positions = new Float32Array(
+              bufferData,
+              positionOffset,
+              positionAccessor.count * 3
+            )
 
-            const u = texcoords ? texcoords[i * 2] : 0
-            const v = texcoords ? texcoords[i * 2 + 1] : 0
-
-            vertices.push({
-              position: [px, py, pz],
-              tex_coords: [u, v],
-              color: color,
-              gradient_coords: [u, v],
-              object_type: 10 // Using object_type 10 for Model3D
-            })
-          }
-
-          // Get indices
-          if (indicesAccessorIndex !== undefined) {
-            const modelIndices = this.getAccessorData(gltf, binaryData, indicesAccessorIndex)
-            for (let i = 0; i < modelIndices.length; i++) {
-              indices.push(startIndex + modelIndices[i])
+            // Get texture coordinates if available
+            let texcoords: Float32Array | null = null
+            if (attributes.TEXCOORD_0 !== undefined) {
+              const texcoordAccessor = gltf.accessors![attributes.TEXCOORD_0]
+              const texcoordBufferView = gltf.bufferViews![texcoordAccessor.bufferView!]
+              const texcoordBuffer = gltfData.buffers[texcoordBufferView.buffer || 0]
+              const texcoordBufferData = texcoordBuffer.arrayBuffer
+              const texcoordOffset =
+                (texcoordBufferView.byteOffset || 0) + (texcoordAccessor.byteOffset || 0)
+              texcoords = new Float32Array(
+                texcoordBufferData,
+                texcoordOffset,
+                texcoordAccessor.count * 2
+              )
             }
-          } else {
-            // No indices, create them sequentially
+
+            // Create vertices
+            const vertexCount = positionAccessor.count
+
             for (let i = 0; i < vertexCount; i++) {
-              indices.push(startIndex + i)
+              const px = positions[i * 3]
+              const py = positions[i * 3 + 1]
+              const pz = positions[i * 3 + 2]
+
+              const u = texcoords ? texcoords[i * 2] : 0
+              const v = texcoords ? texcoords[i * 2 + 1] : 0
+
+              vertices.push({
+                position: [px, py, pz],
+                tex_coords: [u, v],
+                color: color,
+                gradient_coords: [u, v],
+                object_type: 10
+              })
+            }
+
+            // Get indices
+            if (primitive.indices !== undefined) {
+              const indicesAccessor = gltf.accessors![primitive.indices]
+              const indicesBufferView = gltf.bufferViews![indicesAccessor.bufferView!]
+              const indicesBuffer = gltfData.buffers[indicesBufferView.buffer || 0]
+              console.info('indicesBuffer', indicesAccessor, indicesBufferView, indicesBuffer)
+              const indicesBufferData = indicesBuffer.arrayBuffer
+              // const indicesOffset =
+              //   (indicesBufferView.byteOffset || 0) + (indicesAccessor.byteOffset || 0)
+              const indicesOffset = indicesBuffer.byteOffset || 0
+
+              // Component type determines the array type
+              let primitiveIndices: Uint16Array | Uint32Array
+              // if (indicesAccessor.componentType === 5123) {
+              //   // UNSIGNED_SHORT
+              //   primitiveIndices = new Uint16Array(
+              //     indicesBufferData,
+              //     indicesOffset,
+              //     indicesAccessor.count
+              //   )
+              // } else {
+              //   // UNSIGNED_INT (5125)
+              //   primitiveIndices = new Uint32Array(
+              //     indicesBufferData,
+              //     indicesOffset,
+              //     indicesAccessor.count
+              //   )
+              // }
+
+              primitiveIndices = new Uint32Array(
+                indicesBufferData,
+                indicesOffset,
+                indicesAccessor.count
+              )
+
+              for (let i = 0; i < primitiveIndices.length; i++) {
+                indices.push(startIndex + primitiveIndices[i])
+              }
+            } else {
+              // No indices, create them sequentially
+              for (let i = 0; i < vertexCount; i++) {
+                indices.push(startIndex + i)
+              }
             }
           }
         }
@@ -333,66 +394,17 @@ export class Model3D {
 
       if (vertices.length === 0) {
         console.warn('No vertices found in GLB, using fallback geometry')
-        return this.getFallbackGeometry()
+        return Model3D.getFallbackGeometry(backgroundFill)
       }
 
       return [vertices, indices]
     } catch (error) {
       console.error('Error parsing GLB model:', error)
-      return this.getFallbackGeometry()
+      return Model3D.getFallbackGeometry(backgroundFill)
     }
   }
 
-  private getAccessorData(
-    gltf: any,
-    binaryData: Uint8Array,
-    accessorIndex: number
-  ): Float32Array | Uint16Array | Uint32Array {
-    const accessor = gltf.accessors[accessorIndex]
-    const bufferView = gltf.bufferViews[accessor.bufferView]
-
-    const offset = (bufferView.byteOffset || 0) + (accessor.byteOffset || 0)
-    const length = accessor.count * this.getComponentCount(accessor.type)
-
-    // Determine component type
-    const componentType = accessor.componentType
-
-    if (componentType === 5126) {
-      // FLOAT
-      return new Float32Array(binaryData.buffer, binaryData.byteOffset + offset, length)
-    } else if (componentType === 5123) {
-      // UNSIGNED_SHORT
-      return new Uint16Array(binaryData.buffer, binaryData.byteOffset + offset, length)
-    } else if (componentType === 5125) {
-      // UNSIGNED_INT
-      return new Uint32Array(binaryData.buffer, binaryData.byteOffset + offset, length)
-    }
-
-    return new Float32Array(length)
-  }
-
-  private getComponentCount(type: string): number {
-    switch (type) {
-      case 'SCALAR':
-        return 1
-      case 'VEC2':
-        return 2
-      case 'VEC3':
-        return 3
-      case 'VEC4':
-        return 4
-      case 'MAT2':
-        return 4
-      case 'MAT3':
-        return 9
-      case 'MAT4':
-        return 16
-      default:
-        return 1
-    }
-  }
-
-  private getFallbackGeometry(): [Vertex[], number[]] {
+  private static getFallbackGeometry(backgroundFill: BackgroundFill): [Vertex[], number[]] {
     // Return a simple cube as fallback
     const vertices: Vertex[] = []
     const indices: number[] = []
@@ -405,7 +417,7 @@ export class Model3D {
       hd = d / 2
 
     const color: [number, number, number, number] =
-      this.backgroundFill.type === 'Color' ? this.backgroundFill.value : [0.7, 0.7, 0.75, 1.0]
+      backgroundFill.type === 'Color' ? backgroundFill.value : [0.7, 0.7, 0.75, 1.0]
 
     const positions: [number, number, number][] = [
       [-hw, -hh, hd],

@@ -1841,7 +1841,9 @@ export class Editor {
             continue
           }
 
-          const restored_model = new Model3D(
+          console.info('model', model)
+
+          const restored_model = await Model3D.create(
             this.camera.windowSize,
             this.gpuResources.device,
             this.gpuResources.queue,
@@ -1853,7 +1855,11 @@ export class Editor {
             modelData.data.buffer
           )
 
+          restored_model.hidden = hidden
+
           this.models3D.push(restored_model)
+
+          console.info('model 3d restored')
         } catch (error) {
           console.error('Error restoring model:', error)
         }
@@ -3561,7 +3567,7 @@ export class Editor {
       return null
     }
 
-    let model = new Model3D(
+    let model = await Model3D.create(
       windowSize,
       gpuResources.device,
       gpuResources.queue,

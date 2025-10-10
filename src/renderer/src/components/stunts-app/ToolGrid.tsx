@@ -1123,9 +1123,14 @@ export const ToolGrid = ({
 
           const new_model_id = uuidv4()
 
+          // const modelPosition = {
+          //   x: random_number_800 + CANVAS_HORIZ_OFFSET,
+          //   y: random_number_450 + CANVAS_VERT_OFFSET
+          // }
+
           const modelPosition = {
-            x: random_number_800 + CANVAS_HORIZ_OFFSET,
-            y: random_number_450 + CANVAS_VERT_OFFSET
+            x: 0 + CANVAS_HORIZ_OFFSET,
+            y: 0 + CANVAS_VERT_OFFSET
           }
 
           // Create model config
