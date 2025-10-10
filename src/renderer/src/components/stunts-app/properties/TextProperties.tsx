@@ -2,13 +2,15 @@
 
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { DebouncedInput, DebouncedTextarea } from '../items'
+import { Editor, TEXT_BACKGROUNDS_DEFAULT_HIDDEN } from '../../../engine/editor'
 import {
   colorToWgpu,
-  Editor,
+  getRandomNumber,
+  InputValue,
   rgbToWgpu,
-  TEXT_BACKGROUNDS_DEFAULT_HIDDEN,
   wgpuToHuman
-} from '../../../engine/editor'
+} from '../../../engine/editor/helpers'
+
 import EditorState, { SaveTarget } from '../../../engine/editor_state'
 import {
   BackgroundFill,

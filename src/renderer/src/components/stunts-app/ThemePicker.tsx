@@ -1,9 +1,10 @@
-import { Editor, InputValue, rgbToWgpu } from '../../engine/editor'
+import { Editor } from '../../engine/editor'
 import { OptionButton } from './items'
 import { Color, hexParse } from '@kurkle/color'
 import EditorState, { SaveTarget } from '../../engine/editor_state'
 import { BackgroundFill, GradientStop } from '../../engine/animations'
 import { saveSequencesData } from '../../fetchers/projects'
+import { InputValue, rgbToWgpu } from '@renderer/engine/editor/helpers'
 
 export const THEME_COLORS = [
   ['#FFE4E1', '#FF6B6B', '#FF0000', '#B22222', '#8B0000'], // red

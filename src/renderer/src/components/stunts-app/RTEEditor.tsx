@@ -4,12 +4,13 @@ import { useRouter } from '../../hooks/useRouter'
 import { useEffect, useRef, useState } from 'react'
 import { Layer } from './layers'
 import { CanvasPipeline } from '../../engine/pipeline'
-import { Editor, rgbToWgpu, Viewport } from '../../engine/editor'
+import { Editor, Viewport } from '../../engine/editor'
 import { useDevEffectOnce } from '../../hooks/useDevOnce'
 import { testMarkdown } from '../../engine/data'
 import { defaultStyle } from '../../engine/rte'
 import { v4 as uuidv4 } from 'uuid'
 import { TextRendererConfig } from '../../engine/text'
+import { rgbToWgpu } from '@renderer/engine/editor/helpers'
 
 export const RTEEditor: React.FC<any> = ({ projectId }) => {
   const router = useRouter()

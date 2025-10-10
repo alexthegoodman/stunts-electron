@@ -1,6 +1,7 @@
 import { saveSequencesData } from '../../fetchers/projects'
 import { BackgroundFill, ObjectType } from '../animations'
-import { Editor, InputValue } from '../editor'
+import { Editor } from '../editor'
+import { InputValue } from '../editor/helpers'
 import EditorState from '../editor_state'
 import { TextAnimationConfig } from '../textAnimator'
 

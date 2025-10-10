@@ -7,10 +7,9 @@ import {
   CANVAS_HORIZ_OFFSET,
   CANVAS_VERT_OFFSET,
   Point,
-  rgbToWgpu,
-  TEXT_BACKGROUNDS_DEFAULT_HIDDEN,
-  wgpuToHuman
+  TEXT_BACKGROUNDS_DEFAULT_HIDDEN
 } from './editor'
+import { getRandomNumber, InputValue, rgbToWgpu, wgpuToHuman } from '../engine/editor/helpers'
 import { INTERNAL_LAYER_SPACE, Polygon, setupGradientBuffers } from './polygon'
 import { BackgroundFill, ObjectType } from './animations'
 import { FormattedPage, RenderItem } from './rte'

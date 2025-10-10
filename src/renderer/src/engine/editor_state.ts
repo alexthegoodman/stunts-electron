@@ -20,13 +20,9 @@ import { SavedCube3DConfig } from './cube3d'
 import { SavedSphere3DConfig } from './sphere3d'
 import { SavedMockup3DConfig } from './mockup3d'
 import { SavedModel3DConfig } from './model3d'
-import {
-  CANVAS_HORIZ_OFFSET,
-  CANVAS_VERT_OFFSET,
-  Editor,
-  getRandomNumber,
-  InputValue
-} from './editor'
+import { CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Editor } from './editor'
+import { getRandomNumber, InputValue, rgbToWgpu, wgpuToHuman } from '../engine/editor/helpers'
+
 import { TextAnimationConfig } from './textAnimator'
 import { save_default_keyframes } from './state/keyframes'
 import { create_keyframes_from_mouse_positions, MousePosition } from './state/mouse-keyframes'

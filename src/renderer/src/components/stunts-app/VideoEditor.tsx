@@ -49,13 +49,10 @@ import {
   CANVAS_HORIZ_OFFSET,
   CANVAS_VERT_OFFSET,
   Editor,
-  getRandomNumber,
-  InputValue,
   Point,
-  rgbToWgpu,
-  Viewport,
-  wgpuToHuman
+  Viewport
 } from '../../engine/editor'
+import { getRandomNumber, InputValue, rgbToWgpu, wgpuToHuman } from '../../engine/editor/helpers'
 import { StVideoConfig } from '../../engine/video'
 import { fileToBlob, StImageConfig } from '../../engine/image'
 import { TextRendererConfig } from '../../engine/text'
@@ -1411,7 +1408,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
               {project_name}
             </h1>
           )}
-          <div className="flex flex-row items-center gap-2">
+          {/* <div className="flex flex-row items-center gap-2">
             <label htmlFor="layer-spacing" className="text-xs text-gray-300">
               Layer Spacing:
             </label>
@@ -1494,7 +1491,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                 placeholder="0.01"
               />
             )}
-          </div>
+          </div> */}
         </div>
         {editorStateSet && (
           <ExportVideoButton editorRef={editorRef} editorStateRef={editorStateRef} />

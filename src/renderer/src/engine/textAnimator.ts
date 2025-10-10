@@ -1,7 +1,6 @@
 import { vec2 } from 'gl-matrix'
 import { EasingType, UIKeyframe, KeyframeValue } from './animations'
 import { TextRenderer } from './text'
-import { rgbToWgpu } from './editor'
 import { Vertex } from './vertex'
 import { PolyfillQueue } from './polyfill'
 

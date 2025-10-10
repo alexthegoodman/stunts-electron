@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { generateContent, getFlow, IFlowQuestions, updateFlowQuestions } from '../../fetchers/flows'
 import { getTemplates, selectRandomTemplate, Template } from '../../fetchers/templates'
-import { Editor, rgbToWgpu, Viewport } from '../../engine/editor'
+import { Editor, Viewport } from '../../engine/editor'
 import EditorState, { SaveTarget } from '../../engine/editor_state'
 import {
   AnimationData,
@@ -35,6 +35,7 @@ import { getCurrentUser } from '../../hooks/useCurrentUser'
 import { SavedStVideoConfig } from '../../engine/video'
 import { SavedStImageConfig } from '../../engine/image'
 import { mergeTemplateWithUserContent } from '../../engine/merge'
+import { rgbToWgpu } from '@renderer/engine/editor/helpers'
 
 export default function FlowQuestions({
   flowId = null,

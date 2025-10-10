@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { EasingType, KeyType, KeyframeValue, Sequence, UIKeyframe } from './animations' // Import your animation types
 import { Camera, WindowSize } from './camera' // Import your camera type
-import { getFullColor, interpolatePosition, rgbToWgpu, Point } from './editor' // Import your editor functions and types
+import { Point } from './editor' // Import your editor functions and types
 import { Polygon, SavedPoint, Stroke, INTERNAL_LAYER_SPACE } from './polygon' // Import your polygon types
 import { matrix4ToRawArray, Transform } from './transform' // Import your transform functions and types
 import { getZLayer, Vertex } from './vertex' // Import your vertex functions and types
@@ -14,6 +14,14 @@ import {
   PolyfillDevice,
   PolyfillQueue
 } from './polyfill'
+import {
+  getRandomNumber,
+  InputValue,
+  rgbToWgpu,
+  wgpuToHuman,
+  getFullColor,
+  interpolatePosition
+} from '../engine/editor/helpers'
 
 // maybe unnecessary for MotionPath
 export interface MotionPathConfig {

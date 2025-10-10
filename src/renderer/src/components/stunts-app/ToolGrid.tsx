@@ -1,12 +1,7 @@
 'use client'
 
-import {
-  CANVAS_HORIZ_OFFSET,
-  CANVAS_VERT_OFFSET,
-  Editor,
-  getRandomNumber,
-  rgbToWgpu
-} from '../../engine/editor'
+import { CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Editor } from '../../engine/editor'
+import { getRandomNumber, InputValue, rgbToWgpu, wgpuToHuman } from '../../engine/editor/helpers'
 import { OptionButton } from './items'
 import EditorState from '../../engine/editor_state'
 import React, { useCallback, useRef, useState } from 'react'
