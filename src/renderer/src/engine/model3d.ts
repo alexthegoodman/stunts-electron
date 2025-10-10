@@ -97,7 +97,7 @@ export class Model3D {
     const vertexSize = vertices.length * vertexByteSize * 100
 
     console.info('Model3D vertices count ', this.vertices.length, this.indices.length)
-    console.info('vertices ', this.vertices.slice(0, 10), this.indices.slice(0, 10))
+    console.info('vertices ', this.vertices.slice(100, 150), this.indices.slice(0, 10))
     // const maxIndex = Math.max(...indices)
     // console.log('Max index:', maxIndex)
 
@@ -176,6 +176,7 @@ export class Model3D {
         depthOrArrayLayers: 1
       }
       textureData = new Uint8Array(textureImage.data.buffer)
+      console.info('using glb texture')
     } else {
       // Fallback to white pixel
       textureSize = { width: 1, height: 1, depthOrArrayLayers: 1 }
@@ -303,37 +304,9 @@ export class Model3D {
       // Post-process the GLTF to properly decode all buffer data
       const gltf = postProcessGLTF(gltfData)
 
-      console.info('gltf', gltf)
-
       // Get color from fill
       const color: [number, number, number, number] =
         backgroundFill.type === 'Color' ? backgroundFill.value : [0.7, 0.7, 0.75, 1.0]
-
-      // Extract texture from materials if available
-      // if (gltf.materials && gltf.materials.length > 0) {
-      //   const material = gltf.materials[0]
-      //   if (material.pbrMetallicRoughness?.baseColorTexture) {
-      //     const textureIndex = material.pbrMetallicRoughness.baseColorTexture.index
-      //     const texture = gltf.textures?.[textureIndex]
-      //     if (texture?.source !== undefined) {
-      //       const imageIndex = texture.source
-      //       const image = gltf.images?.[imageIndex]
-      //       if (image && gltf.images && gltf.images[imageIndex]) {
-      //         const imageData = gltf.images[imageIndex]
-      //         // loaders.gl provides the image as an ImageBitmap or HTMLImageElement
-      //         if (imageData instanceof ImageBitmap || imageData instanceof HTMLImageElement) {
-      //           // Convert to ImageData using OffscreenCanvas
-      //           const canvas = new OffscreenCanvas(imageData.width, imageData.height)
-      //           const ctx = canvas.getContext('2d')
-      //           if (ctx) {
-      //             ctx.drawImage(imageData, 0, 0)
-      //             textureImage = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      //           }
-      //         }
-      //       }
-      //     }
-      //   }
-      // }
 
       if (gltf.materials && gltf.materials.length > 0) {
         const material = gltf.materials[0]
@@ -341,13 +314,14 @@ export class Model3D {
           const textureIndex = material.pbrMetallicRoughness.baseColorTexture.index
           const texture = gltf.textures?.[textureIndex]
           if (texture?.source !== undefined) {
-            const imageData = texture.source.image.data
+            const imageData = texture.source.image
             // loaders.gl provides the image as an ImageBitmap or HTMLImageElement
             if (imageData instanceof ImageBitmap || imageData instanceof HTMLImageElement) {
               // Convert to ImageData using OffscreenCanvas
               const canvas = new OffscreenCanvas(imageData.width, imageData.height)
               const ctx = canvas.getContext('2d')
               if (ctx) {
+                // console.info('draw texture', texture)
                 ctx.drawImage(imageData, 0, 0)
                 textureImage = ctx.getImageData(0, 0, canvas.width, canvas.height)
               }
@@ -362,6 +336,7 @@ export class Model3D {
           if (!mesh.primitives) continue
 
           for (const primitive of mesh.primitives) {
+            console.info('primitive', primitive)
             const attributes = primitive.attributes
             const startIndex = vertices.length
 
@@ -370,45 +345,11 @@ export class Model3D {
 
             const positions = new Float32Array(positionAccessorIndex.buffer)
 
-            // if (positionAccessorIndex === undefined) continue
-
-            // const positionAccessor = gltf.accessors![positionAccessorIndex]
-            // const positionBufferView = gltf.bufferViews![positionAccessor.bufferView!]
-
-            // // Get the buffer data
-            // const buffer = gltf.buffers[positionBufferView.buffer || 0]
-            // const bufferData = buffer.arrayBuffer
-
-            // // Extract position data
-            // const positionOffset =
-            //   (positionBufferView.byteOffset || 0) + (positionAccessor.byteOffset || 0)
-            // const positions = new Float32Array(
-            //   bufferData,
-            //   positionOffset,
-            //   positionAccessor.count * 3
-            // )
-
             // console.info('positions', positions)
 
             const texcoordAccessor = attributes.TEXCOORD_0.value
 
             const texcoords = new Float32Array(texcoordAccessor.buffer)
-
-            // Get texture coordinates if available
-            // let texcoords: Float32Array | null = null
-            // if (attributes.TEXCOORD_0 !== undefined) {
-            //   const texcoordAccessor = gltf.accessors![attributes.TEXCOORD_0]
-            //   const texcoordBufferView = gltf.bufferViews![texcoordAccessor.bufferView!]
-            //   const texcoordBuffer = gltf.buffers[texcoordBufferView.buffer || 0]
-            //   const texcoordBufferData = texcoordBuffer.arrayBuffer
-            //   const texcoordOffset =
-            //     (texcoordBufferView.byteOffset || 0) + (texcoordAccessor.byteOffset || 0)
-            //   texcoords = new Float32Array(
-            //     texcoordBufferData,
-            //     texcoordOffset,
-            //     texcoordAccessor.count * 2
-            //   )
-            // }
 
             // Create vertices
             // const vertexCount = positionAccessor.count
@@ -435,47 +376,7 @@ export class Model3D {
 
             const indices = new Uint32Array(indicesAccessor.buffer)
 
-            return [vertices, indices, null]
-
-            // // Get indices
-            // if (primitive.indices !== undefined) {
-            //   const indicesAccessor = gltf.accessors![primitive.indices]
-            //   const indicesBufferView = gltf.bufferViews![indicesAccessor.bufferView!]
-            //   const indicesBuffer = gltf.buffers[indicesBufferView.buffer || 0]
-            //   console.info('indicesBuffer', indicesAccessor, indicesBufferView, indicesBuffer)
-            //   const indicesBufferData = indicesBuffer.arrayBuffer
-            //   const indicesOffset =
-            //     (indicesBufferView.byteOffset || 0) + (indicesAccessor.byteOffset || 0)
-
-            //   // Component type determines the array type
-            //   let primitiveIndices: Uint16Array | Uint32Array
-            //   if (indicesAccessor.componentType === 5123) {
-            //     // UNSIGNED_SHORT
-            //     primitiveIndices = new Uint16Array(
-            //       indicesBufferData,
-            //       indicesOffset,
-            //       indicesAccessor.count
-            //     )
-            //   } else {
-            //     // UNSIGNED_INT (5125)
-            //     primitiveIndices = new Uint32Array(
-            //       indicesBufferData,
-            //       indicesOffset,
-            //       indicesAccessor.count
-            //     )
-            //   }
-
-            //   console.info('primitiveIndices ', primitiveIndices, startIndex)
-
-            //   for (let i = 0; i < primitiveIndices.length; i++) {
-            //     indices.push(startIndex + primitiveIndices[i])
-            //   }
-            // } else {
-            //   // No indices, create them sequentially
-            //   for (let i = 0; i < vertexCount; i++) {
-            //     indices.push(startIndex + i)
-            //   }
-            // }
+            return [vertices, indices, textureImage]
           }
         }
       }
