@@ -43,6 +43,8 @@ declare global {
         getVideo: (fileName: string) => Promise<any>
 
         saveVideoFromPath: (data: { filePath: string; fileName?: string }) => Promise<any>
+        saveModelFromPath: (data: { filePath: string; fileName?: string }) => Promise<any>
+        getModel: (fileName: string) => Promise<any>
       }
       settings: {
         get: (userId: string) => Promise<any>
@@ -95,6 +97,9 @@ declare global {
           maxHeight: number
           outputDir?: string
         }) => Promise<any>
+      }
+      model: {
+        select: () => Promise<any>
       }
       screenCapture: {
         getSources: () => Promise<

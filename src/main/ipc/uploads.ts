@@ -13,10 +13,11 @@ async function ensureUploadsDir(): Promise<void> {
   const uploadsDir = getUploadsDir()
   await fs.mkdir(path.join(uploadsDir, 'images'), { recursive: true })
   await fs.mkdir(path.join(uploadsDir, 'videos'), { recursive: true })
+  await fs.mkdir(path.join(uploadsDir, 'models'), { recursive: true })
 }
 
 // Helper to validate file type from buffer
-function getMimeTypeFromBuffer(buffer: Buffer, type: 'image' | 'video'): string | null {
+function getMimeTypeFromBuffer(buffer: Buffer, type: 'image' | 'video' | 'model'): string | null {
   if (type === 'image') {
     if (buffer.length < 2) return null
     // JPEG
@@ -38,6 +39,14 @@ function getMimeTypeFromBuffer(buffer: Buffer, type: 'image' | 'video'): string 
     // MP4 (starts with ftyp)
     if (buffer[4] === 0x66 && buffer[5] === 0x74 && buffer[6] === 0x79 && buffer[7] === 0x70)
       return 'video/mp4'
+  } else if (type === 'model') {
+    if (buffer.length < 4) return null
+    // GLB (starts with glTF magic number 0x46546C67)
+    if (buffer[0] === 0x67 && buffer[1] === 0x6C && buffer[2] === 0x54 && buffer[3] === 0x46)
+      return 'model/gltf-binary'
+    // GLTF (JSON file, starts with '{')
+    if (buffer[0] === 0x7B)
+      return 'model/gltf+json'
   }
   return null
 }
@@ -379,6 +388,79 @@ export function registerUploadHandlers(): void {
     } catch (error) {
       console.error('Failed to get uploads directory:', error)
       return { success: false, error: 'Failed to get uploads directory' }
+    }
+  })
+
+  // Save 3D model from path (used by UI)
+  ipcMain.handle(
+    'uploads:saveModelFromPath',
+    async (_event, data: { filePath: string; fileName?: string }) => {
+      try {
+        await ensureUploadsDir()
+
+        // Read file to validate
+        const buffer = await fs.readFile(data.filePath)
+
+        // Validate file size (50MB limit)
+        const MAX_SIZE = 50 * 1024 * 1024
+        if (buffer.length > MAX_SIZE) {
+          return { success: false, error: 'File size exceeds 50MB limit' }
+        }
+
+        // Validate file type
+        const mimeType = getMimeTypeFromBuffer(buffer, 'model')
+        if (!mimeType) {
+          return { success: false, error: 'Invalid file type. Allowed types: GLB, GLTF' }
+        }
+
+        // Generate unique filename
+        const timestamp = Date.now()
+        const originalName = data.fileName || path.basename(data.filePath)
+        const sanitizedName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_')
+        const extension = mimeType === 'model/gltf-binary' ? '.glb' : '.gltf'
+        const uniqueFileName = `${timestamp}-${sanitizedName}`
+
+        // Save to uploads directory
+        const uploadsDir = getUploadsDir()
+        const savePath = path.join(uploadsDir, 'models', uniqueFileName)
+        await fs.copyFile(data.filePath, savePath)
+
+        return {
+          success: true,
+          data: {
+            url: savePath,
+            fileName: uniqueFileName,
+            size: buffer.length,
+            mimeType: mimeType,
+            dimensions: { width: 0, height: 0 }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to save model:', error)
+        return { success: false, error: 'Failed to save model' }
+      }
+    }
+  )
+
+  // Get 3D model by filename (used by UI)
+  ipcMain.handle('uploads:getModel', async (_event, fileName: string) => {
+    try {
+      const modelPath = fileName
+
+      console.info('reading model', modelPath)
+      const buffer = await fs.readFile(modelPath)
+      const mimeType = getMimeTypeFromBuffer(buffer, 'model') || 'model/gltf-binary'
+
+      return {
+        success: true,
+        data: {
+          buffer: buffer,
+          mimeType: mimeType
+        }
+      }
+    } catch (error) {
+      console.error('Failed to get model:', error)
+      return { success: false, error: 'Failed to get model' }
     }
   })
 }

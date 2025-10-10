@@ -1189,6 +1189,25 @@ export class CanvasPipeline {
       }
     }
 
+    // Draw 3D models
+    for (const model of editor.models3D || []) {
+      if (!model.hidden) {
+        // if (editor.draggingModel3D === model.id || editor.isPlaying) {
+        if (editor.isPlaying) {
+          model.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+        }
+
+        model.bindGroup.bindWebGLBindGroup(gl)
+        model.groupBindGroup?.bindWebGLBindGroup(gl)
+
+        drawIndexedGeometry(
+          model.vertexBuffer as PolyfillBuffer,
+          model.indexBuffer as PolyfillBuffer,
+          model.indices.length
+        )
+      }
+    }
+
     // Draw repeat objects
     let repeatObjects = editor.repeatManager.getAllRepeatObjects()
     if (repeatObjects.length > 0) {

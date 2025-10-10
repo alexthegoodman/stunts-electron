@@ -36,6 +36,9 @@ const api = {
       ipcRenderer.invoke('uploads:saveVideoFromPath', data),
     getImage: (fileName: string) => ipcRenderer.invoke('uploads:getImage', fileName),
     getVideo: (fileName: string) => ipcRenderer.invoke('uploads:getVideo', fileName),
+    saveModelFromPath: (data: { filePath: string; fileName?: string }) =>
+      ipcRenderer.invoke('uploads:saveModelFromPath', data),
+    getModel: (fileName: string) => ipcRenderer.invoke('uploads:getModel', fileName),
   },
 
   // Settings APIs
@@ -87,6 +90,11 @@ const api = {
     select: () => ipcRenderer.invoke('video:select'),
     resizeFromPath: (data: { inputPath: string; maxWidth: number; maxHeight: number; outputDir?: string }) =>
       ipcRenderer.invoke('video:resizeFromPath', data),
+  },
+
+  // 3D Model APIs
+  model: {
+    select: () => ipcRenderer.invoke('model:select'),
   },
 
   // Screen Capture APIs

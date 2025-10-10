@@ -7,6 +7,7 @@ import { SavedBrushConfig } from './brush'
 import { SavedCube3DConfig } from './cube3d'
 import { SavedSphere3DConfig } from './sphere3d'
 import { SavedMockup3DConfig } from './mockup3d'
+import { SavedModel3DConfig } from './model3d'
 import { ShaderThemeConfig } from './shader_themes'
 
 export interface SavedState {
@@ -58,7 +59,8 @@ export enum ObjectType {
   Brush = 'Brush',
   Cube3D = 'Cube3D',
   Sphere3D = 'Sphere3D',
-  Mockup3D = 'Mockup3D'
+  Mockup3D = 'Mockup3D',
+  Model3D = 'Model3D'
 }
 
 export enum EasingType {
@@ -98,6 +100,7 @@ export interface Sequence {
   activeCubes3D?: SavedCube3DConfig[]
   activeSpheres3D?: SavedSphere3DConfig[]
   activeMockups3D?: SavedMockup3DConfig[]
+  activeModels3D?: SavedModel3DConfig[]
 }
 
 export const getSequenceDuration = (sequence: Sequence) => {
@@ -373,6 +376,11 @@ export function findObjectType(lastSavedState: SavedState, objectId: string): Ob
   // Check active mockups
   if (lastSavedState.sequences.some((s) => s.activeMockups3D?.some((av) => av.id === objectId))) {
     return ObjectType.Mockup3D
+  }
+
+  // Check active 3D models
+  if (lastSavedState.sequences.some((s) => s.activeModels3D?.some((av) => av.id === objectId))) {
+    return ObjectType.Model3D
   }
 
   return null

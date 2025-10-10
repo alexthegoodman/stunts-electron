@@ -5,6 +5,7 @@ import { registerUploadHandlers } from './uploads'
 import { registerAiGenerationHandlers } from './ai-generation'
 import { registerVideoHandlers } from './video'
 import { registerScreenCaptureHandlers } from './screen-capture'
+import { registerModelHandlers } from './model'
 
 /**
  * Register all IPC handlers
@@ -18,6 +19,7 @@ export function registerAllHandlers(): void {
   registerAiGenerationHandlers()
   registerVideoHandlers()
   registerScreenCaptureHandlers()
+  registerModelHandlers()
 
   console.log('All IPC handlers registered')
 }

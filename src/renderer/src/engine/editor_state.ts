@@ -19,6 +19,7 @@ import { SavedBrushConfig } from './brush'
 import { SavedCube3DConfig } from './cube3d'
 import { SavedSphere3DConfig } from './sphere3d'
 import { SavedMockup3DConfig } from './mockup3d'
+import { SavedModel3DConfig } from './model3d'
 import {
   CANVAS_HORIZ_OFFSET,
   CANVAS_VERT_OFFSET,
@@ -309,6 +310,37 @@ export default class EditorState {
           s.activeMockups3D = []
         }
         s.activeMockups3D.push(savable_mockup)
+
+        if (this.supportsMotionPaths && s.polygonMotionPaths) {
+          s.polygonMotionPaths.push(new_motion_path)
+        }
+      }
+    })
+
+    let sequences = saved_state.sequences
+
+    await saveSequencesData(sequences, this.saveTarget)
+
+    this.savedState = saved_state
+  }
+
+  async add_saved_model3d(selected_sequence_id: string, savable_model: SavedModel3DConfig) {
+    let new_motion_path = save_default_keyframes(
+      this,
+      savable_model.id,
+      ObjectType.Model3D,
+      savable_model.position,
+      20000
+    )
+
+    let saved_state = this.savedState
+
+    saved_state.sequences.forEach((s) => {
+      if (s.id == selected_sequence_id) {
+        if (!s.activeModels3D) {
+          s.activeModels3D = []
+        }
+        s.activeModels3D.push(savable_model)
 
         if (this.supportsMotionPaths && s.polygonMotionPaths) {
           s.polygonMotionPaths.push(new_motion_path)

@@ -19,7 +19,10 @@ import {
   resizeVideoFromPath,
   saveVideoFromPath,
   selectVideo,
-  saveImage
+  saveImage,
+  selectModel,
+  saveModelFromPath,
+  getUploadedModelData
 } from '../../fetchers/projects'
 import { Sequence } from '../../engine/animations'
 import { PolygonConfig } from '../../engine/polygon'
@@ -28,6 +31,7 @@ import { TextRendererConfig } from '../../engine/text'
 import { Cube3DConfig } from '../../engine/cube3d'
 import { Sphere3DConfig } from '../../engine/sphere3d'
 import { Mockup3DConfig } from '../../engine/mockup3d'
+import { Model3DConfig } from '../../engine/model3d'
 import { PageSequence } from '../../engine/data'
 import { Layer, LayerFromConfig } from './layers'
 import { StVideoConfig } from '../../engine/video'
@@ -1078,6 +1082,116 @@ export const ToolGrid = ({
     [authToken, setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
   )
 
+  const on_add_model3d = useCallback(
+    async (sequence_id: string) => {
+      let editor = editorRef.current
+      let editor_state = editorStateRef.current
+
+      if (!editor || !editor_state) {
+        return
+      }
+
+      if (!editor.settings) {
+        console.error('Editor settings are not defined.')
+        return
+      }
+
+      try {
+        const { filePath, fileName } = await selectModel()
+
+        setUserMessage(`Processing 3D model: ${fileName}...`)
+
+        // Save the model file
+        const response = await saveModelFromPath(filePath, fileName)
+
+        setUserMessage('')
+
+        if (response) {
+          let url = response.url
+
+          console.info('Model file url:', url)
+
+          // Get the model data
+          const modelData = await getUploadedModelData(url)
+
+          if (!modelData) {
+            throw new Error('Failed to get model data')
+          }
+
+          const random_number_800 = getRandomNumber(100, editor.settings.dimensions.width)
+          const random_number_450 = getRandomNumber(100, editor.settings.dimensions.height)
+
+          const new_model_id = uuidv4()
+
+          const modelPosition = {
+            x: random_number_800 + CANVAS_HORIZ_OFFSET,
+            y: random_number_450 + CANVAS_VERT_OFFSET
+          }
+
+          // Create model config
+          const modelConfig: Model3DConfig = {
+            id: new_model_id,
+            name: fileName,
+            path: url,
+            position: modelPosition,
+            rotation: [0, 0, 0],
+            scale: [1, 1, 1],
+            backgroundFill: {
+              type: 'Color',
+              value: [0.7, 0.7, 0.75, 1.0] // Silver gray
+            },
+            layer: layers.length
+          }
+
+          // Add the model
+          await editor.add_model3d(modelConfig, new_model_id, sequence_id, modelData)
+
+          // Save model to state
+          await editor_state.add_saved_model3d(sequence_id, modelConfig)
+
+          console.info('Saved model!')
+
+          let saved_state = editor_state.savedState
+          let updated_sequence = saved_state.sequences.find((s) => s.id == sequence_id)
+
+          let sequence_cloned = updated_sequence
+
+          if (!sequence_cloned) {
+            return
+          }
+
+          if (set_sequences) {
+            set_sequences(saved_state.sequences)
+          }
+
+          editor.currentSequenceData = sequence_cloned
+          editor.updateMotionPaths(sequence_cloned)
+
+          // Add layer only for the model
+          editor.models3D.forEach((model) => {
+            if (!model.hidden && model.id === modelConfig.id) {
+              let model_config: Model3DConfig = model.toConfig()
+              let new_layer: Layer = LayerFromConfig.fromModel3DConfig(model_config)
+              layers.push(new_layer)
+            }
+          })
+
+          setLayers(layers)
+
+          console.info('Model3D added!')
+          toast.success('3D model imported successfully!')
+        }
+      } catch (error: any) {
+        if (error.message !== 'No file selected') {
+          console.error('add model error', error)
+          toast.error(error.message || 'An error occurred')
+        }
+        setUserMessage('')
+      }
+    },
+    [authToken, setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
+  )
+
   return (
     <>
       {userMessage && (
@@ -1498,6 +1612,20 @@ export const ToolGrid = ({
                   return
                 }
                 on_add_mockup3d(currentSequenceId)
+              }}
+            />
+          )}
+          {options.includes('model3d') && (
+            <OptionButton
+              style={{}}
+              label={t('Import 3D Model')}
+              icon="cube"
+              aria-label="Import a 3D model (GLB/GLTF)"
+              callback={() => {
+                if (!currentSequenceId) {
+                  return
+                }
+                on_add_model3d(currentSequenceId)
               }}
             />
           )}

@@ -295,6 +295,7 @@ import { Cube3D, Cube3DConfig } from './cube3d'
 import { Sphere3D, Sphere3DConfig } from './sphere3d'
 import { Mockup3D, Mockup3DConfig } from './mockup3d'
 import { processVideoZoom } from './state/animations/zoom'
+import { Model3D, Model3DConfig } from './model3d'
 // import * as fontkit from "fontkit";
 
 export class Editor {
@@ -325,6 +326,7 @@ export class Editor {
   cubes3D: Cube3D[]
   spheres3D: Sphere3D[]
   mockups3D: Mockup3D[]
+  models3D: Model3D[]
   draggingCube3D: string | null
   draggingSphere3D: string | null
   draggingMockup3D: string | null
@@ -489,6 +491,7 @@ export class Editor {
     this.generationCurved = false
     this.generationChoreographed = true
     this.generationFade = true
+    this.models3D = []
 
     // TODO: update interactive bounds on window resize?
     // this.interactiveBounds = {
@@ -1817,6 +1820,46 @@ export class Editor {
       }
     }
 
+    // Restore 3D models
+    if (saved_sequence.activeModels3D) {
+      for (const model of saved_sequence.activeModels3D) {
+        if (
+          !this.gpuResources ||
+          !this.camera ||
+          !this.modelBindGroupLayout ||
+          !this.groupBindGroupLayout
+        ) {
+          continue
+        }
+
+        try {
+          // Load model data from path
+          const modelData = await window.api.uploads.getModel(model.path)
+
+          if (!modelData.success) {
+            console.error('Failed to load model data:', model.path)
+            continue
+          }
+
+          const restored_model = new Model3D(
+            this.camera.windowSize,
+            this.gpuResources.device,
+            this.gpuResources.queue,
+            this.modelBindGroupLayout,
+            this.groupBindGroupLayout,
+            this.camera,
+            model,
+            saved_sequence.id,
+            modelData.data.buffer
+          )
+
+          this.models3D.push(restored_model)
+        } catch (error) {
+          console.error('Error restoring model:', error)
+        }
+      }
+    }
+
     // restored layer spacing
     // Update all objects with new layer spacing
 
@@ -2598,6 +2641,9 @@ export class Editor {
         case 'Sphere3D':
           objectIdx = this.spheres3D.findIndex((s) => s.id === animation.polygonId)
           break
+        case 'Model3D':
+          objectIdx = this.models3D.findIndex((s) => s.id === animation.polygonId)
+          break
       }
 
       if (objectIdx === undefined || objectIdx === -1) {
@@ -2806,6 +2852,9 @@ export class Editor {
               case ObjectType.Sphere3D:
                 this.spheres3D[objectIdx].transform.updatePosition(positionVec, camera.windowSize)
                 break
+              case ObjectType.Model3D:
+                this.models3D[objectIdx].transform.updatePosition(positionVec, camera.windowSize)
+                break
             }
             break
           }
@@ -2836,6 +2885,9 @@ export class Editor {
                 break
               case ObjectType.Sphere3D:
                 this.spheres3D[objectIdx].transform.updateRotationXDegrees(x)
+                break
+              case ObjectType.Model3D:
+                this.models3D[objectIdx].transform.updateRotationXDegrees(x)
                 break
             }
             break
@@ -2868,6 +2920,9 @@ export class Editor {
               case ObjectType.Sphere3D:
                 this.spheres3D[objectIdx].transform.updateRotationYDegrees(y)
                 break
+              case ObjectType.Model3D:
+                this.models3D[objectIdx].transform.updateRotationYDegrees(y)
+                break
             }
             break
           }
@@ -2896,6 +2951,9 @@ export class Editor {
                 break
               case ObjectType.Sphere3D:
                 this.spheres3D[objectIdx].transform.updateRotation(new_rotation_rad)
+                break
+              case ObjectType.Model3D:
+                this.models3D[objectIdx].transform.updateRotation(new_rotation_rad)
                 break
             }
             break
@@ -2950,6 +3008,9 @@ export class Editor {
               case ObjectType.Sphere3D:
                 this.spheres3D[objectIdx].transform.updateScaleX(new_scale)
                 break
+              case ObjectType.Model3D:
+                this.models3D[objectIdx].transform.updateScaleX(new_scale)
+                break
             }
             break
           }
@@ -3002,6 +3063,9 @@ export class Editor {
                 break
               case ObjectType.Sphere3D:
                 this.spheres3D[objectIdx].transform.updateScaleY(new_scale)
+                break
+              case ObjectType.Model3D:
+                this.models3D[objectIdx].transform.updateScaleY(new_scale)
                 break
             }
             break
@@ -3304,9 +3368,9 @@ export class Editor {
     // }
 
     // let zoom_factor = if delta > 0.0 { 1[1] } else { 0.9 };
-    let zoom_factor = delta / 10.0
-    camera?.update_zoom(zoom_factor, mouse_pos)
-    this.updateCameraBinding()
+    // let zoom_factor = delta / 10.0
+    // camera?.update_zoom(zoom_factor, mouse_pos)
+    // this.updateCameraBinding()
   }
 
   add_polygon(
@@ -3475,6 +3539,43 @@ export class Editor {
     )
 
     this.mockups3D.push(mockup)
+  }
+
+  async add_model3d(
+    model_config: Model3DConfig,
+    new_id: string,
+    selected_sequence_id: string,
+    modelData: ArrayBuffer
+  ) {
+    let gpuResources = this.gpuResources
+    let camera = this.camera
+    let windowSize = camera?.windowSize
+
+    if (
+      !camera ||
+      !windowSize ||
+      !gpuResources ||
+      !this.modelBindGroupLayout ||
+      !this.groupBindGroupLayout
+    ) {
+      return null
+    }
+
+    let model = new Model3D(
+      windowSize,
+      gpuResources.device,
+      gpuResources.queue,
+      this.modelBindGroupLayout,
+      this.groupBindGroupLayout,
+      camera,
+      model_config,
+      selected_sequence_id,
+      modelData
+    )
+
+    this.models3D.push(model)
+
+    return model
   }
 
   async add_text_item(

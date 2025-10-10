@@ -1556,7 +1556,8 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       'brush',
                       'cube3d',
                       'sphere3d',
-                      'mockup3d'
+                      'mockup3d',
+                      'model3d'
                     ]}
                     layers={layers}
                     setLayers={set_layers}

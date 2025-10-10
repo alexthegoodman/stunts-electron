@@ -517,3 +517,53 @@ export const resizeAndSaveVideo = async (
   // Save the resized version
   return await saveVideoFromPath(outputPath, fileName)
 }
+
+/**
+ * Select a 3D model file (GLB/GLTF) using native file dialog
+ * Returns the file path without processing
+ */
+export const selectModel = async (): Promise<{
+  filePath: string
+  fileName: string
+  size: number
+}> => {
+  const result = await window.api.model.select()
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to select model')
+  }
+
+  return result.data
+}
+
+/**
+ * Save a 3D model file from a path to the uploads directory
+ */
+export const saveModelFromPath = async (
+  filePath: string,
+  fileName?: string
+): Promise<UploadResponse> => {
+  const result = await window.api.uploads.saveModelFromPath({
+    filePath,
+    fileName
+  })
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to save model')
+  }
+
+  return result.data
+}
+
+/**
+ * Get uploaded model data
+ */
+export const getUploadedModelData = async (url: string): Promise<ArrayBuffer> => {
+  const result = await window.api.uploads.getModel(url)
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to get model data')
+  }
+
+  return result.data.buffer
+}

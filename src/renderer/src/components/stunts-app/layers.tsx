@@ -8,6 +8,7 @@ import { BrushConfig } from '../../engine/brush'
 import { Cube3DConfig } from '../../engine/cube3d'
 import { Sphere3DConfig } from '../../engine/sphere3d'
 import { Mockup3DConfig } from '../../engine/mockup3d'
+import { Model3DConfig } from '../../engine/model3d'
 import { ObjectType } from '../../engine/animations'
 import { CreateIcon } from './icon'
 import { Editor } from '../../engine/editor'
@@ -69,6 +70,12 @@ export const LayerFromConfig = {
     instance_id: config.id,
     instance_name: config.name,
     instance_kind: ObjectType.Mockup3D,
+    initial_layer_index: config.layer
+  }),
+  fromModel3DConfig: (config: Model3DConfig): Layer => ({
+    instance_id: config.id,
+    instance_name: config.name,
+    instance_kind: ObjectType.Model3D,
     initial_layer_index: config.layer
   })
 }
