@@ -1,96 +1,3 @@
-// import {
-//   AnimationData,
-//   TimelineSequence,
-//   TrackType,
-// } from "../engine/animations";
-// import React, { useState, useCallback } from "react";
-
-// interface TrackProps {
-//   type: TrackType;
-//   objectData: AnimationData;
-//   pixelsPerSecond: number;
-//   onSequenceDragEnd: (animation: AnimationData, newStartTimeMs: number) => void;
-// }
-
-// export const ObjectTrack: React.FC<TrackProps> = ({
-//   type,
-//   objectData,
-//   pixelsPerSecond,
-//   onSequenceDragEnd,
-// }) => {
-//   //   console.info("tSequences", tSequences);
-
-//   const pixelsPerMs = pixelsPerSecond / 1000;
-//   const trackColor = type === TrackType.Audio ? "bg-blue-300" : "bg-orange-200";
-//   const sequenceColor =
-//     type === TrackType.Audio ? "bg-red-400" : "bg-green-400";
-
-//   const handleDragStart = (e: React.DragEvent, animation: AnimationData) => {
-//     console.info("handleDragStart");
-//     e.dataTransfer.setData("text/plain", JSON.stringify(animation));
-//     e.dataTransfer.effectAllowed = "move";
-//   };
-
-//   const handleDragOver = (e: React.DragEvent) => {
-//     console.info("handleDragOver");
-//     e.preventDefault();
-
-//     e.dataTransfer.dropEffect = "move";
-//   };
-
-//   const handleDrop = (e: React.DragEvent) => {
-//     console.info("handleDrop");
-//     e.preventDefault();
-
-//     const animation = JSON.parse(
-//       e.dataTransfer.getData("text/plain")
-//     ) as AnimationData;
-
-//     // Calculate new position based on drop coordinates
-//     const trackRect = (
-//       e.currentTarget as HTMLDivElement
-//     ).getBoundingClientRect();
-//     const newPositionX = e.clientX - trackRect.left;
-//     const newStartTimeMs = Math.max(0, Math.round(newPositionX / pixelsPerMs));
-
-//     onSequenceDragEnd(animation, newStartTimeMs);
-//   };
-
-//   const left = objectData.startTimeMs * pixelsPerMs;
-//   const width = objectData.duration * pixelsPerMs;
-
-//   return (
-//     <div className="relative h-[50px] w-[900px] mb-1">
-//       {/* Track background */}
-//       <div
-//         className={`relative w-[900px] h-[50px] ${trackColor}`}
-//         onDragOver={(e) => handleDragOver(e)}
-//         onDrop={(e) => handleDrop(e)}
-//       />
-
-//       {/* Sequences */}
-//       <div className="relative w-full h-full p-1 top-[-50px] z-10">
-//         {objectData && (
-//           <div
-//             key={objectData.id}
-//             draggable
-//             onDragStart={(e) => handleDragStart(e, objectData)}
-//             className={`relative h-10 rounded cursor-pointer ${sequenceColor}
-//            hover:shadow-lg transition-shadow duration-200
-//            flex items-center px-2 select-none`}
-//             style={{
-//               left: `${left}px`,
-//               width: `${width}px`,
-//             }}
-//           >
-//             {objectData.id}
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
 import React, { useState } from 'react'
 import {
   DndContext,
@@ -104,6 +11,7 @@ import {
 import { restrictToHorizontalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
 import { AnimationData, ObjectType, TrackType } from '../../engine/animations'
+import { CreateIcon } from './icon'
 
 interface TrackProps {
   type: TrackType
@@ -113,6 +21,7 @@ interface TrackProps {
   pixelsPerSecond: number
   onSequenceDragEnd: (animation: AnimationData, newStartTimeMs: number) => void
   onSelectObject: (objectType: ObjectType, objectId: string) => void
+  onDeleteObject: (id: string, kind: ObjectType) => void
 }
 
 interface SequenceProps {
@@ -123,6 +32,7 @@ interface SequenceProps {
   localLeft: number
   localWidth: number
   onSelectObject: (objectType: ObjectType, objectId: string) => void
+  onDeleteObject: (id: string, kind: ObjectType) => void
 }
 
 // Draggable Sequence Component
@@ -133,7 +43,8 @@ const DraggableSequence: React.FC<SequenceProps> = ({
   sequenceColor,
   localLeft,
   localWidth,
-  onSelectObject
+  onSelectObject,
+  onDeleteObject
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: animation.id,
@@ -156,11 +67,21 @@ const DraggableSequence: React.FC<SequenceProps> = ({
     >
       <span className="truncate">{objectName}</span>
       {/* <span className="text-xs">({animation.polygonId})</span> */}
-      <div
-        className="bg-black hover:bg-gray-600 pb-1 px-2 rounded"
-        onClick={() => onSelectObject(animation.objectType, animation.polygonId)}
-      >
-        <span className="text-xs">Select</span>
+      <div className="flex flex-row gap-1">
+        <div
+          className="bg-black hover:bg-gray-600 pb-1 px-2 rounded"
+          onClick={() => onSelectObject(animation.objectType, animation.polygonId)}
+        >
+          <span className="text-xs">Select</span>
+        </div>
+        <div
+          className="bg-red-500 hover:bg-gray-600 pb-1 px-2 rounded pt-1"
+          onClick={() => {
+            onDeleteObject(animation.polygonId, animation.objectType)
+          }}
+        >
+          <CreateIcon icon="trash" size="18px" />
+        </div>
       </div>
     </div>
   )
@@ -173,7 +94,8 @@ export const ObjectTrack: React.FC<TrackProps> = ({
   objectData,
   pixelsPerSecond,
   onSequenceDragEnd,
-  onSelectObject
+  onSelectObject,
+  onDeleteObject
 }) => {
   const pixelsPerMs = pixelsPerSecond / 1000
 
@@ -238,6 +160,7 @@ export const ObjectTrack: React.FC<TrackProps> = ({
               localLeft={localLeft}
               localWidth={localWidth}
               onSelectObject={onSelectObject}
+              onDeleteObject={onDeleteObject}
             />
           )}
         </div>
