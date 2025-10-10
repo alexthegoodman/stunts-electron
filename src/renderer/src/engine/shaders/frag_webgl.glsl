@@ -197,8 +197,9 @@ float starNoise_shader(vec2 uv, float seed) {
     float b = hash_shader(i + vec2(1.0, 0.0) + seed);
     float c = hash_shader(i + vec2(0.0, 1.0) + seed);
     float d = hash_shader(i + vec2(1.0, 1.0) + seed);
-    vec2 u = f * f * (3.0 - 2.0 * f);
-    return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+    // Quintic interpolation for smoother result
+    vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 
 // Night Sky Shader
@@ -218,8 +219,8 @@ vec4 nightSkyShader(vec2 uv) {
     stars = pow(stars, 12.0 - starDensity * 9.0);
 
     // Add individual twinkling per star using position-based offset
-    float starId = hash_shader(floor(uv * 300.0 * starDensity));
-    float twinkle = sin(currentTime * twinkleSpeed * 3.0 + starId * 6.28) * 0.3 + 0.7;
+    float twinkle = starNoise_shader(uv * 300.0 * starDensity + currentTime * twinkleSpeed * 0.5, 10.0) * 0.6 + 0.4;
+    twinkle = pow(twinkle, 3.0) * 0.6 + 0.4;
     stars *= twinkle * starBrightness;
 
     // Add nebula

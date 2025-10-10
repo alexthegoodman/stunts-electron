@@ -13,11 +13,7 @@ export interface ShaderThemeConfig {
   params: ShaderThemeParams
 }
 
-export type ShaderThemeParams =
-  | NightSkyParams
-  | NetworkParams
-  | DaySkyParams
-  | RingsBlurParams
+export type ShaderThemeParams = NightSkyParams | NetworkParams | DaySkyParams | RingsBlurParams
 
 export interface NightSkyParams {
   starDensity: number // 0.0 - 1.0
@@ -55,11 +51,11 @@ export interface RingsBlurParams {
 
 // Default configurations for each shader theme
 export const DEFAULT_NIGHT_SKY: NightSkyParams = {
-  starDensity: 0.6,
-  starBrightness: 1.0,
+  starDensity: 0.1,
+  starBrightness: 0.1,
   nebulaDensity: 0.4,
   nebulaColor: [0.5, 0.2, 0.9, 1.0],
-  twinkleSpeed: 1.5
+  twinkleSpeed: 0.25
 }
 
 export const DEFAULT_NETWORK: NetworkParams = {

@@ -37,6 +37,7 @@ import toast from 'react-hot-toast'
 import { SourceSelectionModal } from './SourceSelectionModal'
 import { TextRollModal, TextRollConfig } from './TextRollModal'
 import { TextAnimationConfig, createTextAnimationPreset } from '../../engine/textAnimator'
+import { BrushType } from '@renderer/engine/brush'
 
 export const ToolGrid = ({
   editorRef,
@@ -1076,477 +1077,487 @@ export const ToolGrid = ({
           {uploadProgress > 0 && uploadProgress < 99 ? <span> {uploadProgress}%</span> : <></>}
         </div>
       )}
-      <div className="flex flex-row flex-wrap gap-2">
-        {options.includes('page') && (
-          <OptionButton
-            style={{}}
-            label={t('Add Page')}
-            icon="file-plus"
-            callback={() => {
-              if (!currentSequenceId || !on_create_sequence) {
-                return
-              }
-
-              on_create_sequence()
-            }}
-          />
-        )}
-
-        {options.includes('square') && (
-          <OptionButton
-            style={{}}
-            label={t('Add Square')}
-            icon="square"
-            aria-label="Add a square shape to the canvas"
-            callback={() => {
-              if (!currentSequenceId) {
-                return
-              }
-
-              on_add_square(currentSequenceId)
-            }}
-          />
-        )}
-
-        {options.includes('circle') && (
-          <OptionButton
-            style={{}}
-            label={t('Add Circle')}
-            icon="circle"
-            aria-label="Add a circle shape to the canvas"
-            callback={() => {
-              if (!currentSequenceId) {
-                return
-              }
-
-              on_add_square(currentSequenceId, true) // true for isCircle
-            }}
-          />
-        )}
-
-        {options.includes('text') && (
-          <OptionButton
-            style={{}}
-            label={t('Add Text')}
-            icon="text"
-            aria-label="Add a text element to the canvas"
-            callback={() => {
-              if (!currentSequenceId) {
-                return
-              }
-
-              on_add_text(currentSequenceId)
-            }}
-          />
-        )}
-
-        {options.includes('image') && (
-          <>
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*"
-              style={{ display: 'none' }}
-              aria-label="Select image file to upload"
-              onChange={(e) => {
-                // Handle the selected file here
-                if (!e.target.files || !currentSequenceId) {
+      <div className="flex flex-col">
+        <span className="block mb-2 text-white text-xs">2D Elements</span>
+        <div className="flex flex-row flex-wrap gap-2 mb-4">
+          {options.includes('page') && (
+            <OptionButton
+              style={{}}
+              label={t('Add Page')}
+              icon="file-plus"
+              callback={() => {
+                if (!currentSequenceId || !on_create_sequence) {
                   return
                 }
 
-                const file = e.target.files[0]
-                if (file) {
-                  // Do something with the file
-                  console.log('Selected file:', file)
-                  on_add_image(currentSequenceId, file)
+                on_create_sequence()
+              }}
+            />
+          )}
+
+          {options.includes('square') && (
+            <OptionButton
+              style={{}}
+              label={t('Add Square')}
+              icon="square"
+              aria-label="Add a square shape to the canvas"
+              callback={() => {
+                if (!currentSequenceId) {
+                  return
+                }
+
+                on_add_square(currentSequenceId)
+              }}
+            />
+          )}
+
+          {options.includes('circle') && (
+            <OptionButton
+              style={{}}
+              label={t('Add Circle')}
+              icon="circle"
+              aria-label="Add a circle shape to the canvas"
+              callback={() => {
+                if (!currentSequenceId) {
+                  return
+                }
+
+                on_add_square(currentSequenceId, true) // true for isCircle
+              }}
+            />
+          )}
+
+          {options.includes('text') && (
+            <OptionButton
+              style={{}}
+              label={t('Add Text')}
+              icon="text"
+              aria-label="Add a text element to the canvas"
+              callback={() => {
+                if (!currentSequenceId) {
+                  return
+                }
+
+                on_add_text(currentSequenceId)
+              }}
+            />
+          )}
+
+          {options.includes('textRoll') && (
+            <OptionButton
+              style={{}}
+              label={t('Add Text Roll')}
+              icon="text"
+              aria-label="Create animated text roll with multiple text blocks"
+              callback={() => {
+                setTextRollModalOpen(true)
+              }}
+            />
+          )}
+        </div>
+        <span className="block mb-2 text-white text-xs">Media</span>
+        <div className="flex flex-row flex-wrap gap-2 mb-4">
+          {options.includes('image') && (
+            <>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                style={{ display: 'none' }}
+                aria-label="Select image file to upload"
+                onChange={(e) => {
+                  // Handle the selected file here
+                  if (!e.target.files || !currentSequenceId) {
+                    return
+                  }
+
+                  const file = e.target.files[0]
+                  if (file) {
+                    // Do something with the file
+                    console.log('Selected file:', file)
+                    on_add_image(currentSequenceId, file)
+                  }
+                }}
+              />
+              <OptionButton
+                style={{}}
+                label={t('Add Image')}
+                icon="image"
+                aria-label="Browse and add an image file to the canvas"
+                callback={() => fileInputRef.current?.click()}
+              />
+            </>
+          )}
+
+          {options.includes('video') && (
+            <OptionButton
+              style={{}}
+              label={t('Add Video')}
+              icon="video"
+              aria-label="Browse and add a video file to the canvas"
+              callback={() => {
+                if (!currentSequenceId) {
+                  return
+                }
+                on_add_video(currentSequenceId)
+              }}
+            />
+          )}
+
+          {options.includes('capture') && (
+            <OptionButton
+              style={{}}
+              label={t('Screen Capture')}
+              icon="video"
+              aria-label={isCapturing ? 'Stop screen recording' : 'Start screen recording'}
+              callback={() => {
+                if (isCapturing) {
+                  handleStopCapture()
+                } else {
+                  handleStartCapture()
                 }
               }}
             />
-            <OptionButton
-              style={{}}
-              label={t('Add Image')}
-              icon="image"
-              aria-label="Browse and add an image file to the canvas"
-              callback={() => fileInputRef.current?.click()}
-            />
-          </>
-        )}
+          )}
 
-        {options.includes('video') && (
-          <OptionButton
-            style={{}}
-            label={t('Add Video')}
-            icon="video"
-            aria-label="Browse and add a video file to the canvas"
-            callback={() => {
-              if (!currentSequenceId) {
-                return
-              }
-              on_add_video(currentSequenceId)
-            }}
-          />
-        )}
-
-        {options.includes('capture') && (
-          <OptionButton
-            style={{}}
-            label={t('Screen Capture')}
-            icon="video"
-            aria-label={isCapturing ? 'Stop screen recording' : 'Start screen recording'}
-            callback={() => {
-              if (isCapturing) {
-                handleStopCapture()
-              } else {
-                handleStartCapture()
-              }
-            }}
-          />
-        )}
-
-        {options.includes('stickers') && (
-          <>
-            <OptionButton
-              style={{}}
-              label={t('Add Sticker')}
-              icon="sticker"
-              callback={() => {
-                setStickerModalOpen(true)
-              }}
-            />
-            <Dialog
-              open={stickerModalOpen}
-              onClose={() => setStickerModalOpen(false)}
-              className="relative z-50"
-            >
-              <div className="fixed inset-0 bg-black/25" />
-              <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-                <DialogPanel className="max-w-4xl space-y-4 border bg-white p-8 rounded-lg">
-                  <DialogTitle className="font-bold text-xl">Choose a Sticker</DialogTitle>
-                  <Description>Select a sticker to add to your project.</Description>
-                  <div className="grid grid-cols-6 gap-4 max-h-96 overflow-y-auto">
-                    {availableStickers.map((sticker) => (
+          {options.includes('stickers') && (
+            <>
+              <OptionButton
+                style={{}}
+                label={t('Add Sticker')}
+                icon="sticker"
+                callback={() => {
+                  setStickerModalOpen(true)
+                }}
+              />
+              <Dialog
+                open={stickerModalOpen}
+                onClose={() => setStickerModalOpen(false)}
+                className="relative z-50"
+              >
+                <div className="fixed inset-0 bg-black/25" />
+                <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
+                  <DialogPanel className="max-w-4xl space-y-4 border bg-white p-8 rounded-lg">
+                    <DialogTitle className="font-bold text-xl">Choose a Sticker</DialogTitle>
+                    <Description>Select a sticker to add to your project.</Description>
+                    <div className="grid grid-cols-6 gap-4 max-h-96 overflow-y-auto">
+                      {availableStickers.map((sticker) => (
+                        <button
+                          key={sticker}
+                          onClick={() => handleStickerSelect(sticker)}
+                          className="aspect-square border-2 border-gray-200 rounded-lg p-2 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                        >
+                          <img
+                            src={`/stickers/${sticker}`}
+                            alt={sticker.replace('.png', '')}
+                            className="w-full h-full object-contain"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex justify-end">
                       <button
-                        key={sticker}
-                        onClick={() => handleStickerSelect(sticker)}
-                        className="aspect-square border-2 border-gray-200 rounded-lg p-2 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                        onClick={() => setStickerModalOpen(false)}
+                        className="px-4 py-2 text-gray-600 hover:text-gray-800"
                       >
-                        <img
-                          src={`/stickers/${sticker}`}
-                          alt={sticker.replace('.png', '')}
-                          className="w-full h-full object-contain"
-                        />
+                        Cancel
                       </button>
-                    ))}
-                  </div>
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => setStickerModalOpen(false)}
-                      className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </DialogPanel>
-              </div>
-            </Dialog>
-          </>
-        )}
+                    </div>
+                  </DialogPanel>
+                </div>
+              </Dialog>
+            </>
+          )}
 
-        {options.includes('imageGeneration') && (
-          <>
+          {options.includes('imageGeneration') && (
+            <>
+              <OptionButton
+                style={{}}
+                label={t('Generate Image')}
+                icon="image"
+                callback={() => {
+                  setGenerateImageModalOpen(true)
+                }}
+              />
+              <Dialog
+                open={generateImageModalOpen}
+                onClose={() => setGenerateImageModalOpen(false)}
+                className="relative z-50"
+              >
+                <div className="fixed inset-0 bg-black/25" />
+                <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
+                  <DialogPanel className="max-w-lg space-y-4 border bg-white p-12 rounded-lg">
+                    <DialogTitle className="font-bold">Generate New Image</DialogTitle>
+                    <Description>
+                      This will enable you to create images which you can use freely in your
+                      projects.
+                    </Description>
+                    <div>
+                      <textarea
+                        placeholder="A dog eating food with delight..."
+                        rows={3}
+                        className="w-full p-3 border border-gray-300 rounded-md resize-none"
+                        value={generateImagePrompt}
+                        onChange={(e) => setGenerateImagePrompt(e.target.value)}
+                        disabled={isGeneratingImage}
+                      />
+                    </div>
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => setGenerateImageModalOpen(false)}
+                        disabled={isGeneratingImage}
+                        className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleGenerateImage}
+                        disabled={isGeneratingImage || !generateImagePrompt.trim()}
+                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isGeneratingImage ? 'Generating...' : 'Generate'}
+                      </button>
+                    </div>
+                  </DialogPanel>
+                </div>
+              </Dialog>
+            </>
+          )}
+        </div>
+
+        <span className="block mb-2 text-white text-xs">3D Elements</span>
+        <div className="flex flex-row flex-wrap gap-2 mb-4">
+          {options.includes('cube3d') && (
             <OptionButton
               style={{}}
-              label={t('Generate Image')}
-              icon="image"
+              label={t('Add 3D Cube')}
+              icon="cube"
+              aria-label="Add a 3D cube to the canvas"
               callback={() => {
-                setGenerateImageModalOpen(true)
-              }}
-            />
-            <Dialog
-              open={generateImageModalOpen}
-              onClose={() => setGenerateImageModalOpen(false)}
-              className="relative z-50"
-            >
-              <div className="fixed inset-0 bg-black/25" />
-              <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-                <DialogPanel className="max-w-lg space-y-4 border bg-white p-12 rounded-lg">
-                  <DialogTitle className="font-bold">Generate New Image</DialogTitle>
-                  <Description>
-                    This will enable you to create images which you can use freely in your projects.
-                  </Description>
-                  <div>
-                    <textarea
-                      placeholder="A dog eating food with delight..."
-                      rows={3}
-                      className="w-full p-3 border border-gray-300 rounded-md resize-none"
-                      value={generateImagePrompt}
-                      onChange={(e) => setGenerateImagePrompt(e.target.value)}
-                      disabled={isGeneratingImage}
-                    />
-                  </div>
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => setGenerateImageModalOpen(false)}
-                      disabled={isGeneratingImage}
-                      className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleGenerateImage}
-                      disabled={isGeneratingImage || !generateImagePrompt.trim()}
-                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isGeneratingImage ? 'Generating...' : 'Generate'}
-                    </button>
-                  </div>
-                </DialogPanel>
-              </div>
-            </Dialog>
-          </>
-        )}
+                if (!editorRef.current || !currentSequenceId) {
+                  return
+                }
 
-        {options.includes('brush') && (
-          <OptionButton
-            style={{}}
-            label={t('Procedural Brush')}
-            icon="brush"
-            aria-label="Enable procedural brush drawing mode"
-            callback={() => {
-              if (!editorRef.current || !currentSequenceId) {
-                return
-              }
+                const editor = editorRef.current
+                const editor_state = editorStateRef.current
 
-              // Toggle brush drawing mode
-              editorRef.current.brushDrawingMode = !editorRef.current.brushDrawingMode
+                if (!editor || !editor_state || !editor.settings) {
+                  return
+                }
 
-              if (editorRef.current.brushDrawingMode) {
-                // Create new brush with default config
-                const { BrushType } = require('../../engine/brush')
+                const random_number_800 = getRandomNumber(100, editor.settings.dimensions.width)
+                const random_number_450 = getRandomNumber(100, editor.settings.dimensions.height)
+
                 const new_id = uuidv4()
 
-                const random_number_800 = getRandomNumber(
-                  100,
-                  editorRef.current.settings?.dimensions.width || 900
-                )
-                const random_number_450 = getRandomNumber(
-                  100,
-                  editorRef.current.settings?.dimensions.height || 550
-                )
-
-                const defaultBrushConfig = {
+                const cubeConfig: Cube3DConfig = {
                   id: new_id,
-                  name: 'New Brush',
-                  brushType: BrushType.Noise,
-                  size: 20,
-                  opacity: 0.7,
-                  flow: 0.5,
-                  spacing: 0.25,
-                  primaryColor: [0, 0, 0, 255] as [number, number, number, number],
-                  secondaryColor: [255, 255, 255, 255] as [number, number, number, number],
-                  noiseScale: 0.01,
-                  octaves: 4,
-                  persistence: 0.5,
-                  randomSeed: Math.random() * 1000,
+                  name: '3D Cube',
+                  dimensions: [0.5, 0.5, 0.2],
                   position: {
-                    x: random_number_800,
-                    y: random_number_450
+                    x: 0,
+                    y: 0
                   },
-                  dimensions: [500, 500] as [number, number],
-                  layer: layers.length,
-                  rotation: 0
+                  rotation: [0, 0, 0],
+                  backgroundFill: {
+                    type: 'Color',
+                    value: [0.5, 0.7, 1.0, 1.0]
+                  },
+                  layer: layers.length
                 }
 
-                editorRef.current.add_brush(defaultBrushConfig, new_id, currentSequenceId)
+                editor.add_cube3d(cubeConfig, new_id, currentSequenceId)
+
+                editor_state.add_saved_cube3d(currentSequenceId, cubeConfig)
+
+                let saved_state = editor_state.savedState
+
+                let updated_sequence = saved_state.sequences.find((s) => s.id == currentSequenceId)
+
+                let sequence_cloned = updated_sequence
+
+                if (!sequence_cloned) {
+                  throw Error('Sequence does not exist')
+                }
+
+                if (set_sequences) {
+                  set_sequences(saved_state.sequences)
+                }
+
+                editor.currentSequenceData = sequence_cloned
+
+                editor.updateMotionPaths(sequence_cloned)
+
+                editor.cubes3D.forEach((cube) => {
+                  if (!cube.hidden && cube.id === cubeConfig.id) {
+                    let cube_config: Cube3DConfig = cube.toConfig()
+                    let new_layer: Layer = LayerFromConfig.fromCube3DConfig(cube_config)
+                    layers.push(new_layer)
+                  }
+                })
+
+                setLayers(layers)
 
                 update()
+              }}
+            />
+          )}
 
-                console.info('Brush drawing mode enabled!')
-              } else {
-                console.info('Brush drawing mode disabled!')
-              }
-            }}
-          />
-        )}
-
-        {options.includes('cube3d') && (
-          <OptionButton
-            style={{}}
-            label={t('Add 3D Cube')}
-            icon="cube"
-            aria-label="Add a 3D cube to the canvas"
-            callback={() => {
-              if (!editorRef.current || !currentSequenceId) {
-                return
-              }
-
-              const editor = editorRef.current
-              const editor_state = editorStateRef.current
-
-              if (!editor || !editor_state || !editor.settings) {
-                return
-              }
-
-              const random_number_800 = getRandomNumber(100, editor.settings.dimensions.width)
-              const random_number_450 = getRandomNumber(100, editor.settings.dimensions.height)
-
-              const new_id = uuidv4()
-
-              const cubeConfig: Cube3DConfig = {
-                id: new_id,
-                name: '3D Cube',
-                dimensions: [0.5, 0.5, 0.2],
-                position: {
-                  x: 0,
-                  y: 0
-                },
-                rotation: [0, 0, 0],
-                backgroundFill: {
-                  type: 'Color',
-                  value: [0.5, 0.7, 1.0, 1.0]
-                },
-                layer: layers.length
-              }
-
-              editor.add_cube3d(cubeConfig, new_id, currentSequenceId)
-
-              editor_state.add_saved_cube3d(currentSequenceId, cubeConfig)
-
-              let saved_state = editor_state.savedState
-
-              let updated_sequence = saved_state.sequences.find((s) => s.id == currentSequenceId)
-
-              let sequence_cloned = updated_sequence
-
-              if (!sequence_cloned) {
-                throw Error('Sequence does not exist')
-              }
-
-              if (set_sequences) {
-                set_sequences(saved_state.sequences)
-              }
-
-              editor.currentSequenceData = sequence_cloned
-
-              editor.updateMotionPaths(sequence_cloned)
-
-              editor.cubes3D.forEach((cube) => {
-                if (!cube.hidden && cube.id === cubeConfig.id) {
-                  let cube_config: Cube3DConfig = cube.toConfig()
-                  let new_layer: Layer = LayerFromConfig.fromCube3DConfig(cube_config)
-                  layers.push(new_layer)
+          {options.includes('sphere3d') && (
+            <OptionButton
+              style={{}}
+              label={t('Add 3D Sphere')}
+              icon="circle"
+              aria-label="Add a 3D sphere to the canvas"
+              callback={() => {
+                if (!editorRef.current || !currentSequenceId) {
+                  return
                 }
-              })
 
-              setLayers(layers)
+                const editor = editorRef.current
+                const editor_state = editorStateRef.current
 
-              update()
-            }}
-          />
-        )}
-
-        {options.includes('sphere3d') && (
-          <OptionButton
-            style={{}}
-            label={t('Add 3D Sphere')}
-            icon="circle"
-            aria-label="Add a 3D sphere to the canvas"
-            callback={() => {
-              if (!editorRef.current || !currentSequenceId) {
-                return
-              }
-
-              const editor = editorRef.current
-              const editor_state = editorStateRef.current
-
-              if (!editor || !editor_state || !editor.settings) {
-                return
-              }
-
-              const random_number_800 = getRandomNumber(100, editor.settings.dimensions.width)
-              const random_number_450 = getRandomNumber(100, editor.settings.dimensions.height)
-
-              const new_id = uuidv4()
-
-              const sphereConfig: Sphere3DConfig = {
-                id: new_id,
-                name: '3D Sphere',
-                radius: 0.5,
-                position: {
-                  x: 0,
-                  y: 0
-                },
-                rotation: [0, 0, 0],
-                backgroundFill: {
-                  type: 'Color',
-                  value: [1.0, 0.5, 0.7, 1.0]
-                },
-                layer: layers.length
-              }
-
-              editor.add_sphere3d(sphereConfig, new_id, currentSequenceId)
-
-              editor_state.add_saved_sphere3d(currentSequenceId, sphereConfig)
-
-              let saved_state = editor_state.savedState
-
-              let updated_sequence = saved_state.sequences.find((s) => s.id == currentSequenceId)
-
-              let sequence_cloned = updated_sequence
-
-              if (!sequence_cloned) {
-                throw Error('Sequence does not exist')
-              }
-
-              if (set_sequences) {
-                set_sequences(saved_state.sequences)
-              }
-
-              editor.currentSequenceData = sequence_cloned
-
-              editor.updateMotionPaths(sequence_cloned)
-
-              editor.spheres3D.forEach((sphere) => {
-                if (!sphere.hidden && sphere.id === sphereConfig.id) {
-                  let sphere_config: Sphere3DConfig = sphere.toConfig()
-                  let new_layer: Layer = LayerFromConfig.fromSphere3DConfig(sphere_config)
-                  layers.push(new_layer)
+                if (!editor || !editor_state || !editor.settings) {
+                  return
                 }
-              })
 
-              setLayers(layers)
+                const random_number_800 = getRandomNumber(100, editor.settings.dimensions.width)
+                const random_number_450 = getRandomNumber(100, editor.settings.dimensions.height)
 
-              update()
-            }}
-          />
-        )}
+                const new_id = uuidv4()
 
-        {options.includes('mockup3d') && (
-          <OptionButton
-            style={{}}
-            label={t('Add Laptop Mockup')}
-            icon="laptop"
-            aria-label="Add a laptop mockup with video screen"
-            callback={() => {
-              if (!currentSequenceId) {
-                return
-              }
-              on_add_mockup3d(currentSequenceId)
-            }}
-          />
-        )}
+                const sphereConfig: Sphere3DConfig = {
+                  id: new_id,
+                  name: '3D Sphere',
+                  radius: 0.5,
+                  position: {
+                    x: 0,
+                    y: 0
+                  },
+                  rotation: [0, 0, 0],
+                  backgroundFill: {
+                    type: 'Color',
+                    value: [1.0, 0.5, 0.7, 1.0]
+                  },
+                  layer: layers.length
+                }
 
-        {options.includes('textRoll') && (
-          <OptionButton
-            style={{}}
-            label={t('Add Text Roll')}
-            icon="text"
-            aria-label="Create animated text roll with multiple text blocks"
-            callback={() => {
-              setTextRollModalOpen(true)
-            }}
-          />
-        )}
+                editor.add_sphere3d(sphereConfig, new_id, currentSequenceId)
+
+                editor_state.add_saved_sphere3d(currentSequenceId, sphereConfig)
+
+                let saved_state = editor_state.savedState
+
+                let updated_sequence = saved_state.sequences.find((s) => s.id == currentSequenceId)
+
+                let sequence_cloned = updated_sequence
+
+                if (!sequence_cloned) {
+                  throw Error('Sequence does not exist')
+                }
+
+                if (set_sequences) {
+                  set_sequences(saved_state.sequences)
+                }
+
+                editor.currentSequenceData = sequence_cloned
+
+                editor.updateMotionPaths(sequence_cloned)
+
+                editor.spheres3D.forEach((sphere) => {
+                  if (!sphere.hidden && sphere.id === sphereConfig.id) {
+                    let sphere_config: Sphere3DConfig = sphere.toConfig()
+                    let new_layer: Layer = LayerFromConfig.fromSphere3DConfig(sphere_config)
+                    layers.push(new_layer)
+                  }
+                })
+
+                setLayers(layers)
+
+                update()
+              }}
+            />
+          )}
+          {options.includes('mockup3d') && (
+            <OptionButton
+              style={{}}
+              label={t('Add Laptop Mockup')}
+              icon="laptop"
+              aria-label="Add a laptop mockup with video screen"
+              callback={() => {
+                if (!currentSequenceId) {
+                  return
+                }
+                on_add_mockup3d(currentSequenceId)
+              }}
+            />
+          )}
+        </div>
+        <span className="block mb-2 text-white text-xs">Brushes</span>
+        <div className="flex flex-row flex-wrap gap-2 mb-4">
+          {options.includes('brush') && (
+            <OptionButton
+              style={{}}
+              label={t('Procedural Brush')}
+              icon="brush"
+              aria-label="Enable procedural brush drawing mode"
+              callback={() => {
+                if (!editorRef.current || !currentSequenceId) {
+                  return
+                }
+
+                // Toggle brush drawing mode
+                editorRef.current.brushDrawingMode = !editorRef.current.brushDrawingMode
+
+                if (editorRef.current.brushDrawingMode) {
+                  // Create new brush with default config
+
+                  const new_id = uuidv4()
+
+                  const random_number_800 = getRandomNumber(
+                    100,
+                    editorRef.current.settings?.dimensions.width || 900
+                  )
+                  const random_number_450 = getRandomNumber(
+                    100,
+                    editorRef.current.settings?.dimensions.height || 550
+                  )
+
+                  const defaultBrushConfig = {
+                    id: new_id,
+                    name: 'New Brush',
+                    brushType: BrushType.Noise,
+                    size: 20,
+                    opacity: 0.7,
+                    flow: 0.5,
+                    spacing: 0.25,
+                    primaryColor: [0, 0, 0, 255] as [number, number, number, number],
+                    secondaryColor: [255, 255, 255, 255] as [number, number, number, number],
+                    noiseScale: 0.01,
+                    octaves: 4,
+                    persistence: 0.5,
+                    randomSeed: Math.random() * 1000,
+                    position: {
+                      x: random_number_800,
+                      y: random_number_450
+                    },
+                    dimensions: [500, 500] as [number, number],
+                    layer: layers.length,
+                    rotation: 0
+                  }
+
+                  editorRef.current.add_brush(defaultBrushConfig, new_id, currentSequenceId)
+
+                  update()
+
+                  console.info('Brush drawing mode enabled!')
+                } else {
+                  console.info('Brush drawing mode disabled!')
+                }
+              }}
+            />
+          )}
+        </div>
       </div>
 
       <SourceSelectionModal
