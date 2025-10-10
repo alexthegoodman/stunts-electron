@@ -60,11 +60,15 @@ import {
   WaveSawtoothIcon,
   PaletteIcon,
   StackIcon,
-  FlowArrowIcon
+  FlowArrowIcon,
+  CameraRotateIcon
 } from '@phosphor-icons/react'
 
 export const CreateIcon = ({ icon, size }: { icon: string; size: string }) => {
   switch (icon) {
+    case 'camera': {
+      return <CameraRotateIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
+    }
     case 'toolbox': {
       return <ToolboxIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
     }

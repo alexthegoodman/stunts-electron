@@ -1510,12 +1510,6 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
               }px] md:mx-auto overflow-hidden`}
             >
               <div className="flex flex-row gap-2 p-3">
-                {/* <button
-          className="md:hidden text-xs rounded-md text-white stunts-gradient px-2 py-1 h-50 w-50 flex items-center justify-center top-4 left-18"
-          onClick={toggleSidebar}
-        >
-          <Stack size={"20px"} /> {t("Actions")}
-        </button> */}
                 <MiniSquareButton
                   onClick={() => {
                     if (toolbarTab === 'tools') {
@@ -1549,7 +1543,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                   icon={'palette'}
                   label={'Themes'}
                 />
-                <MiniSquareButton
+                {/* <MiniSquareButton
                   onClick={() => {
                     if (toolbarTab === 'layers') {
                       setToolbarTab('none')
@@ -1559,7 +1553,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                   }}
                   icon={'stack'}
                   label={'Layers'}
-                />
+                /> */}
                 <MiniSquareButton
                   onClick={() => {
                     if (toolbarTab === 'sequences') {
@@ -1571,11 +1565,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                   icon="flow-arrow"
                   label={'Sequences'}
                 />
-                {/** Probably just for testing and verification */}
-                <button
-                  className="min-w-[45px] h-[45px] flex flex-col justify-center items-center border-0 rounded-[15px]
-        shadow-[0_0_15px_4px_rgba(0,0,0,0.16)] transition-colors duration-200 ease-in-out
-         hover:cursor-pointer focus-visible:border-2 focus-visible:border-blue-500 z-10"
+                <MiniSquareButton
                   onClick={() => {
                     if (toolbarTab === 'camera') {
                       setToolbarTab('none')
@@ -1583,10 +1573,9 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       setToolbarTab('camera')
                     }
                   }}
-                >
-                  <CameraRotate />
-                  <span className="text-xs">Camera</span>
-                </button>
+                  icon="camera"
+                  label={'Camera'}
+                />
               </div>
             </div>
 
@@ -1706,13 +1695,6 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                   <div className="flex flex-col w-full">
                     <div className="flex flex-row justify-between align-center w-full mt-2">
                       <h5>{t('Sequences')}</h5>
-                      {/* <button
-                      className="text-xs rounded-md text-white stunts-gradient px-2 py-1 cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed"
-                      disabled={loading}
-                      onClick={on_create_sequence}
-                    >
-                      New Sequence
-                    </button> */}
                       <a
                         className="text-xs rounded-md text-white stunts-gradient px-2 py-1 cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed"
                         href="#"
@@ -1746,66 +1728,6 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                               </span>
                               <ArrowRight />
                             </button>
-                            {/* <button
-                        className="text-xs w-full text-left p-2 rounded hover:bg-gray-200 hover:cursor-pointer active:bg-[#edda4] transition-colors"
-                        disabled={loading}
-                        onClick={() => {}}
-                      >
-                        Duplicate
-                      </button> */}
-                            {/* {showAddButton && (
-                            <button
-                              className="text-xs w-[100px] text-left p-2 rounded hover:bg-gray-200 hover:cursor-pointer active:bg-[#edda4] transition-colors"
-                              disabled={loading}
-                              onClick={async () => {
-                                let editor_state = editorStateRef.current;
-
-                                if (
-                                  !editor_state ||
-                                  !editor_state.savedState.timeline_state
-                                ) {
-                                  return;
-                                }
-
-                                let existing_timeline =
-                                  editor_state.savedState.timeline_state
-                                    .timeline_sequences;
-
-                                // Find the sequence that ends at the latest point in time
-                                let startTime = 0;
-                                if (existing_timeline.length > 0) {
-                                  let test = existing_timeline.map((seq) => {
-                                    let duration_ms =
-                                      sequenceDurations[seq.sequenceId];
-                                    return seq.startTimeMs + duration_ms;
-                                  });
-
-                                  startTime = Math.max(...test);
-                                }
-
-                                existing_timeline.push({
-                                  id: uuidv4(),
-                                  sequenceId: sequence.id,
-                                  trackType: TrackType.Video,
-                                  startTimeMs: startTime,
-                                  // duration_ms: 20000,
-                                });
-
-                                await saveTimelineData(
-                                  editor_state.savedState.timeline_state
-                                );
-
-                                setTSequences(
-                                  editor_state.savedState.timeline_state
-                                    .timeline_sequences
-                                );
-
-                                console.info("Sequence added!");
-                              }}
-                            >
-                              {t("Add to Timeline")}
-                            </button>
-                          )} */}
                           </div>
                         )
                       })}
@@ -2121,48 +2043,6 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                           />
                         </>
                       )}
-
-                      {/* {!selected_polygon_id &&
-                      !selected_image_id &&
-                      !selected_text_id &&
-                      !selected_video_id && (
-                        <>
-                          <div className="flex max-w-[315px] w-full max-h-[50vh] overflow-y-scroll overflow-x-hidden p-4 border-0 rounded-[15px] shadow-[0_0_15px_4px_rgba(0,0,0,0.16)]">
-                            <div className="flex flex-col w-full gap-4 mb-4">
-                              <div className="flex flex-row items-center">
-                                <button
-                                  className="flex flex-col justify-center items-center text-xs w-[35px] h-[35px] text-center rounded hover:bg-gray-200 hover:cursor-pointer active:bg-[#edda4] transition-colors mr-2"
-                                  disabled={loading}
-                                  onClick={() => {
-                                    let editor = editorRef.current;
-
-                                    if (!editor) {
-                                      return;
-                                    }
-
-                                    editor.clearCanvas();
-
-                                    set_current_sequence_id(null);
-                                    set_section("SequenceList");
-                                  }}
-                                >
-                                  <CreateIcon icon="arrow-left" size="24px" />
-                                </button>
-                                <h5>Update Sequence</h5>
-                              </div>
-                              
-
-                              
-
-                              
-                              
-                            </div>
-                          </div>
-                          <div className="flex max-w-[315px] w-full max-h-[50vh] overflow-y-scroll overflow-x-hidden p-4 border-0 rounded-[15px] shadow-[0_0_15px_4px_rgba(0,0,0,0.16)]">
-                            
-                          </div>
-                        </>
-                      )} */}
                     </>
                   )}
                 </div>
