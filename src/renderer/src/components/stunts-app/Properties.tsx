@@ -1751,7 +1751,7 @@ export const Model3DProperties = ({
                     editor,
                     currentModelId,
                     ObjectType.Model3D,
-                    parseInt(value)
+                    parseFloat(value)
                   )
                 }}
               />
@@ -1771,7 +1771,7 @@ export const Model3DProperties = ({
                     editor,
                     currentModelId,
                     ObjectType.Model3D,
-                    parseInt(value)
+                    parseFloat(value)
                   )
                 }}
               />
@@ -1793,7 +1793,7 @@ export const Model3DProperties = ({
                     editor,
                     currentModelId,
                     ObjectType.Model3D,
-                    parseInt(value)
+                    parseFloat(value)
                   )
                 }}
               />

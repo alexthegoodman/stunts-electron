@@ -354,6 +354,30 @@ export function updatePositionX(
       saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
       break
     }
+    case ObjectType.Model3D: {
+      let model = editor.models3D.find((s) => s.id === objectId)
+      if (model && editor.camera) {
+        model.transform.updatePosition(
+          [value, model.transform.position[1]],
+          editor.camera.windowSize
+        )
+        model.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+      }
+
+      editorState.savedState.sequences.forEach((s) => {
+        s.activeModels3D?.forEach((sp) => {
+          if (sp.id == objectId) {
+            sp.position = {
+              x: value,
+              y: sp.position.y
+            }
+          }
+        })
+      })
+
+      saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+      break
+    }
   }
 }
 
@@ -478,6 +502,30 @@ export function updatePositionY(
 
       editorState.savedState.sequences.forEach((s) => {
         s.activeSpheres3D?.forEach((sp) => {
+          if (sp.id == objectId) {
+            sp.position = {
+              x: sp.position.x,
+              y: value
+            }
+          }
+        })
+      })
+
+      saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+      break
+    }
+    case ObjectType.Model3D: {
+      let model = editor.models3D.find((s) => s.id === objectId)
+      if (model && editor.camera) {
+        model.transform.updatePosition(
+          [model.transform.position[0], value],
+          editor.camera.windowSize
+        )
+        model.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+      }
+
+      editorState.savedState.sequences.forEach((s) => {
+        s.activeModels3D?.forEach((sp) => {
           if (sp.id == objectId) {
             sp.position = {
               x: sp.position.x,
