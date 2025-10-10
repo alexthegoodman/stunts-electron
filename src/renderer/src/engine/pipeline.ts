@@ -882,7 +882,9 @@ export class CanvasPipeline {
         editor.target === SaveTarget.Videos &&
         editor.isPlaying
       ) {
-        polygon.updateGradientAnimation(device, 0.001)
+        // Use faster deltaTime for shader backgrounds (10x) to make animations visible
+        const deltaTime = polygon.backgroundFill.type === 'Shader' ? 0.1 : 0.001
+        polygon.updateGradientAnimation(device, deltaTime)
       }
 
       polygon.bindGroup.bindWebGLBindGroup(gl)

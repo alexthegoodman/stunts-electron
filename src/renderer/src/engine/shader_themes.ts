@@ -55,37 +55,37 @@ export interface RingsBlurParams {
 
 // Default configurations for each shader theme
 export const DEFAULT_NIGHT_SKY: NightSkyParams = {
-  starDensity: 0.5,
-  starBrightness: 0.8,
-  nebulaDensity: 0.3,
-  nebulaColor: [0.4, 0.2, 0.8, 1.0],
-  twinkleSpeed: 1.0
+  starDensity: 0.6,
+  starBrightness: 1.0,
+  nebulaDensity: 0.4,
+  nebulaColor: [0.5, 0.2, 0.9, 1.0],
+  twinkleSpeed: 1.5
 }
 
 export const DEFAULT_NETWORK: NetworkParams = {
-  nodeCount: 50,
-  connectionDistance: 0.3,
-  nodeColor: [0.2, 0.6, 1.0, 1.0],
-  lineColor: [0.2, 0.6, 1.0, 0.5],
-  animationSpeed: 1.0,
-  nodeSize: 0.01
+  nodeCount: 40,
+  connectionDistance: 0.25,
+  nodeColor: [0.3, 0.7, 1.0, 1.0],
+  lineColor: [0.3, 0.7, 1.0, 0.8],
+  animationSpeed: 0.5,
+  nodeSize: 0.008
 }
 
 export const DEFAULT_DAY_SKY: DaySkyParams = {
   skyColor: [0.4, 0.6, 1.0, 1.0],
-  cloudDensity: 0.4,
-  cloudSpeed: 1.0,
-  sunIntensity: 0.8,
-  sunPosition: [0.8, 0.2]
+  cloudDensity: 0.5,
+  cloudSpeed: 1.5,
+  sunIntensity: 0.9,
+  sunPosition: [0.75, 0.25]
 }
 
 export const DEFAULT_RINGS_BLUR: RingsBlurParams = {
-  ringCount: 8,
-  ringColor: [0.8, 0.4, 1.0, 1.0],
-  blurAmount: 0.5,
-  rotationSpeed: 1.0,
-  radius: 0.5,
-  thickness: 0.05
+  ringCount: 6,
+  ringColor: [0.9, 0.5, 1.0, 1.0],
+  blurAmount: 0.6,
+  rotationSpeed: 0.5,
+  radius: 0.7,
+  thickness: 0.04
 }
 
 // Helper to get default params for a shader type

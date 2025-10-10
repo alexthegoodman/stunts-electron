@@ -108,6 +108,7 @@ export class Polygon implements PolygonShape {
   objectType: ObjectType
   // textureView: GPUTextureView;
   isCircle: boolean
+  timeOffset: number = 0
 
   gradient?: GradientDefinition
   gradientBuffer?: PolyfillBuffer
@@ -234,18 +235,33 @@ export class Polygon implements PolygonShape {
   }
 
   updateGradientAnimation(device: PolyfillDevice, deltaTime: number) {
-    if (!this.gradient || !this.gradientBuffer) return
+    if (this.backgroundFill.type === 'Shader') {
+      if (!this.gradientBuffer) return
 
-    // Update the timeOffset
-    this.gradient.timeOffset = (this.gradient.timeOffset || 0) + deltaTime
+      // Update the timeOffset
+      this.timeOffset = (this.timeOffset || 0) + deltaTime
 
-    // Update just the time value in the buffer (offset 49 = 40 + 9)
-    const timeOffset = 49
-    device.queue!.writeBuffer(
-      this.gradientBuffer,
-      timeOffset * 4, // Multiply by 4 because offset is in bytes
-      new Float32Array([this.gradient.timeOffset])
-    )
+      // Update just the time value in the buffer (offset 49 = 40 + 9)
+      const timeOffset = 49
+      device.queue!.writeBuffer(
+        this.gradientBuffer,
+        timeOffset * 4, // Multiply by 4 because offset is in bytes
+        new Float32Array([this.timeOffset])
+      )
+    } else if (this.backgroundFill.type === 'Gradient') {
+      if (!this.gradient || !this.gradientBuffer) return
+
+      // Update the timeOffset
+      this.gradient.timeOffset = (this.gradient.timeOffset || 0) + deltaTime
+
+      // Update just the time value in the buffer (offset 49 = 40 + 9)
+      const timeOffset = 49
+      device.queue!.writeBuffer(
+        this.gradientBuffer,
+        timeOffset * 4, // Multiply by 4 because offset is in bytes
+        new Float32Array([this.gradient.timeOffset])
+      )
+    }
   }
 
   boundingBox(): BoundingBox {
@@ -1356,7 +1372,7 @@ export function setupGradientBuffers(
         mappedRange[configOffset + 7] = 0.5 // u_center.y (unused)
         mappedRange[configOffset + 8] = 1.0 // u_radius (unused)
         mappedRange[configOffset + 9] = 0 // u_time (set by animation)
-        mappedRange[configOffset + 10] = 0 // u_animation_speed (unused for night sky)
+        mappedRange[configOffset + 10] = 1.0 // u_animation_speed
         mappedRange[configOffset + 11] = 1 // u_enabled
         mappedRange[configOffset + 12] = borderRadius ?? 0.0
 
@@ -1377,7 +1393,7 @@ export function setupGradientBuffers(
         mappedRange[configOffset + 7] = 0.5 // u_center.y
         mappedRange[configOffset + 8] = 1.0 // u_radius
         mappedRange[configOffset + 9] = 0 // u_time
-        mappedRange[configOffset + 10] = 0 // u_animation_speed
+        mappedRange[configOffset + 10] = 1.0 // u_animation_speed
         mappedRange[configOffset + 11] = 1 // u_enabled
         mappedRange[configOffset + 12] = borderRadius ?? 0.0
 
@@ -1404,7 +1420,7 @@ export function setupGradientBuffers(
         mappedRange[configOffset + 7] = params.sunPosition[1] // u_center.y
         mappedRange[configOffset + 8] = 1.0 // u_radius
         mappedRange[configOffset + 9] = 0 // u_time
-        mappedRange[configOffset + 10] = 0 // u_animation_speed
+        mappedRange[configOffset + 10] = 1.0 // u_animation_speed
         mappedRange[configOffset + 11] = 1 // u_enabled
         mappedRange[configOffset + 12] = borderRadius ?? 0.0
 
@@ -1425,7 +1441,7 @@ export function setupGradientBuffers(
         mappedRange[configOffset + 7] = 0.5 // u_center.y
         mappedRange[configOffset + 8] = params.radius // u_radius
         mappedRange[configOffset + 9] = 0 // u_time
-        mappedRange[configOffset + 10] = 0 // u_animation_speed
+        mappedRange[configOffset + 10] = 1.0 // u_animation_speed
         mappedRange[configOffset + 11] = 1 // u_enabled
         mappedRange[configOffset + 12] = borderRadius ?? 0.0
 

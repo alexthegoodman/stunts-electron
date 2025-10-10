@@ -203,7 +203,7 @@ float starNoise_shader(vec2 uv, float seed) {
 
 // Night Sky Shader
 vec4 nightSkyShader(vec2 uv) {
-    float time = u_time;
+    float currentTime = u_time * u_animation_speed;
     // Extract params from uniform buffer
     float starDensity = u_num_stops;
     float starBrightness = u_start_point.x;
@@ -212,12 +212,20 @@ vec4 nightSkyShader(vec2 uv) {
     float twinkleSpeed = u_end_point.x;
 
     vec4 color = vec4(0.0, 0.0, 0.05, 1.0);
-    float stars = starNoise_shader(uv * 200.0 * starDensity, 0.0);
-    stars = pow(stars, 10.0 - starDensity * 8.0);
-    float twinkle = sin(time * twinkleSpeed + hash_shader(uv * 100.0) * 6.28) * 0.5 + 0.5;
+
+    // Generate star field
+    float stars = starNoise_shader(uv * 300.0 * starDensity, 0.0);
+    stars = pow(stars, 12.0 - starDensity * 9.0);
+
+    // Add individual twinkling per star using position-based offset
+    float starId = hash_shader(floor(uv * 300.0 * starDensity));
+    float twinkle = sin(currentTime * twinkleSpeed * 3.0 + starId * 6.28) * 0.3 + 0.7;
     stars *= twinkle * starBrightness;
+
+    // Add nebula
     float nebula = starNoise_shader(uv * 3.0, 1.0) * starNoise_shader(uv * 5.0, 2.0);
     nebula = pow(nebula, 2.0) * nebulaDensity;
+
     color.rgb += vec3(stars);
     color.rgb = mix(color.rgb, nebulaColor.rgb, nebula * nebulaColor.a);
     return color;
@@ -225,7 +233,7 @@ vec4 nightSkyShader(vec2 uv) {
 
 // Network Shader
 vec4 networkShader(vec2 uv) {
-    float time = u_time;
+    float currentTime = u_time * u_animation_speed;
     float nodeCount = u_num_stops;
     float connectionDistance = u_start_point.x;
     vec4 nodeColor = u_stop_colors[0];
@@ -233,18 +241,52 @@ vec4 networkShader(vec2 uv) {
     float animationSpeed = u_start_point.y;
     float nodeSize = u_end_point.x;
 
-    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
-    int count = int(min(nodeCount, 50.0)); // Limit for performance
+    vec4 color = vec4(0.05, 0.05, 0.1, 1.0); // Dark blue background
+    int count = int(min(nodeCount, 50.0));
 
+    // Store node positions
+    vec2 nodes[50];
     for (int i = 0; i < 50; i++) {
         if (i >= count) break;
         vec2 seed = vec2(float(i) * 0.123, float(i) * 0.456);
         vec2 offset = vec2(hash_shader(seed), hash_shader(seed + vec2(1.0, 0.0)));
-        vec2 velocity = (vec2(hash_shader(seed + vec2(1.0, 1.0)), hash_shader(seed + vec2(2.0, 2.0))) - 0.5) * 0.1;
-        vec2 nodePos = fract(offset + velocity * time * animationSpeed);
+        vec2 velocity = (vec2(hash_shader(seed + vec2(1.0, 1.0)), hash_shader(seed + vec2(2.0, 2.0))) - 0.5) * 0.15;
+        nodes[i] = fract(offset + velocity * currentTime * animationSpeed);
+    }
 
-        float dist = distance(uv, nodePos);
-        float nodeMask = smoothstep(nodeSize, nodeSize * 0.5, dist);
+    // Draw connections first (so nodes appear on top)
+    for (int i = 0; i < 50; i++) {
+        if (i >= count) break;
+        for (int j = i + 1; j < 50; j++) {
+            if (j >= count) break;
+
+            float nodeDist = distance(nodes[i], nodes[j]);
+            if (nodeDist < connectionDistance) {
+                // Calculate distance from point to line segment
+                vec2 pa = uv - nodes[i];
+                vec2 ba = nodes[j] - nodes[i];
+                float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+                float lineDist = length(pa - ba * h);
+
+                // Line width and fade
+                float lineWidth = 0.002;
+                float lineMask = smoothstep(lineWidth, 0.0, lineDist);
+                float fadeByDistance = 1.0 - (nodeDist / connectionDistance);
+
+                color = mix(color, lineColor, lineMask * lineColor.a * fadeByDistance * 0.6);
+            }
+        }
+    }
+
+    // Draw nodes on top
+    for (int i = 0; i < 50; i++) {
+        if (i >= count) break;
+        float dist = distance(uv, nodes[i]);
+        float nodeMask = smoothstep(nodeSize, nodeSize * 0.3, dist);
+
+        // Glow effect
+        float glow = smoothstep(nodeSize * 3.0, 0.0, dist) * 0.3;
+        color = mix(color, nodeColor, glow);
         color = mix(color, nodeColor, nodeMask * nodeColor.a);
     }
 
@@ -253,7 +295,7 @@ vec4 networkShader(vec2 uv) {
 
 // Day Sky Shader
 vec4 daySkyShader(vec2 uv) {
-    float time = u_time;
+    float currentTime = u_time * u_animation_speed;
     vec4 skyColor = u_stop_colors[0];
     float cloudDensity = u_num_stops;
     float cloudSpeed = u_start_point.x;
@@ -262,8 +304,14 @@ vec4 daySkyShader(vec2 uv) {
 
     vec4 color = mix(skyColor, vec4(0.6, 0.8, 1.0, 1.0), uv.y);
 
-    vec2 cloudUv = uv + vec2(time * cloudSpeed * 0.05, 0.0);
-    float clouds = starNoise_shader(cloudUv * 3.0, 0.0);
+    // Multiple cloud layers for more movement
+    vec2 cloudUv1 = uv + vec2(currentTime * cloudSpeed * 0.1, 0.0);
+    vec2 cloudUv2 = uv + vec2(currentTime * cloudSpeed * 0.15, currentTime * cloudSpeed * 0.02);
+
+    float clouds1 = starNoise_shader(cloudUv1 * 3.0, 0.0);
+    float clouds2 = starNoise_shader(cloudUv2 * 5.0, 1.0);
+    float clouds = (clouds1 + clouds2 * 0.5) / 1.5;
+
     clouds = smoothstep(0.4, 0.8, clouds) * cloudDensity;
     vec4 cloudColor = vec4(1.0, 1.0, 1.0, clouds * 0.8);
     color = mix(color, cloudColor, cloudColor.a);
@@ -277,35 +325,73 @@ vec4 daySkyShader(vec2 uv) {
     return color;
 }
 
-// Rings + Blur Shader
+// Rings + Blur Shader - Floating rings in space
 vec4 ringsBlurShader(vec2 uv) {
-    float time = u_time;
+    float currentTime = u_time * (u_animation_speed / 10.0);
     float ringCount = u_num_stops;
     vec4 ringColor = u_stop_colors[0];
     float blurAmount = u_start_point.x;
     float rotationSpeed = u_start_point.y;
-    float radius = u_end_point.x;
+    float maxRadius = u_end_point.x;
     float thickness = u_end_point.y;
 
-    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
+    // Deep space background with subtle stars
+    vec4 color = vec4(0.01, 0.01, 0.05, 1.0);
+    float stars = starNoise_shader(uv * 150.0, 0.0);
+    stars = pow(stars, 15.0) * 0.3;
+    color.rgb += vec3(stars);
+
     vec2 center = vec2(0.5, 0.5);
     vec2 pos = uv - center;
 
-    float angle = time * rotationSpeed;
+    // Rotate the entire ring system
+    float angle = currentTime * rotationSpeed * 0.3;
     float c = cos(angle);
     float s = sin(angle);
     pos = vec2(pos.x * c - pos.y * s, pos.x * s + pos.y * c);
-    float dist = length(pos);
 
+    int count = int(min(ringCount, 20.0));
+
+    // Draw multiple rings with perspective and blur
     for (float i = 0.0; i < 20.0; i += 1.0) {
-        if (i >= ringCount) break;
-        float ringRadius = radius * (i + 1.0) / ringCount;
+        if (i >= float(count)) break;
+
+        // Varying ring positions and sizes
+        float ringIndex = i / float(count);
+        float ringRadius = 0.15 + ringIndex * maxRadius * 0.7;
+
+        // Add slight offset to each ring for depth
+        vec2 ringOffset = vec2(
+            sin(currentTime * 0.5 + i * 0.7) * 0.05,
+            cos(currentTime * 0.3 + i * 0.5) * 0.03
+        );
+        vec2 ringPos = pos - ringOffset;
+
+        // Calculate distance from ring
+        float dist = length(ringPos);
         float ringDist = abs(dist - ringRadius);
-        float blur = thickness * (1.0 + blurAmount);
-        float ring = smoothstep(blur, blur * 0.5, ringDist);
-        float fade = 1.0 - (i / ringCount) * 0.5;
-        vec4 currentRing = ringColor * ring * fade;
-        color = mix(color, currentRing, currentRing.a * ringColor.a);
+
+        // Apply blur with soft falloff
+        float blurSize = thickness * (1.0 + blurAmount * 2.0);
+        float innerBlur = blurSize * 0.3;
+        float outerBlur = blurSize;
+
+        // Create ring with soft edges
+        float ring = 1.0 - smoothstep(innerBlur, outerBlur, ringDist);
+
+        // Add glow effect
+        float glow = exp(-ringDist * (15.0 - blurAmount * 10.0)) * 0.5;
+
+        // Fade based on ring position (depth effect)
+        float depthFade = 0.4 + 0.6 * (1.0 - ringIndex);
+
+        // Color variation per ring
+        vec3 ringTint = ringColor.rgb;
+        ringTint += vec3(sin(i * 0.5) * 0.2, cos(i * 0.7) * 0.2, sin(i * 1.1) * 0.2);
+
+        // Combine ring and glow
+        float intensity = (ring + glow) * depthFade;
+        color.rgb = mix(color.rgb, ringTint, intensity * ringColor.a);
     }
 
     return color;
