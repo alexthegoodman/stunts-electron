@@ -1,23 +1,23 @@
-import { mat4, vec2, vec3, quat, vec4 } from "gl-matrix";
-import { WindowSize } from "./camera";
-import { Point } from "./editor";
+import { mat4, vec2, vec3, quat, vec4 } from 'gl-matrix'
+import { WindowSize } from './camera'
+import { Point } from './editor'
 import {
   PolyfillBindGroup,
   PolyfillBindGroupLayout,
   PolyfillBuffer,
   PolyfillDevice,
-  PolyfillQueue,
-} from "./polyfill";
+  PolyfillQueue
+} from './polyfill'
 
 export class Transform {
-  position: vec3;
-  startPosition: vec3;
-  rotation: number; // Rotation angle in radians
-  rotationX: number;
-  rotationY: number;
-  scale: vec2;
-  uniformBuffer: PolyfillBuffer;
-  layer: number; // deprecated - kept for backward compatibility during migration
+  position: vec3
+  startPosition: vec3
+  rotation: number // Rotation angle in radians
+  rotationX: number
+  rotationY: number
+  scale: vec2
+  uniformBuffer: PolyfillBuffer
+  layer: number // deprecated - kept for backward compatibility during migration
 
   constructor(
     position: vec3,
@@ -26,26 +26,24 @@ export class Transform {
     uniformBuffer: PolyfillBuffer
     // windowSize: WindowSize
   ) {
-    this.position = position;
-    this.startPosition = position;
-    this.rotation = rotation;
-    this.rotationX = 0;
-    this.rotationY = 0;
-    this.scale = scale;
-    this.uniformBuffer = uniformBuffer;
-    this.layer = 0.0; // deprecated
+    this.position = position
+    this.startPosition = position
+    this.rotation = rotation
+    this.rotationX = 0
+    this.rotationY = 0
+    this.scale = scale
+    this.uniformBuffer = uniformBuffer
+    this.layer = 0.0 // deprecated
   }
 
   updateTransform(windowSize: WindowSize): mat4 {
-    const x = this.position[0];
-    const y = this.position[1];
-    const z = this.position[2];
+    // let objectZShift = -6.0; // to assure objects are naturally in front of camera
+    const x = this.position[0]
+    const y = this.position[1]
+    const z = this.position[2]
 
     // Create individual transformation matrices
-    const translation = mat4.fromTranslation(
-      mat4.create(),
-      vec3.fromValues(x, y, z)
-    );
+    const translation = mat4.fromTranslation(mat4.create(), vec3.fromValues(x, y, z))
     const rotation = mat4.fromQuat(
       mat4.create(),
       quat.fromEuler(
@@ -54,93 +52,89 @@ export class Transform {
         (this.rotationY * 180) / Math.PI,
         (this.rotation * 180) / Math.PI
       )
-    ); // gl-matrix uses degrees for quat euler angles
+    ) // gl-matrix uses degrees for quat euler angles
     const scale = mat4.fromScaling(
       mat4.create(),
       vec3.fromValues(this.scale[0], this.scale[1], 1.0)
-    ); // Use both x and y scale
+    ) // Use both x and y scale
 
     // Combine transformations: translation * rotation * scale
-    let combined = mat4.create();
-    mat4.mul(combined, translation, rotation);
-    mat4.mul(combined, combined, scale);
+    let combined = mat4.create()
+    mat4.mul(combined, translation, rotation)
+    mat4.mul(combined, combined, scale)
 
-    return combined;
+    return combined
   }
 
   updateUniformBuffer(queue: PolyfillQueue, windowSize: WindowSize) {
-    const transformMatrix = this.updateTransform(windowSize);
-    const rawMatrix = matrix4ToRawArray(transformMatrix);
-    queue.writeBuffer(
-      this.uniformBuffer,
-      0,
-      new Float32Array(rawMatrix).buffer
-    );
+    const transformMatrix = this.updateTransform(windowSize)
+    const rawMatrix = matrix4ToRawArray(transformMatrix)
+    queue.writeBuffer(this.uniformBuffer, 0, new Float32Array(rawMatrix).buffer)
   }
 
   updatePosition(position: [number, number] | [number, number, number], windowSize: WindowSize) {
     if (position.length === 3) {
-      this.position = vec3.fromValues(position[0], position[1], position[2]);
+      this.position = vec3.fromValues(position[0], position[1], position[2])
     } else {
       // Backward compatibility: keep existing Z coordinate
-      this.position = vec3.fromValues(position[0], position[1], this.position[2]);
+      this.position = vec3.fromValues(position[0], position[1], this.position[2])
     }
   }
 
   updateRotation(angle: number) {
-    this.rotation = angle;
+    this.rotation = angle
   }
 
   updateRotationX(angle: number) {
-    this.rotationX = angle;
+    this.rotationX = angle
   }
 
   updateRotationY(angle: number) {
-    this.rotationY = angle;
+    this.rotationY = angle
   }
 
   updateRotationDegrees(degrees: number) {
-    this.rotation = degrees * (Math.PI / 180.0);
+    this.rotation = degrees * (Math.PI / 180.0)
   }
 
   // best as 100 * 0.001
   updateRotationXDegrees(degrees: number) {
-    this.rotationX = degrees * (Math.PI / 180.0);
+    this.rotationX = degrees * (Math.PI / 180.0)
   }
 
   // best as 100 * 0.001
   updateRotationYDegrees(degrees: number) {
-    this.rotationY = degrees * (Math.PI / 180.0);
+    this.rotationY = degrees * (Math.PI / 180.0)
   }
 
   updateScale(scale: [number, number]) {
-    this.scale = vec2.fromValues(scale[0], scale[1]);
+    this.scale = vec2.fromValues(scale[0], scale[1])
   }
 
   updateScaleX(scaleX: number) {
-    this.scale[0] = scaleX;
+    this.scale[0] = scaleX
   }
 
   updateScaleY(scaleY: number) {
-    this.scale[1] = scaleY;
+    this.scale[1] = scaleY
   }
 
   translate(translation: vec2 | vec3) {
     if (translation.length === 3) {
-      vec3.add(this.position, this.position, translation as vec3);
+      vec3.add(this.position, this.position, translation as vec3)
     } else {
       // 2D translation: keep Z unchanged
-      const translation3 = vec3.fromValues(translation[0], translation[1], 0);
-      vec3.add(this.position, this.position, translation3);
+      const translation3 = vec3.fromValues(translation[0], translation[1], 0)
+      vec3.add(this.position, this.position, translation3)
     }
   }
 
   rotate(angle: number) {
-    this.rotation += angle;
+    this.rotation += angle
   }
 
   rotateDegrees(degrees: number) {
-    this.rotation += degrees * (Math.PI / 180.0);
+    this.rotation += degrees * (Math.PI / 180.0)
   }
 
   /**
@@ -150,7 +144,7 @@ export class Transform {
    */
   getWorldMatrix(windowSize: WindowSize): mat4 {
     // Re-use the existing transformation logic
-    return this.updateTransform(windowSize);
+    return this.updateTransform(windowSize)
   }
 
   /**
@@ -159,13 +153,13 @@ export class Transform {
    * @returns {mat4} The inverse of the World Matrix.
    */
   getInverseWorldMatrix(windowSize: WindowSize): mat4 {
-    const worldMatrix = this.getWorldMatrix(windowSize);
-    const inverseMatrix = mat4.create();
+    const worldMatrix = this.getWorldMatrix(windowSize)
+    const inverseMatrix = mat4.create()
 
     // Compute the inverse matrix
-    mat4.invert(inverseMatrix, worldMatrix);
+    mat4.invert(inverseMatrix, worldMatrix)
 
-    return inverseMatrix;
+    return inverseMatrix
   }
 
   /**
@@ -176,7 +170,7 @@ export class Transform {
    */
   transformPoint(point: Point, matrix: mat4): Point {
     // This function now relies on the corrected external utility
-    return transformPointByMatrix(point, matrix);
+    return transformPointByMatrix(point, matrix)
   }
 }
 
@@ -189,49 +183,49 @@ export class Transform {
  */
 export function transformPointByMatrix(point: Point, matrix: mat4): Point {
   // Use a temporary vec4 to represent the point (x, y, z=0, w=1)
-  const tempVec = vec4.fromValues(point.x, point.y, 0.0, 1.0);
-  const resultVec = vec4.create();
+  const tempVec = vec4.fromValues(point.x, point.y, 0.0, 1.0)
+  const resultVec = vec4.create()
 
   // 1. **CORRECTION:** Use vec4.transformMat4(out, vec, mat)
   // This function applies the matrix transformation: resultVec = matrix * tempVec
-  vec4.transformMat4(resultVec, tempVec, matrix);
+  vec4.transformMat4(resultVec, tempVec, matrix)
 
   // The resulting point is the transformed (x, y) coordinates.
   // We divide by w (resultVec[3]) for homogeneous coordinates,
   // although w should be 1.0 for standard affine (non-perspective) transforms.
-  const w = resultVec[3];
+  const w = resultVec[3]
 
   return {
     x: resultVec[0] / w,
-    y: resultVec[1] / w,
-  } as Point; // Assuming 'Point' is { x: number, y: number }
+    y: resultVec[1] / w
+  } as Point // Assuming 'Point' is { x: number, y: number }
 }
 
 export function degreesToRadians(degrees: number) {
-  return degrees * (Math.PI / 180.0);
+  return degrees * (Math.PI / 180.0)
 }
 
 export function matrix4ToRawArray(matrix: mat4): Float32Array<ArrayBuffer> {
-  return new Float32Array(matrix.values()); // gl-matrix stores matrices in column-major order, matching WebGPU
+  return new Float32Array(matrix.values()) // gl-matrix stores matrices in column-major order, matching WebGPU
 }
 
 export function angleBetweenPoints(p1: Point, p2: Point): number {
-  const dx = p2.x - p1.x;
-  const dy = p2.y - p1.y;
+  const dx = p2.x - p1.x
+  const dy = p2.y - p1.y
 
   // Calculate the angle in radians using atan2
-  const angleRad = Math.atan2(dy, dx);
+  const angleRad = Math.atan2(dy, dx)
 
-  return angleRad;
+  return angleRad
 }
 
 export function degreesBetweenPoints(p1: Point, p2: Point): number {
-  const angleRad = angleBetweenPoints(p1, p2);
+  const angleRad = angleBetweenPoints(p1, p2)
 
   // Convert radians to degrees if needed
-  const angleDeg = (angleRad * 180.0) / Math.PI;
+  const angleDeg = (angleRad * 180.0) / Math.PI
 
-  return angleDeg;
+  return angleDeg
 }
 
 /// For creating temporary group bind groups
@@ -241,25 +235,22 @@ export function createEmptyGroupTransform(
   groupBindGroupLayout: PolyfillBindGroupLayout,
   windowSize: WindowSize
 ): [PolyfillBindGroup, Transform] {
-  const emptyBuffer = mat4.create();
-  const rawMatrix = matrix4ToRawArray(emptyBuffer);
+  const emptyBuffer = mat4.create()
+  const rawMatrix = matrix4ToRawArray(emptyBuffer)
 
   const uniformBuffer = device.createBuffer(
     {
-      label: "Group Uniform Buffer",
+      label: 'Group Uniform Buffer',
       size: rawMatrix.byteLength,
-      usage:
-        process.env.NODE_ENV === "test"
-          ? 0
-          : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-      mappedAtCreation: true,
+      usage: process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      mappedAtCreation: true
     },
-    "uniformMatrix4fv"
-  );
+    'uniformMatrix4fv'
+  )
 
-  if (process.env.NODE_ENV !== "test") {
-    new Float32Array(uniformBuffer.getMappedRange()).set(rawMatrix);
-    uniformBuffer.unmap();
+  if (process.env.NODE_ENV !== 'test') {
+    new Float32Array(uniformBuffer.getMappedRange()).set(rawMatrix)
+    uniformBuffer.unmap()
   }
 
   // Now create your bind group with these defaults
@@ -270,12 +261,12 @@ export function createEmptyGroupTransform(
         binding: 0,
         groupIndex: 3,
         resource: {
-          pbuffer: uniformBuffer,
-        },
-      },
-    ],
+          pbuffer: uniformBuffer
+        }
+      }
+    ]
     // label: "Transform Bind Group",
-  });
+  })
 
   // uniformBuffer.unmap();
 
@@ -285,7 +276,7 @@ export function createEmptyGroupTransform(
     vec2.fromValues(1.0, 1.0),
     uniformBuffer
     // windowSize
-  );
+  )
 
-  return [bindGroup, groupTransform];
+  return [bindGroup, groupTransform]
 }

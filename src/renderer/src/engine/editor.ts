@@ -1360,7 +1360,8 @@ export class Editor {
         [p.dimensions[0] * this.scaleMultiplier, p.dimensions[1] * this.scaleMultiplier],
         {
           x: p.position.x * this.scaleMultiplier,
-          y: p.position.y * this.scaleMultiplier
+          y: p.position.y * this.scaleMultiplier,
+          z: p.position.z
         },
         0.0,
         p.borderRadius,
@@ -3874,8 +3875,8 @@ export class Editor {
 
     console.info('bg poly', canvas_polygon)
 
-    canvas_polygon.transform.updateScale([20, 20])
-    canvas_polygon.transform.layer = -89
+    canvas_polygon.transform.updateScale([25, 25])
+    canvas_polygon.transform.position[2] = -89
     canvas_polygon.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
 
     canvas_polygon.updateGradientAnimation(gpuResources.device!, 0.01)
@@ -3932,8 +3933,9 @@ export class Editor {
         )
 
         // update scale
-        selected_polygon.transform.updateScale([20, 20])
-        selected_polygon.transform.layer = -89
+        selected_polygon.transform.updateScale([25, 25])
+        // selected_polygon.transform.layer = -89
+        selected_polygon.transform.position[2] = -89
         selected_polygon.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
 
         // switch (new_value_type) {
@@ -4274,6 +4276,14 @@ export class Editor {
                 )
                 break
               }
+              case 'positionZ': {
+                selected_polygon.transform.position[2] = new_value
+                selected_polygon.transform.updateUniformBuffer(
+                  gpuResources.queue!,
+                  camera.windowSize
+                )
+                break
+              }
             }
           }
         }
@@ -4400,6 +4410,21 @@ export class Editor {
                 }
                 break
               }
+              case 'positionX': {
+                selected_text.transform.position[0] = new_value
+                selected_text.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
+                break
+              }
+              case 'positionY': {
+                selected_text.transform.position[1] = new_value
+                selected_text.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
+                break
+              }
+              case 'positionZ': {
+                selected_text.transform.position[2] = new_value
+                selected_text.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
+                break
+              }
             }
           }
         }
@@ -4475,6 +4500,11 @@ export class Editor {
                 )
                 break
               }
+              case 'positionZ': {
+                selected_image.transform.position[2] = new_value
+                selected_image.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
+                break
+              }
             }
           }
         }
@@ -4532,6 +4562,27 @@ export class Editor {
                   [selected_video.dimensions[0] as number, new_value as number]
                   //   camera
                 )
+                break
+              }
+              case 'positionX': {
+                selected_video.transform.position[0] = new_value
+                selected_video.transform.updateUniformBuffer(
+                  this.gpuResources.queue!,
+                  this.camera.windowSize
+                )
+                break
+              }
+              case 'positionY': {
+                selected_video.transform.position[1] = new_value
+                selected_video.transform.updateUniformBuffer(
+                  this.gpuResources.queue!,
+                  this.camera.windowSize
+                )
+                break
+              }
+              case 'positionZ': {
+                selected_video.transform.position[2] = new_value
+                selected_video.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
                 break
               }
             }

@@ -26,11 +26,13 @@ export class Camera3D extends Camera {
   lastOrbitX: number = 0
   lastOrbitY: number = 0
 
+  resetZ: number = 7.0
+
   constructor(windowSize: WindowSize) {
     super(windowSize)
 
     // Initialize 3D position (x, y from base class, adding z)
-    this.position3D = vec3.fromValues(this.position[0], this.position[1], 0.0)
+    this.position3D = vec3.fromValues(this.position[0], this.position[1], this.resetZ)
 
     // Initialize rotation as identity quaternion (no rotation)
     this.rotation = quat.create()
@@ -222,7 +224,7 @@ export class Camera3D extends Camera {
   }
 
   reset_zoom() {
-    this.position3D[2] = 0
+    this.position3D[2] = this.resetZ
   }
 
   // Method to orbit camera around target point

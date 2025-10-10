@@ -576,7 +576,10 @@ export function updatePositionZ(
     case ObjectType.Cube3D: {
       let cube = editor.cubes3D.find((c) => c.id === objectId)
       if (cube && editor.camera) {
-        cube.transform.updatePosition([cube.transform.position[0], cube.transform.position[1], value], editor.camera.windowSize)
+        cube.transform.updatePosition(
+          [cube.transform.position[0], cube.transform.position[1], value],
+          editor.camera.windowSize
+        )
         cube.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
       }
 
@@ -607,6 +610,31 @@ export function updatePositionZ(
 
       editorState.savedState.sequences.forEach((s) => {
         s.activeSpheres3D?.forEach((sp) => {
+          if (sp.id == objectId) {
+            sp.position = {
+              x: sp.position.x,
+              y: sp.position.y,
+              z: value
+            }
+          }
+        })
+      })
+
+      saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+      break
+    }
+    case ObjectType.Model3D: {
+      let model = editor.models3D.find((s) => s.id === objectId)
+      if (model && editor.camera) {
+        model.transform.updatePosition(
+          [model.transform.position[0], model.transform.position[1], value],
+          editor.camera.windowSize
+        )
+        model.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+      }
+
+      editorState.savedState.sequences.forEach((s) => {
+        s.activeModels3D?.forEach((sp) => {
           if (sp.id == objectId) {
             sp.position = {
               x: sp.position.x,
