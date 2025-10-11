@@ -725,28 +725,28 @@ export class TextRenderer {
         vertices.push(
           {
             position: [x0, y0, 0.0],
-            tex_coords: [u0, v0],
+            tex_coords: [u0, v1],
             color: activeColor,
             gradient_coords: [x0 / systemDimensions[0], y0 / systemDimensions[1]],
             object_type: 1 // OBJECT_TYPE_TEXT
           },
           {
             position: [x1, y0, 0.0],
-            tex_coords: [u1, v0],
+            tex_coords: [u1, v1],
             color: activeColor,
             gradient_coords: [x1 / systemDimensions[0], y0 / systemDimensions[1]],
             object_type: 1 // OBJECT_TYPE_TEXT
           },
           {
             position: [x1, y1, 0.0],
-            tex_coords: [u1, v1],
+            tex_coords: [u1, v0],
             color: activeColor,
             gradient_coords: [x1 / systemDimensions[0], y1 / systemDimensions[1]],
             object_type: 1 // OBJECT_TYPE_TEXT
           },
           {
             position: [x0, y1, 0.0],
-            tex_coords: [u0, v1],
+            tex_coords: [u0, v0],
             color: activeColor,
             gradient_coords: [x0 / systemDimensions[0], y1 / systemDimensions[1]],
             object_type: 1 // OBJECT_TYPE_TEXT

@@ -827,12 +827,13 @@ function generateCircleVertices(
     // For shader backgrounds, use normalized UV coordinates
     const normalizedX = x / dimensions[0] + 0.5
     const normalizedY = y / dimensions[1] + 0.5
+    const flippedY = 1.0 - normalizedY
 
     vertices.push({
       position: [x, y, -0.0001], // Slightly above z=0 to avoid z-fighting
-      tex_coords: objectType === 9 ? [normalizedX, normalizedY] : [0, 0],
+      tex_coords: objectType === 9 ? [normalizedX, flippedY] : [0, 0],
       color,
-      gradient_coords: objectType === 9 ? [normalizedX, normalizedY] : [x, y],
+      gradient_coords: objectType === 9 ? [normalizedX, flippedY] : [x, y],
       object_type: objectType
     })
   }
@@ -936,6 +937,7 @@ export function getPolygonData(
       tessellationResult.points.forEach((point) => {
         const normalizedX = point[0] / polygon.dimensions[0] + 0.5
         const normalizedY = point[1] / polygon.dimensions[1] + 0.5
+        const flippedY = 1.0 - normalizedY
 
         // console.info("normalized poly", normalizedX, normalizedY);
 
@@ -967,9 +969,9 @@ export function getPolygonData(
           // createVertex(point[0], point[1], getZLayer(1.0), polygon.fill, ObjectType.Polygon)
           {
             position: [point[0], point[1], -0.0001],
-            tex_coords: objectType === 9 ? [normalizedX, normalizedY] : [0, 0],
+            tex_coords: objectType === 9 ? [normalizedX, flippedY] : [0, 0],
             color: fill,
-            gradient_coords: [normalizedX, normalizedY],
+            gradient_coords: [normalizedX, flippedY],
             object_type: objectType
           }
         )

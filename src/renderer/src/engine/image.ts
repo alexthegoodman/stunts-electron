@@ -289,28 +289,28 @@ export class StImage {
       this.vertices = [
         {
           position: [-0.5, -0.5, 0.0],
-          tex_coords: [u0, v0],
+          tex_coords: [u0, v1],
           color: [1.0, 1.0, 1.0, 1.0],
           gradient_coords: [normalizedX0, normalizedY0],
           object_type: 2 // OBJECT_TYPE_IMAGE
         },
         {
           position: [0.5, -0.5, 0.0],
-          tex_coords: [u1, v0],
+          tex_coords: [u1, v1],
           color: [1.0, 1.0, 1.0, 1.0],
           gradient_coords: [normalizedX1, normalizedY0],
           object_type: 2 // OBJECT_TYPE_IMAGE
         },
         {
           position: [0.5, 0.5, 0.0],
-          tex_coords: [u1, v1],
+          tex_coords: [u1, v0],
           color: [1.0, 1.0, 1.0, 1.0],
           gradient_coords: [normalizedX1, normalizedY1],
           object_type: 2 // OBJECT_TYPE_IMAGE
         },
         {
           position: [-0.5, 0.5, 0.0],
-          tex_coords: [u0, v1],
+          tex_coords: [u0, v0],
           color: [1.0, 1.0, 1.0, 1.0],
           gradient_coords: [normalizedX0, normalizedY1],
           object_type: 2 // OBJECT_TYPE_IMAGE
@@ -591,16 +591,16 @@ export class StImage {
 
       this.vertices.forEach((v, i) => {
         if (i === 0) {
-          v.tex_coords = [u0, v0]
+          v.tex_coords = [u0, v1]
         }
         if (i === 1) {
-          v.tex_coords = [u1, v0]
-        }
-        if (i === 2) {
           v.tex_coords = [u1, v1]
         }
+        if (i === 2) {
+          v.tex_coords = [u1, v0]
+        }
         if (i === 3) {
-          v.tex_coords = [u0, v1]
+          v.tex_coords = [u0, v0]
         }
       })
 

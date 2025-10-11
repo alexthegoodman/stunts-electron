@@ -3564,12 +3564,14 @@ export class Editor {
                 break
               }
               case 'positionX': {
-                selected_text.transform.position[0] = new_value
+                let ndc = toNDC(new_value, new_value, windowSize.width, windowSize.width)
+                selected_text.transform.position[0] = ndc.x
                 selected_text.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
                 break
               }
               case 'positionY': {
-                selected_text.transform.position[1] = new_value
+                let ndc = toNDC(new_value, new_value, windowSize.height, windowSize.height)
+                selected_text.transform.position[1] = ndc.y
                 selected_text.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
                 break
               }
