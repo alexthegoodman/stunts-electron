@@ -367,7 +367,7 @@ Guidelines:
 - Match the animation style (smooth = gentle curves, bouncy = overshoot, quick = fast transitions, dramatic = large movements, subtle = small changes)
 - Use object types to inform animation choices (text objects may need different animations than images or shapes)
 - Consider object dimensions when creating scale animations (larger objects may need different scaling than smaller ones)
-- Use current positions as ending points for animations
+- Animate objects anywhere that looks best, unless a specific spot is requested
 - Ensure animations keep objects within canvas boundaries based on their dimensions
 
 User Request: ${data.prompt}`

@@ -2021,7 +2021,7 @@ export class Editor {
             const start = startFrame.value.value // Type assertion for clarity
             const end = endFrame.value.value
 
-            const x = this.lerp(start, end, progress) * 0.01
+            const x = this.lerp(start, end, progress)
 
             switch (animation.objectType) {
               case ObjectType.Polygon:
@@ -2055,7 +2055,7 @@ export class Editor {
             const start = startFrame.value.value // Type assertion for clarity
             const end = endFrame.value.value
 
-            const y = this.lerp(start, end, progress) * 0.01
+            const y = this.lerp(start, end, progress)
 
             switch (animation.objectType) {
               case ObjectType.Polygon:
