@@ -78,12 +78,12 @@ export const fromNDC = (ndcX: number, ndcY: number, width: number, height: numbe
 }
 
 // Convert human dimensions to system-scale dimensions
-export const toSystemScale = (humanDim, windowDim) => {
+export const toSystemScale = (humanDim: number, windowDim: number) => {
   return (humanDim / windowDim) * 2
 }
 
 // Convert system-scale dimensions back to human dimensions
-export const fromSystemScale = (scaleDim, windowDim) => {
+export const fromSystemScale = (scaleDim: number, windowDim: number) => {
   return (scaleDim / 2) * windowDim
 }
 

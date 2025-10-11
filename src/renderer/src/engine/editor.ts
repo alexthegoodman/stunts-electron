@@ -70,7 +70,7 @@ import {
   toRadians,
   resolveOverlaps
 } from './editor/helpers'
-import { toNDC } from './vertex'
+import { toNDC, toSystemScale } from './vertex'
 
 export const TEXT_BACKGROUNDS_DEFAULT_HIDDEN = true
 
@@ -2143,7 +2143,12 @@ export class Editor {
                   originalScaleImage[0] * new_scale,
                   originalScaleImage[1] * new_scale
                 ] as [number, number]
-                this.imageItems[objectIdx].transform.updateScaleX(originalScaleImage[0] * new_scale)
+                const systemWidth = toSystemScale(
+                  originalScaleImage[0] * new_scale,
+                  camera.windowSize.width
+                )
+                // this.imageItems[objectIdx].transform.updateScaleX(originalScaleImage[0] * new_scale)
+                this.imageItems[objectIdx].transform.updateScaleX(systemWidth)
                 break
               case ObjectType.VideoItem:
                 const originalScaleVideo = this.videoItems[objectIdx].dimensions
@@ -2199,7 +2204,12 @@ export class Editor {
                   originalScaleImage[0] * new_scale,
                   originalScaleImage[1] * new_scale
                 ] as [number, number]
-                this.imageItems[objectIdx].transform.updateScaleY(originalScaleImage[1] * new_scale)
+                const systemHeight = toSystemScale(
+                  originalScaleImage[1] * new_scale,
+                  camera.windowSize.height
+                )
+                // this.imageItems[objectIdx].transform.updateScaleY(originalScaleImage[1] * new_scale)
+                this.imageItems[objectIdx].transform.updateScaleY(systemHeight)
                 break
               case ObjectType.VideoItem:
                 const originalScaleVideo = this.videoItems[objectIdx].dimensions
