@@ -45,6 +45,7 @@ export const ColorProperties = ({
   const [is_white, set_is_white] = useState(false)
   const [is_transparent, set_is_transparent] = useState(false)
   const [is_gradient, set_is_gradient] = useState(false)
+  const [interacted, setInteracted] = useState(false)
 
   useEffect(() => {
     if (!color) {
@@ -104,6 +105,10 @@ export const ColorProperties = ({
     let editorState = editorStateRef.current
 
     if (!editor || !editorState) {
+      return
+    }
+
+    if (!interacted) {
       return
     }
 
@@ -298,6 +303,7 @@ export const ColorProperties = ({
           name="is_gradient"
           checked={is_gradient}
           onChange={(ev) => {
+            setInteracted(true)
             set_is_gradient(true)
           }}
         />
@@ -306,13 +312,23 @@ export const ColorProperties = ({
         </label>
       </div>
 
-      <ColorPicker label="Select Color" color={color} setColor={setColor} />
+      <ColorPicker
+        label="Select Color"
+        color={color}
+        setColor={(c) => {
+          setInteracted(true)
+          setColor(c)
+        }}
+      />
 
       {is_gradient && (
         <ColorPicker
           label="Select Secondary Color"
           color={colorSecondary}
-          setColor={setColorSecondary}
+          setColor={(c) => {
+            setInteracted(true)
+            setColorSecondary(c)
+          }}
         />
       )}
 
@@ -328,6 +344,8 @@ export const ColorProperties = ({
             if (!editorState || !editor) {
               return
             }
+
+            setInteracted(true)
 
             if (ev.target.checked) {
               let value: BackgroundFill = {
@@ -362,6 +380,8 @@ export const ColorProperties = ({
             if (!editorState || !editor) {
               return
             }
+
+            setInteracted(true)
 
             if (ev.target.checked) {
               let value: BackgroundFill = {
