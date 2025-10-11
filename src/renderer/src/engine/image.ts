@@ -22,6 +22,7 @@ export interface SavedStImageConfig {
   dimensions: [number, number]
   // pub path: String,
   url: string
+  replicateUrl?: string // Original Replicate URL for AI operations
   position: SavedPoint
   layer: number
   isCircle: boolean
@@ -35,6 +36,7 @@ export interface StImageConfig {
   dimensions: [number, number]
   // pub path: String,
   url: string
+  replicateUrl?: string // Original Replicate URL for AI operations
   position: SavedPoint
   layer: number
   isCircle: boolean
@@ -47,6 +49,7 @@ export class StImage {
   currentSequenceId: string
   name: string
   url: string
+  replicateUrl?: string
   texture!: PolyfillTexture
   // textureView!: GPUTextureView;
   transform!: Transform
@@ -85,6 +88,7 @@ export class StImage {
     this.currentSequenceId = currentSequenceId
     this.name = imageConfig.name
     this.url = url
+    this.replicateUrl = imageConfig.replicateUrl
     this.layer = imageConfig.layer
     this.layerSpacing = 0.001
     this.dimensions = imageConfig.dimensions
@@ -680,6 +684,7 @@ export class StImage {
       id: this.id,
       name: this.name,
       url: this.url,
+      replicateUrl: this.replicateUrl,
       dimensions: this.dimensions,
       position: {
         x: ndc.x, // Access position from matrix

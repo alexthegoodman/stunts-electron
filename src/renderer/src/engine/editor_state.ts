@@ -351,6 +351,47 @@ export default class EditorState {
     this.savedState = saved_state
   }
 
+  async update_saved_image_url(
+    selected_sequence_id: string,
+    image_id: string,
+    new_url: string
+  ): Promise<void> {
+    let saved_state = this.savedState
+
+    saved_state.sequences.forEach((s) => {
+      if (s.id == selected_sequence_id) {
+        const imageItem = s.activeImageItems.find((img) => img.id === image_id)
+        if (imageItem) {
+          imageItem.url = new_url
+        }
+      }
+    })
+
+    let sequences = saved_state.sequences
+    await saveSequencesData(sequences, this.saveTarget)
+    this.savedState = saved_state
+  }
+
+  async delete_saved_image_item(selected_sequence_id: string, image_id: string): Promise<void> {
+    let saved_state = this.savedState
+
+    saved_state.sequences.forEach((s) => {
+      if (s.id == selected_sequence_id) {
+        // Remove from activeImageItems
+        s.activeImageItems = s.activeImageItems.filter((img) => img.id !== image_id)
+
+        // Remove associated motion paths
+        if (this.supportsMotionPaths && s.polygonMotionPaths) {
+          s.polygonMotionPaths = s.polygonMotionPaths.filter((mp) => mp.polygonId !== image_id)
+        }
+      }
+    })
+
+    let sequences = saved_state.sequences
+    await saveSequencesData(sequences, this.saveTarget)
+    this.savedState = saved_state
+  }
+
   private genProcessPrmoptItem(
     item: SavedStImageConfig | SavedStVideoConfig | SavedPolygonConfig | SavedTextRendererConfig,
     total: number

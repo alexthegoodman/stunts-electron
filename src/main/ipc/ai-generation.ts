@@ -58,7 +58,8 @@ export function registerAiGenerationHandlers(): void {
         success: true,
         data: {
           url: savePath,
-          fileName: fileName
+          fileName: fileName,
+          replicateUrl: imageUrl // Store the original Replicate URL
         }
       }
     } catch (error) {
@@ -375,4 +376,139 @@ User Request: ${data.prompt}`
       }
     }
   )
+
+  // Remove background from image using Replicate
+  ipcMain.handle('ai:removeBackground', async (_event, imageUrl: string) => {
+    try {
+      const replicateKey = await apiKeys.getKey('replicate')
+      if (!replicateKey) {
+        return { success: false, error: 'Replicate API key not configured' }
+      }
+
+      const replicate = new Replicate({ auth: replicateKey })
+
+      // Use BRIA RMBG model for background removal
+      // const output = (await replicate.run('briaai/rmbg-2.0:4c2dea16ef0d2463c538b5e33a28a0b9daa6e373e3c58aeb3f0c1a2d2c9e10b0', {
+      //   input: {
+      //     image: imageUrl
+      //   }
+      // })) as string
+
+      const output = (await replicate.run(
+        '851-labs/background-remover:a029dff38972b5fda4ec5d75d7d1cd25aeff621d2cf4946a41055d7db66b80bc',
+        {
+          input: {
+            image: imageUrl,
+            format: 'png',
+            reverse: false,
+            threshold: 0,
+            background_type: 'rgba'
+          }
+        }
+      )) as any
+
+      // Download the processed image and save locally
+      const response = await fetch(output.url())
+      const arrayBuffer = await response.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+
+      // Save to uploads directory
+      const documentsPath = app.getPath('documents')
+      const uploadsDir = path.join(documentsPath, 'Stunts', 'uploads', 'images')
+      await fs.mkdir(uploadsDir, { recursive: true })
+
+      const timestamp = Date.now()
+      const fileName = `no-bg-${timestamp}.png`
+      const savePath = path.join(uploadsDir, fileName)
+      await fs.writeFile(savePath, buffer)
+
+      return {
+        success: true,
+        data: {
+          url: savePath,
+          fileName: fileName
+        }
+      }
+    } catch (error) {
+      console.error('Failed to remove background:', error)
+      return { success: false, error: 'Failed to remove background' }
+    }
+  })
+
+  // Generate 3D model from image using Replicate and Trellis
+  ipcMain.handle('ai:generate3DModel', async (_event, imageUrl: string) => {
+    try {
+      const replicateKey = await apiKeys.getKey('replicate')
+      if (!replicateKey) {
+        return { success: false, error: 'Replicate API key not configured' }
+      }
+
+      const replicate = new Replicate({ auth: replicateKey })
+
+      // Use Trellis model for 3D generation from image
+      // const output = (await replicate.run(
+      //   'jbilcke-hf/trellis:87fc4da651e7d0bfc03f54f5c4b7766bb8e30d4a2e2fa5cc3e8a04c9c38267f4',
+      //   {
+      //     input: {
+      //       image: imageUrl,
+      //       seed: Math.floor(Math.random() * 1000000),
+      //       slat_sampler_steps: 12,
+      //       slat_sampler_cfg: 7.5,
+      //       mesh_simplify: 0.95,
+      //       texture_size: 1024
+      //     }
+      //   }
+      // )) as any
+
+      const input = {
+        images: [imageUrl],
+        texture_size: 2048,
+        mesh_simplify: 0.9,
+        generate_model: true,
+        save_gaussian_ply: true,
+        ss_sampling_steps: 38
+      }
+
+      const output = (await replicate.run(
+        'firtoz/trellis:e8f6c45206993f297372f5436b90350817bd9b4a0d52d2a76df50c1c8afa2b3c',
+        { input }
+      )) as any
+
+      console.log(output)
+      //=> {"model_file":"https://replicate.delivery/yhqm/5xOmxKPXDT...
+
+      // The output should contain a GLB file URL
+      const glbUrl = output?.model_file
+
+      if (!glbUrl) {
+        throw new Error('No GLB model returned from Trellis')
+      }
+
+      // Download the GLB file and save locally
+      const response = await fetch(glbUrl)
+      const arrayBuffer = await response.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+
+      // Save to uploads directory
+      const documentsPath = app.getPath('documents')
+      const uploadsDir = path.join(documentsPath, 'Stunts', 'uploads', 'models')
+      await fs.mkdir(uploadsDir, { recursive: true })
+
+      const timestamp = Date.now()
+      const fileName = `generated-model-${timestamp}.glb`
+      const savePath = path.join(uploadsDir, fileName)
+      await fs.writeFile(savePath, buffer)
+
+      return {
+        success: true,
+        data: {
+          url: savePath,
+          fileName: fileName
+        }
+      }
+    } catch (error) {
+      console.error('Failed to generate 3D model:', error)
+      return { success: false, error: 'Failed to generate 3D model' }
+    }
+  })
 }

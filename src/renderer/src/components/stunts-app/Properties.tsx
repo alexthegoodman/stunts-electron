@@ -18,6 +18,9 @@ import { saveSequencesData } from '../../fetchers/projects'
 import { ColorPicker } from './ColorPicker'
 import { ColorService, IColor, useColor } from 'react-color-palette'
 import { update_keyframe } from './VideoEditor'
+import toast from 'react-hot-toast'
+import { v4 as uuidv4 } from 'uuid'
+import { getUploadedModelData } from '../../fetchers/projects'
 import {
   updateBackground,
   updateBorderRadius,
@@ -396,6 +399,9 @@ export const ImageProperties = ({
   const [positionX, setPositionX] = useState(0)
   const [positionY, setPositionY] = useState(0)
   const [positionZ, setPositionZ] = useState(0)
+  const [hasReplicateUrl, setHasReplicateUrl] = useState(false)
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false)
+  const [isGenerating3DModel, setIsGenerating3DModel] = useState(false)
 
   useEffect(() => {
     let editor = editorRef.current
@@ -438,8 +444,190 @@ export const ImageProperties = ({
       setPositionZ(posZ)
     }
 
+    // Check if image has a Replicate URL (generated with AI)
+    setHasReplicateUrl(!!currentObject?.replicateUrl)
+
     setDefaultsSet(true)
   }, [currentImageId])
+
+  const handleRemoveBackground = async () => {
+    const editor = editorRef.current
+    const editorState = editorStateRef.current
+
+    if (!editor || !editorState) {
+      return
+    }
+
+    const currentSequence = editorState.savedState.sequences.find((s) => s.id === currentSequenceId)
+    const currentObject = currentSequence?.activeImageItems.find((p) => p.id === currentImageId)
+
+    if (!currentObject?.replicateUrl) {
+      toast.error('No Replicate URL found for this image')
+      return
+    }
+
+    setIsRemovingBackground(true)
+
+    try {
+      const result = await window.api.ai.removeBackground(currentObject.replicateUrl)
+
+      if (!result.success) {
+        if (result.error?.includes('API key')) {
+          toast.error('Replicate API key not configured. Please add your API key in Settings.', {
+            duration: 5000
+          })
+        } else {
+          throw new Error(result.error || 'Failed to remove background')
+        }
+        return
+      }
+
+      // Get the new image data
+      const imageData = await window.api.uploads.getImage(result.data.url)
+
+      if (!imageData.success) {
+        throw new Error('Failed to load processed image')
+      }
+
+      // Find and remove the old image item
+      const oldImageIndex = editor.imageItems.findIndex((img) => img.id === currentImageId)
+      if (oldImageIndex === -1) {
+        throw new Error('Image not found in editor')
+      }
+
+      const oldImage = editor.imageItems[oldImageIndex]
+      const blob = new Blob([imageData.data.buffer], { type: imageData.data.mimeType })
+
+      // Create new image config with the same ID to preserve animations
+      const newImageConfig = {
+        id: currentImageId, // Keep the same ID!
+        name: oldImage.name,
+        dimensions: oldImage.dimensions,
+        position: {
+          x: currentObject.position.x,
+          y: currentObject.position.y,
+          z: currentObject.position.z ?? 0
+        },
+        url: result.data.url,
+        replicateUrl: currentObject.replicateUrl,
+        layer: oldImage.layer,
+        isCircle: oldImage.isCircle,
+        isSticker: oldImage.isSticker,
+        borderRadius: oldImage.borderRadius
+      }
+
+      // Remove old image from editor
+      editor.imageItems.splice(oldImageIndex, 1)
+
+      // Add new image with same ID
+      await editor.add_image_item(newImageConfig, result.data.url, blob, currentImageId, currentSequenceId)
+
+      // Update the saved state with the new URL
+      await editorState.update_saved_image_url(currentSequenceId, currentImageId, result.data.url)
+
+      // Update the editor's current sequence data
+      const savedState = editorState.savedState
+      const updatedSequence = savedState.sequences.find((s) => s.id === currentSequenceId)
+      if (updatedSequence) {
+        editor.currentSequenceData = updatedSequence
+        editor.updateMotionPaths(updatedSequence)
+      }
+
+      toast.success('Background removed successfully!')
+    } catch (error: any) {
+      console.error('Remove background error:', error)
+      toast.error(error.message || 'Failed to remove background')
+    } finally {
+      setIsRemovingBackground(false)
+    }
+  }
+
+  const handleGenerate3DModel = async () => {
+    const editor = editorRef.current
+    const editorState = editorStateRef.current
+
+    if (!editor || !editorState) {
+      return
+    }
+
+    const currentSequence = editorState.savedState.sequences.find((s) => s.id === currentSequenceId)
+    const currentObject = currentSequence?.activeImageItems.find((p) => p.id === currentImageId)
+
+    if (!currentObject?.replicateUrl) {
+      toast.error('No Replicate URL found for this image')
+      return
+    }
+
+    setIsGenerating3DModel(true)
+
+    try {
+      const result = await window.api.ai.generate3DModel(currentObject.replicateUrl)
+
+      if (!result.success) {
+        if (result.error?.includes('API key')) {
+          toast.error('Replicate API key not configured. Please add your API key in Settings.', {
+            duration: 5000
+          })
+        } else {
+          throw new Error(result.error || 'Failed to generate 3D model')
+        }
+        return
+      }
+
+      // Get the model data
+      const modelData = await getUploadedModelData(result.data.url)
+
+      if (!modelData) {
+        throw new Error('Failed to load generated model')
+      }
+
+      // Remove the old image item from the editor
+      const imageItem = editor.imageItems.find((img) => img.id === currentImageId)
+      if (imageItem) {
+        imageItem.hidden = true
+      }
+
+      // Create the 3D model with the same ID as the image to preserve animations
+      const modelConfig = {
+        id: currentImageId, // Keep the same ID!
+        name: 'Generated 3D Model',
+        path: result.data.url,
+        position: currentObject.position,
+        rotation: [0, 0, 0] as [number, number, number],
+        scale: [1, 1, 1] as [number, number, number],
+        backgroundFill: {
+          type: 'Color' as const,
+          value: [0.7, 0.7, 0.75, 1.0] as [number, number, number, number]
+        },
+        layer: currentObject.layer
+      }
+
+      // Add the 3D model
+      await editor.add_model3d(modelConfig, currentImageId, currentSequenceId, modelData)
+
+      // Remove the old image from saved state and add the model
+      editorState.delete_saved_image_item(currentSequenceId, currentImageId)
+      await editorState.add_saved_model3d(currentSequenceId, modelConfig)
+
+      // Update the editor's current sequence data
+      const savedState = editorState.savedState
+      const updatedSequence = savedState.sequences.find((s) => s.id === currentSequenceId)
+      if (updatedSequence) {
+        editor.currentSequenceData = updatedSequence
+        editor.updateMotionPaths(updatedSequence)
+      }
+
+      toast.success('3D model generated successfully!')
+
+      // Go back to main properties view since the object type changed
+      handleGoBack()
+    } catch (error: any) {
+      console.error('Generate 3D model error:', error)
+      toast.error(error.message || 'Failed to generate 3D model')
+    } finally {
+      setIsGenerating3DModel(false)
+    }
+  }
 
   if (!defaultsSet) {
     return <></>
@@ -463,6 +651,29 @@ export const ImageProperties = ({
           </button>
           <h5>Update Image</h5>
         </div>
+        {hasReplicateUrl && (
+          <details open={false} className="border border-gray-300 rounded">
+            <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+              AI Tools
+            </summary>
+            <div className="p-2 space-y-2">
+              <button
+                onClick={handleRemoveBackground}
+                disabled={isRemovingBackground}
+                className="w-full px-3 py-2 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isRemovingBackground ? 'Removing Background...' : 'Remove Background'}
+              </button>
+              <button
+                onClick={handleGenerate3DModel}
+                disabled={isGenerating3DModel}
+                className="w-full px-3 py-2 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGenerating3DModel ? 'Generating 3D Model...' : 'Generate 3D Model'}
+              </button>
+            </div>
+          </details>
+        )}
         <details open={false} className="border border-gray-300 rounded">
           <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
             Size & Shape

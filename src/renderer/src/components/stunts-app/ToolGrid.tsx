@@ -277,7 +277,7 @@ export const ToolGrid = ({
     console.info('Square added!')
   }
 
-  let on_add_image = async (sequence_id: string, file: File, isSticker: boolean = false) => {
+  let on_add_image = async (sequence_id: string, file: File, isSticker: boolean = false, replicateUrl?: string) => {
     let editor = editorRef.current
     let editor_state = editorStateRef.current
 
@@ -342,6 +342,7 @@ export const ToolGrid = ({
           position,
           // path: new_path.clone(),
           url: url,
+          replicateUrl: replicateUrl,
           layer: layers.length,
           isCircle: false,
           isSticker: isSticker
@@ -356,6 +357,7 @@ export const ToolGrid = ({
           name: image_config.name,
           // path: new_path.clone(),
           url: url,
+          replicateUrl: replicateUrl,
           dimensions: [image_config.dimensions[0], image_config.dimensions[1]],
           position: {
             x: position.x,
@@ -905,7 +907,7 @@ export const ToolGrid = ({
         type: imageData.data.mimeType
       })
 
-      await on_add_image(currentSequenceId, file)
+      await on_add_image(currentSequenceId, file, false, result.data.replicateUrl)
 
       setGenerateImageModalOpen(false)
       setGenerateImagePrompt('')

@@ -81,6 +81,8 @@ const api = {
       }>
       canvasSize: { width: number; height: number }
     }) => ipcRenderer.invoke('ai:generateAnimation', data),
+    removeBackground: (imageUrl: string) => ipcRenderer.invoke('ai:removeBackground', imageUrl),
+    generate3DModel: (imageUrl: string) => ipcRenderer.invoke('ai:generate3DModel', imageUrl),
   },
 
   // Video Processing APIs

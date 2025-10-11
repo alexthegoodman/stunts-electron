@@ -87,6 +87,8 @@ declare global {
           }>
           canvasSize: { width: number; height: number }
         }) => Promise<any>
+        removeBackground: (imageUrl: string) => Promise<any>
+        generate3DModel: (imageUrl: string) => Promise<any>
       }
       video: {
         resize: (data: { buffer: ArrayBuffer; maxWidth: number; maxHeight: number }) => Promise<any>
