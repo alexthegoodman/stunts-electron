@@ -766,8 +766,8 @@ export class TextRenderer {
         globalCharIndex++ // Increment global character index
       }
 
-      // Move to the next line
-      currentY += capHeight
+      // Move to the next line (subtract because Y is flipped)
+      currentY -= capHeight
     }
 
     // Update buffers
