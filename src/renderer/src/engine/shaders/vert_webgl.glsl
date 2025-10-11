@@ -61,13 +61,14 @@ void main() {
     // Apply model and group transforms
     vec4 world_pos = bindGroup1_0 * group_transform * vec4(a_position, 1.0);
 
-    if (a_object_type != 5.0 && a_object_type != 6.0 && a_object_type != 8.0 && a_object_type != 10.0) { // not 3D cube, sphere, or mockup, or model
+    // all objects will now instead be handled with same coordinate system, using a conversion from user-friendly units to system units
+    // if (a_object_type != 5.0 && a_object_type != 6.0 && a_object_type != 8.0 && a_object_type != 10.0) { // not 3D cube, sphere, or mockup, or model
         // // Convert XY from pixel coordinates to NDC for positioning
         // // Preserve Z and W for proper 3D projection
-        world_pos.x = (world_pos.x / bindGroup0_1.x) * 2.0 - 1.0;
-        world_pos.y = -((world_pos.y / bindGroup0_1.y) * 2.0 - 1.0);
+    //    world_pos.x = (world_pos.x / bindGroup0_1.x) * 2.0 - 1.0;
+    //    world_pos.y = -((world_pos.y / bindGroup0_1.y) * 2.0 - 1.0);
         // // world_pos.z and world_pos.w preserved!
-    }
+   // }
 
     // Apply camera view-projection matrix
     // This handles perspective divide for 3D depth using the W component

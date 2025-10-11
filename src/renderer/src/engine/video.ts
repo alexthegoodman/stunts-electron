@@ -1,8 +1,8 @@
 import { mat4, vec2, vec3 } from 'gl-matrix'
 import { v4 as uuidv4 } from 'uuid'
-import { Point } from './editor'
+import { CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Point } from './editor'
 import { createEmptyGroupTransform, Transform } from './transform'
-import { getZLayer, Vertex } from './vertex'
+import { fromNDC, getZLayer, toNDC, toSystemScale, Vertex } from './vertex'
 import { INTERNAL_LAYER_SPACE, SavedPoint, setupGradientBuffers } from './polygon'
 import MP4Box, { DataStream, MP4ArrayBuffer, MP4VideoTrack } from 'mp4box'
 import { WindowSize } from './camera'
@@ -226,12 +226,17 @@ export class StVideo {
       uniformBuffer.unmap()
     }
 
+    // Convert dimensions to system scale for the vertices
+    let systemDimensions = [
+      toSystemScale(videoConfig.dimensions[0] as number, windowSize.width),
+      toSystemScale(videoConfig.dimensions[1] as number, windowSize.height)
+    ] as [number, number]
+
     this.transform = new Transform(
-      // vec3.fromValues(videoConfig.position.x, videoConfig.position.y, videoConfig.position.z ?? 0),
+      // Position will be set via groupTransform
       vec3.fromValues(0, 0, 0),
       0.0,
-      // vec2.fromValues(videoConfig.dimensions[0], videoConfig.dimensions[1]), // Apply scaling here instead of resizing image
-      vec2.fromValues(1, 1), // testing
+      vec2.fromValues(1, 1),
       uniformBuffer
       // window_size,
     )
@@ -262,11 +267,17 @@ export class StVideo {
 
     // console.info("position", videoConfig.position);
 
+    // Convert position to NDC for group transform
+    let systemPosition = toNDC(
+      videoConfig.position.x,
+      videoConfig.position.y,
+      windowSize.width,
+      windowSize.height
+    )
+
     let setPosition = {
-      // x: 1.5,
-      // y: 1.5,
-      x: videoConfig.position.x,
-      y: videoConfig.position.y
+      x: systemPosition.x,
+      y: systemPosition.y
     }
 
     group_transform.updatePosition([setPosition.x, setPosition.y], windowSize)
@@ -369,9 +380,9 @@ export class StVideo {
             // const posX = -0.5 + x / cols;
             // const posY = -0.5 + y / rows;
 
-            // Center the position by offsetting by half dimensions
-            const posX = -videoConfig.dimensions[0] / 2 + videoConfig.dimensions[0] * (x / cols)
-            const posY = -videoConfig.dimensions[1] / 2 + videoConfig.dimensions[1] * (y / rows)
+            // Center the position by offsetting by half dimensions (using system scale)
+            const posX = -systemDimensions[0] / 2 + systemDimensions[0] * (x / cols)
+            const posY = -systemDimensions[1] / 2 + systemDimensions[1] * (y / rows)
 
             // Map texture coordinates to properly implement cover
             const percentX = x / cols // 0 to 1 across the grid
@@ -1060,15 +1071,23 @@ export class StVideo {
     dimensions: [number, number]
   ): void {
     console.info('updateDataFromDimensions', dimensions)
+
+    // Store human dimensions
     this.dimensions = [dimensions[0], dimensions[1]]
     // this.transform.updateScale([dimensions[0], dimensions[1]]); // old scale way with webgpu
 
     this.transform.updateUniformBuffer(queue, windowSize)
 
+    // Convert to system scale for vertex positions
+    let systemDimensions = [
+      toSystemScale(dimensions[0] as number, windowSize.width),
+      toSystemScale(dimensions[1] as number, windowSize.height)
+    ] as [number, number]
+
     const rows = this.gridResolution[0]
     const cols = this.gridResolution[1]
 
-    // Calculate cover texture coordinates
+    // Calculate cover texture coordinates (using human dimensions)
     const { u0, u1, v0, v1 } = this.calculateCoverTextureCoordinates(
       this.dimensions[0],
       this.dimensions[1],
@@ -1079,9 +1098,9 @@ export class StVideo {
     let n = 0
     for (let y = 0; y <= rows; y++) {
       for (let x = 0; x <= cols; x++) {
-        // Center the position by offsetting by half dimensions
-        const posX = -this.dimensions[0] / 2 + this.dimensions[0] * (x / cols)
-        const posY = -this.dimensions[1] / 2 + this.dimensions[1] * (y / rows)
+        // Center the position by offsetting by half dimensions (using system scale)
+        const posX = -systemDimensions[0] / 2 + systemDimensions[0] * (x / cols)
+        const posY = -systemDimensions[1] / 2 + systemDimensions[1] * (y / rows)
 
         // Map texture coordinates to properly implement cover
         const percentX = x / cols // 0 to 1 across the grid
@@ -1282,7 +1301,14 @@ export class StVideo {
     return { x: 0, y: 0 }
   }
 
-  toConfig(): StVideoConfig {
+  toConfig(windowSize: WindowSize): StVideoConfig {
+    let ndc = fromNDC(
+      this.transform.position[0] - CANVAS_HORIZ_OFFSET,
+      this.transform.position[1] - CANVAS_VERT_OFFSET,
+      windowSize.width,
+      windowSize.height
+    )
+
     return {
       id: this.id,
       name: this.name,
@@ -1290,8 +1316,9 @@ export class StVideo {
       // mousePath: this.mousePath || "",
       dimensions: this.dimensions,
       position: {
-        x: this.groupTransform.position[0],
-        y: this.groupTransform.position[1]
+        x: ndc.x,
+        y: ndc.y,
+        z: this.transform.position[2]
       },
       layer: this.layer,
       borderRadius: this.borderRadius

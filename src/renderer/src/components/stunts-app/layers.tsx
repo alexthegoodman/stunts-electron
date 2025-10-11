@@ -200,28 +200,28 @@ export const LayerPanel: React.FC<{
 
     editor.polygons.forEach((polygon) => {
       if (!polygon.hidden) {
-        let polygon_config: PolygonConfig = polygon.toConfig()
+        let polygon_config: PolygonConfig = polygon.toConfig(editor.camera.windowSize)
         let new_layer: Layer = LayerFromConfig.fromPolygonConfig(polygon_config)
         new_layers.push(new_layer)
       }
     })
     editor.textItems.forEach((text) => {
       if (!text.hidden) {
-        let text_config: TextRendererConfig = text.toConfig()
+        let text_config: TextRendererConfig = text.toConfig(editor.camera.windowSize)
         let new_layer: Layer = LayerFromConfig.fromTextConfig(text_config)
         new_layers.push(new_layer)
       }
     })
     editor.imageItems.forEach((image) => {
       if (!image.hidden) {
-        let image_config: StImageConfig = image.toConfig()
+        let image_config: StImageConfig = image.toConfig(editor.camera.windowSize)
         let new_layer: Layer = LayerFromConfig.fromImageConfig(image_config)
         new_layers.push(new_layer)
       }
     })
     editor.videoItems.forEach((video) => {
       if (!video.hidden) {
-        let video_config: StVideoConfig = video.toConfig()
+        let video_config: StVideoConfig = video.toConfig(editor.camera.windowSize)
         let new_layer: Layer = LayerFromConfig.fromVideoConfig(video_config)
         new_layers.push(new_layer)
       }
@@ -319,7 +319,7 @@ export const LayerPanel: React.FC<{
 
     switch (kind) {
       case ObjectType.Polygon:
-        let polygonConfig = editor.polygons.find((p) => p.id === id)?.toConfig()
+        let polygonConfig = editor.polygons.find((p) => p.id === id)?.toConfig(camera.windowSize)
         let savedPolygon = sequence.activePolygons.find((p) => p.id === id)
 
         if (!polygonConfig || !savedPolygon) {
@@ -379,7 +379,7 @@ export const LayerPanel: React.FC<{
         break
 
       case ObjectType.TextItem:
-        let textItemConfig = editor.textItems.find((t) => t.id === id)?.toConfig()
+        let textItemConfig = editor.textItems.find((t) => t.id === id)?.toConfig(camera.windowSize)
         let savedTextItem = sequence.activeTextItems.find((t) => t.id === id)
 
         if (!textItemConfig || !savedTextItem) {

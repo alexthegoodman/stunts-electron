@@ -266,7 +266,7 @@ export const ToolGrid = ({
 
     editor.polygons.forEach((polygon) => {
       if (!polygon.hidden && polygon.id === polygon_config.id) {
-        let polygon_config: PolygonConfig = polygon.toConfig()
+        let polygon_config: PolygonConfig = polygon.toConfig(editor.camera.windowSize)
         let new_layer: Layer = LayerFromConfig.fromPolygonConfig(polygon_config)
         layers.push(new_layer)
       }
@@ -386,7 +386,7 @@ export const ToolGrid = ({
 
         editor.imageItems.forEach((image) => {
           if (!image.hidden && image.id === image_config.id) {
-            let image_config: StImageConfig = image.toConfig()
+            let image_config: StImageConfig = image.toConfig(editor.camera.windowSize)
             let new_layer: Layer = LayerFromConfig.fromImageConfig(image_config)
             layers.push(new_layer)
           }
@@ -456,7 +456,7 @@ export const ToolGrid = ({
     // Find the created text renderer and save with animation data
     const textRenderer = editor.textItems.find((t) => t.id === text_config.id)
     const savedConfig = textRenderer
-      ? textRenderer.toSavedConfig()
+      ? textRenderer.toSavedConfig(editor.camera.windowSize)
       : {
           id: text_config.id,
           name: text_config.name,
@@ -497,7 +497,7 @@ export const ToolGrid = ({
 
     editor.textItems.forEach((text) => {
       if (!text.hidden && text.id === text_config.id) {
-        let text_config: TextRendererConfig = text.toConfig()
+        let text_config: TextRendererConfig = text.toConfig(editor.camera.windowSize)
         let new_layer: Layer = LayerFromConfig.fromTextConfig(text_config)
         layers.push(new_layer)
       }
@@ -615,7 +615,7 @@ export const ToolGrid = ({
           : config.pace
 
         // Save with animation data
-        const savedConfig = textRenderer.toSavedConfig()
+        const savedConfig = textRenderer.toSavedConfig(editor.camera.windowSize)
         editor_state.add_saved_text_item(
           sequence_id,
           savedConfig,
@@ -631,7 +631,7 @@ export const ToolGrid = ({
         // Add to layers
         editor.textItems.forEach((text) => {
           if (!text.hidden && text.id === text_config.id) {
-            let text_config_layer: TextRendererConfig = text.toConfig()
+            let text_config_layer: TextRendererConfig = text.toConfig(editor.camera.windowSize)
             let new_layer: Layer = LayerFromConfig.fromTextConfig(text_config_layer)
             layers.push(new_layer)
           }
@@ -814,7 +814,7 @@ export const ToolGrid = ({
 
           editor.videoItems.forEach((video) => {
             if (!video.hidden && video.id === video_config.id) {
-              let video_config: StVideoConfig = video.toConfig()
+              let video_config: StVideoConfig = video.toConfig(editor.camera.windowSize)
               let new_layer: Layer = LayerFromConfig.fromVideoConfig(video_config)
               layers.push(new_layer)
             }

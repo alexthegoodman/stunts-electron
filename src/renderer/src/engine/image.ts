@@ -1,9 +1,9 @@
 import { mat4, vec2, vec3 } from 'gl-matrix'
 import { v4 as uuidv4 } from 'uuid' // Make sure you have uuid installed
-import { getZLayer, Vertex } from './vertex'
+import { fromNDC, getZLayer, toNDC, toSystemScale, Vertex } from './vertex'
 import { createEmptyGroupTransform, Transform } from './transform'
 import { INTERNAL_LAYER_SPACE, SavedPoint, setupGradientBuffers } from './polygon'
-import { Point } from './editor'
+import { CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Point } from './editor'
 import { WindowSize } from './camera'
 import { ObjectType } from './animations'
 import {
@@ -133,10 +133,24 @@ export class StImage {
       uniformBuffer.unmap()
     }
 
+    // Convert position to NDC and dimensions to system scale
+    let systemPosition = toNDC(
+      imageConfig.position.x,
+      imageConfig.position.y,
+      windowSize.width,
+      windowSize.height
+    )
+    systemPosition.z = imageConfig.position.z
+
+    let systemDimensions = [
+      toSystemScale(imageConfig.dimensions[0] as number, windowSize.width),
+      toSystemScale(imageConfig.dimensions[1] as number, windowSize.height)
+    ] as [number, number]
+
     this.transform = new Transform(
-      vec3.fromValues(imageConfig.position.x, imageConfig.position.y, imageConfig.position.z ?? 0),
+      vec3.fromValues(systemPosition.x, systemPosition.y, systemPosition.z ?? 0),
       0.0,
-      vec2.fromValues(imageConfig.dimensions[0], imageConfig.dimensions[1]), // Apply scaling here instead of resizing image
+      vec2.fromValues(systemDimensions[0], systemDimensions[1]),
       uniformBuffer
     )
 
@@ -554,8 +568,16 @@ export class StImage {
     bindGroupLayout: PolyfillBindGroupLayout,
     dimensions: [number, number]
   ): void {
+    // Store human dimensions
     this.dimensions = [dimensions[0], dimensions[1]]
-    this.transform.updateScale([dimensions[0], dimensions[1]])
+
+    // Convert to system scale for transform
+    let systemDimensions = [
+      toSystemScale(dimensions[0] as number, windowSize.width),
+      toSystemScale(dimensions[1] as number, windowSize.height)
+    ] as [number, number]
+
+    this.transform.updateScale([systemDimensions[0], systemDimensions[1]])
     this.transform.updateUniformBuffer(queue, windowSize)
 
     if (!this.isCircle) {
@@ -646,15 +668,22 @@ export class StImage {
     return localPoint
   }
 
-  toConfig(): StImageConfig {
+  toConfig(windowSize: WindowSize): StImageConfig {
+    let ndc = fromNDC(
+      this.transform.position[0] - CANVAS_HORIZ_OFFSET,
+      this.transform.position[1] - CANVAS_VERT_OFFSET,
+      windowSize.width,
+      windowSize.height
+    )
+
     return {
       id: this.id,
       name: this.name,
       url: this.url,
       dimensions: this.dimensions,
       position: {
-        x: this.transform.position[0], // Access position from matrix
-        y: this.transform.position[1],
+        x: ndc.x, // Access position from matrix
+        y: ndc.y,
         z: this.transform.position[2]
       },
       layer: this.layer,

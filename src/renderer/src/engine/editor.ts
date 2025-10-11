@@ -70,6 +70,7 @@ import {
   toRadians,
   resolveOverlaps
 } from './editor/helpers'
+import { toNDC } from './vertex'
 
 export const TEXT_BACKGROUNDS_DEFAULT_HIDDEN = true
 
@@ -559,7 +560,7 @@ export class Editor {
       )
 
       restored_text.hidden = hidden
-      restored_text.renderText(device!, queue!)
+      restored_text.renderText(device!, queue!, this.camera.windowSize)
 
       // Restore text animation if it exists
       if (t.textAnimation) {
@@ -1043,8 +1044,16 @@ export class Editor {
           throw new Error("Couldn't find polygon")
         }
 
-        polygon.transform.position[0] = p.position.x + CANVAS_HORIZ_OFFSET * this.scaleMultiplier
-        polygon.transform.position[1] = p.position.y + CANVAS_VERT_OFFSET * this.scaleMultiplier
+        let systemPosition = toNDC(
+          p.position.x + CANVAS_HORIZ_OFFSET * this.scaleMultiplier,
+          p.position.y + CANVAS_VERT_OFFSET * this.scaleMultiplier,
+          camera.windowSize.width,
+          camera.windowSize.height
+        )
+        systemPosition.z = p.position.z
+
+        polygon.transform.position[0] = systemPosition.x
+        polygon.transform.position[1] = systemPosition.y
         polygon.transform.rotation = 0.0
         polygon.transform.updateScale([1.0, 1.0])
 
@@ -1058,8 +1067,16 @@ export class Editor {
           throw new Error("Couldn't find text")
         }
 
-        text.transform.position[0] = t.position.x + CANVAS_HORIZ_OFFSET * this.scaleMultiplier
-        text.transform.position[1] = t.position.y + CANVAS_VERT_OFFSET * this.scaleMultiplier
+        let systemPosition = toNDC(
+          t.position.x + CANVAS_HORIZ_OFFSET * this.scaleMultiplier,
+          t.position.y + CANVAS_VERT_OFFSET * this.scaleMultiplier,
+          camera.windowSize.width,
+          camera.windowSize.height
+        )
+        systemPosition.z = t.position.z
+
+        text.transform.position[0] = systemPosition.x
+        text.transform.position[1] = systemPosition.y
         text.transform.rotation = 0.0
 
         text.transform.updateUniformBuffer(gpu_resources.queue!, camera.windowSize)
@@ -1082,8 +1099,16 @@ export class Editor {
           throw new Error("Couldn't find image")
         }
 
-        image.transform.position[0] = i.position.x + CANVAS_HORIZ_OFFSET * this.scaleMultiplier
-        image.transform.position[1] = i.position.y + CANVAS_VERT_OFFSET * this.scaleMultiplier
+        let systemPosition = toNDC(
+          i.position.x + CANVAS_HORIZ_OFFSET * this.scaleMultiplier,
+          i.position.y + CANVAS_VERT_OFFSET * this.scaleMultiplier,
+          camera.windowSize.width,
+          camera.windowSize.height
+        )
+        systemPosition.z = i.position.z
+
+        image.transform.position[0] = systemPosition.x
+        image.transform.position[1] = systemPosition.y
         image.transform.rotation = 0.0
 
         image.transform.updateUniformBuffer(gpu_resources.queue!, camera.windowSize)
@@ -1096,17 +1121,16 @@ export class Editor {
           throw new Error("Couldn't find video")
         }
 
-        // video.transform.position[0] = i.position.x + CANVAS_HORIZ_OFFSET;
-        // video.transform.position[1] = i.position.y + CANVAS_VERT_OFFSET;
-        // video.transform.rotation = 0.0;
+        let systemPosition = toNDC(
+          i.position.x + CANVAS_HORIZ_OFFSET * this.scaleMultiplier,
+          i.position.y + CANVAS_VERT_OFFSET * this.scaleMultiplier,
+          camera.windowSize.width,
+          camera.windowSize.height
+        )
+        systemPosition.z = i.position.z
 
-        // video.transform.updateUniformBuffer(
-        //   gpu_resources.queue!,
-        //   camera.windowSize
-        // );
-
-        video.groupTransform.position[0] = i.position.x + CANVAS_HORIZ_OFFSET * this.scaleMultiplier
-        video.groupTransform.position[1] = i.position.y + CANVAS_VERT_OFFSET * this.scaleMultiplier
+        video.groupTransform.position[0] = systemPosition.x
+        video.groupTransform.position[1] = systemPosition.y
         video.groupTransform.rotation = 0.0
 
         video.groupTransform.updateUniformBuffer(gpu_resources.queue!, camera.windowSize)
@@ -1937,10 +1961,20 @@ export class Editor {
             }
 
             // const positionVec: vec2 = vec2.fromValues(position.x, position.y);
-            let positionVec = [
+            let positionVec1 = [
               position.x * this.scaleMultiplier - posBufferAdjustment,
               position.y * this.scaleMultiplier - posBufferAdjustment
             ] as [number, number]
+
+            let systemPosition = toNDC(
+              positionVec1[0],
+              positionVec1[1],
+              camera.windowSize.width,
+              camera.windowSize.height
+            )
+
+            let positionVec = [systemPosition.x, systemPosition.y] as [number, number]
+
             // const windowSizeVec: vec2 = vec2.fromValues(
             //   camera.windowSize.width,
             //   camera.windowSize.height
@@ -2753,7 +2787,7 @@ export class Editor {
       false
     )
 
-    text_item.renderText(device!, queue!)
+    text_item.renderText(device!, queue!, this.camera.windowSize)
 
     this.textItems.push(text_item)
   }
@@ -2766,7 +2800,7 @@ export class Editor {
       // console.info("Checking text item:", textItem.id, "hidden:", textItem.hidden, "hasAnimation:", textItem.hasTextAnimation());
       if (!textItem.hidden && textItem.hasTextAnimation()) {
         // console.info("Calling updateTextAnimation for:", textItem.id);
-        textItem.updateTextAnimation(currentTimeMs, queue)
+        textItem.updateTextAnimation(currentTimeMs, queue, this.camera.windowSize)
       }
     }
   }
@@ -2956,8 +2990,6 @@ export class Editor {
     // Remove existing background
     this.staticPolygons = this.staticPolygons.filter((p) => p.name !== 'canvas_background')
 
-    console.info('replace background', backgroundFill)
-
     let canvas_polygon = new Polygon(
       windowSize,
       gpuResources.device!,
@@ -2976,6 +3008,7 @@ export class Editor {
       {
         x: windowSize.width / 2.0,
         y: windowSize.height / 2.0
+        // z: -89
       },
       0.0,
       0.0,
@@ -2995,8 +3028,8 @@ export class Editor {
 
     console.info('bg poly', canvas_polygon)
 
-    canvas_polygon.transform.updateScale([25, 25])
-    canvas_polygon.transform.position[2] = -89
+    canvas_polygon.transform.updateScale([5, 5])
+    canvas_polygon.transform.position[2] = -3
     canvas_polygon.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
 
     canvas_polygon.updateGradientAnimation(gpuResources.device!, 0.01)
@@ -4069,7 +4102,7 @@ export class Editor {
 
     text_item.fontFamily = font_id
     text_item.updateFontFamily(new_fontFamily)
-    text_item.renderText(gpuResources.device!, gpuResources.queue!)
+    text_item.renderText(gpuResources.device!, gpuResources.queue!, this.camera.windowSize)
   }
 
   update_text_color(selected_text_id: string, color: [number, number, number, number]) {
@@ -4083,7 +4116,7 @@ export class Editor {
     console.info('Updating text color...')
 
     text_item.color = color
-    text_item.renderText(gpuResources.device!, gpuResources.queue!)
+    text_item.renderText(gpuResources.device!, gpuResources.queue!, this.camera.windowSize)
   }
 
   update_text_size(selected_text_id: string, size: number) {
@@ -4095,7 +4128,7 @@ export class Editor {
     }
 
     text_item.fontSize = size
-    text_item.renderText(gpuResources.device!, gpuResources.queue!)
+    text_item.renderText(gpuResources.device!, gpuResources.queue!, this.camera.windowSize)
   }
 
   update_text_content(selected_text_id: string, content: string) {
@@ -4107,7 +4140,7 @@ export class Editor {
     }
 
     text_item.text = content
-    text_item.renderText(gpuResources.device!, gpuResources.queue!)
+    text_item.renderText(gpuResources.device!, gpuResources.queue!, this.camera.windowSize)
   }
 
   /** Mouse Handlers */

@@ -2,7 +2,7 @@ import { mat4, vec2, vec3 } from 'gl-matrix'
 import * as fontkit from 'fontkit'
 import { createEmptyGroupTransform, Transform } from './transform'
 import { Camera, WindowSize } from './camera'
-import { getZLayer, Vertex } from './vertex'
+import { fromNDC, getZLayer, toNDC, toSystemScale, Vertex } from './vertex'
 import {
   CANVAS_HORIZ_OFFSET,
   CANVAS_VERT_OFFSET,
@@ -253,8 +253,16 @@ export class TextRenderer {
 
     // console.info("text config", textConfig);
 
+    let systemPosition = toNDC(
+      textConfig.position.x,
+      textConfig.position.y,
+      camera.windowSize.width,
+      camera.windowSize.height
+    )
+    systemPosition.z = textConfig.position.z
+
     this.transform = new Transform(
-      vec3.fromValues(textConfig.position.x, textConfig.position.y, textConfig.position.z ?? 0),
+      vec3.fromValues(systemPosition.x, systemPosition.y, systemPosition.z ?? 0),
       0.0,
       vec2.fromValues(1.0, 1.0),
       this.uniformBuffer
@@ -321,348 +329,11 @@ export class TextRenderer {
     this.animationManager = new TextAnimationManager()
   }
 
-  addAreaGlyphToAtlas(
-    device: PolyfillDevice,
-    queue: PolyfillQueue,
-    charGlyph: CharRasterConfig
-  ): AtlasGlyph {
-    const metrics = {
-      width: charGlyph.charItem.width,
-      // height: charGlyph.charItem.capHeight,
-      height: charGlyph.charItem.height,
-      xmin: charGlyph.charItem.x,
-      ymin: charGlyph.charItem.y
-    }
-
-    // Create an offscreen canvas to render the glyph
-    let canvas_width = charGlyph.charItem.width + 1
-    // let canvas_height = charGlyph.charItem.capHeight;
-    let canvas_height = charGlyph.charItem.height + 1
-
-    if (canvas_width <= 0 || canvas_height <= 0) {
-      canvas_width = 1
-      canvas_height = 1
-    }
-
-    const canvas = new OffscreenCanvas(canvas_width, canvas_height)
-    // let canvas = document.createElement("canvas");
-    const ctx = canvas.getContext('2d')
-    if (!ctx) {
-      throw new Error('Could not create canvas context')
-    }
-
-    ctx.globalAlpha = 0.5
-    ctx.globalCompositeOperation = 'copy' // Disable premultiplied alpha
-
-    // Set canvas size to match the glyph's bounding box
-    canvas.width = canvas_width
-    canvas.height = canvas_height
-
-    // Render the glyph onto the canvas using native Canvas API
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = 'white' // Use white for the glyph color, or black for testing
-
-    // Set up the font and text rendering
-    const fontFamily = this.font.familyName || this.fontFamily || 'Arial'
-    ctx.font = `${charGlyph.fontSize}px "${fontFamily}"`
-
-    console.info(
-      'Area text rendering with font:',
-      fontFamily,
-      'for character:',
-      charGlyph.charItem.char
-    )
-
-    ctx.textBaseline = 'alphabetic' // Align text to the baseline
-    ctx.textAlign = 'left' // Align text to the left
-
-    // Enable better text rendering for complex scripts
-    // if (ctx.textKerning) {
-    //   ctx.textKerning = "normal";
-    // }
-    if (ctx.fontVariantCaps) {
-      ctx.fontVariantCaps = 'normal'
-    }
-
-    // const baselineY = Math.ceil(charGlyph.charItem.height);
-    let DPI_SCALE = 1
-    const scale = charGlyph.fontSize / this.font.unitsPerEm
-    const glyphRun = this.font.layout(charGlyph.charItem.char)
-    const glyph = glyphRun.glyphs[0]
-    const boundingBox = glyph.bbox
-    const baselineY = Math.ceil(boundingBox.maxY * scale * DPI_SCALE)
-    ctx.fillText(charGlyph.charItem.char, 0, baselineY)
-
-    // Get the image data from the canvas
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-
-    // Convert the image data to RGBA format
-    const rgbaData = new Uint8Array(imageData.data.buffer)
-
-    // Check if we need to move to the next row in the atlas
-    if (this.nextAtlasPosition[0] + canvas.width > this.atlasSize[0]) {
-      this.nextAtlasPosition[0] = 0
-      this.nextAtlasPosition[1] += this.currentRowHeight
-      this.currentRowHeight = 0
-    }
-
-    // Update current row height if this glyph is taller
-    this.currentRowHeight = Math.max(this.currentRowHeight, canvas.height)
-
-    // Calculate UV coordinates
-    const uv_rect: [number, number, number, number] = [
-      this.nextAtlasPosition[0] / this.atlasSize[0],
-      this.nextAtlasPosition[1] / this.atlasSize[1],
-      canvas.width / this.atlasSize[0],
-      canvas.height / this.atlasSize[1]
-    ]
-
-    // Write glyph bitmap to atlas
-    queue.writeTexture(
-      {
-        texture: this.atlasTexture,
-        mipLevel: 0,
-        origin: {
-          x: this.nextAtlasPosition[0],
-          y: this.nextAtlasPosition[1],
-          z: 0
-        }
-      },
-      rgbaData,
-      {
-        offset: 0,
-        bytesPerRow: canvas.width * 4, // *4 for RGBA
-        rowsPerImage: canvas.height
-      },
-      {
-        width: canvas.width,
-        height: canvas.height,
-        depthOrArrayLayers: 1
-      }
-    )
-
-    // Update atlas position for next glyph
-    this.nextAtlasPosition[0] += canvas.width
-
-    return {
-      uv_rect,
-      // metrics: [metrics.width, metrics.height, metrics.xmin, metrics.ymin],
-      metrics
-    }
-  }
-
-  renderAreaText(
-    device: PolyfillDevice,
-    queue: PolyfillQueue,
-    // docByPage: { [key: number]: RenderItem[] }
-    renderPages: FormattedPage[]
-  ) {
-    if (!this.font) {
-      return
-    }
-
-    const vertices: Vertex[] = []
-    const indices: number[] = []
-
-    const scale = this.fontSize / this.font.unitsPerEm
-
-    // Calculate the total width and height of the text
-    const startX = 0
-    const startY = 0
-    let globalNlIndex = 0
-    let globalIndex = 0
-    // let currentX = startX;
-    for (let [pageIndex, page] of Object.entries(renderPages)) {
-      // temp
-      // console.info("pageindex", pageIndex);
-      if (parseInt(pageIndex) > 0) {
-        continue
-      }
-
-      let layoutNodes = page.layout.query(0, page.content.length)
-
-      if (!layoutNodes[0].layoutInfo) {
-        return
-      }
-
-      for (let charItem of layoutNodes[0].layoutInfo) {
-        // let charItem = node.layoutInfo[0];
-
-        globalNlIndex++
-
-        if (charItem?.char === '\n') {
-          continue
-        }
-
-        globalIndex++
-
-        const glyph = charItem.char
-
-        // Create a unique key for the glyph (e.g., glyph ID + font size)
-        const key = `${glyph}-${this.fontSize}`
-
-        // Ensure the glyph is in the atlas
-        if (!this.glyphCache.has(key)) {
-          const atlasGlyph = this.addAreaGlyphToAtlas(device, queue, {
-            charItem, // Convert code point to character
-            fontSize: this.fontSize
-          })
-          this.glyphCache.set(key, atlasGlyph)
-        }
-
-        const atlasGlyph = this.glyphCache.get(key)!
-
-        const baseVertex = vertices.length
-
-        const baselineY = charItem.capHeight - charItem.height
-
-        // console.info(
-        //   "heights",
-        //   charItem.char,
-        //   charItem.y,
-        //   atlasGlyph.metrics.ymin
-        // );
-
-        let x0 = charItem.x // topleft, bottomleft
-        let x1 = charItem.x + charItem.width // topright, bottomright
-        let y0 = charItem.y + baselineY // topleft, topright
-        let y1 = charItem.y + charItem.height + baselineY // bottomleft, bottomright
-
-        // // Calculate vertex positions using the scaled glyph's position and metrics
-        // const x0 = charItem.x;
-        // const x1 = x0 + atlasGlyph.metrics.width;
-        // // currentX += position.xAdvance * scale; // Update for next character
-
-        // const baselineY =
-        //   charItem.capHeight -
-        //   atlasGlyph.metrics.height -
-        //   atlasGlyph.metrics.ymin;
-
-        // let y0 = charItem.y - charItem.capHeight / 2 + baselineY;
-        // let y1 =
-        //   charItem.y -
-        //   charItem.capHeight / 2 +
-        //   atlasGlyph.metrics.height +
-        //   baselineY; // metrics[1] is already scaled in addGlyphToAtlas
-
-        // UV coordinates from atlas
-        let u0 = atlasGlyph.uv_rect[0]
-        let u1 = u0 + atlasGlyph.uv_rect[2]
-        let v0 = atlasGlyph.uv_rect[1]
-        let v1 = v0 + atlasGlyph.uv_rect[3]
-
-        const z = getZLayer(1.0)
-
-        const activeColor = rgbToWgpu(this.color[0], this.color[1], this.color[2], 255.0)
-
-        y0 = y0 === -Infinity || y0 === Infinity ? 0 : y0
-        y1 = y1 === -Infinity || y1 === Infinity ? 0 : y1
-
-        // console.info("vertice pos", x0, x1, y0, y1);
-
-        const normalizedX0 = (x0 - this.transform.position[0]) / this.dimensions[0]
-        const normalizedY0 = (y0 - this.transform.position[1]) / this.dimensions[1]
-        const normalizedX1 = (x1 - this.transform.position[0]) / this.dimensions[0]
-        const normalizedY1 = (y1 - this.transform.position[1]) / this.dimensions[1]
-
-        let vertexId = `${charItem.char}-${charItem.page}-${globalIndex}-${globalNlIndex - 1}`
-
-        // Add vertices for the glyph quad
-        vertices.push(
-          {
-            position: [x0, y0, 0],
-            tex_coords: [u0, v0],
-            color: activeColor,
-            gradient_coords: [normalizedX0, normalizedY0],
-            object_type: 1, // OBJECT_TYPE_TEXT
-            id: vertexId
-          },
-          {
-            position: [x1, y0, 0],
-            tex_coords: [u1, v0],
-            color: activeColor,
-            gradient_coords: [normalizedX1, normalizedY0],
-            object_type: 1, // OBJECT_TYPE_TEXT
-            id: vertexId
-          },
-          {
-            position: [x1, y1, 0],
-            tex_coords: [u1, v1],
-            color: activeColor,
-            gradient_coords: [normalizedX1, normalizedY1],
-            object_type: 1, // OBJECT_TYPE_TEXT
-            id: vertexId
-          },
-          {
-            position: [x0, y1, 0],
-            tex_coords: [u0, v1],
-            color: activeColor,
-            gradient_coords: [normalizedX0, normalizedY1],
-            object_type: 1, // OBJECT_TYPE_TEXT
-            id: vertexId
-          }
-        )
-
-        // Add indices for the glyph quad (two triangles)
-        indices.push(
-          baseVertex,
-          baseVertex + 1,
-          baseVertex + 2,
-          baseVertex,
-          baseVertex + 2,
-          baseVertex + 3
-        )
-
-        // TODO: double check functioning with multiple pages
-        if (page.preCalculatedIndex !== null) {
-          if (page.preCalculatedIndex === globalIndex) {
-            if (this.vertices && this.indices) {
-              console.info('preCalculatedIndex', page.preCalculatedIndex)
-              // push rest of this.vertices to vertices as cache
-              // also same with indices
-              let vertLength = vertices.length
-              let indLength = indices.length
-
-              vertices.push(...this.vertices?.slice(vertLength))
-              indices.push(...this.indices?.slice(indLength))
-
-              break
-            }
-          }
-        }
-      }
-    }
-
-    // Update buffers
-    queue.writeBuffer(
-      this.vertexBuffer,
-      0,
-      new Float32Array(
-        vertices.flatMap((v) => [
-          ...v.position,
-          ...v.tex_coords,
-          ...v.color,
-          ...v.gradient_coords,
-          v.object_type
-        ])
-      )
-    )
-    queue.writeBuffer(this.indexBuffer, 0, new Uint32Array(indices))
-
-    // Store vertices and indices for later use
-    this.vertices = vertices
-    this.indices = indices
-
-    // Re-initialize text animations if they exist
-    if (this.textAnimator) {
-      this.textAnimator.updateConfig({ ...this.textAnimator.getConfig() }, this)
-    }
-  }
-
   addGlyphToAtlas(
     device: PolyfillDevice,
     queue: PolyfillQueue,
-    rasterConfig: GlyphRasterConfig
+    rasterConfig: GlyphRasterConfig,
+    windowSize: WindowSize
   ): AtlasGlyph {
     // Get the glyph layout for the given character (using fontkit for metrics)
     const glyphRun = this.font.layout(rasterConfig.character)
@@ -686,6 +357,9 @@ export class TextRenderer {
     const DPI_SCALE = 3 // Increase this for even higher quality
     let canvas_width = Math.ceil(metrics.width * DPI_SCALE) + 1
     let canvas_height = Math.ceil(metrics.height * DPI_SCALE) + 2
+
+    // canvas_width = toSystemScale(canvas_width, windowSize.width)
+    // canvas_height = toSystemScale(canvas_height, windowSize.height)
 
     if (canvas_width <= 0 || canvas_height <= 0) {
       canvas_width = 1
@@ -722,7 +396,9 @@ export class TextRenderer {
 
     // Set up the font and text rendering with scaled size
     ctx.textRendering = 'optimizeLegibility'
-    const scaledFontSize = rasterConfig.fontSize * DPI_SCALE
+    let scaledFontSize = rasterConfig.fontSize * DPI_SCALE
+
+    // scaledFontSize = toSystemScale(rasterConfig.fontSize, windowSize.width) //?
 
     // Use the actual font family name from fontkit, which should support Hindi
     const fontFamily = this.font.familyName || this.fontFamily || 'Arial'
@@ -855,16 +531,20 @@ export class TextRenderer {
     }
   }
 
-  renderText(device: PolyfillDevice, queue: PolyfillQueue) {
+  renderText(device: PolyfillDevice, queue: PolyfillQueue, windowSize: WindowSize) {
     if (!this.font) {
       return
     }
+
+    let systemWidth = toSystemScale(this.dimensions[0], windowSize.width)
+    let systemHeight = toSystemScale(this.dimensions[1], windowSize.height)
+    let systemDimensions = [systemWidth, systemHeight]
 
     const vertices: Vertex[] = []
     const indices: number[] = []
 
     const text = this.text
-    const maxLineWidth = this.dimensions[0] // Define your maximum line width here
+    const maxLineWidth = systemDimensions[0] // Define your maximum line width here
 
     // Use fontkit's layout function to get glyph positions and metrics
     // Enable proper shaping for complex scripts
@@ -994,20 +674,25 @@ export class TextRenderer {
         // Ensure the glyph is in the atlas
         // Glyph cache is reset when new font family chosen
         if (!this.glyphCache.has(key)) {
-          const atlasGlyph = this.addGlyphToAtlas(device, queue, {
-            character: glyphChar,
-            fontSize: this.fontSize,
-            fontWeight: charStyleConfig.fontWeight,
-            fontItalic: charStyleConfig.fontItalic
-          })
+          const atlasGlyph = this.addGlyphToAtlas(
+            device,
+            queue,
+            {
+              character: glyphChar,
+              fontSize: this.fontSize,
+              fontWeight: charStyleConfig.fontWeight,
+              fontItalic: charStyleConfig.fontItalic
+            },
+            windowSize
+          )
           this.glyphCache.set(key, atlasGlyph)
         }
 
         const atlasGlyph = this.glyphCache.get(key)!
 
         // Calculate vertex positions using the scaled glyph's position and metrics
-        const x0 = currentX
-        const x1 = x0 + atlasGlyph.metrics.width
+        let x0 = currentX
+        let x1 = x0 + atlasGlyph.metrics.width
         currentX += position.xAdvance * scale // Update for next character
 
         // const y0 = currentY - capHeight / 2;
@@ -1017,6 +702,11 @@ export class TextRenderer {
 
         let y0 = currentY - capHeight / 2 + baselineY
         let y1 = currentY - capHeight / 2 + atlasGlyph.metrics.height + baselineY // metrics[1] is already scaled in addGlyphToAtlas
+
+        x0 = toSystemScale(x0, windowSize.width)
+        x1 = toSystemScale(x1, windowSize.width)
+        y0 = toSystemScale(y0, windowSize.height)
+        y1 = toSystemScale(y1, windowSize.height)
 
         // UV coordinates from atlas
         const u0 = atlasGlyph.uv_rect[0]
@@ -1037,28 +727,28 @@ export class TextRenderer {
             position: [x0, y0, 0.0],
             tex_coords: [u0, v0],
             color: activeColor,
-            gradient_coords: [x0 / this.dimensions[0], y0 / this.dimensions[1]],
+            gradient_coords: [x0 / systemDimensions[0], y0 / systemDimensions[1]],
             object_type: 1 // OBJECT_TYPE_TEXT
           },
           {
             position: [x1, y0, 0.0],
             tex_coords: [u1, v0],
             color: activeColor,
-            gradient_coords: [x1 / this.dimensions[0], y0 / this.dimensions[1]],
+            gradient_coords: [x1 / systemDimensions[0], y0 / systemDimensions[1]],
             object_type: 1 // OBJECT_TYPE_TEXT
           },
           {
             position: [x1, y1, 0.0],
             tex_coords: [u1, v1],
             color: activeColor,
-            gradient_coords: [x1 / this.dimensions[0], y1 / this.dimensions[1]],
+            gradient_coords: [x1 / systemDimensions[0], y1 / systemDimensions[1]],
             object_type: 1 // OBJECT_TYPE_TEXT
           },
           {
             position: [x0, y1, 0.0],
             tex_coords: [u0, v1],
             color: activeColor,
-            gradient_coords: [x0 / this.dimensions[0], y1 / this.dimensions[1]],
+            gradient_coords: [x0 / systemDimensions[0], y1 / systemDimensions[1]],
             object_type: 1 // OBJECT_TYPE_TEXT
           }
         )
@@ -1106,9 +796,15 @@ export class TextRenderer {
     }
   }
 
-  update(device: PolyfillDevice, queue: PolyfillQueue, text: string, dimensions: [number, number]) {
+  update(
+    device: PolyfillDevice,
+    queue: PolyfillQueue,
+    text: string,
+    dimensions: [number, number],
+    windowSize: WindowSize
+  ) {
     this.dimensions = dimensions
-    this.updateText(device, queue, text)
+    this.updateText(device, queue, text, windowSize)
     this.initialized = true
   }
 
@@ -1132,9 +828,9 @@ export class TextRenderer {
     this.backgroundPolygon.transform.updateUniformBuffer(queue, windowSize)
   }
 
-  updateText(device: PolyfillDevice, queue: PolyfillQueue, text: string) {
+  updateText(device: PolyfillDevice, queue: PolyfillQueue, text: string, windowSize: WindowSize) {
     this.text = text
-    this.renderText(device, queue)
+    this.renderText(device, queue, windowSize)
   }
 
   updateFontFamily(fontData: Buffer) {
@@ -1291,6 +987,7 @@ export class TextRenderer {
     dimensions: [number, number],
     camera: Camera
   ) {
+    // backgroundPolygon.updateDataFromDimensions will handle scaling internally
     this.backgroundPolygon.updateDataFromDimensions(
       windowSize,
       device,
@@ -1307,10 +1004,11 @@ export class TextRenderer {
       this.backgroundPolygon.backgroundFill
     )
 
+    // Store human dimensions
     this.dimensions = dimensions
 
     // Re-render text to ensure proper wrapping
-    this.renderText(device, queue)
+    this.renderText(device, queue, camera.windowSize)
   }
 
   containsPoint(point: { x: number; y: number }, camera: Camera): boolean {
@@ -1393,7 +1091,14 @@ export class TextRenderer {
     }
   }
 
-  toConfig(): TextRendererConfig {
+  toConfig(windowSize: WindowSize): TextRendererConfig {
+    let ndc = fromNDC(
+      this.transform.position[0] - CANVAS_HORIZ_OFFSET,
+      this.transform.position[1] - CANVAS_VERT_OFFSET,
+      windowSize.width,
+      windowSize.height
+    )
+
     return {
       id: this.id,
       name: this.name,
@@ -1401,8 +1106,8 @@ export class TextRenderer {
       fontFamily: this.fontFamily,
       dimensions: this.dimensions,
       position: {
-        x: this.transform.position[0] - CANVAS_HORIZ_OFFSET,
-        y: this.transform.position[1] - CANVAS_VERT_OFFSET,
+        x: ndc.x,
+        y: ndc.y,
         z: this.transform.position[2]
       },
       layer: this.layer,
@@ -1414,7 +1119,14 @@ export class TextRenderer {
     }
   }
 
-  toSavedConfig(): SavedTextRendererConfig {
+  toSavedConfig(windowSize: WindowSize): SavedTextRendererConfig {
+    let ndc = fromNDC(
+      this.transform.position[0] - CANVAS_HORIZ_OFFSET,
+      this.transform.position[1] - CANVAS_VERT_OFFSET,
+      windowSize.width,
+      windowSize.height
+    )
+
     return {
       id: this.id,
       name: this.name,
@@ -1422,8 +1134,8 @@ export class TextRenderer {
       fontFamily: this.fontFamily,
       dimensions: this.dimensions,
       position: {
-        x: this.transform.position[0] - CANVAS_HORIZ_OFFSET,
-        y: this.transform.position[1] - CANVAS_VERT_OFFSET,
+        x: ndc.x,
+        y: ndc.y,
         z: this.transform.position[2]
       },
       layer: this.layer,
@@ -1507,10 +1219,14 @@ export class TextRenderer {
     }
   }
 
-  public updateTextAnimation(currentTime: number, queue: PolyfillQueue): void {
+  public updateTextAnimation(
+    currentTime: number,
+    queue: PolyfillQueue,
+    windowSize: WindowSize
+  ): void {
     // console.info("TextRenderer.updateTextAnimation called for:", this.id, "textAnimator exists:", !!this.textAnimator);
     if (this.textAnimator) {
-      this.textAnimator.updateAnimation(currentTime, queue, this)
+      this.textAnimator.updateAnimation(currentTime, queue, this, windowSize)
     }
   }
 

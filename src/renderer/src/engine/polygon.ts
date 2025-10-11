@@ -3,7 +3,15 @@ import { mat4, vec2, vec3 } from 'gl-matrix'
 import { Camera, WindowSize } from './camera' // Import your camera type
 import { BoundingBox, CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Point } from './editor' // Import your types
 import { createEmptyGroupTransform, matrix4ToRawArray, Transform } from './transform'
-import { createVertex, getZLayer, Vertex, vertexByteSize } from './vertex'
+import {
+  createVertex,
+  fromNDC,
+  getZLayer,
+  toNDC,
+  toSystemScale,
+  Vertex,
+  vertexByteSize
+} from './vertex'
 
 import * as gt from '@thi.ng/geom-tessellate'
 import { BackgroundFill, GradientDefinition, GradientStop, ObjectType } from './animations'
@@ -170,12 +178,25 @@ export class Polygon implements PolygonShape {
     //   y: 0,
     // };
 
+    // take human dimensions and coordinates, scale them to appropriate value for shader
+    let systemDimensions = [
+      toSystemScale(dimensions[0] as number, camera.windowSize.width),
+      toSystemScale(dimensions[1] as number, camera.windowSize.height)
+    ] as [number, number]
+    let systemPosition = toNDC(
+      position.x,
+      position.y,
+      camera.windowSize.width,
+      camera.windowSize.height
+    )
+    systemPosition.z = position.z
+
     let config: PolygonConfig = {
       id,
       name,
       points,
-      dimensions,
-      position,
+      dimensions: systemDimensions,
+      position: systemPosition,
       // position: {
       //   x: 0,
       //   y: 0,
@@ -395,10 +416,16 @@ export class Polygon implements PolygonShape {
     isCircle: boolean,
     camera: Camera
   ) {
+    // take human dimensions and coordinates, scale them to appropriate value for shader
+    let systemDimensions = [
+      toSystemScale(this.dimensions[0] as number, camera.windowSize.width),
+      toSystemScale(this.dimensions[1] as number, camera.windowSize.height)
+    ] as [number, number]
+
     let config: PolygonConfig = {
       id: this.id,
       name: this.name,
-      dimensions: this.dimensions,
+      dimensions: systemDimensions,
       points: this.points,
       position: {
         x: this.transform.position[0],
@@ -441,10 +468,16 @@ export class Polygon implements PolygonShape {
     dimensions: [number, number],
     camera: Camera
   ) {
+    // take human dimensions and coordinates, scale them to appropriate value for shader
+    let systemDimensions = [
+      toSystemScale(dimensions[0] as number, camera.windowSize.width),
+      toSystemScale(dimensions[1] as number, camera.windowSize.height)
+    ] as [number, number]
+
     let config: PolygonConfig = {
       id: this.id,
       name: this.name,
-      dimensions,
+      dimensions: systemDimensions,
       points: this.points,
       position: {
         x: this.transform.position[0],
@@ -486,7 +519,14 @@ export class Polygon implements PolygonShape {
     position: Point,
     camera: Camera
   ) {
-    this.transform.updatePosition([position.x, position.y], camera.windowSize)
+    let systemPosition = toNDC(
+      position.x,
+      position.y,
+      camera.windowSize.width,
+      camera.windowSize.height
+    )
+    systemPosition.z = position.z
+    this.transform.updatePosition([systemPosition.x, systemPosition.y], camera.windowSize)
   }
 
   updateDataFromBorderRadius(
@@ -497,10 +537,16 @@ export class Polygon implements PolygonShape {
     borderRadius: number,
     camera: Camera
   ) {
+    // take human dimensions and coordinates, scale them to appropriate value for shader
+    let systemDimensions = [
+      toSystemScale(this.dimensions[0] as number, camera.windowSize.width),
+      toSystemScale(this.dimensions[1] as number, camera.windowSize.height)
+    ] as [number, number]
+
     let config: PolygonConfig = {
       id: this.id,
       name: this.name,
-      dimensions: this.dimensions,
+      dimensions: systemDimensions,
       points: this.points,
       position: {
         x: this.transform.position[0],
@@ -554,10 +600,16 @@ export class Polygon implements PolygonShape {
     stroke: Stroke,
     camera: Camera
   ) {
+    // take human dimensions and coordinates, scale them to appropriate value for shader
+    let systemDimensions = [
+      toSystemScale(this.dimensions[0] as number, camera.windowSize.width),
+      toSystemScale(this.dimensions[1] as number, camera.windowSize.height)
+    ] as [number, number]
+
     let config: PolygonConfig = {
       id: this.id,
       name: this.name,
-      dimensions: this.dimensions,
+      dimensions: systemDimensions,
       points: this.points,
       position: {
         x: this.transform.position[0],
@@ -612,10 +664,16 @@ export class Polygon implements PolygonShape {
     backgroundFill: BackgroundFill,
     camera: Camera
   ) {
+    // take human dimensions and coordinates, scale them to appropriate value for shader
+    let systemDimensions = [
+      toSystemScale(this.dimensions[0] as number, camera.windowSize.width),
+      toSystemScale(this.dimensions[1] as number, camera.windowSize.height)
+    ] as [number, number]
+
     let config: PolygonConfig = {
       id: this.id,
       name: this.name,
-      dimensions: this.dimensions,
+      dimensions: systemDimensions,
       points: this.points,
       position: {
         x: this.transform.position[0],
@@ -683,7 +741,14 @@ export class Polygon implements PolygonShape {
   //     }
   // }
 
-  toConfig(): PolygonConfig {
+  toConfig(windowSize: WindowSize): PolygonConfig {
+    let ndc = fromNDC(
+      this.transform.position[0] - CANVAS_HORIZ_OFFSET,
+      this.transform.position[1] - CANVAS_VERT_OFFSET,
+      windowSize.width,
+      windowSize.height
+    )
+
     let config: PolygonConfig = {
       id: this.id,
       name: this.name,
@@ -693,8 +758,8 @@ export class Polygon implements PolygonShape {
       dimensions: this.dimensions,
       rotation: this.transform.rotation,
       position: {
-        x: this.transform.position[0] - CANVAS_HORIZ_OFFSET,
-        y: this.transform.position[1] - CANVAS_VERT_OFFSET,
+        x: ndc.x,
+        y: ndc.y,
         z: this.transform.position[2]
       },
       borderRadius: this.borderRadius,

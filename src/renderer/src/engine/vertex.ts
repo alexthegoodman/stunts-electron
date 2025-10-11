@@ -1,4 +1,5 @@
 import { ObjectType } from './animations'
+import { Point } from './editor'
 import { INTERNAL_LAYER_SPACE } from './polygon'
 
 // Type alias to define the vertex data layout for buffer creation
@@ -60,6 +61,30 @@ export function getZLayer(layer: number, layerSpacing: number = 0.001): number {
   const zLayer = basePosition + effectiveLayer * layerRel
 
   return zLayer
+}
+
+// Convert human coordinates to NDC
+export const toNDC = (x, y, width, height): Point => {
+  const ndcX = (x / width) * 2 - 1
+  const ndcY = -((y / height) * 2 - 1) // Flip Y axis
+  return { x: ndcX, y: ndcY }
+}
+
+// Convert NDC coordinates back to human coordinates
+export const fromNDC = (ndcX: number, ndcY: number, width: number, height: number): Point => {
+  const x = ((ndcX + 1) / 2) * width
+  const y = ((-ndcY + 1) / 2) * height // Flip Y axis back
+  return { x, y }
+}
+
+// Convert human dimensions to system-scale dimensions
+export const toSystemScale = (humanDim, windowDim) => {
+  return (humanDim / windowDim) * 2
+}
+
+// Convert system-scale dimensions back to human dimensions
+export const fromSystemScale = (scaleDim, windowDim) => {
+  return (scaleDim / 2) * windowDim
 }
 
 export function createVertex(

@@ -3,6 +3,7 @@ import { EasingType, UIKeyframe, KeyframeValue } from './animations'
 import { TextRenderer } from './text'
 import { Vertex } from './vertex'
 import { PolyfillQueue } from './polyfill'
+import { WindowSize } from './camera'
 
 export enum TextAnimationType {
   Typewriter = 'Typewriter',
@@ -287,7 +288,8 @@ export class TextAnimator {
   public updateAnimation(
     currentTime: number,
     queue: PolyfillQueue,
-    textRenderer: TextRenderer
+    textRenderer: TextRenderer,
+    windowSize: WindowSize
   ): void {
     if (!this.isPlaying) return
 
@@ -344,7 +346,7 @@ export class TextAnimator {
 
     // Apply character styles to TextRenderer if needed for StylePunch (only once)
     if (needsFontRerender && this.animationConfig.customParams?.stylePunchEnabled) {
-      this.applyStylePunchFonts(textRenderer, queue)
+      this.applyStylePunchFonts(textRenderer, queue, windowSize)
       this.stylePunchFontsApplied = true // Mark as done
     }
 
@@ -663,7 +665,11 @@ export class TextAnimator {
     return this.isPlaying
   }
 
-  private applyStylePunchFonts(textRenderer: TextRenderer, queue: PolyfillQueue): void {
+  private applyStylePunchFonts(
+    textRenderer: TextRenderer,
+    queue: PolyfillQueue,
+    windowSize: WindowSize
+  ): void {
     console.info('this.animatedCharacters', this.animatedCharacters)
     // Apply character styles and trigger re-render
     for (const char of this.animatedCharacters) {
@@ -675,7 +681,7 @@ export class TextAnimator {
 
     // Trigger re-render with new font styles
     if (textRenderer.device) {
-      textRenderer.renderText(textRenderer.device, queue)
+      textRenderer.renderText(textRenderer.device, queue, windowSize)
     }
   }
 }
