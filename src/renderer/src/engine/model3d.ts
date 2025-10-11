@@ -2,7 +2,7 @@ import { mat4, vec2, vec3 } from 'gl-matrix'
 import { Camera, WindowSize } from './camera'
 import { BoundingBox, CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Point } from './editor'
 import { createEmptyGroupTransform, matrix4ToRawArray, Transform } from './transform'
-import { createVertex, getZLayer, Vertex, vertexByteSize } from './vertex'
+import { createVertex, getZLayer, toNDC, Vertex, vertexByteSize } from './vertex'
 import { BackgroundFill, ObjectType } from './animations'
 import {
   PolyfillBindGroup,
@@ -233,9 +233,11 @@ export class Model3D {
       ]
     })
 
+    let ndc = toNDC(this.position.x, this.position.y, windowSize.height, windowSize.width)
+
     // Create transform
     this.transform = new Transform(
-      vec3.fromValues(this.position.x, this.position.y, this.position.z ?? 0),
+      vec3.fromValues(ndc.x, ndc.y, this.position.z ?? 0),
       0, // 2D rotation (we'll handle 3D rotation separately)
       vec2.fromValues(this.scale[0], this.scale[1]),
       uniformBuffer

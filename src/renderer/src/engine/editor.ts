@@ -3650,7 +3650,9 @@ export class Editor {
                 break
               }
               case 'positionX': {
-                selected_image.transform.position[0] = new_value
+                let ndc = toNDC(new_value, new_value, windowSize.width, windowSize.width)
+
+                selected_image.transform.position[0] = ndc.x
                 selected_image.transform.updateUniformBuffer(
                   this.gpuResources.queue!,
                   this.camera.windowSize
@@ -3658,7 +3660,9 @@ export class Editor {
                 break
               }
               case 'positionY': {
-                selected_image.transform.position[1] = new_value
+                let ndc = toNDC(new_value, new_value, windowSize.height, windowSize.height)
+
+                selected_image.transform.position[1] = ndc.y
                 selected_image.transform.updateUniformBuffer(
                   this.gpuResources.queue!,
                   this.camera.windowSize
@@ -3730,7 +3734,9 @@ export class Editor {
                 break
               }
               case 'positionX': {
-                selected_video.transform.position[0] = new_value
+                let ndc = toNDC(new_value, new_value, windowSize.width, windowSize.width)
+
+                selected_video.transform.position[0] = ndc.x
                 selected_video.transform.updateUniformBuffer(
                   this.gpuResources.queue!,
                   this.camera.windowSize
@@ -3738,7 +3744,9 @@ export class Editor {
                 break
               }
               case 'positionY': {
-                selected_video.transform.position[1] = new_value
+                let ndc = toNDC(new_value, new_value, windowSize.height, windowSize.height)
+
+                selected_video.transform.position[1] = ndc.y
                 selected_video.transform.updateUniformBuffer(
                   this.gpuResources.queue!,
                   this.camera.windowSize

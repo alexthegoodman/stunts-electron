@@ -26,20 +26,40 @@ export function registerAiGenerationHandlers(): void {
 
       const replicate = new Replicate({ auth: replicateKey })
 
-      const output = (await replicate.run('black-forest-labs/flux-schnell', {
-        input: {
-          prompt: prompt,
-          go_fast: true,
-          megapixels: '0.25',
-          num_outputs: 1,
-          aspect_ratio: '1:1',
-          output_format: 'jpg',
-          output_quality: 80
-        }
-      })) as any
+      // const output = (await replicate.run('black-forest-labs/flux-schnell', {
+      //   input: {
+      //     prompt: prompt,
+      //     go_fast: true,
+      //     megapixels: '0.25',
+      //     num_outputs: 1,
+      //     aspect_ratio: '1:1',
+      //     output_format: 'jpg',
+      //     output_quality: 80
+      //   }
+      // })) as any
+
+      const input = {
+        size: '1K',
+        width: 1024,
+        height: 1024,
+        prompt: prompt,
+        max_images: 1,
+        image_input: [],
+        aspect_ratio: '1:1',
+        sequential_image_generation: 'disabled'
+      }
+
+      const output = await replicate.run('bytedance/seedream-4', { input })
+
+      const imageUrl = output[0].url() as URL
+
+      // To access the file URL:
+      console.log(imageUrl) //=> "http://example.com"
+
+      // console.info('output', output)
 
       // Download the image and save locally
-      const imageUrl = output[0] as string
+      // const imageUrl = output[0] as string
       const response = await fetch(imageUrl)
       const arrayBuffer = await response.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
@@ -54,12 +74,14 @@ export function registerAiGenerationHandlers(): void {
       const savePath = path.join(uploadsDir, fileName)
       await fs.writeFile(savePath, buffer)
 
+      console.info('saving replicate url ', imageUrl)
+
       return {
         success: true,
         data: {
           url: savePath,
           fileName: fileName,
-          replicateUrl: imageUrl // Store the original Replicate URL
+          replicateUrl: imageUrl.href // Store the original Replicate URL
         }
       }
     } catch (error) {
@@ -393,6 +415,8 @@ User Request: ${data.prompt}`
       //     image: imageUrl
       //   }
       // })) as string
+
+      console.info('imageUrl', imageUrl)
 
       const output = (await replicate.run(
         '851-labs/background-remover:a029dff38972b5fda4ec5d75d7d1cd25aeff621d2cf4946a41055d7db66b80bc',

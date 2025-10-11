@@ -4,6 +4,7 @@ import { Editor } from '../editor'
 import { InputValue } from '../editor/helpers'
 import EditorState from '../editor_state'
 import { TextAnimationConfig } from '../textAnimator'
+import { toNDC } from '../vertex'
 
 export function updateBackground(
   editorState: EditorState,
@@ -358,8 +359,15 @@ export function updatePositionX(
     case ObjectType.Model3D: {
       let model = editor.models3D.find((s) => s.id === objectId)
       if (model && editor.camera) {
+        let ndc = toNDC(
+          value,
+          value,
+          editor.camera.windowSize.width,
+          editor.camera.windowSize.width
+        )
+
         model.transform.updatePosition(
-          [value, model.transform.position[1]],
+          [ndc.x, model.transform.position[1]],
           editor.camera.windowSize
         )
         model.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
@@ -518,8 +526,15 @@ export function updatePositionY(
     case ObjectType.Model3D: {
       let model = editor.models3D.find((s) => s.id === objectId)
       if (model && editor.camera) {
+        let ndc = toNDC(
+          value,
+          value,
+          editor.camera.windowSize.height,
+          editor.camera.windowSize.height
+        )
+
         model.transform.updatePosition(
-          [model.transform.position[0], value],
+          [model.transform.position[0], ndc.y],
           editor.camera.windowSize
         )
         model.transform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)

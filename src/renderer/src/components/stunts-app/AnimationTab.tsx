@@ -40,6 +40,7 @@ import {
   save_swarm_convergence_keyframes
 } from '../../engine/state/keyframes'
 import { useLocalStorage } from '@uidotdev/usehooks'
+import { fromNDC } from '@renderer/engine/vertex'
 
 export default function AnimationTab({
   editorRef,
@@ -258,6 +259,8 @@ export default function AnimationTab({
 
     setAiLoading(true)
 
+    let windowSize = editor.camera.windowSize
+
     try {
       // Get all visible objects in the current sequence with their metadata
       let objectsData: Array<{
@@ -272,18 +275,23 @@ export default function AnimationTab({
         objectsData.push(
           ...editor.textItems
             .filter((item) => !item.hidden)
-            .map((item) => ({
-              id: item.id,
-              objectType: 'text',
-              dimensions: {
-                width: item.dimensions[0] || 100,
-                height: item.dimensions[1] || 50
-              },
-              position: {
-                x: item.transform.position[0] || 0,
-                y: item.transform.position[1] || 0
+            .map((item) => {
+              let world = fromNDC(
+                item.transform.position[0],
+                item.transform.position[1],
+                windowSize.width,
+                windowSize.height
+              )
+              return {
+                id: item.id,
+                objectType: 'text',
+                dimensions: {
+                  width: item.dimensions[0] || 100,
+                  height: item.dimensions[1] || 50
+                },
+                position: world
               }
-            }))
+            })
         )
       }
 
@@ -292,18 +300,23 @@ export default function AnimationTab({
         objectsData.push(
           ...editor.polygons
             .filter((item) => !item.hidden)
-            .map((item) => ({
-              id: item.id,
-              objectType: 'polygon',
-              dimensions: {
-                width: item.dimensions[0] || 100,
-                height: item.dimensions[1] || 50
-              },
-              position: {
-                x: item.transform.position[0] || 0,
-                y: item.transform.position[1] || 0
+            .map((item) => {
+              let world = fromNDC(
+                item.transform.position[0],
+                item.transform.position[1],
+                windowSize.width,
+                windowSize.height
+              )
+              return {
+                id: item.id,
+                objectType: 'polygon',
+                dimensions: {
+                  width: item.dimensions[0] || 100,
+                  height: item.dimensions[1] || 50
+                },
+                position: world
               }
-            }))
+            })
         )
       }
 
@@ -312,18 +325,24 @@ export default function AnimationTab({
         objectsData.push(
           ...editor.imageItems
             .filter((item) => !item.hidden)
-            .map((item) => ({
-              id: item.id,
-              objectType: 'image',
-              dimensions: {
-                width: item.dimensions[0] || 100,
-                height: item.dimensions[1] || 50
-              },
-              position: {
-                x: item.transform.position[0] || 0,
-                y: item.transform.position[1] || 0
+            .map((item) => {
+              let world = fromNDC(
+                item.transform.position[0],
+                item.transform.position[1],
+                windowSize.width,
+                windowSize.height
+              )
+
+              return {
+                id: item.id,
+                objectType: 'image',
+                dimensions: {
+                  width: item.dimensions[0] || 100,
+                  height: item.dimensions[1] || 50
+                },
+                position: world
               }
-            }))
+            })
         )
       }
 
@@ -332,18 +351,48 @@ export default function AnimationTab({
         objectsData.push(
           ...editor.videoItems
             .filter((item) => !item.hidden)
-            .map((item) => ({
-              id: item.id,
-              objectType: 'video',
-              dimensions: {
-                width: item.dimensions[0] || 100,
-                height: item.dimensions[1] || 50
-              },
-              position: {
-                x: item.transform.position[0] || 0,
-                y: item.transform.position[1] || 0
+            .map((item) => {
+              let world = fromNDC(
+                item.transform.position[0],
+                item.transform.position[1],
+                windowSize.width,
+                windowSize.height
+              )
+              return {
+                id: item.id,
+                objectType: 'video',
+                dimensions: {
+                  width: item.dimensions[0] || 100,
+                  height: item.dimensions[1] || 50
+                },
+                position: world
               }
-            }))
+            })
+        )
+      }
+
+      if (editor.models3D) {
+        objectsData.push(
+          ...editor.models3D
+            .filter((item) => !item.hidden)
+            .map((item) => {
+              let world = fromNDC(
+                item.transform.position[0],
+                item.transform.position[1],
+                windowSize.width,
+                windowSize.height
+              )
+
+              return {
+                id: item.id,
+                objectType: '3D Model',
+                dimensions: {
+                  width: 150,
+                  height: 150
+                },
+                position: world
+              }
+            })
         )
       }
 

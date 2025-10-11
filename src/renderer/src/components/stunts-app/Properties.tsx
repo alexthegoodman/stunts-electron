@@ -461,7 +461,7 @@ export const ImageProperties = ({
     const currentSequence = editorState.savedState.sequences.find((s) => s.id === currentSequenceId)
     const currentObject = currentSequence?.activeImageItems.find((p) => p.id === currentImageId)
 
-    if (!currentObject?.replicateUrl) {
+    if (typeof currentObject?.replicateUrl !== 'string' || !currentObject?.replicateUrl) {
       toast.error('No Replicate URL found for this image')
       return
     }
@@ -520,7 +520,13 @@ export const ImageProperties = ({
       editor.imageItems.splice(oldImageIndex, 1)
 
       // Add new image with same ID
-      await editor.add_image_item(newImageConfig, result.data.url, blob, currentImageId, currentSequenceId)
+      await editor.add_image_item(
+        newImageConfig,
+        result.data.url,
+        blob,
+        currentImageId,
+        currentSequenceId
+      )
 
       // Update the saved state with the new URL
       await editorState.update_saved_image_url(currentSequenceId, currentImageId, result.data.url)
@@ -553,7 +559,7 @@ export const ImageProperties = ({
     const currentSequence = editorState.savedState.sequences.find((s) => s.id === currentSequenceId)
     const currentObject = currentSequence?.activeImageItems.find((p) => p.id === currentImageId)
 
-    if (!currentObject?.replicateUrl) {
+    if (typeof currentObject?.replicateUrl !== 'string' || !currentObject?.replicateUrl) {
       toast.error('No Replicate URL found for this image')
       return
     }
