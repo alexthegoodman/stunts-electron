@@ -2152,6 +2152,95 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                       objectData={animation}
                                       pixelsPerSecond={15}
                                       onSequenceDragEnd={handleObjectDragEnd}
+                                      onDeleteObject={async (id: string, kind: ObjectType) => {
+                                        let editor = editorRef.current
+                                        let editorState = editorStateRef.current
+
+                                        if (!editor || !editorState) {
+                                          return
+                                        }
+
+                                        let sequence = editorState.savedState.sequences.find(
+                                          (s) => s.id === current_sequence_id
+                                        )
+
+                                        if (!sequence) {
+                                          return
+                                        }
+
+                                        switch (kind) {
+                                          case ObjectType.Polygon:
+                                            editor.polygons = editor.polygons.filter(
+                                              (p) => p.id !== id
+                                            )
+                                            sequence.activePolygons =
+                                              sequence.activePolygons.filter((p) => p.id !== id)
+                                            break
+                                          case ObjectType.ImageItem:
+                                            editor.imageItems = editor.imageItems.filter(
+                                              (i) => i.id !== id
+                                            )
+                                            sequence.activeImageItems =
+                                              sequence.activeImageItems.filter((i) => i.id !== id)
+                                            break
+
+                                          case ObjectType.TextItem:
+                                            editor.textItems = editor.textItems.filter(
+                                              (t) => t.id !== id
+                                            )
+                                            sequence.activeTextItems =
+                                              sequence.activeTextItems.filter((t) => t.id !== id)
+                                            break
+
+                                          case ObjectType.VideoItem:
+                                            editor.videoItems = editor.videoItems.filter(
+                                              (v) => v.id !== id
+                                            )
+                                            sequence.activeVideoItems =
+                                              sequence.activeVideoItems.filter((v) => v.id !== id)
+                                            break
+
+                                          case ObjectType.Cube3D:
+                                            editor.cubes3D = editor.cubes3D.filter(
+                                              (v) => v.id !== id
+                                            )
+                                            sequence.activeCubes3D = sequence.activeCubes3D?.filter(
+                                              (v) => v.id !== id
+                                            )
+                                            break
+
+                                          case ObjectType.Sphere3D:
+                                            editor.spheres3D = editor.spheres3D.filter(
+                                              (v) => v.id !== id
+                                            )
+                                            sequence.activeSpheres3D =
+                                              sequence.activeSpheres3D?.filter((v) => v.id !== id)
+                                            break
+
+                                          case ObjectType.Mockup3D:
+                                            editor.mockups3D = editor.mockups3D.filter(
+                                              (v) => v.id !== id
+                                            )
+                                            sequence.activeMockups3D =
+                                              sequence.activeMockups3D?.filter((v) => v.id !== id)
+                                            break
+
+                                          default:
+                                            break
+                                        }
+
+                                        sequence.polygonMotionPaths =
+                                          sequence.polygonMotionPaths?.filter(
+                                            (pm) => pm.polygonId !== id
+                                          )
+
+                                        await saveSequencesData(
+                                          editorState.savedState.sequences,
+                                          editor.target
+                                        )
+
+                                        // update_layer_list()
+                                      }}
                                       onSelectObject={(
                                         objectType: ObjectType,
                                         objectId: string
