@@ -34,15 +34,22 @@ export function ProjectSelector({ currentProjectId, currentProjectName }: Projec
   }, [])
 
   const handleProjectSelect = (projectId: string) => {
-    if (projectId === 'new') {
-      router.push('/create-project')
-    } else {
-      router.push(`/project/${projectId}/videos`)
-    }
     setIsOpen(false)
+
+    if (projectId === 'new') {
+      router.push('/redirect?to=/create-project')
+    } else {
+      // Store the project in localStorage for the next page
+      localStorage.setItem('stored-project', JSON.stringify({ project_id: projectId }))
+      // Use redirect page to force a full navigation
+      router.push(`/redirect?to=/project/${projectId}/videos`)
+    }
   }
 
-  const displayName = currentProjectName || projects?.find(p => p.project_id === currentProjectId)?.project_name || 'Loading...'
+  const displayName =
+    currentProjectName ||
+    projects?.find((p) => p.project_id === currentProjectId)?.project_name ||
+    'Loading...'
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -51,8 +58,12 @@ export function ProjectSelector({ currentProjectId, currentProjectName }: Projec
         className="flex items-center justify-between gap-2 px-3 py-2 rounded hover:bg-gray-700 transition-colors w-full text-left border border-gray-600"
         title="Select project"
       >
-        <span className="text-sm truncate">{displayName}</span>
-        <CaretDown size={16} weight="bold" className={`transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+        <span className="text-sm truncate w-10">{displayName}</span>
+        <CaretDown
+          size={16}
+          weight="bold"
+          className={`transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+        />
       </button>
 
       {isOpen && (

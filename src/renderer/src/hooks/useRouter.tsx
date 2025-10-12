@@ -25,7 +25,7 @@ export function RouterProvider({ children, initialPath = '/' }: RouterProviderPr
 
   const currentPath = history[currentIndex]
 
-  console.info('currentPath', currentPath)
+  console.info('currentPath', history, currentIndex, currentPath)
 
   const push = useCallback(
     (path: string) => {

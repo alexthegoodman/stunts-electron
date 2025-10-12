@@ -8,6 +8,7 @@ import Projects from './stunts-pages/projects/page'
 import CreateProject from './stunts-pages/create-project/page'
 import SelectLanguage from './stunts-pages/select-language/page'
 import OnboardingCarousel from './stunts-pages/onboarding-carousel/page'
+import RedirectPage from './stunts-pages/redirect/page'
 import Project from './stunts-pages/project/[projectId]/page'
 import ProjectLayout from './stunts-pages/project/[projectId]/layout'
 import ChoosePath from './stunts-pages/project/[projectId]/choose-path/page'
@@ -33,6 +34,7 @@ function App(): React.JSX.Element {
             { path: '/create-project', component: <CreateProject /> },
             { path: '/select-language', component: <SelectLanguage /> },
             { path: '/onboarding', component: <OnboardingCarousel /> },
+            { path: '/redirect', component: <RedirectPage /> },
 
             // Project routes (with layout)
             {

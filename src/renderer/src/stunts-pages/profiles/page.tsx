@@ -36,14 +36,15 @@ export default function ProfilesPage() {
     try {
       const projectId = await getOrCreateDefaultProject(authToken)
       localStorage.setItem('stored-project', JSON.stringify({ project_id: projectId }))
+      console.info('projectId', projectId)
       setTimeout(() => {
-        router.push(`/project/${projectId}/videos`)
+        router.push(`/redirect?to=/project/${projectId}/videos`)
       }, 500)
     } catch (error) {
       console.error('Error getting/creating default project:', error)
       // Fallback to projects page on error
       setTimeout(() => {
-        router.push('/projects')
+        router.push('/redirect?to=/projects')
       }, 500)
     }
   }
