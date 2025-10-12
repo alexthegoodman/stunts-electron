@@ -113,6 +113,55 @@ export const getProjects = async (authToken: AuthToken | null): Promise<ProjectI
   return projects.sort((a, b) => b.modified.diff(a.modified).milliseconds)
 }
 
+export const getMostRecentProject = async (authToken: AuthToken | null): Promise<ProjectInfo | null> => {
+  const projects = await getProjects(authToken)
+  return projects.length > 0 ? projects[0] : null
+}
+
+export const getOrCreateDefaultProject = async (authToken: AuthToken | null): Promise<string> => {
+  const mostRecent = await getMostRecentProject(authToken)
+
+  if (mostRecent) {
+    return mostRecent.project_id
+  }
+
+  // Create a new empty project for new profiles
+  const { v4: uuidv4 } = await import('uuid')
+  const newId = uuidv4()
+
+  const defaultVideoSequence: Sequence = {
+    id: newId,
+    name: 'Sequence #1',
+    backgroundFill: { type: 'Color', value: [200, 200, 200, 255] },
+    activePolygons: [],
+    polygonMotionPaths: [],
+    activeTextItems: [],
+    activeImageItems: [],
+    activeVideoItems: []
+  }
+
+  const videoState: SavedState = {
+    sequences: [defaultVideoSequence],
+    timeline_state: {
+      timeline_sequences: [
+        {
+          id: uuidv4(),
+          sequenceId: newId,
+          trackType: 'VIDEO' as any
+        }
+      ]
+    }
+  }
+
+  const emptyState: SavedState = {
+    sequences: [],
+    timeline_state: null
+  }
+
+  const newProject = await createProject('', 'My First Project', videoState, emptyState, emptyState)
+  return newProject.newProject.id
+}
+
 export const createProject = async (
   token: string,
   name: string,

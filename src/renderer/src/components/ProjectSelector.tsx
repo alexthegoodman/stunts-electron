@@ -1,0 +1,88 @@
+import React, { useState, useRef, useEffect } from 'react'
+import { useRouter } from '../hooks/useRouter'
+import { getProjects } from '../fetchers/projects'
+import { useLocalStorage } from '@uidotdev/usehooks'
+import { AuthToken } from '../fetchers/projects'
+import useSWR from 'swr'
+import { CaretDown } from '@phosphor-icons/react'
+import { useTranslation } from 'react-i18next'
+
+interface ProjectSelectorProps {
+  currentProjectId: string
+  currentProjectName?: string
+}
+
+export function ProjectSelector({ currentProjectId, currentProjectName }: ProjectSelectorProps) {
+  const { t } = useTranslation('common')
+  const router = useRouter()
+  const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const { data: projects, isLoading } = useSWR('projects', () => getProjects(authToken))
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleProjectSelect = (projectId: string) => {
+    if (projectId === 'new') {
+      router.push('/create-project')
+    } else {
+      router.push(`/project/${projectId}/videos`)
+    }
+    setIsOpen(false)
+  }
+
+  const displayName = currentProjectName || projects?.find(p => p.project_id === currentProjectId)?.project_name || 'Loading...'
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between gap-2 px-3 py-2 rounded hover:bg-gray-700 transition-colors w-full text-left border border-gray-600"
+        title="Select project"
+      >
+        <span className="text-sm truncate">{displayName}</span>
+        <CaretDown size={16} weight="bold" className={`transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-50 min-w-[200px] max-h-[400px] overflow-y-auto">
+          {isLoading ? (
+            <div className="px-4 py-2 text-sm text-gray-400">{t('Loading')}...</div>
+          ) : (
+            <>
+              {projects?.map((project) => (
+                <button
+                  key={project.project_id}
+                  onClick={() => handleProjectSelect(project.project_id)}
+                  className={`w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-sm ${
+                    project.project_id === currentProjectId ? 'bg-gray-700 font-semibold' : ''
+                  }`}
+                >
+                  {project.project_name}
+                </button>
+              ))}
+              <hr className="border-gray-700 my-1" />
+              <button
+                onClick={() => handleProjectSelect('new')}
+                className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-sm text-blue-400"
+              >
+                + {t('Create Project')}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

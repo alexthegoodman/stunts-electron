@@ -5,12 +5,20 @@ import { usePathname } from '../../../hooks/useRouter'
 import { Toaster } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { ThemeSelector } from '../../../components/ThemeSelector'
+import { ProjectSelector } from '../../../components/ProjectSelector'
+import { getSingleProject } from '../../../fetchers/projects'
+import useSWR from 'swr'
 
 export default function ProjectLayout({ children = null }: { children: any }) {
   const { t } = useTranslation('common')
 
   const { projectId } = useParams('/project/:projectId')
   const pathname = usePathname()
+
+  const { data: project } = useSWR(
+    projectId ? `project-${projectId}` : null,
+    () => getSingleProject('', projectId)
+  )
 
   let hubUrl = `/project/${projectId}`
   if (pathname.includes('flows') || pathname === hubUrl || pathname === hubUrl + '/') {
@@ -31,13 +39,17 @@ export default function ProjectLayout({ children = null }: { children: any }) {
       >
         <div className="flex flex-col gap-4 mr-4">
           <ThemeSelector />
-          {/* <NavButton
-            label={t("Hub")}
-            icon="lightning"
-            destination={`/project/${projectId}`}
-          /> */}
-          <NavButton label={t('Projects')} icon="shapes" destination={`/projects`} />
+
+          <ProjectSelector currentProjectId={projectId} currentProjectName={project?.project?.name} />
+
           <NavButton label={t('Video')} icon="video" destination={`/project/${projectId}/videos`} />
+
+          <NavButton
+            label={t('Assets')}
+            icon="activity"
+            destination={`/project/${projectId}/assets`}
+          />
+
           {/* <NavButton
             label={t("Document")}
             icon="file-cloud"
