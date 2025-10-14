@@ -7,7 +7,7 @@ import {
   matrix4ToRawArray,
   Transform
 } from './transform'
-import { createVertex, getZLayer, Vertex, vertexByteSize } from './vertex'
+import { createVertex, getZLayer, toNDC, toSystemScale, Vertex, vertexByteSize } from './vertex'
 import { BackgroundFill, ObjectType } from './animations'
 import {
   PolyfillBindGroup,
@@ -94,6 +94,19 @@ export class Mockup3D {
     this.objectType = ObjectType.Mockup3D
     this.currentSequenceId = currentSequenceId
     this.videoChildConfig = config.videoChild
+
+    let systemPosition = toNDC(
+      config.position.x,
+      config.position.y,
+      windowSize.width,
+      windowSize.height
+    )
+
+    // let systemDimensions = [
+    //       toSystemScale(config.dimensions[0] as number, windowSize.width),
+    //       toSystemScale(config.dimensions[1] as number, windowSize.height),
+    //       toSystemScale(config.dimensions[2] as number, windowSize.height)
+    //     ] as [number, number, number]
 
     // Generate laptop mockup geometry
     const [vertices, indices] = this.generateLaptopGeometry()
@@ -222,8 +235,10 @@ export class Mockup3D {
     this.groupBindGroup = mockupGroupBindGroup
     this.groupTransform = mockupGroupTransform
 
+    console.info('mockup pos', systemPosition)
+
     // Setup group transform with position and rotation
-    this.groupTransform.updatePosition([position.x, position.y], windowSize)
+    this.groupTransform.updatePosition([systemPosition.x, systemPosition.y], windowSize)
     this.groupTransform.updateRotationXDegrees(rotation[0] * 0.01)
     this.groupTransform.updateRotationYDegrees(rotation[1] * 0.01)
     this.groupTransform.updateRotationDegrees(rotation[2] * 0.01)
@@ -237,11 +252,12 @@ export class Mockup3D {
       vec2.fromValues(1, 1),
       uniformBuffer
     )
-    this.transform.layer = (getZLayer(config.layer) as number) - 3.5
+    // this.transform.layer = (getZLayer(config.layer) as number) - 3.5
+    this.transform.position[2] -= 1.0
     this.transform.updateUniformBuffer(queue, camera.windowSize)
   }
 
-  private generateLaptopGeometry(): [Vertex[], number[]] {
+  private generateLaptopGeometry(usedDimensions: [number, number, number]): [Vertex[], number[]] {
     const vertices: Vertex[] = []
     const indices: number[] = []
 
@@ -525,7 +541,7 @@ export class Mockup3D {
     rotation: [number, number, number]
   } {
     const [w, h, d] = this.dimensions
-    const screenHeight = h * 0.6
+    const screenHeight = h * 0.9
     const screenWidth = w * 0.85 // Inset from bezel
     const hingeY = (h * 0.5) / 2
     const tiltAngle = this.tiltAngle
@@ -536,7 +552,7 @@ export class Mockup3D {
     return {
       position: {
         x: 0, // Centered horizontally relative to mockup
-        y: screenCenterY - 200 // Offset vertically relative to mockup center
+        y: screenCenterY * 0.75 // Offset vertically relative to mockup center
       },
       dimensions: [screenWidth, screenHeight * 0.9],
       rotation: [
@@ -649,6 +665,8 @@ export class Mockup3D {
 
     const screenBounds = this.getScreenBounds()
 
+    console.info('screenBounds', screenBounds)
+
     // Update video's groupTransform (not shared, it has its own) to include:
     // - Mockup's world position + screen offset
     // - Mockup's rotation + screen tilt
@@ -666,9 +684,10 @@ export class Mockup3D {
     // );
     // this.videoChild.groupTransform.updateRotation(this.groupTransform.rotation);
 
-    this.videoChild.transform.updateRotationX(screenBounds.rotation[0] * -0.01)
+    this.videoChild.transform.updateRotationX(screenBounds.rotation[0])
 
     // Update the video's group transform buffer
     this.videoChild.transform.updateUniformBuffer(queue, windowSize)
+    this.groupTransform.updateUniformBuffer(queue, windowSize)
   }
 }

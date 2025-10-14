@@ -863,20 +863,20 @@ export class Editor {
           y: CANVAS_VERT_OFFSET + i.position.y * this.scaleMultiplier
         }
 
-        const ndcPoint = {
-          x: (position.x / camera.windowSize.width) * 2.0 - 1.0,
-          y: -((position.y / camera.windowSize.height) * 2.0 - 1.0)
-        }
+        // const ndcPoint = {
+        //   x: (position.x / camera.windowSize.width) * 2.0 - 1.0,
+        //   y: -((position.y / camera.windowSize.height) * 2.0 - 1.0)
+        // }
 
         let dimensions = [
           i.dimensions[0] * this.scaleMultiplier,
           i.dimensions[1] * this.scaleMultiplier
         ] as [number, number]
 
-        const ndcDimensions = [
-          (dimensions[0] / camera.windowSize.width) * 2.0 - 1.0,
-          -((dimensions[1] / camera.windowSize.height) * 2.0 - 1.0)
-        ] as [number, number]
+        // const ndcDimensions = [
+        //   (dimensions[0] / camera.windowSize.width) * 2.0 - 1.0,
+        //   -((dimensions[1] / camera.windowSize.height) * 2.0 - 1.0)
+        // ] as [number, number]
 
         const video_config: StVideoConfig = {
           id: i.id,
@@ -925,8 +925,9 @@ export class Editor {
 
         restored_mockup.videoChild = restored_video
 
-        restored_mockup.videoChild.transform.layer =
-          restored_mockup.videoChild.transform.layer + 0.3
+        // restored_mockup.videoChild.transform.layer =
+        //   restored_mockup.videoChild.transform.layer + 0.3
+        restored_mockup.videoChild.transform.position[2] += 0.6
 
         restored_mockup.updateVideoChildTransform(
           this.gpuResources?.queue!,

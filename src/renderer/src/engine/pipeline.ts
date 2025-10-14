@@ -1126,8 +1126,8 @@ export class CanvasPipeline {
           mockup.groupTransform.updateUniformBuffer(queue, editor.camera.windowSize)
         }
 
-        mockup.bindGroup.bindWebGLBindGroup(gl)
         mockup.groupBindGroup?.bindWebGLBindGroup(gl)
+        mockup.bindGroup.bindWebGLBindGroup(gl)
 
         drawIndexedGeometry(
           mockup.vertexBuffer as PolyfillBuffer,

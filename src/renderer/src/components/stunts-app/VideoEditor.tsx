@@ -2137,6 +2137,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                     objectName = sequence.activeSpheres3D?.find(
                                       (pol) => pol.id === animation.polygonId
                                     )?.name
+                                  } else if (animation.objectType === ObjectType.Mockup3D) {
+                                    objectName = sequence.activeMockups3D?.find(
+                                      (pol) => pol.id === animation.polygonId
+                                    )?.name
                                   } else if (animation.objectType === ObjectType.Model3D) {
                                     objectName = sequence.activeModels3D?.find(
                                       (pol) => pol.id === animation.polygonId

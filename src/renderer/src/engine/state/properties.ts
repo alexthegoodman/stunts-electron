@@ -356,6 +356,40 @@ export function updatePositionX(
       saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
       break
     }
+    case ObjectType.Mockup3D: {
+      let mockup = editor.mockups3D.find((s) => s.id === objectId)
+      if (mockup && editor.camera) {
+        let ndc = toNDC(
+          value,
+          value,
+          editor.camera.windowSize.width,
+          editor.camera.windowSize.width
+        )
+
+        mockup.groupTransform.updatePosition(
+          [ndc.x, mockup.transform.position[1]],
+          editor.camera.windowSize
+        )
+        mockup.groupTransform.updateUniformBuffer(
+          editor.gpuResources?.queue!,
+          editor.camera.windowSize
+        )
+      }
+
+      editorState.savedState.sequences.forEach((s) => {
+        s.activeMockups3D?.forEach((sp) => {
+          if (sp.id == objectId) {
+            sp.position = {
+              x: value,
+              y: sp.position.y
+            }
+          }
+        })
+      })
+
+      saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+      break
+    }
     case ObjectType.Model3D: {
       let model = editor.models3D.find((s) => s.id === objectId)
       if (model && editor.camera) {
@@ -523,6 +557,40 @@ export function updatePositionY(
       saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
       break
     }
+    case ObjectType.Mockup3D: {
+      let mockup = editor.mockups3D.find((s) => s.id === objectId)
+      if (mockup && editor.camera) {
+        let ndc = toNDC(
+          value,
+          value,
+          editor.camera.windowSize.height,
+          editor.camera.windowSize.height
+        )
+
+        mockup.groupTransform.updatePosition(
+          [mockup.transform.position[0], ndc.y],
+          editor.camera.windowSize
+        )
+        mockup.groupTransform.updateUniformBuffer(
+          editor.gpuResources?.queue!,
+          editor.camera.windowSize
+        )
+      }
+
+      editorState.savedState.sequences.forEach((s) => {
+        s.activeMockups3D?.forEach((sp) => {
+          if (sp.id == objectId) {
+            sp.position = {
+              x: sp.position.x,
+              y: value
+            }
+          }
+        })
+      })
+
+      saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+      break
+    }
     case ObjectType.Model3D: {
       let model = editor.models3D.find((s) => s.id === objectId)
       if (model && editor.camera) {
@@ -674,6 +742,34 @@ export function updatePositionZ(
 
       editorState.savedState.sequences.forEach((s) => {
         s.activeSpheres3D?.forEach((sp) => {
+          if (sp.id == objectId) {
+            sp.position = {
+              x: sp.position.x,
+              y: sp.position.y,
+              z: value
+            }
+          }
+        })
+      })
+
+      saveSequencesData(editorState.savedState.sequences, editorState.saveTarget)
+      break
+    }
+    case ObjectType.Mockup3D: {
+      let mockup = editor.mockups3D.find((s) => s.id === objectId)
+      if (mockup && editor.camera) {
+        mockup.groupTransform.updatePosition(
+          [mockup.groupTransform.position[0], mockup.groupTransform.position[1], value],
+          editor.camera.windowSize
+        )
+        mockup.groupTransform.updateUniformBuffer(
+          editor.gpuResources?.queue!,
+          editor.camera.windowSize
+        )
+      }
+
+      editorState.savedState.sequences.forEach((s) => {
+        s.activeMockups3D?.forEach((sp) => {
           if (sp.id == objectId) {
             sp.position = {
               x: sp.position.x,
