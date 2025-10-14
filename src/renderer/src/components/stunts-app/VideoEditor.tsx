@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { vec2 } from 'gl-matrix'
+import { quat, vec2 } from 'gl-matrix'
 import {
   DebouncedInput,
   ExportVideoButton,
@@ -230,6 +230,9 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
   // Camera pan state
   let [panX, setPanX] = useState(0)
   let [panY, setPanY] = useState(0)
+
+  let [rotateX, setRotateX] = useState(0)
+  let [rotateY, setRotateY] = useState(0)
 
   let [zoom, setZoom] = useState(0)
 
@@ -1856,6 +1859,52 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
                     <hr className="invisible py-2" />
 
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Rotate (X)</label>
+                      <input
+                        type="range"
+                        min="-360"
+                        max="360"
+                        step="5"
+                        value={rotateX}
+                        className="w-full"
+                        onChange={(e) => {
+                          const editor = editorRef.current
+                          if (editor && editor.camera) {
+                            const newValue = parseFloat(e.target.value)
+                            const deltaX = newValue - rotateX
+                            editor.camera.rotate('x', deltaX)
+                            editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
+                            setRotateX(newValue)
+                          }
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Rotate (Y)</label>
+                      <input
+                        type="range"
+                        min="-360"
+                        max="360"
+                        step="5"
+                        value={rotateY}
+                        className="w-full"
+                        onChange={(e) => {
+                          const editor = editorRef.current
+                          if (editor && editor.camera) {
+                            const newValue = parseFloat(e.target.value)
+                            const deltaY = newValue - rotateY
+                            editor.camera.rotate('y', deltaY)
+                            editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
+                            setRotateY(newValue)
+                          }
+                        }}
+                      />
+                    </div>
+
+                    <hr className="invisible py-2" />
+
                     <button
                       className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
                       onClick={() => {
@@ -1863,6 +1912,8 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                         if (editor && editor.camera) {
                           // Reset zoom
                           editor.camera.reset_zoom()
+
+                          editor.camera.rotation = quat.create()
 
                           // Reset orbit
                           const orbitDeltaX = -orbitX
@@ -1881,6 +1932,8 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                           setOrbitY(0)
                           setPanX(0)
                           setPanY(0)
+                          setRotateX(0)
+                          setRotateY(0)
                           setZoom(0)
                         }
                       }}

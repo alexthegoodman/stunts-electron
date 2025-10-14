@@ -3,7 +3,7 @@ import { Camera, WindowSize } from './camera'
 import { BoundingBox, CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Point } from './editor'
 import { createEmptyGroupTransform, matrix4ToRawArray, Transform } from './transform'
 import { createVertex, getZLayer, Vertex, vertexByteSize } from './vertex'
-import { BackgroundFill, ObjectType } from './animations'
+import { BackgroundFill, GradientDefinition, ObjectType } from './animations'
 import {
   PolyfillBindGroup,
   PolyfillBindGroupLayout,
@@ -56,6 +56,11 @@ export class Sphere3D {
   groupBindGroup: PolyfillBindGroup
   transform: Transform
   currentSequenceId: string
+
+  gradient?: GradientDefinition
+  gradientBuffer?: PolyfillBuffer
+  gradientBindGroup?: PolyfillBindGroup
+  timeOffset: number = 0
 
   constructor(
     windowSize: WindowSize,
@@ -173,11 +178,34 @@ export class Sphere3D {
     )
 
     // Setup gradient
+    // let [gradient, gradientBuffer] = setupGradientBuffers(
+    //   device,
+    //   queue,
+    //   config.backgroundFill.type === 'Gradient' ? config.backgroundFill.value : null
+    // )
+
+    let gradientDef = null
+    let shaderConfig = null
+
+    if (config.backgroundFill.type === 'Gradient') {
+      gradientDef = config.backgroundFill.value
+    } else if (config.backgroundFill.type === 'Shader') {
+      shaderConfig = config.backgroundFill.value
+    }
+
     let [gradient, gradientBuffer] = setupGradientBuffers(
       device,
       queue,
-      config.backgroundFill.type === 'Gradient' ? config.backgroundFill.value : null
+      gradientDef,
+      undefined,
+      shaderConfig
     )
+
+    if (config.backgroundFill.type) {
+      this.gradient = gradient
+      this.timeOffset = 0
+      this.gradientBuffer = gradientBuffer
+    }
 
     // Create bind group
     this.bindGroup = device.createBindGroup({
@@ -237,6 +265,8 @@ export class Sphere3D {
       color = this.backgroundFill.value
     } else if (this.backgroundFill.type === 'Gradient') {
       color = this.backgroundFill.value.stops[0].color
+    } else if (this.backgroundFill.type === 'Shader') {
+      color = [1, 1, 1, 1]
     }
 
     // Generate vertices
@@ -279,6 +309,36 @@ export class Sphere3D {
     }
 
     return [vertices, indices]
+  }
+
+  updateGradientAnimation(device: PolyfillDevice, deltaTime: number) {
+    if (this.backgroundFill.type === 'Shader') {
+      if (!this.gradientBuffer) return
+
+      // Update the timeOffset
+      this.timeOffset = (this.timeOffset || 0) + deltaTime
+
+      // Update just the time value in the buffer (offset 49 = 40 + 9)
+      const timeOffset = 49
+      device.queue!.writeBuffer(
+        this.gradientBuffer,
+        timeOffset * 4, // Multiply by 4 because offset is in bytes
+        new Float32Array([this.timeOffset])
+      )
+    } else if (this.backgroundFill.type === 'Gradient') {
+      if (!this.gradient || !this.gradientBuffer) return
+
+      // Update the timeOffset
+      this.gradient.timeOffset = (this.gradient.timeOffset || 0) + deltaTime
+
+      // Update just the time value in the buffer (offset 49 = 40 + 9)
+      const timeOffset = 49
+      device.queue!.writeBuffer(
+        this.gradientBuffer,
+        timeOffset * 4, // Multiply by 4 because offset is in bytes
+        new Float32Array([this.gradient.timeOffset])
+      )
+    }
   }
 
   updateOpacity(queue: PolyfillQueue, opacity: number) {

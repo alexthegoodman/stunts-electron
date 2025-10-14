@@ -446,7 +446,7 @@ void main() {
         final_color = proceduralColor;
         // final_color = v_color * proceduralColor;
         // final_color = vec4(0.0,1.0,0.0,1.0);
-    } else if (v_object_type > 8.5 && v_object_type < 9.5) {
+    } else if (v_object_type == 9.0 || v_object_type == 6.0) {
         // Shader background (object_type == 9.0)
         // u_gradient_type determines which shader: 0=NightSky, 1=Network, 2=DaySky, 3=RingsBlur
         if (u_gradient_type < 0.5) {

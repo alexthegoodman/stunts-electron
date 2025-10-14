@@ -2,6 +2,7 @@ import { mat4, vec2, vec3, quat } from 'gl-matrix'
 import { Point } from './editor'
 import { Camera } from './camera' // Import your existing Camera class
 import { WindowSize } from './camera'
+import { degreesToRadians } from './transform'
 
 export class Camera3D extends Camera {
   // 3D position instead of 2D
@@ -109,6 +110,28 @@ export class Camera3D extends Camera {
     // Update rotation quaternion based on direction
     const forward = vec3.fromValues(0, 0, -1) // Default forward direction
     this.rotation = quat.rotationTo(quat.create(), forward, direction)
+  }
+
+  rotate(axis: string, degrees: number) {
+    let myQuaternion = this.rotation
+    let angleInRadians = degreesToRadians(degrees) // 45 degrees
+
+    let newQuaternion = quat.create()
+
+    switch (axis) {
+      case 'x':
+        quat.rotateX(newQuaternion, myQuaternion, angleInRadians)
+        break
+
+      case 'y':
+        quat.rotateY(newQuaternion, myQuaternion, angleInRadians)
+        break
+
+      default:
+        break
+    }
+
+    this.rotation = newQuaternion
   }
 
   // Override pan method to handle 3D movement

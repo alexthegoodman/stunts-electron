@@ -194,7 +194,7 @@ export class Editor {
   selectedPolygonId: string | null
   polygons: Polygon[]
   draggingPolygon: string | null
-  staticPolygons: Polygon[]
+  staticPolygons: (Polygon | Sphere3D)[]
   projectSelected: string | null
   textItems: TextRenderer[]
   draggingText: string | null
@@ -3039,51 +3039,76 @@ export class Editor {
     // Remove existing background
     this.staticPolygons = this.staticPolygons.filter((p) => p.name !== 'canvas_background')
 
-    let canvas_polygon = new Polygon(
+    // let canvas_polygon = new Polygon(
+    //   windowSize,
+    //   gpuResources.device!,
+    //   gpuResources.queue!,
+    //   modelBindGroupLayout,
+    //   groupBindGroupLayout,
+    //   // gradientBindGroupLayout,
+    //   camera,
+    //   [
+    //     { x: 0.0, y: 0.0 },
+    //     { x: 1.0, y: 0.0 },
+    //     { x: 1.0, y: 1.0 },
+    //     { x: 0.0, y: 1.0 }
+    //   ],
+    //   [backgroundSize.width as number, backgroundSize.height as number],
+    //   {
+    //     x: windowSize.width / 2.0,
+    //     y: windowSize.height / 2.0
+    //     // z: -89
+    //   },
+    //   0.0,
+    //   0.0,
+    //   backgroundFill,
+    //   // [0.2, 0.5, 0.2, 0.5],
+    //   {
+    //     thickness: 0.0,
+    //     fill: rgbToWgpu(0, 0, 0, 255.0)
+    //   },
+    //   0.0,
+    //   -89, // camera far is -100
+    //   'canvas_background',
+    //   sequence_id,
+    //   sequence_id,
+    //   false
+    // )
+
+    const sphere_config: Sphere3DConfig = {
+      id: uuidv4(),
+      name: 'canvas_background',
+      radius: 300,
+      position: {
+        x: 0,
+        y: 0
+      },
+      rotation: [0, 0, 0],
+      backgroundFill: backgroundFill,
+      layer: 0,
+      segments: 64
+    }
+
+    const skybox = new Sphere3D(
       windowSize,
       gpuResources.device!,
       gpuResources.queue!,
-      modelBindGroupLayout,
-      groupBindGroupLayout,
-      // gradientBindGroupLayout,
+      this.modelBindGroupLayout!,
+      this.groupBindGroupLayout!,
       camera,
-      [
-        { x: 0.0, y: 0.0 },
-        { x: 1.0, y: 0.0 },
-        { x: 1.0, y: 1.0 },
-        { x: 0.0, y: 1.0 }
-      ],
-      [backgroundSize.width as number, backgroundSize.height as number],
-      {
-        x: windowSize.width / 2.0,
-        y: windowSize.height / 2.0
-        // z: -89
-      },
-      0.0,
-      0.0,
-      backgroundFill,
-      // [0.2, 0.5, 0.2, 0.5],
-      {
-        thickness: 0.0,
-        fill: rgbToWgpu(0, 0, 0, 255.0)
-      },
-      0.0,
-      -89, // camera far is -100
-      'canvas_background',
-      sequence_id,
-      sequence_id,
-      false
+      sphere_config,
+      sequence_id
     )
 
-    console.info('bg poly', canvas_polygon)
+    console.info('bg skybox', skybox)
 
-    canvas_polygon.transform.updateScale([5, 5])
-    canvas_polygon.transform.position[2] = -3
-    canvas_polygon.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
+    // skybox.transform.updateScale([5, 5])
+    // skybox.transform.position[2] = -3
+    // skybox.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
 
-    canvas_polygon.updateGradientAnimation(gpuResources.device!, 0.01)
+    skybox.updateGradientAnimation(gpuResources.device!, 0.01)
 
-    this.staticPolygons.push(canvas_polygon)
+    this.staticPolygons.push(skybox)
   }
 
   update_background(
