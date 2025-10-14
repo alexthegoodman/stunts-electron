@@ -66,11 +66,28 @@ import {
   ImagesIcon,
   ActivityIcon,
   PersonSimpleCircleIcon,
-  PersonArmsSpreadIcon
+  PersonArmsSpreadIcon,
+  BookIcon,
+  MoneyIcon,
+  StackPlusIcon,
+  BooksIcon,
+  TextAaIcon
 } from '@phosphor-icons/react'
 
 export const CreateIcon = ({ icon, size }: { icon: string; size: string }) => {
   switch (icon) {
+    case 'text': {
+      return <TextAaIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
+    }
+    case 'stack-plus': {
+      return <StackPlusIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
+    }
+    case 'money': {
+      return <MoneyIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
+    }
+    case 'book': {
+      return <BooksIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
+    }
     case 'person': {
       return <PersonArmsSpreadIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
     }

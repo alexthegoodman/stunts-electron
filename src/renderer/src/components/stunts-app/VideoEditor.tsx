@@ -110,6 +110,7 @@ import { Mockup3DConfig } from '../../engine/mockup3d'
 import { TextProperties } from './properties/TextProperties'
 import { KeyframeProperties } from './properties/KeyframeProperties'
 import { Model3DConfig } from '@renderer/engine/model3d'
+import { ProjectSelector } from '../ProjectSelector'
 
 export function update_keyframe(
   editor_state: EditorState,
@@ -1373,7 +1374,8 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
       <div className="flex flex-row mb-2 gap-4 justify-between w-full">
         <div className="flex flex-row gap-4 items-center">
-          {isEditingName ? (
+          <ProjectSelector currentProjectId={projectId} currentProjectName={project_name} />
+          {/* {isEditingName ? (
             <input
               type="text"
               value={tempProjectName}
@@ -1410,7 +1412,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
             >
               {project_name}
             </h1>
-          )}
+          )} */}
           {/* <div className="flex flex-row items-center gap-2">
             <label htmlFor="layer-spacing" className="text-xs text-gray-300">
               Layer Spacing:

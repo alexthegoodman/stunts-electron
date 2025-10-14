@@ -15,9 +15,9 @@ export default function ProjectLayout({ children = null }: { children: any }) {
   const { projectId } = useParams('/project/:projectId')
   const pathname = usePathname()
 
-  const { data: project } = useSWR(projectId ? `project-${projectId}` : null, () =>
-    getSingleProject('', projectId)
-  )
+  // const { data: project } = useSWR(projectId ? `project-${projectId}` : null, () =>
+  //   getSingleProject('', projectId)
+  // )
 
   let hubUrl = `/project/${projectId}`
   if (pathname.includes('flows') || pathname === hubUrl || pathname === hubUrl + '/') {
@@ -39,16 +39,15 @@ export default function ProjectLayout({ children = null }: { children: any }) {
         <div className="flex flex-col gap-4 mr-4">
           <ThemeSelector />
 
-          <ProjectSelector
-            currentProjectId={projectId}
-            currentProjectName={project?.project?.name}
-          />
-
           <NavButton label={t('Video')} icon="video" destination={`/project/${projectId}/videos`} />
 
+          <NavButton label={t('Ads')} icon="stack-plus" destination={`/project/${projectId}/ads`} />
+
+          <NavButton label={t('Copy')} icon="text" destination={`/project/${projectId}/copy`} />
+
           <NavButton
-            label={t('Characters')}
-            icon="person"
+            label={t('Library')}
+            icon="book"
             destination={`/project/${projectId}/assets`}
           />
 

@@ -58,7 +58,7 @@ export function ProjectSelector({ currentProjectId, currentProjectName }: Projec
         className="flex items-center justify-between gap-2 px-3 py-2 rounded hover:bg-gray-700 transition-colors w-full text-left border border-gray-600"
         title="Select project"
       >
-        <span className="text-sm truncate w-10">{displayName}</span>
+        <span className="text-sm truncate w-32">{displayName}</span>
         <CaretDown
           size={16}
           weight="bold"
