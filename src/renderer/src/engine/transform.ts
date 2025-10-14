@@ -16,6 +16,7 @@ export class Transform {
   rotationX: number
   rotationY: number
   scale: vec2
+  anchor: vec3 // Anchor/pivot point for rotations (in local space)
   uniformBuffer: PolyfillBuffer
   layer: number // deprecated - kept for backward compatibility during migration
 
@@ -23,7 +24,8 @@ export class Transform {
     position: vec3,
     rotation: number, // Accepts angle in radians
     scale: vec2,
-    uniformBuffer: PolyfillBuffer
+    uniformBuffer: PolyfillBuffer,
+    anchor: vec3 = vec3.fromValues(0, 0, 0) // Default anchor at origin
     // windowSize: WindowSize
   ) {
     this.position = position
@@ -32,6 +34,7 @@ export class Transform {
     this.rotationX = 0
     this.rotationY = 0
     this.scale = scale
+    this.anchor = anchor
     this.uniformBuffer = uniformBuffer
     this.layer = 0.0 // deprecated
   }
@@ -44,6 +47,7 @@ export class Transform {
 
     // Create individual transformation matrices
     const translation = mat4.fromTranslation(mat4.create(), vec3.fromValues(x, y, z))
+
     const rotation = mat4.fromQuat(
       mat4.create(),
       quat.fromEuler(
@@ -53,15 +57,34 @@ export class Transform {
         (this.rotation * 180) / Math.PI
       )
     ) // gl-matrix uses degrees for quat euler angles
+
     const scale = mat4.fromScaling(
       mat4.create(),
       vec3.fromValues(this.scale[0], this.scale[1], 1.0)
     ) // Use both x and y scale
 
-    // Combine transformations: translation * rotation * scale
+    // Apply anchor point offset for proper pivot rotation
+    // The transformation order becomes: Translation * Rotation(around anchor) * Scale
+    // Which expands to: Translation * Translate(anchor) * Rotation * Translate(-anchor) * Scale
+
     let combined = mat4.create()
-    mat4.mul(combined, translation, rotation)
-    mat4.mul(combined, combined, scale)
+
+    // Start with translation to world position
+    mat4.copy(combined, translation)
+
+    // Translate by anchor offset (moves rotation pivot)
+    mat4.translate(combined, combined, this.anchor)
+
+    // Apply rotation (now rotates around anchor point)
+    mat4.multiply(combined, combined, rotation)
+
+    // Translate back by negative anchor offset
+    const negativeAnchor = vec3.create()
+    vec3.negate(negativeAnchor, this.anchor)
+    mat4.translate(combined, combined, negativeAnchor)
+
+    // Apply scale last
+    mat4.multiply(combined, combined, scale)
 
     return combined
   }
@@ -117,6 +140,10 @@ export class Transform {
 
   updateScaleY(scaleY: number) {
     this.scale[1] = scaleY
+  }
+
+  updateAnchor(anchor: vec3) {
+    this.anchor = anchor
   }
 
   translate(translation: vec2 | vec3) {

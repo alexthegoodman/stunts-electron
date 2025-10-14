@@ -18,6 +18,7 @@ import {
 } from './polyfill'
 import { setupGradientBuffers } from './polygon'
 import { StVideo, StVideoConfig } from './video'
+import { Cube3D } from './cube3d'
 
 export interface Mockup3DConfig {
   id: string
@@ -66,6 +67,9 @@ export class Mockup3D {
   // Required video child
   videoChild: StVideo | null = null
   videoChildConfig: StVideoConfig
+
+  // Debug: Anchor point visualization
+  anchorDebugCube: Cube3D | null = null
 
   tiltAngle: number = 45
 
@@ -242,6 +246,19 @@ export class Mockup3D {
     this.groupTransform.updateRotationXDegrees(rotation[0])
     this.groupTransform.updateRotationYDegrees(rotation[1])
     this.groupTransform.updateRotationDegrees(rotation[2])
+
+    // Set anchor point at the hinge location (bottom-center of the laptop base)
+    // This allows the laptop to rotate around the hinge naturally
+    const [w, h, d] = this.dimensions
+    const hh = h / 2
+    const baseThickness = d * 0.1
+    // const hingeAnchor = vec3.fromValues(0, hh * 0.5, baseThickness)
+    const hingeAnchor = vec3.fromValues(0, 1, 1)
+
+    console.info('hingeAnchor', hingeAnchor)
+
+    this.groupTransform.updateAnchor(hingeAnchor)
+
     // this.groupTransform.layer = (getZLayer(config.layer) as number) - 0.5;
     this.groupTransform.updateUniformBuffer(queue, camera.windowSize)
 
@@ -255,6 +272,38 @@ export class Mockup3D {
     // this.transform.layer = (getZLayer(config.layer) as number) - 3.5
     this.transform.position[2] -= 1.0
     this.transform.updateUniformBuffer(queue, camera.windowSize)
+
+    // Create debug cube to visualize anchor point
+    const cubeSize = 0.1
+    this.anchorDebugCube = new Cube3D(
+      windowSize,
+      device,
+      queue,
+      bindGroupLayout,
+      groupBindGroupLayout,
+      camera,
+      {
+        id: `${this.id}_anchor_debug`,
+        name: 'Anchor Debug Cube',
+        dimensions: [cubeSize, cubeSize, cubeSize],
+        position: { x: hingeAnchor[0], y: hingeAnchor[1], z: hingeAnchor[2] },
+        // position: { x: 0, y: 0, z: 0 },
+        rotation: [0, 0, 0],
+        backgroundFill: {
+          type: 'Color',
+          value: [0.0, 0.5, 1.0, 1.0] // Blue
+        },
+        layer: config.layer
+      },
+      currentSequenceId
+    )
+
+    // Position the cube at the anchor point in local space (relative to the mockup's group transform)
+    this.anchorDebugCube.transform.updatePosition(
+      [hingeAnchor[0], hingeAnchor[1], hingeAnchor[2]],
+      windowSize
+    )
+    this.anchorDebugCube.transform.updateUniformBuffer(queue, camera.windowSize)
   }
 
   private generateLaptopGeometry(usedDimensions: [number, number, number]): [Vertex[], number[]] {
@@ -689,5 +738,50 @@ export class Mockup3D {
     // Update the video's group transform buffer
     this.videoChild.transform.updateUniformBuffer(queue, windowSize)
     this.groupTransform.updateUniformBuffer(queue, windowSize)
+  }
+
+  // Debug method to visualize the anchor point as a blue cube
+  createAnchorDebugCube(
+    windowSize: WindowSize,
+    device: PolyfillDevice,
+    queue: PolyfillQueue,
+    bindGroupLayout: PolyfillBindGroupLayout,
+    groupBindGroupLayout: PolyfillBindGroupLayout,
+    camera: Camera
+  ) {
+    const cubeSize = 0.1 // Small cube
+    const anchor = this.groupTransform.anchor
+
+    // Create a blue cube at the anchor point
+    this.anchorDebugCube = new Cube3D(
+      windowSize,
+      device,
+      queue,
+      bindGroupLayout,
+      groupBindGroupLayout,
+      camera,
+      {
+        id: `${this.id}_anchor_debug`,
+        name: 'Anchor Debug Cube',
+        dimensions: [cubeSize, cubeSize, cubeSize],
+        position: { x: anchor[0], y: anchor[1], z: anchor[2] },
+        rotation: [0, 0, 0],
+        backgroundFill: {
+          type: 'Color',
+          value: [0.0, 0.5, 1.0, 1.0] // Blue
+        },
+        layer: this.layer + 0.001
+      },
+      this.currentSequenceId
+    )
+
+    // Position the cube at the anchor point in local space
+    this.anchorDebugCube.transform.updatePosition([anchor[0], anchor[1], anchor[2]], windowSize)
+    this.anchorDebugCube.transform.updateUniformBuffer(queue, windowSize)
+  }
+
+  // Remove the debug cube
+  removeAnchorDebugCube() {
+    this.anchorDebugCube = null
   }
 }
