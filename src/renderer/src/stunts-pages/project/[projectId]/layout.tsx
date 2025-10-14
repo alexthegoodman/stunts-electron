@@ -15,9 +15,8 @@ export default function ProjectLayout({ children = null }: { children: any }) {
   const { projectId } = useParams('/project/:projectId')
   const pathname = usePathname()
 
-  const { data: project } = useSWR(
-    projectId ? `project-${projectId}` : null,
-    () => getSingleProject('', projectId)
+  const { data: project } = useSWR(projectId ? `project-${projectId}` : null, () =>
+    getSingleProject('', projectId)
   )
 
   let hubUrl = `/project/${projectId}`
@@ -40,13 +39,16 @@ export default function ProjectLayout({ children = null }: { children: any }) {
         <div className="flex flex-col gap-4 mr-4">
           <ThemeSelector />
 
-          <ProjectSelector currentProjectId={projectId} currentProjectName={project?.project?.name} />
+          <ProjectSelector
+            currentProjectId={projectId}
+            currentProjectName={project?.project?.name}
+          />
 
           <NavButton label={t('Video')} icon="video" destination={`/project/${projectId}/videos`} />
 
           <NavButton
-            label={t('Assets')}
-            icon="activity"
+            label={t('Characters')}
+            icon="person"
             destination={`/project/${projectId}/assets`}
           />
 

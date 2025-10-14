@@ -64,11 +64,16 @@ import {
   CameraRotateIcon,
   ClubIcon,
   ImagesIcon,
-  ActivityIcon
+  ActivityIcon,
+  PersonSimpleCircleIcon,
+  PersonArmsSpreadIcon
 } from '@phosphor-icons/react'
 
 export const CreateIcon = ({ icon, size }: { icon: string; size: string }) => {
   switch (icon) {
+    case 'person': {
+      return <PersonArmsSpreadIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
+    }
     case 'activity': {
       return <ActivityIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
     }
