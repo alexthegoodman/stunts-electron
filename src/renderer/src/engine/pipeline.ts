@@ -1136,16 +1136,16 @@ export class CanvasPipeline {
         )
 
         // Draw anchor debug cube if it exists
-        if (mockup.anchorDebugCube) {
-          mockup.groupBindGroup?.bindWebGLBindGroup(gl)
-          mockup.anchorDebugCube.bindGroup.bindWebGLBindGroup(gl)
+        // if (mockup.anchorDebugCube) {
+        //   mockup.groupBindGroup?.bindWebGLBindGroup(gl)
+        //   mockup.anchorDebugCube.bindGroup.bindWebGLBindGroup(gl)
 
-          drawIndexedGeometry(
-            mockup.anchorDebugCube.vertexBuffer as PolyfillBuffer,
-            mockup.anchorDebugCube.indexBuffer as PolyfillBuffer,
-            mockup.anchorDebugCube.indices.length
-          )
-        }
+        //   drawIndexedGeometry(
+        //     mockup.anchorDebugCube.vertexBuffer as PolyfillBuffer,
+        //     mockup.anchorDebugCube.indexBuffer as PolyfillBuffer,
+        //     mockup.anchorDebugCube.indices.length
+        //   )
+        // }
 
         if (mockup.videoChild) {
           if (editor.draggingVideo === mockup.videoChild.id || editor.isPlaying) {

@@ -353,6 +353,17 @@ export class Mockup3D {
       this.videoChild.transform.updateRotationY(degreesToRadians(rotation[1]))
       this.videoChild.transform.updateRotation(degreesToRadians(rotation[2]))
 
+      // is xdiff truly needed because of the additional offset given to place the screen in front? who knows!
+      let xDiff = (rotation[1] / 40) * 0.57
+
+      // console.info('xDiff', xDiff)
+
+      // must adapt the live position
+      this.videoChild.transform.updatePosition(
+        [screenBounds.position.x + xDiff, screenBounds.position.y],
+        camera.windowSize
+      )
+
       this.videoChild.transform.updateUniformBuffer(queue, camera.windowSize)
     }
   }
@@ -774,16 +785,16 @@ export class Mockup3D {
     // Update video's groupTransform (not shared, it has its own) to include:
     // - Mockup's world position + screen offset
     // - Mockup's rotation + screen tilt
-    this.videoChild.transform.updatePosition(
-      [screenBounds.position.x, screenBounds.position.y],
-      windowSize
-    )
+    // this.videoChild.transform.updatePosition(
+    //   [screenBounds.position.x + 0.57, screenBounds.position.y],
+    //   windowSize
+    // )
 
-    this.videoChild.transform.updateRotationX(screenBounds.rotation[0])
+    // this.videoChild.transform.updateRotationX(screenBounds.rotation[0])
 
     // Update the video's group transform buffer
-    this.videoChild.transform.updateUniformBuffer(queue, windowSize)
-    this.groupTransform.updateUniformBuffer(queue, windowSize)
+    // this.videoChild.transform.updateUniformBuffer(queue, windowSize)
+    // this.groupTransform.updateUniformBuffer(queue, windowSize)
   }
 
   // Debug method to visualize the anchor point as a blue cube

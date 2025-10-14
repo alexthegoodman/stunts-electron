@@ -71,6 +71,7 @@ import {
   resolveOverlaps
 } from './editor/helpers'
 import { toNDC, toSystemScale } from './vertex'
+import { radiansToDegrees } from './transform'
 
 export const TEXT_BACKGROUNDS_DEFAULT_HIDDEN = true
 
@@ -1794,6 +1795,9 @@ export class Editor {
         case 'Sphere3D':
           objectIdx = this.spheres3D.findIndex((s) => s.id === animation.polygonId)
           break
+        case 'Mockup3D':
+          objectIdx = this.mockups3D.findIndex((s) => s.id === animation.polygonId)
+          break
         case 'Model3D':
           objectIdx = this.models3D.findIndex((s) => s.id === animation.polygonId)
           break
@@ -2049,6 +2053,15 @@ export class Editor {
               case ObjectType.Sphere3D:
                 this.spheres3D[objectIdx].transform.updateRotationXDegrees(x)
                 break
+              case ObjectType.Mockup3D:
+                let currentRotationY = this.mockups3D[objectIdx].transform.rotationY
+                let currentRotationZ = this.mockups3D[objectIdx].transform.rotation
+                this.mockups3D[objectIdx].updateChildRotations(gpuResources.queue, this.camera, [
+                  x,
+                  radiansToDegrees(currentRotationY),
+                  radiansToDegrees(currentRotationZ)
+                ])
+                break
               case ObjectType.Model3D:
                 this.models3D[objectIdx].transform.updateRotationXDegrees(x)
                 break
@@ -2083,6 +2096,15 @@ export class Editor {
               case ObjectType.Sphere3D:
                 this.spheres3D[objectIdx].transform.updateRotationYDegrees(y)
                 break
+              case ObjectType.Mockup3D:
+                let currentRotationX = this.mockups3D[objectIdx].transform.rotationX
+                let currentRotationZ = this.mockups3D[objectIdx].transform.rotation
+                this.mockups3D[objectIdx].updateChildRotations(gpuResources.queue, this.camera, [
+                  radiansToDegrees(currentRotationX),
+                  y,
+                  radiansToDegrees(currentRotationZ)
+                ])
+                break
               case ObjectType.Model3D:
                 this.models3D[objectIdx].transform.updateRotationYDegrees(y)
                 break
@@ -2114,6 +2136,15 @@ export class Editor {
                 break
               case ObjectType.Sphere3D:
                 this.spheres3D[objectIdx].transform.updateRotation(new_rotation_rad)
+                break
+              case ObjectType.Mockup3D:
+                let currentRotationX = this.mockups3D[objectIdx].transform.rotationX
+                let currentRotationY = this.mockups3D[objectIdx].transform.rotationY
+                this.mockups3D[objectIdx].updateChildRotations(gpuResources.queue, this.camera, [
+                  radiansToDegrees(currentRotationX),
+                  radiansToDegrees(currentRotationY),
+                  radiansToDegrees(new_rotation_rad)
+                ])
                 break
               case ObjectType.Model3D:
                 this.models3D[objectIdx].transform.updateRotation(new_rotation_rad)
