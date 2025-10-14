@@ -1821,8 +1821,11 @@ export class Editor {
       // Determine whether to draw the video frame based on the frame rate and current time
       let animateProperties = false
 
-      if (animation.objectType === 'VideoItem') {
-        const videoItem = this.videoItems[objectIdx]
+      if (animation.objectType === 'VideoItem' || animation.objectType === ObjectType.Mockup3D) {
+        const videoItem =
+          animation.objectType === ObjectType.Mockup3D
+            ? this.mockups3D[objectIdx].videoChild
+            : this.videoItems[objectIdx]
         const frameRate = videoItem.sourceFrameRate
         const sourceDurationMs = videoItem.sourceDurationMs
         const frameInterval = 1.0 / frameRate
