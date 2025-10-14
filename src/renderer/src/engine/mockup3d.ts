@@ -19,6 +19,7 @@ import {
 import { setupGradientBuffers } from './polygon'
 import { StVideo, StVideoConfig } from './video'
 import { Cube3D } from './cube3d'
+import { Camera3D } from './3dcamera'
 
 export interface Mockup3DConfig {
   id: string
@@ -243,21 +244,13 @@ export class Mockup3D {
 
     // Setup group transform with position and rotation
     this.groupTransform.updatePosition([systemPosition.x, systemPosition.y], windowSize)
-    this.groupTransform.updateRotationXDegrees(rotation[0])
-    this.groupTransform.updateRotationYDegrees(rotation[1])
-    this.groupTransform.updateRotationDegrees(rotation[2])
+    // this.groupTransform.updateRotationXDegrees(rotation[0])
+    // this.groupTransform.updateRotationYDegrees(rotation[1])
+    // this.groupTransform.updateRotationDegrees(rotation[2])
 
-    // Set anchor point at the hinge location (bottom-center of the laptop base)
-    // This allows the laptop to rotate around the hinge naturally
-    const [w, h, d] = this.dimensions
-    const hh = h / 2
-    const baseThickness = d * 0.1
-    // const hingeAnchor = vec3.fromValues(0, hh * 0.5, baseThickness)
-    const hingeAnchor = vec3.fromValues(0, 1, 1)
+    // this.updateChildRotations(rotation)
 
-    console.info('hingeAnchor', hingeAnchor)
-
-    this.groupTransform.updateAnchor(hingeAnchor)
+    const hingeAnchor = this.updateAnchor()
 
     // this.groupTransform.layer = (getZLayer(config.layer) as number) - 0.5;
     this.groupTransform.updateUniformBuffer(queue, camera.windowSize)
@@ -304,6 +297,68 @@ export class Mockup3D {
       windowSize
     )
     this.anchorDebugCube.transform.updateUniformBuffer(queue, camera.windowSize)
+  }
+
+  updateAnchor() {
+    // Set anchor point at the hinge location (bottom-center of the laptop base)
+    // This allows the laptop to rotate around the hinge naturally
+    const [w, h, d] = this.dimensions
+    const hh = h / 2
+    const baseThickness = d * 0.1
+    const hingeAnchor = vec3.fromValues(0, hh * 0.5, baseThickness)
+    // const hingeAnchor = vec3.fromValues(0, 1, 1)
+
+    console.info('hingeAnchor', this.transform, hingeAnchor)
+
+    // this.groupTransform.updateAnchor(hingeAnchor)
+
+    // if (this.transform) {
+    //   this.transform.updateAnchor(hingeAnchor)
+    // }
+
+    // if (this.videoChild) {
+    //   this.videoChild.transform.updateAnchor(hingeAnchor)
+    //   this.videoChild.transform.position = hingeAnchor
+    // }
+
+    return hingeAnchor
+  }
+
+  updateChildRotations(queue: PolyfillQueue, camera: Camera3D, rotation: [number, number, number]) {
+    if (this.transform) {
+      console.info('udpate mockup child rotation')
+
+      // NOTE: using radians, not degrees
+
+      this.transform.updateRotationX(degreesToRadians(rotation[0]))
+      this.transform.updateRotationY(degreesToRadians(rotation[1]))
+      this.transform.updateRotation(degreesToRadians(rotation[2]))
+
+      this.transform.updateUniformBuffer(queue, camera.windowSize)
+    }
+
+    if (this.videoChild) {
+      const screenBounds = this.getScreenBounds()
+      console.info(
+        'udpate video child rotation',
+        this.transform.rotation,
+        rotation[0] + screenBounds.rotation[0],
+        rotation,
+        screenBounds.rotation[0]
+      )
+
+      this.videoChild.transform.updateRotationX(
+        degreesToRadians(rotation[0]) + screenBounds.rotation[0]
+      )
+      this.videoChild.transform.updateRotationY(degreesToRadians(rotation[1]))
+      this.videoChild.transform.updateRotation(degreesToRadians(rotation[2]))
+
+      this.videoChild.transform.updateUniformBuffer(queue, camera.windowSize)
+    }
+  }
+
+  initVideo() {
+    this.updateAnchor()
   }
 
   private generateLaptopGeometry(usedDimensions: [number, number, number]): [Vertex[], number[]] {
@@ -723,15 +778,6 @@ export class Mockup3D {
       [screenBounds.position.x, screenBounds.position.y],
       windowSize
     )
-
-    // Apply the screen tilt angle combined with mockup rotation
-    // this.videoChild.groupTransform.updateRotationX(
-    //   this.groupTransform.rotationX + screenBounds.rotation[0]
-    // );
-    // this.videoChild.groupTransform.updateRotationY(
-    //   this.groupTransform.rotationY
-    // );
-    // this.videoChild.groupTransform.updateRotation(this.groupTransform.rotation);
 
     this.videoChild.transform.updateRotationX(screenBounds.rotation[0])
 

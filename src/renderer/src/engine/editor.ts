@@ -935,6 +935,10 @@ export class Editor {
         )
 
         restored_mockup.hidden = hidden
+
+        restored_mockup.initVideo() // run after adding video to mockup
+        restored_mockup.updateChildRotations(queue, camera, s.rotation)
+
         this.mockups3D.push(restored_mockup)
         console.log('Sphere3D restored...')
       }

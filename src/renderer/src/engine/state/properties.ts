@@ -4,6 +4,7 @@ import { Editor } from '../editor'
 import { InputValue } from '../editor/helpers'
 import EditorState from '../editor_state'
 import { TextAnimationConfig } from '../textAnimator'
+import { radiansToDegrees } from '../transform'
 import { toNDC } from '../vertex'
 
 export function updateBackground(
@@ -1426,10 +1427,15 @@ export function updateMockup3DRotationX(
 ) {
   let mockup = editor.mockups3D.find((m) => m.id === objectId)
   if (mockup && editor.camera) {
-    mockup.groupTransform.rotationX = value
-    mockup.groupTransform.updateRotationXDegrees(value)
-    mockup.groupTransform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
-    // Video child automatically follows via shared group transform
+    // mockup.groupTransform.rotationX = value
+    // mockup.groupTransform.updateRotationXDegrees(value)
+    // mockup.groupTransform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+
+    mockup.updateChildRotations(editor.gpuResources?.queue!, editor.camera, [
+      value,
+      radiansToDegrees(mockup.transform.rotationY),
+      radiansToDegrees(mockup.transform.rotation)
+    ])
   }
 
   editorState.savedState.sequences.forEach((s) => {
@@ -1451,10 +1457,14 @@ export function updateMockup3DRotationY(
 ) {
   let mockup = editor.mockups3D.find((m) => m.id === objectId)
   if (mockup && editor.camera) {
-    mockup.groupTransform.rotationY = value
-    mockup.groupTransform.updateRotationYDegrees(value)
-    mockup.groupTransform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
-    // Video child automatically follows via shared group transform
+    // mockup.groupTransform.rotationY = value
+    // mockup.groupTransform.updateRotationYDegrees(value)
+    // mockup.groupTransform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+    mockup.updateChildRotations(editor.gpuResources?.queue!, editor.camera, [
+      radiansToDegrees(mockup.transform.rotationX),
+      value,
+      radiansToDegrees(mockup.transform.rotation)
+    ])
   }
 
   editorState.savedState.sequences.forEach((s) => {
@@ -1476,10 +1486,14 @@ export function updateMockup3DRotationZ(
 ) {
   let mockup = editor.mockups3D.find((m) => m.id === objectId)
   if (mockup && editor.camera) {
-    mockup.groupTransform.rotation = value
-    mockup.groupTransform.updateRotationDegrees(value)
-    mockup.groupTransform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
-    // Video child automatically follows via shared group transform
+    // mockup.groupTransform.rotation = value
+    // mockup.groupTransform.updateRotationDegrees(value)
+    // mockup.groupTransform.updateUniformBuffer(editor.gpuResources?.queue!, editor.camera.windowSize)
+    mockup.updateChildRotations(editor.gpuResources?.queue!, editor.camera, [
+      radiansToDegrees(mockup.transform.rotationY),
+      radiansToDegrees(mockup.transform.rotation),
+      value
+    ])
   }
 
   editorState.savedState.sequences.forEach((s) => {
