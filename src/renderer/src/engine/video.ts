@@ -390,7 +390,8 @@ export class StVideo {
 
             // Apply the cover bounds to the texture coordinates
             const texX = u0 + (u1 - u0) * percentX
-            const texY = v0 + (v1 - v0) * percentY
+            // const texY = v0 + (v1 - v0) * percentY
+            const texY = v0 + (v1 - v0) * (1 - percentY)
 
             const normalizedX = (posX - this.transform.position[0]) / this.dimensions[0]
             const normalizedY = (posY - this.transform.position[1]) / this.dimensions[1]

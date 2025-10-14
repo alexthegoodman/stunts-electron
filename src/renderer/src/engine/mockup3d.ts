@@ -476,7 +476,7 @@ export class Mockup3D {
 
     // Screen section (lid)
     // The screen is angled back from the base
-    const screenHeight = h * 0.6 // 60% of total height for screen
+    const screenHeight = h * 0.9 // 90% of total height for screen
     const screenThickness = d * 0.05 // Thin screen
 
     // Screen tilted back at ~105 degrees (common laptop angle)
