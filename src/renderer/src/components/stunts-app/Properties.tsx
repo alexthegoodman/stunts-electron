@@ -1,7 +1,7 @@
 'use client'
 
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
-import { DebouncedInput, DebouncedTextarea } from './items'
+import { DebouncedInput, DebouncedTextarea, MiniButton } from './items'
 import { Editor } from '../../engine/editor'
 import { getRandomNumber, InputValue, rgbToWgpu, wgpuToHuman } from '../../engine/editor/helpers'
 import EditorState, { SaveTarget } from '../../engine/editor_state'
@@ -62,6 +62,7 @@ import {
 import { AnimationOptions } from './properties/KeyframeProperties'
 import { ColorProperties } from './properties/ColorProperties'
 import { RepeatProperties } from './properties/RepeatProperties'
+import { degreesToRadians } from '@renderer/engine/transform'
 
 export const PolygonProperties = ({
   editorRef,
@@ -1686,6 +1687,59 @@ export const Mockup3DProperties = ({
           </button>
           <h5>Update Laptop Mockup</h5>
         </div>
+        <details open={false} className="border border-gray-300 rounded">
+          <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
+            Presets
+          </summary>
+          <div className="p-2 space-y-1">
+            <MiniButton
+              callback={() => {
+                let editor = editorRef.current
+
+                if (!editor) {
+                  return
+                }
+
+                let mockup = editor.mockups3D.find((mu) => mu.id === currentMockupId)
+                mockup.setTiltAngle(editor.gpuResources.queue!, editor.gpuResources.device!, 90)
+
+                // // for testing only
+                // const screenBounds = mockup.getScreenBounds()
+                // mockup.videoChild.transform.updateRotationX(degreesToRadians(mockup.tiltAngle))
+                // mockup.videoChild.transform.updateUniformBuffer(
+                //   editor.gpuResources.queue!,
+                //   editor.camera.windowSize
+                // )
+
+                mockup.updateChildRotations(editor.gpuResources.queue!, editor.camera, [0, 0, 0])
+              }}
+              label="On Table"
+            />
+            <MiniButton
+              callback={() => {
+                let editor = editorRef.current
+
+                if (!editor) {
+                  return
+                }
+
+                let mockup = editor.mockups3D.find((mu) => mu.id === currentMockupId)
+                mockup.setTiltAngle(editor.gpuResources.queue!, editor.gpuResources.device!, 0)
+
+                // // for testing only
+                // const screenBounds = mockup.getScreenBounds()
+                // mockup.videoChild.transform.updateRotationX(degreesToRadians(mockup.tiltAngle))
+                // mockup.videoChild.transform.updateUniformBuffer(
+                //   editor.gpuResources.queue!,
+                //   editor.camera.windowSize
+                // )
+
+                mockup.updateChildRotations(editor.gpuResources.queue!, editor.camera, [0, 0, 0])
+              }}
+              label="In Air"
+            />
+          </div>
+        </details>
         <details open={false} className="border border-gray-300 rounded">
           <summary className="cursor-pointer px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-200">
             Position

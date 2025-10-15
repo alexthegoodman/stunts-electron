@@ -928,7 +928,7 @@ export class Editor {
 
         // restored_mockup.videoChild.transform.layer =
         //   restored_mockup.videoChild.transform.layer + 0.3
-        restored_mockup.videoChild.transform.position[2] += 0.6
+        restored_mockup.videoChild.transform.position[2] += 0.02
 
         restored_mockup.updateVideoChildTransform(
           this.gpuResources?.queue!,

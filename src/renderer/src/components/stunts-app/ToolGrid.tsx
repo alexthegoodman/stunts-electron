@@ -277,7 +277,12 @@ export const ToolGrid = ({
     console.info('Square added!')
   }
 
-  let on_add_image = async (sequence_id: string, file: File, isSticker: boolean = false, replicateUrl?: string) => {
+  let on_add_image = async (
+    sequence_id: string,
+    file: File,
+    isSticker: boolean = false,
+    replicateUrl?: string
+  ) => {
     let editor = editorRef.current
     let editor_state = editorStateRef.current
 
@@ -1004,7 +1009,8 @@ export const ToolGrid = ({
               value: [0.7, 0.7, 0.75, 1.0] // Silver gray
             },
             layer: layers.length,
-            videoChild: videoConfig
+            videoChild: videoConfig,
+            tiltAngle: 45
           }
 
           // First add the video item (the mockup will reference it)
@@ -1031,7 +1037,7 @@ export const ToolGrid = ({
             mockup.videoChild = new_video_item
             // Update video child transform to match mockup's screen
             if (editor.gpuResources?.queue && editor.camera?.windowSize) {
-              mockup.videoChild.transform.layer = mockup.videoChild.transform.layer + 0.3
+              mockup.videoChild.transform.layer = mockup.videoChild.transform.layer + 0.02
               mockup.updateVideoChildTransform(editor.gpuResources.queue, editor.camera.windowSize)
             }
           }

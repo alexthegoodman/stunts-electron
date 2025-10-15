@@ -30,6 +30,7 @@ export interface Mockup3DConfig {
   backgroundFill: BackgroundFill
   layer: number
   videoChild: StVideoConfig // Required video child
+  tiltAngle: number
 }
 
 export interface SavedMockup3DConfig {
@@ -41,7 +42,11 @@ export interface SavedMockup3DConfig {
   backgroundFill: BackgroundFill
   layer: number
   videoChild: StVideoConfig
+  tiltAngle: number
 }
+
+// Add the small offset distance
+const OFFSET_DISTANCE = 0.01
 
 export class Mockup3D {
   id: string
@@ -113,50 +118,7 @@ export class Mockup3D {
     //       toSystemScale(config.dimensions[2] as number, windowSize.height)
     //     ] as [number, number, number]
 
-    // Generate laptop mockup geometry
-    const [vertices, indices] = this.generateLaptopGeometry()
-    this.vertices = vertices
-    this.indices = indices
-
-    // Create vertex buffer
-    this.vertexBuffer = device.createBuffer(
-      {
-        label: 'Mockup3D Vertex Buffer',
-        size: vertices.length * vertexByteSize,
-        usage: process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
-      },
-      ''
-    )
-
-    const vertexData = new Float32Array(vertices.length * (3 + 2 + 4 + 2 + 1))
-    for (let i = 0; i < vertices.length; i++) {
-      const v = vertices[i]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 0] = v.position[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 1] = v.position[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 2] = v.position[2]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 3] = v.tex_coords[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 4] = v.tex_coords[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 5] = v.color[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 6] = v.color[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 7] = v.color[2]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 8] = v.color[3]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 9] = v.gradient_coords[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 10] = v.gradient_coords[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 11] = v.object_type
-    }
-
-    queue.writeBuffer(this.vertexBuffer, 0, vertexData.buffer)
-
-    // Create index buffer
-    this.indexBuffer = device.createBuffer(
-      {
-        label: 'Mockup3D Index Buffer',
-        size: indices.length * Uint32Array.BYTES_PER_ELEMENT,
-        usage: process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
-      },
-      ''
-    )
-    queue.writeBuffer(this.indexBuffer, 0, new Uint32Array(indices).buffer)
+    this.setGeometry(queue, device)
 
     // Create uniform buffer
     const emptyMatrix = mat4.create()
@@ -299,6 +261,53 @@ export class Mockup3D {
     this.anchorDebugCube.transform.updateUniformBuffer(queue, camera.windowSize)
   }
 
+  setGeometry(queue, device) {
+    // Generate laptop mockup geometry
+    const [vertices, indices] = this.generateLaptopGeometry()
+    this.vertices = vertices
+    this.indices = indices
+
+    // Create vertex buffer
+    this.vertexBuffer = device.createBuffer(
+      {
+        label: 'Mockup3D Vertex Buffer',
+        size: vertices.length * vertexByteSize,
+        usage: process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+      },
+      ''
+    )
+
+    const vertexData = new Float32Array(vertices.length * (3 + 2 + 4 + 2 + 1))
+    for (let i = 0; i < vertices.length; i++) {
+      const v = vertices[i]
+      vertexData[i * (3 + 2 + 4 + 2 + 1) + 0] = v.position[0]
+      vertexData[i * (3 + 2 + 4 + 2 + 1) + 1] = v.position[1]
+      vertexData[i * (3 + 2 + 4 + 2 + 1) + 2] = v.position[2]
+      vertexData[i * (3 + 2 + 4 + 2 + 1) + 3] = v.tex_coords[0]
+      vertexData[i * (3 + 2 + 4 + 2 + 1) + 4] = v.tex_coords[1]
+      vertexData[i * (3 + 2 + 4 + 2 + 1) + 5] = v.color[0]
+      vertexData[i * (3 + 2 + 4 + 2 + 1) + 6] = v.color[1]
+      vertexData[i * (3 + 2 + 4 + 2 + 1) + 7] = v.color[2]
+      vertexData[i * (3 + 2 + 4 + 2 + 1) + 8] = v.color[3]
+      vertexData[i * (3 + 2 + 4 + 2 + 1) + 9] = v.gradient_coords[0]
+      vertexData[i * (3 + 2 + 4 + 2 + 1) + 10] = v.gradient_coords[1]
+      vertexData[i * (3 + 2 + 4 + 2 + 1) + 11] = v.object_type
+    }
+
+    queue.writeBuffer(this.vertexBuffer, 0, vertexData.buffer)
+
+    // Create index buffer
+    this.indexBuffer = device.createBuffer(
+      {
+        label: 'Mockup3D Index Buffer',
+        size: indices.length * Uint32Array.BYTES_PER_ELEMENT,
+        usage: process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
+      },
+      ''
+    )
+    queue.writeBuffer(this.indexBuffer, 0, new Uint32Array(indices).buffer)
+  }
+
   updateAnchor() {
     // Set anchor point at the hinge location (bottom-center of the laptop base)
     // This allows the laptop to rotate around the hinge naturally
@@ -312,31 +321,21 @@ export class Mockup3D {
 
     // this.groupTransform.updateAnchor(hingeAnchor)
 
-    // if (this.transform) {
-    //   this.transform.updateAnchor(hingeAnchor)
-    // }
+    if (this.transform) {
+      // this.transform.updateAnchor(hingeAnchor)
+      this.transform.position = hingeAnchor
+    }
 
-    // if (this.videoChild) {
-    //   this.videoChild.transform.updateAnchor(hingeAnchor)
-    //   this.videoChild.transform.position = hingeAnchor
-    // }
+    if (this.videoChild) {
+      // this.videoChild.transform.anchor = hingeAnchor
+      // this.videoChild.transform.position = hingeAnchor
+    }
 
     return hingeAnchor
+    // return vec3.fromValues(0, 0, 0)
   }
 
   updateChildRotations(queue: PolyfillQueue, camera: Camera3D, rotation: [number, number, number]) {
-    if (this.transform) {
-      console.info('udpate mockup child rotation')
-
-      // NOTE: using radians, not degrees
-
-      this.transform.updateRotationX(degreesToRadians(rotation[0]))
-      this.transform.updateRotationY(degreesToRadians(rotation[1]))
-      this.transform.updateRotation(degreesToRadians(rotation[2]))
-
-      this.transform.updateUniformBuffer(queue, camera.windowSize)
-    }
-
     if (this.videoChild) {
       const screenBounds = this.getScreenBounds()
       console.info(
@@ -350,21 +349,41 @@ export class Mockup3D {
       this.videoChild.transform.updateRotationX(
         degreesToRadians(rotation[0]) + screenBounds.rotation[0]
       )
-      this.videoChild.transform.updateRotationY(degreesToRadians(rotation[1]))
-      this.videoChild.transform.updateRotation(degreesToRadians(rotation[2]))
+      this.videoChild.transform.updateRotationY(
+        degreesToRadians(rotation[1]) + screenBounds.rotation[1]
+      )
+      this.videoChild.transform.updateRotation(
+        degreesToRadians(rotation[2]) + screenBounds.rotation[2]
+      )
 
       // is xdiff truly needed because of the additional offset given to place the screen in front? who knows!
-      let xDiff = (rotation[1] / 40) * 0.57
+      // let xDiff = (rotation[1] / 40) * 0.57
+      let xDiff = 0
 
       // console.info('xDiff', xDiff)
 
       // must adapt the live position
-      this.videoChild.transform.updatePosition(
-        [screenBounds.position.x + xDiff, screenBounds.position.y],
-        camera.windowSize
-      )
+      // this.videoChild.transform.updatePosition(
+      //   [screenBounds.position.x + xDiff, screenBounds.position.y],
+      //   camera.windowSize
+      // )
+      // this.videoChild.transform.position[2] = screenBounds.position.z
+      this.updateAnchor()
 
       this.videoChild.transform.updateUniformBuffer(queue, camera.windowSize)
+    }
+
+    // run after updateAnchor
+    if (this.transform) {
+      console.info('udpate mockup child rotation')
+
+      // NOTE: using radians, not degrees
+
+      this.transform.updateRotationX(degreesToRadians(rotation[0]))
+      this.transform.updateRotationY(degreesToRadians(rotation[1]))
+      this.transform.updateRotation(degreesToRadians(rotation[2]))
+
+      this.transform.updateUniformBuffer(queue, camera.windowSize)
     }
   }
 
@@ -372,7 +391,13 @@ export class Mockup3D {
     this.updateAnchor()
   }
 
-  private generateLaptopGeometry(usedDimensions: [number, number, number]): [Vertex[], number[]] {
+  setTiltAngle(queue: PolyfillQueue, device: PolyfillDevice, tiltAngle: number) {
+    this.tiltAngle = tiltAngle
+
+    this.setGeometry(queue, device)
+  }
+
+  private generateLaptopGeometry(): [Vertex[], number[]] {
     const vertices: Vertex[] = []
     const indices: number[] = []
 
@@ -442,7 +467,7 @@ export class Mockup3D {
     const trackpadWidth = w * 0.25
     const trackpadHeight = h * 0.5 * 0.3 // 30% of base height
     const trackpadX = 0 // Centered
-    const trackpadY = -hh * 0.3 // Lower part of base
+    const trackpadY = -hh * 0.6 // Lower part of base
     const trackpadZ = baseThickness + 0.001 // Slightly raised
 
     const trackpadVertices: [number, number, number][] = [
@@ -474,11 +499,11 @@ export class Mockup3D {
     // Add keyboard keys pattern
     const keyColor: [number, number, number, number] = [0.15, 0.15, 0.18, 1] // Dark keys
     const keyWidth = w * 0.045
-    const keyHeight = h * 0.5 * 0.06
+    const keyHeight = h * 0.5 * 0.1
     const keySpacingX = keyWidth * 1.15
     const keySpacingY = keyHeight * 1.2
     const keyboardStartX = -hw * 0.65
-    const keyboardStartY = hh * 0.05
+    const keyboardStartY = hh * -0.15
     const keyZ = baseThickness + 0.002
     const numRows = 4
     const numCols = 13
@@ -649,7 +674,7 @@ export class Mockup3D {
     return [vertices, indices]
   }
 
-  // Get the screen area bounds for positioning the video child (relative to mockup center)
+  // // Get the screen area bounds for positioning the video child (relative to mockup center)
   getScreenBounds(): {
     position: Point
     dimensions: [number, number]
@@ -660,6 +685,7 @@ export class Mockup3D {
     const screenWidth = w * 0.85 // Inset from bezel
     const hingeY = (h * 0.5) / 2
     const tiltAngle = this.tiltAngle
+    const baseThickness = d * 0.1
 
     // Calculate screen center position RELATIVE to mockup center
     const screenCenterY = hingeY + (screenHeight * Math.cos((tiltAngle * Math.PI) / 180)) / 2
@@ -667,16 +693,57 @@ export class Mockup3D {
     return {
       position: {
         x: 0, // Centered horizontally relative to mockup
-        y: screenCenterY * 0.75 // Offset vertically relative to mockup center
+        // y: screenCenterY * 0.75, // Offset vertically relative to mockup center
+        y: 0,
+        z: baseThickness
       },
       dimensions: [screenWidth, screenHeight * 0.9],
       rotation: [
-        degreesToRadians(tiltAngle), // Just the tilt angle, parent rotation handled by group transform
+        degreesToRadians(tiltAngle),
         0, // No additional Y rotation
         0 // No additional Z rotation
       ]
     }
   }
+
+  // getScreenBounds(): {
+  //   position: { x: number; y: number; z: number } // Z-position added
+  //   dimensions: [number, number]
+  //   rotation: [number, number, number]
+  // } {
+  //   const [w, h, d] = this.dimensions
+  //   const screenHeight = h * 0.9
+  //   const screenWidth = w * 0.85
+  //   const hingeY = (h * 0.5) / 2 // y-coordinate of the hinge center (likely relative to mockup center)
+  //   const tiltAngle = this.tiltAngle
+  //   const theta = (tiltAngle * Math.PI) / 180 // Angle in radians (relative to y-axis)
+
+  //   // 1. Calculate the center position of the MOCKUP screen
+  //   // Y-position (Vertical): hingeY + (vertical projection of half screen height)
+  //   const yMockupCenter = hingeY + (screenHeight / 2) * Math.cos(theta)
+  //   // Z-position (Depth): (forward projection of half screen height)
+  //   const zMockupCenter = (screenHeight / 2) * Math.sin(theta)
+
+  //   // 2. Calculate the FINAL position by applying the 0.01 offset
+  //   // Offset in Y-direction: d * sin(theta)
+  //   const yOffset = OFFSET_DISTANCE * Math.sin(theta)
+  //   // Offset in Z-direction: d * cos(theta)
+  //   const zOffset = OFFSET_DISTANCE * Math.cos(theta)
+
+  //   const yFinal = yMockupCenter + yOffset
+  //   const zFinal = zMockupCenter + zOffset
+
+  //   return {
+  //     // x is still 0 (centered horizontally)
+  //     position: {
+  //       x: 0,
+  //       y: yFinal, // Corrected Y position
+  //       z: zFinal // Corrected Z position
+  //     },
+  //     dimensions: [screenWidth, screenHeight * 0.9],
+  //     rotation: [theta, 0, 0]
+  //   }
+  // }
 
   updateOpacity(queue: PolyfillQueue, opacity: number) {
     let new_color: [number, number, number, number] = [1, 1, 1, opacity]
@@ -736,7 +803,8 @@ export class Mockup3D {
       ],
       backgroundFill: this.backgroundFill,
       layer: this.layer,
-      videoChild: this.videoChildConfig
+      videoChild: this.videoChildConfig,
+      tiltAngle: this.tiltAngle
     }
   }
 

@@ -374,34 +374,65 @@ export class StVideo {
         )
 
         this.vertices = []
+        // for (let y = 0; y <= rows; y++) {
+        //   for (let x = 0; x <= cols; x++) {
+        //     // Keep your original position calculation
+        //     // const posX = -0.5 + x / cols;
+        //     // const posY = -0.5 + y / rows;
+
+        //     // Center the position by offsetting by half dimensions (using system scale)
+        //     const posX = -systemDimensions[0] / 2 + systemDimensions[0] * (x / cols)
+        //     const posY = -systemDimensions[1] / 2 + systemDimensions[1] * (y / rows)
+
+        //     // Map texture coordinates to properly implement cover
+        //     const percentX = x / cols // 0 to 1 across the grid
+        //     const percentY = y / rows // 0 to 1 across the grid
+
+        //     // Apply the cover bounds to the texture coordinates
+        //     const texX = u0 + (u1 - u0) * percentX
+        //     // const texY = v0 + (v1 - v0) * percentY
+        //     const texY = v0 + (v1 - v0) * (1 - percentY)
+
+        //     const normalizedX = (posX - this.transform.position[0]) / this.dimensions[0]
+        //     const normalizedY = (posY - this.transform.position[1]) / this.dimensions[1]
+
+        //     this.vertices.push({
+        //       position: [posX, posY, 0.0],
+        //       tex_coords: [texX, texY],
+        //       color: [1.0, 1.0, 1.0, 1.0],
+        //       gradient_coords: [normalizedX, normalizedY],
+        //       object_type: this.objectTypeShader // OBJECT_TYPE_VIDEO
+        //     })
+        //   }
+        // }
+
+        // IMPORTANT: never change these vertices, they are intentionally above in local space, without use of transform
         for (let y = 0; y <= rows; y++) {
           for (let x = 0; x <= cols; x++) {
-            // Keep your original position calculation
-            // const posX = -0.5 + x / cols;
-            // const posY = -0.5 + y / rows;
-
-            // Center the position by offsetting by half dimensions (using system scale)
+            // Center horizontally, but make the *bottom* of the object y = 0
+            // instead of being centered vertically.
             const posX = -systemDimensions[0] / 2 + systemDimensions[0] * (x / cols)
-            const posY = -systemDimensions[1] / 2 + systemDimensions[1] * (y / rows)
+            let posY = systemDimensions[1] * (y / rows) // bottom-aligned
 
-            // Map texture coordinates to properly implement cover
-            const percentX = x / cols // 0 to 1 across the grid
-            const percentY = y / rows // 0 to 1 across the grid
+            posY += systemDimensions[1] / 2 + 0.4
 
-            // Apply the cover bounds to the texture coordinates
+            const percentX = x / cols // 0 → 1 across width
+            const percentY = y / rows // 0 → 1 across height
+
+            // Apply the cover bounds and flip vertically if needed
             const texX = u0 + (u1 - u0) * percentX
-            // const texY = v0 + (v1 - v0) * percentY
             const texY = v0 + (v1 - v0) * (1 - percentY)
 
+            // Use bottom-aligned positions so gradients still work correctly
             const normalizedX = (posX - this.transform.position[0]) / this.dimensions[0]
             const normalizedY = (posY - this.transform.position[1]) / this.dimensions[1]
 
             this.vertices.push({
-              position: [posX, posY, 0.0],
+              position: [posX, posY, 0.1],
               tex_coords: [texX, texY],
               color: [1.0, 1.0, 1.0, 1.0],
               gradient_coords: [normalizedX, normalizedY],
-              object_type: this.objectTypeShader // OBJECT_TYPE_VIDEO
+              object_type: this.objectTypeShader // e.g. OBJECT_TYPE_VIDEO
             })
           }
         }
@@ -1096,23 +1127,41 @@ export class StVideo {
       this.sourceDimensions[1]
     )
 
+    // let n = 0
+    // for (let y = 0; y <= rows; y++) {
+    //   for (let x = 0; x <= cols; x++) {
+    //     // Center the position by offsetting by half dimensions (using system scale)
+    //     const posX = -systemDimensions[0] / 2 + systemDimensions[0] * (x / cols)
+    //     const posY = -systemDimensions[1] / 2 + systemDimensions[1] * (y / rows)
+
+    //     // Map texture coordinates to properly implement cover
+    //     const percentX = x / cols // 0 to 1 across the grid
+    //     const percentY = y / rows // 0 to 1 across the grid
+    //     // Apply the cover bounds to the texture coordinates
+    //     const texX = u0 + (u1 - u0) * percentX
+    //     const texY = v0 + (v1 - v0) * percentY
+
+    //     this.vertices[n].position = [posX, posY, 0]
+    //     this.vertices[n].tex_coords = [texX, texY]
+
+    //     n++
+    //   }
+    // }
+
     let n = 0
     for (let y = 0; y <= rows; y++) {
       for (let x = 0; x <= cols; x++) {
-        // Center the position by offsetting by half dimensions (using system scale)
+        // Center horizontally but bottom-align vertically
         const posX = -systemDimensions[0] / 2 + systemDimensions[0] * (x / cols)
-        const posY = -systemDimensions[1] / 2 + systemDimensions[1] * (y / rows)
+        const posY = systemDimensions[1] * (y / rows) // bottom at y=0, top at +height
 
-        // Map texture coordinates to properly implement cover
-        const percentX = x / cols // 0 to 1 across the grid
-        const percentY = y / rows // 0 to 1 across the grid
-        // Apply the cover bounds to the texture coordinates
+        const percentX = x / cols
+        const percentY = y / rows
         const texX = u0 + (u1 - u0) * percentX
         const texY = v0 + (v1 - v0) * percentY
 
         this.vertices[n].position = [posX, posY, 0]
         this.vertices[n].tex_coords = [texX, texY]
-
         n++
       }
     }
