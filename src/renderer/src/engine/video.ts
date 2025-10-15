@@ -414,7 +414,7 @@ export class StVideo {
             const posX = -systemDimensions[0] / 2 + systemDimensions[0] * (x / cols)
             let posY = systemDimensions[1] * (y / rows) // bottom-aligned
 
-            posY += systemDimensions[1] / 2 + 0.4
+            posY += systemDimensions[1] / 2 + 0.3
 
             const percentX = x / cols // 0 → 1 across width
             const percentY = y / rows // 0 → 1 across height
@@ -428,7 +428,7 @@ export class StVideo {
             const normalizedY = (posY - this.transform.position[1]) / this.dimensions[1]
 
             this.vertices.push({
-              position: [posX, posY, 0.1],
+              position: [posX, posY, 0.03],
               tex_coords: [texX, texY],
               color: [1.0, 1.0, 1.0, 1.0],
               gradient_coords: [normalizedX, normalizedY],

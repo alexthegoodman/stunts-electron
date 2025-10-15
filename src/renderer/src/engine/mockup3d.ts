@@ -628,15 +628,15 @@ export class Mockup3D {
     const bezelThickness = screenThickness
     const screenBezelVertices: [number, number, number][] = [
       // Front face (bezel)
-      [-hw, hingeY, baseThickness], // 0 - bottom left
-      [hw, hingeY, baseThickness], // 1 - bottom right
-      [hw, screenTop, screenTopZ], // 2 - top right
-      [-hw, screenTop, screenTopZ], // 3 - top left
+      [-hw, hingeY, baseThickness - bezelThickness * 2], // 0 - bottom left
+      [hw, hingeY, baseThickness - bezelThickness * 2], // 1 - bottom right
+      [hw, screenTop, screenTopZ - bezelThickness * 2], // 2 - top right
+      [-hw, screenTop, screenTopZ - bezelThickness * 2], // 3 - top left
       // Back face
-      [-hw, hingeY, baseThickness + bezelThickness], // 4
-      [hw, hingeY, baseThickness + bezelThickness], // 5
-      [hw, screenTop, screenTopZ + bezelThickness], // 6
-      [-hw, screenTop, screenTopZ + bezelThickness] // 7
+      [-hw, hingeY, baseThickness - bezelThickness], // 4
+      [hw, hingeY, baseThickness - bezelThickness], // 5
+      [hw, screenTop, screenTopZ - bezelThickness], // 6
+      [-hw, screenTop, screenTopZ - bezelThickness] // 7
     ]
 
     // Add screen bezel faces
