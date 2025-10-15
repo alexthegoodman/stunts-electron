@@ -12,6 +12,7 @@ import {
   PolyfillQueue
 } from './polyfill'
 import { setupGradientBuffers } from './polygon'
+import { ShaderThemeConfig } from './shader_themes'
 
 export interface Sphere3DConfig {
   id: string
@@ -88,6 +89,26 @@ export class Sphere3D {
     this.objectType = ObjectType.Sphere3D
     this.currentSequenceId = currentSequenceId
 
+    this.initialize(
+      windowSize,
+      device,
+      queue,
+      bindGroupLayout,
+      groupBindGroupLayout,
+      config,
+      currentSequenceId
+    )
+  }
+
+  initialize(
+    windowSize: WindowSize,
+    device: PolyfillDevice,
+    queue: PolyfillQueue,
+    bindGroupLayout: PolyfillBindGroupLayout,
+    groupBindGroupLayout: PolyfillBindGroupLayout,
+    config: Sphere3DConfig,
+    currentSequenceId: string
+  ) {
     // Generate sphere geometry
     const [vertices, indices] = this.generateSphereGeometry()
     this.vertices = vertices
@@ -241,7 +262,7 @@ export class Sphere3D {
     this.transform.updateRotationYDegrees(this.rotation[1])
     this.transform.updateRotationDegrees(this.rotation[2])
     this.transform.layer = (getZLayer(config.layer) as number) - 0.5
-    this.transform.updateUniformBuffer(queue, camera.windowSize)
+    this.transform.updateUniformBuffer(queue, windowSize)
 
     // Create group bind group
     let [tmp_group_bind_group, tmp_group_transform] = createEmptyGroupTransform(
@@ -250,6 +271,41 @@ export class Sphere3D {
       windowSize
     )
     this.groupBindGroup = tmp_group_bind_group
+  }
+
+  updateDataFromFill(
+    windowSize: WindowSize,
+    device: PolyfillDevice,
+    queue: PolyfillQueue,
+    modelBindGroupLayout: PolyfillBindGroupLayout,
+    groupBindGroupLayout: PolyfillBindGroupLayout,
+    background: BackgroundFill
+  ) {
+    // this.gradient = background.type === 'Gradient' ? background.value : null
+    // this.timeOffset = 0
+
+    // setupGradientBuffers(
+    //   device,
+    //   queue,
+    //   background.type === 'Gradient' ? background.value : null,
+    //   0,
+    //   background.type === 'Shader' ? background.value : null,
+    // ) // pass buffer to set on buffer
+
+    let config = this.toConfig()
+    config.backgroundFill = background
+
+    console.info('update sphere fill', config)
+
+    this.initialize(
+      windowSize,
+      device,
+      queue,
+      modelBindGroupLayout,
+      groupBindGroupLayout,
+      config,
+      this.currentSequenceId
+    )
   }
 
   private generateSphereGeometry(): [Vertex[], number[]] {

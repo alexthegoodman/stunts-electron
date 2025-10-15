@@ -3126,26 +3126,18 @@ export class Editor {
     }
 
     // First iteration: find the index of the selected polygon
-    let polygon_index = this.staticPolygons.findIndex(
-      (p) => p.id == selected_id && p.name == 'canvas_background'
-    )
+    let polygon_index = this.staticPolygons.findIndex((p) => p.name == 'canvas_background')
 
     if (polygon_index !== null) {
-      console.info('Found selected static_polygon with ID: {}', selected_id)
+      console.info(
+        'Found selected static_polygon with ID: ',
+        selected_id,
+        this.staticPolygons[polygon_index]
+      )
 
-      // Get the necessary data from editor
-      // let viewport_width = camera.windowSize.width;
-      // let viewport_height = camera.windowSize.height;
       let windowSize = camera?.windowSize
       let device = gpuResources.device
       let queue = gpuResources.queue
-
-      // let windowSize = windowSize {
-      //     width: viewport_width as number,
-      //     height: viewport_height as number,
-      // };
-
-      // Second iteration: update the selected polygon
 
       if (this.staticPolygons[polygon_index]) {
         let selected_polygon = this.staticPolygons[polygon_index]
@@ -3155,66 +3147,13 @@ export class Editor {
           device!,
           queue!,
           this.modelBindGroupLayout,
+          this.groupBindGroupLayout,
           newFill,
           camera
         )
 
         // update scale
-        selected_polygon.transform.updateScale([25, 25])
-        // selected_polygon.transform.layer = -89
-        selected_polygon.transform.position[2] = -89
         selected_polygon.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
-
-        // switch (new_value_type) {
-        //   case InputValue.Number:
-        //     switch (key) {
-        //       case "red": {
-        //         selected_polygon.updateDataFromFill(
-        //           windowSize,
-        //           device!,
-        //           queue!,
-        //           this.modelBindGroupLayout,
-        //           [
-        //             colorToWgpu(new_value),
-        //             selected_polygon.fill[1],
-        //             selected_polygon.fill[2],
-        //             selected_polygon.fill[3],
-        //           ],
-        //           camera
-        //         );
-        //       }
-        //       case "green": {
-        //         selected_polygon.updateDataFromFill(
-        //           windowSize,
-        //           device!,
-        //           queue!,
-        //           this.modelBindGroupLayout,
-        //           [
-        //             selected_polygon.fill[0],
-        //             colorToWgpu(new_value),
-        //             selected_polygon.fill[2],
-        //             selected_polygon.fill[3],
-        //           ],
-        //           camera
-        //         );
-        //       }
-        //       case "blue": {
-        //         selected_polygon.updateDataFromFill(
-        //           windowSize,
-        //           device!,
-        //           queue!,
-        //           this.modelBindGroupLayout,
-        //           [
-        //             selected_polygon.fill[0],
-        //             selected_polygon.fill[1],
-        //             colorToWgpu(new_value),
-        //             selected_polygon.fill[3],
-        //           ],
-        //           camera
-        //         );
-        //       }
-        //     }
-        // }
       }
     } else {
       console.info('No static_polygon found with the selected ID: {}', selected_id)

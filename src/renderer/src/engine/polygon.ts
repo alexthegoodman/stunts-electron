@@ -660,6 +660,7 @@ export class Polygon implements PolygonShape {
     device: PolyfillDevice,
     queue: PolyfillQueue,
     bind_group_layout: PolyfillBindGroupLayout,
+    group_bind_group_layout: PolyfillBindGroupLayout,
     // fill: [number, number, number, number],
     backgroundFill: BackgroundFill,
     camera: Camera
@@ -1352,7 +1353,8 @@ export function setupGradientBuffers(
   // gradientBindGroupLayout: PolyfillBindGroupLayout,
   gradient?: GradientDefinition | null,
   borderRadius?: number,
-  shaderConfig?: ShaderThemeConfig | null
+  shaderConfig?: ShaderThemeConfig | null,
+  existingBuffer?: PolyfillBuffer | null
 ): [GradientDefinition, PolyfillBuffer] {
   let defaultStops: GradientStop[] = [
     { offset: 0, color: [1, 0, 0, 1] }, // Red
@@ -1377,32 +1379,23 @@ export function setupGradientBuffers(
     // console.warn("no gradient selected");
   }
 
-  const gradientBuffer = device.createBuffer(
-    {
-      label: 'Gradient Buffer',
-      // 2 vec4s for offsets + 8 vec4s for colors + 13 floats for config (added border_radius)
-      // (2 + 8) * 16 + 13 * 4 = 212 bytes
-      size: 212,
-      usage: process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-      mappedAtCreation: true
-    },
-    'UBO'
-  )
+  const gradientBuffer = existingBuffer
+    ? existingBuffer
+    : device.createBuffer(
+        {
+          label: 'Gradient Buffer',
+          // 2 vec4s for offsets + 8 vec4s for colors + 13 floats for config (added border_radius)
+          // (2 + 8) * 16 + 13 * 4 = 212 bytes
+          size: 212,
+          usage:
+            process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+          mappedAtCreation: true
+        },
+        'UBO'
+      )
 
   if (process.env.NODE_ENV !== 'test') {
     const mappedRange = new Float32Array(gradientBuffer.getMappedRange())
-
-    // const mappedRange = new Float32Array(gradientBuffer.getMappedRange());
-    // console.log("checking", mappedRange.buffer === gradientBuffer.data); // Should be true
-
-    // mappedRange[0] = 42;
-    // const check = new Float32Array(gradientBuffer.data!);
-    // console.log("check", check[0]); // Should be 42
-
-    // console.info(
-    //   "gradientBuffer mappedRange",
-    //   JSON.stringify(mappedRange.buffer)
-    // );
 
     // If we have a shader config, encode shader parameters
     if (shaderConfig) {
@@ -1569,7 +1562,9 @@ export function setupGradientBuffers(
     //   JSON.stringify(mappedRange.buffer)
     // );
 
-    // gradientBuffer.data = mappedRange.buffer; // TODO: is this correct?
+    // if (existingBuffer) {
+    //   gradientBuffer.data = mappedRange.buffer // TODO: is this correct?
+    // }
 
     gradientBuffer.unmap() // used elsewhere
   }
