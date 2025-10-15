@@ -21,6 +21,9 @@ import ProjectSettings from './stunts-pages/project/[projectId]/settings/page'
 import FlowContent from './stunts-pages/project/[projectId]/flows/[flowId]/content/page'
 import FlowQuestions from './stunts-pages/project/[projectId]/flows/[flowId]/questions/page'
 import { ThemeProvider } from './contexts/ThemeContext'
+import Ads from './stunts-pages/project/[projectId]/ads/page'
+import Copy from './stunts-pages/project/[projectId]/copy/page'
+import Library from './stunts-pages/project/[projectId]/library/page'
 
 function App(): React.JSX.Element {
   return (
@@ -59,6 +62,30 @@ function App(): React.JSX.Element {
               component: (
                 <ProjectLayout>
                   <Videos />
+                </ProjectLayout>
+              )
+            },
+            {
+              path: '/project/:projectId/ads',
+              component: (
+                <ProjectLayout>
+                  <Ads />
+                </ProjectLayout>
+              )
+            },
+            {
+              path: '/project/:projectId/copy',
+              component: (
+                <ProjectLayout>
+                  <Copy />
+                </ProjectLayout>
+              )
+            },
+            {
+              path: '/project/:projectId/library',
+              component: (
+                <ProjectLayout>
+                  <Library />
                 </ProjectLayout>
               )
             },

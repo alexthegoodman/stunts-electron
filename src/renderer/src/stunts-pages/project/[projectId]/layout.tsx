@@ -48,7 +48,7 @@ export default function ProjectLayout({ children = null }: { children: any }) {
           <NavButton
             label={t('Library')}
             icon="book"
-            destination={`/project/${projectId}/assets`}
+            destination={`/project/${projectId}/library`}
           />
 
           {/* <NavButton
