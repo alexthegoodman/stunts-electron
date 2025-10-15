@@ -3491,24 +3491,28 @@ export class Editor {
             switch (key) {
               case 'width': {
                 console.info('update the width')
+                let systemWidth = toSystemScale(new_value, viewport_width)
+                let systemHeight = toSystemScale(selected_text.dimensions[1], viewport_height)
                 selected_text.updateDataFromDimensions(
                   windowSize,
                   device!,
                   queue!,
                   this.modelBindGroupLayout,
-                  [new_value, selected_text.dimensions[1]],
+                  [systemWidth, systemHeight],
                   camera
                 )
                 break
               }
               case 'height': {
                 console.info('update the height')
+                let systemWidth = toSystemScale(selected_text.dimensions[0], viewport_width)
+                let systemHeight = toSystemScale(new_value, viewport_height)
                 selected_text.updateDataFromDimensions(
                   windowSize,
                   device!,
                   queue!,
                   this.modelBindGroupLayout,
-                  [selected_text.dimensions[0], new_value],
+                  [systemWidth, systemHeight],
                   camera
                 )
                 break
@@ -3739,8 +3743,8 @@ export class Editor {
               case 'positionX': {
                 let ndc = toNDC(new_value, new_value, windowSize.width, windowSize.width)
 
-                selected_video.transform.position[0] = ndc.x
-                selected_video.transform.updateUniformBuffer(
+                selected_video.groupTransform.position[0] = ndc.x
+                selected_video.groupTransform.updateUniformBuffer(
                   this.gpuResources.queue!,
                   this.camera.windowSize
                 )
@@ -3749,16 +3753,19 @@ export class Editor {
               case 'positionY': {
                 let ndc = toNDC(new_value, new_value, windowSize.height, windowSize.height)
 
-                selected_video.transform.position[1] = ndc.y
-                selected_video.transform.updateUniformBuffer(
+                selected_video.groupTransform.position[1] = ndc.y
+                selected_video.groupTransform.updateUniformBuffer(
                   this.gpuResources.queue!,
                   this.camera.windowSize
                 )
                 break
               }
               case 'positionZ': {
-                selected_video.transform.position[2] = new_value
-                selected_video.transform.updateUniformBuffer(gpuResources.queue!, camera.windowSize)
+                selected_video.groupTransform.position[2] = new_value
+                selected_video.groupTransform.updateUniformBuffer(
+                  gpuResources.queue!,
+                  camera.windowSize
+                )
                 break
               }
             }

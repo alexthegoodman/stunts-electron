@@ -536,8 +536,10 @@ export class TextRenderer {
       return
     }
 
-    let systemWidth = toSystemScale(this.dimensions[0], windowSize.width)
-    let systemHeight = toSystemScale(this.dimensions[1], windowSize.height)
+    // let systemWidth = toSystemScale(this.dimensions[0], windowSize.width)
+    // let systemHeight = toSystemScale(this.dimensions[1], windowSize.height)
+    let systemWidth = this.dimensions[0]
+    let systemHeight = this.dimensions[1]
     let systemDimensions = [systemWidth, systemHeight]
 
     const vertices: Vertex[] = []

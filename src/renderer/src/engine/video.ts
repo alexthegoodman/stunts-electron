@@ -137,6 +137,7 @@ export class StVideo {
   dynamicAlpha: number
   numFramesDrawn: number
   objectTypeShader: number = 3
+  isMockupChild: boolean = false
 
   private videoDecoder?: VideoDecoder
   private mp4File?: MP4Box.MP4File
@@ -421,6 +422,9 @@ export class StVideo {
 
             // Apply the cover bounds and flip vertically if needed
             const texX = u0 + (u1 - u0) * percentX
+            // const texY = !this.isMockupChild
+            //   ? v0 + (v1 - v0) * percentY
+            //   : v0 + (v1 - v0) * (1 - percentY)
             const texY = v0 + (v1 - v0) * (1 - percentY)
 
             // Use bottom-aligned positions so gradients still work correctly
@@ -1242,7 +1246,8 @@ export class StVideo {
     // Update UV coordinates for each vertex in place
     for (let y = 0; y <= rows; y++) {
       const vRatio = y / rows
-      const uvY = uvMinY + (uvMaxY - uvMinY) * vRatio
+      // const uvY = uvMinY + (uvMaxY - uvMinY) * vRatio // upside down now
+      const uvY = uvMaxY - (uvMaxY - uvMinY) * vRatio
 
       for (let x = 0; x <= cols; x++) {
         const uRatio = x / cols

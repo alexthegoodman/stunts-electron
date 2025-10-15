@@ -651,8 +651,8 @@ export const ExportVideoButton: React.FC<{
           seq.activeImageItems.length > 0 ||
           seq.activeTextItems.length > 0 ||
           seq.activeVideoItems.length > 0 ||
-          seq.activeMockups3D.length > 0 ||
-          seq.activeModels3D.length > 0
+          seq?.activeMockups3D?.length > 0 ||
+          seq?.activeModels3D?.length > 0
         ) {
           canExport = true
         }
