@@ -241,6 +241,8 @@ export default function AnimationTab({
   }
 
   let onGenerateAIAnimation = async () => {
+    await resetAnimations()
+
     let editor = editorRef.current
     let editor_state = editorStateRef.current
 
@@ -371,6 +373,31 @@ export default function AnimationTab({
         )
       }
 
+      if (editor.mockups3D) {
+        objectsData.push(
+          ...editor.mockups3D
+            .filter((item) => !item.hidden)
+            .map((item) => {
+              let world = fromNDC(
+                item.transform.position[0],
+                item.transform.position[1],
+                windowSize.width,
+                windowSize.height
+              )
+
+              return {
+                id: item.id,
+                objectType: '3D Mockup',
+                dimensions: {
+                  width: 250,
+                  height: 250
+                },
+                position: world
+              }
+            })
+        )
+      }
+
       if (editor.models3D) {
         objectsData.push(
           ...editor.models3D
@@ -436,6 +463,8 @@ export default function AnimationTab({
           current_sequence_id,
           animation.objectId
         )
+
+        animationDataItem.duration = aiAnimationDuration
 
         for (let property of animation.properties) {
           // Find or create AnimationProperty for this property
@@ -751,7 +780,7 @@ export default function AnimationTab({
   }
 
   // Reset animations function
-  const resetAnimations = () => {
+  const resetAnimations = async () => {
     let editor_state = editorStateRef.current
     if (!editor_state || !current_sequence_id) return
 
@@ -794,7 +823,7 @@ export default function AnimationTab({
       sequence.polygonMotionPaths = resetAnimationData
 
       // Save the updated sequences
-      saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos)
+      await saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos)
 
       // Update the editor if available
       let editor = editorRef.current

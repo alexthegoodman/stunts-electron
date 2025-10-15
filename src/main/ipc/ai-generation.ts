@@ -369,6 +369,7 @@ Guidelines:
 - Consider object dimensions when creating scale animations (larger objects may need different scaling than smaller ones)
 - Animate objects anywhere that looks best, unless a specific spot is requested
 - Ensure animations keep objects within canvas boundaries based on their dimensions
+- Please be sure to limit mockup, video, and image rotation to up to 20 degrees
 
 User Request: ${data.prompt}`
 
