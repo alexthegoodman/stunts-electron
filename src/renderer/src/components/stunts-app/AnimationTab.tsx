@@ -18,7 +18,7 @@ import EditorState, { SaveTarget } from '../../engine/editor_state'
 import { TextAnimationManager } from '../../engine/textAnimationManager'
 import { AuthToken, saveSequencesData } from '../../fetchers/projects'
 import { Disclosure } from '@headlessui/react'
-import { ArrowDown, MagicWand } from '@phosphor-icons/react'
+import { ArrowDown, InfoIcon, MagicWand } from '@phosphor-icons/react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import {
@@ -852,164 +852,95 @@ export default function AnimationTab({
         </button>
       </div>
 
-      {/* Animation Settings Accordion */}
-      <Disclosure as="div">
-        {({ open }) => (
-          <>
-            <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus-visible:ring focus-visible:ring-opacity-75">
-              <span>Generate Animation</span>
-              <ArrowDown
-                className={`${open ? 'rotate-180 transform' : ''} h-5 w-5 text-gray-500`}
-              />
-            </Disclosure.Button>
-            <Disclosure.Panel className="p-2 text-sm text-gray-500">
-              <div className="space-y-3">
-                {/* <div className="flex flex-row gap-2">
-                          <label htmlFor="keyframe_count" className="text-xs">
-                            Choose keyframe count
-                          </label>
-                          <select
-                            id="keyframe_count"
-                            name="keyframe_count"
-                            className="text-xs"
-                            value={keyframe_count}
-                            onChange={(ev) =>
-                              set_keyframe_count(parseInt(ev.target.value))
-                            }
-                          >
-                            <option value="4">4</option>
-                            <option value="6">6</option>
-                          </select>
-                          <input
-                            type="checkbox"
-                            id="is_curved"
-                            name="is_curved"
-                            checked={is_curved}
-                            onChange={(ev) => set_is_curved(ev.target.checked)}
-                          />
-                          <label htmlFor="is_curved" className="text-xs">
-                            Is Curved
-                          </label>
-                        </div>
-                        <div className="flex flex-row gap-2">
-                          <input
-                            type="checkbox"
-                            id="auto_choreograph"
-                            name="auto_choreograph"
-                            checked={auto_choreograph}
-                            onChange={(ev) =>
-                              set_auto_choreograph(ev.target.checked)
-                            }
-                          />
-                          <label htmlFor="auto_choreograph" className="text-xs">
-                            Auto-Choreograph
-                          </label>
-                          <input
-                            type="checkbox"
-                            id="auto_fade"
-                            name="auto_fade"
-                            checked={auto_fade}
-                            onChange={(ev) => set_auto_fade(ev.target.checked)}
-                          />
-                          <label htmlFor="auto_fade" className="text-xs">
-                            Auto-Fade
-                          </label>
-                        </div>
-                        <button
-                          type="submit"
-                          className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white stunts-gradient focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={loading}
-                          onClick={() => {
-                            on_generate_animation();
-                          }}
-                        >
-                          {loading ? "Generating..." : "Generate Animation"}
-                        </button> */}
+      <div className="bg-slate-600 text-white text-xs rounded p-4 flex flex-row">
+        <div className="mr-2">
+          <InfoIcon size={24} />
+        </div>
+        <div>
+          <p>
+            This area applies animations to the whole scene. Be sure to select objects in the
+            timeline in order to add animations to an individual object.
+          </p>
+        </div>
+      </div>
 
-                {/* AI-Powered Animation Generation */}
-                <div className="mt-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <h4 className="flex flex-row bg-white px-1 rounded text-sm font-medium text-purple-900">
-                      <MagicWand size={16} className="text-purple-600 mr-1" />
-                      AI Animation Generator
-                    </h4>
-                  </div>
+      <div className="mt-4 bg-white p-4 rounded">
+        <div className="flex items-center gap-2 mb-3">
+          <h4 className="flex flex-row  px-1 rounded text-sm font-medium text-purple-900">
+            <MagicWand size={16} className="text-purple-600 mr-1" />
+            AI Animation Generator
+          </h4>
+        </div>
 
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs text-white block mb-1">
-                        Describe your animation:
-                      </label>
-                      <textarea
-                        className="w-full text-black text-xs border rounded px-2 py-1 h-16 resize-none bg-white"
-                        placeholder={`IMAGINE: you have added a picture of a rocket to the scene. 
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-black block mb-1">Describe your animation:</label>
+            <textarea
+              className="w-full text-black text-xs border rounded px-2 py-1 resize-none bg-white"
+              placeholder={`IMAGINE: you have added a picture of a rocket to the scene. 
 EXAMPLE PROMPT: the image, which is a rocket, needs lift off to the upper-right corner of the canvas
 WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
-                        value={aiAnimationPrompt}
-                        onChange={(e) => setAiAnimationPrompt(e.target.value)}
-                      />
-                    </div>
+              value={aiAnimationPrompt}
+              onChange={(e) => setAiAnimationPrompt(e.target.value)}
+              rows={6}
+            />
+          </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-xs text-white block mb-1">Duration</label>
-                        <select
-                          className="text-white text-xs border rounded px-2 py-1 w-full"
-                          value={aiAnimationDuration}
-                          onChange={(e) => setAiAnimationDuration(Number(e.target.value))}
-                        >
-                          <option value={1000}>1 second</option>
-                          <option value={2000}>2 seconds</option>
-                          <option value={3000}>3 seconds</option>
-                          <option value={5000}>5 seconds</option>
-                          <option value={8000}>8 seconds</option>
-                        </select>
-                      </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-black block mb-1">Duration</label>
+              <select
+                className="text-white text-xs border rounded px-2 py-1 w-full"
+                value={aiAnimationDuration}
+                onChange={(e) => setAiAnimationDuration(Number(e.target.value))}
+              >
+                <option value={1000}>1 second</option>
+                <option value={2000}>2 seconds</option>
+                <option value={3000}>3 seconds</option>
+                <option value={5000}>5 seconds</option>
+                <option value={8000}>8 seconds</option>
+              </select>
+            </div>
 
-                      <div>
-                        <label className="text-xs text-white block mb-1">Style</label>
-                        <select
-                          className="text-white text-xs border rounded px-2 py-1 w-full"
-                          value={aiAnimationStyle}
-                          onChange={(e) => setAiAnimationStyle(e.target.value)}
-                        >
-                          <option value="smooth">Smooth</option>
-                          <option value="bouncy">Bouncy</option>
-                          <option value="quick">Quick</option>
-                          <option value="dramatic">Dramatic</option>
-                          <option value="subtle">Subtle</option>
-                        </select>
-                      </div>
-                    </div>
+            <div>
+              <label className="text-xs text-black block mb-1">Style</label>
+              <select
+                className="text-white text-xs border rounded px-2 py-1 w-full"
+                value={aiAnimationStyle}
+                onChange={(e) => setAiAnimationStyle(e.target.value)}
+              >
+                <option value="smooth">Smooth</option>
+                <option value="bouncy">Bouncy</option>
+                <option value="quick">Quick</option>
+                <option value="dramatic">Dramatic</option>
+                <option value="subtle">Subtle</option>
+              </select>
+            </div>
+          </div>
 
-                    <button
-                      type="button"
-                      className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={aiLoading || !aiAnimationPrompt.trim()}
-                      onClick={onGenerateAIAnimation}
-                    >
-                      {aiLoading ? (
-                        <span className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Generating...
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-2">
-                          <MagicWand size={16} />
-                          Generate AI Animation
-                        </span>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </Disclosure.Panel>
-          </>
-        )}
-      </Disclosure>
+          <button
+            type="button"
+            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={aiLoading || !aiAnimationPrompt.trim()}
+            onClick={onGenerateAIAnimation}
+          >
+            {aiLoading ? (
+              <span className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Generating...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <MagicWand size={16} />
+                Generate AI Animation
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
 
       {/* Choreographed Animation Templates Accordion */}
-      <Disclosure as="div" className="mt-4">
+      {/* <Disclosure as="div" className="mt-4">
         {({ open }) => (
           <>
             <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus-visible:ring focus-visible:ring-opacity-75">
@@ -1020,7 +951,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
             </Disclosure.Button>
             <Disclosure.Panel className="px-4 pt-4 pb-2">
               <div className="space-y-3">
-                {/* Confetti Explosion */}
                 <div className="border rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium">Confetti Explosion</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1074,7 +1004,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                   </button>
                 </div>
 
-                {/* Flock Formation */}
                 <div className="border rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium">Flock Formation</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1137,7 +1066,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                   </button>
                 </div>
 
-                {/* Ripple Wave */}
                 <div className="border rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium">Ripple Wave</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1174,7 +1102,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                   </button>
                 </div>
 
-                {/* Orbit Dance */}
                 <div className="border rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium">Orbit Dance</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1219,7 +1146,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                   </button>
                 </div>
 
-                {/* Domino Cascade */}
                 <div className="border rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium">Domino Cascade</h5>
                   <div>
@@ -1244,7 +1170,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                   </button>
                 </div>
 
-                {/* Swarm Convergence */}
                 <div className="border rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium">Swarm Convergence</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1319,10 +1244,10 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
             </Disclosure.Panel>
           </>
         )}
-      </Disclosure>
+      </Disclosure> */}
 
       {/* Collage-Style Animation Templates Accordion */}
-      <Disclosure as="div" className="mt-4 mb-4">
+      {/* <Disclosure as="div" className="mt-4 mb-4">
         {({ open }) => (
           <>
             <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus-visible:ring focus-visible:ring-opacity-75">
@@ -1333,7 +1258,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
             </Disclosure.Button>
             <Disclosure.Panel className="px-4 pt-4 pb-2">
               <div className="space-y-3">
-                {/* Photo Mosaic Assembly */}
                 <div className="border border-blue-200 rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium text-blue-800">Photo Mosaic Assembly</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1390,7 +1314,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                   </button>
                 </div>
 
-                {/* Scrapbook Scatter */}
                 <div className="border border-blue-200 rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium text-blue-800">Scrapbook Scatter</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1441,7 +1364,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                   </button>
                 </div>
 
-                {/* Gallery Wall Build */}
                 <div className="border border-blue-200 rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium text-blue-800">Gallery Wall Build</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1519,7 +1441,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                   </button>
                 </div>
 
-                {/* Memory Carousel */}
                 <div className="border border-blue-200 rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium text-blue-800">Memory Carousel</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1567,7 +1488,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                   </button>
                 </div>
 
-                {/* Polaroid Tumble */}
                 <div className="border border-blue-200 rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium text-blue-800">Polaroid Tumble</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1612,10 +1532,10 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
             </Disclosure.Panel>
           </>
         )}
-      </Disclosure>
+      </Disclosure> */}
 
       {/* Screen-Filling Animation Templates Accordion */}
-      <Disclosure as="div" className="mt-4 mb-4">
+      {/* <Disclosure as="div" className="mt-4 mb-4">
         {({ open }) => (
           <>
             <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus-visible:ring focus-visible:ring-opacity-75">
@@ -1626,7 +1546,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
             </Disclosure.Button>
             <Disclosure.Panel className="px-4 pt-4 pb-2">
               <div className="space-y-3">
-                {/* Full-Screen Slideshow */}
                 <div className="border border-green-200 rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium text-green-800">Full-Screen Slideshow</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1665,7 +1584,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                   </button>
                 </div>
 
-                {/* Adaptive Grid Layout */}
                 <div className="border border-green-200 rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium text-green-800">Adaptive Grid Layout</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1728,7 +1646,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                   </button>
                 </div>
 
-                {/* Screen-Filling Carousel */}
                 <div className="border border-green-200 rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium text-green-800">Screen-Filling Carousel</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1767,7 +1684,6 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
                   </button>
                 </div>
 
-                {/* Maximize & Showcase */}
                 <div className="border border-green-200 rounded p-3 space-y-2">
                   <h5 className="text-xs font-medium text-green-800">Maximize & Showcase</h5>
                   <div className="grid grid-cols-2 gap-2">
@@ -1812,7 +1728,7 @@ WHY? Keywords like "the image" or "the canvas" are helpful hints to AI`}
             </Disclosure.Panel>
           </>
         )}
-      </Disclosure>
+      </Disclosure> */}
     </>
   )
 }

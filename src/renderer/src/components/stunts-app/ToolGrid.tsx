@@ -1200,6 +1200,61 @@ export const ToolGrid = ({
     [authToken, setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
   )
 
+  const brushClick = (brushType: BrushType) => {
+    if (!editorRef.current || !currentSequenceId) {
+      return
+    }
+
+    // Toggle brush drawing mode
+    editorRef.current.brushDrawingMode = !editorRef.current.brushDrawingMode
+
+    if (editorRef.current.brushDrawingMode) {
+      // Create new brush with default config
+
+      const new_id = uuidv4()
+
+      const random_number_800 = getRandomNumber(
+        100,
+        editorRef.current.settings?.dimensions.width || 900
+      )
+      const random_number_450 = getRandomNumber(
+        100,
+        editorRef.current.settings?.dimensions.height || 550
+      )
+
+      const defaultBrushConfig = {
+        id: new_id,
+        name: 'New Brush',
+        brushType,
+        size: 20,
+        opacity: 0.7,
+        flow: 0.5,
+        spacing: 0.25,
+        primaryColor: [0, 0, 0, 255] as [number, number, number, number],
+        secondaryColor: [255, 255, 255, 255] as [number, number, number, number],
+        noiseScale: 0.01,
+        octaves: 4,
+        persistence: 0.5,
+        randomSeed: Math.random() * 1000,
+        position: {
+          x: random_number_800,
+          y: random_number_450
+        },
+        dimensions: [500, 500] as [number, number],
+        layer: layers.length,
+        rotation: 0
+      }
+
+      editorRef.current.add_brush(defaultBrushConfig, new_id, currentSequenceId)
+
+      update()
+
+      console.info('Brush drawing mode enabled!')
+    } else {
+      console.info('Brush drawing mode disabled!')
+    }
+  }
+
   return (
     <>
       {userMessage && (
@@ -1208,7 +1263,8 @@ export const ToolGrid = ({
           {uploadProgress > 0 && uploadProgress < 99 ? <span> {uploadProgress}%</span> : <></>}
         </div>
       )}
-      <div className="flex flex-col">
+
+      <div className="flex flex-col ">
         <span className="block mb-2 text-white text-xs">2D Elements</span>
         <div className="flex flex-row flex-wrap gap-2 mb-4">
           {options.includes('page') && (
@@ -1641,66 +1697,64 @@ export const ToolGrid = ({
         <span className="block mb-2 text-white text-xs">Brushes</span>
         <div className="flex flex-row flex-wrap gap-2 mb-4">
           {options.includes('brush') && (
-            <OptionButton
-              style={{}}
-              label={t('Procedural Brush')}
-              icon="brush"
-              aria-label="Enable procedural brush drawing mode"
-              callback={() => {
-                if (!editorRef.current || !currentSequenceId) {
-                  return
-                }
-
-                // Toggle brush drawing mode
-                editorRef.current.brushDrawingMode = !editorRef.current.brushDrawingMode
-
-                if (editorRef.current.brushDrawingMode) {
-                  // Create new brush with default config
-
-                  const new_id = uuidv4()
-
-                  const random_number_800 = getRandomNumber(
-                    100,
-                    editorRef.current.settings?.dimensions.width || 900
-                  )
-                  const random_number_450 = getRandomNumber(
-                    100,
-                    editorRef.current.settings?.dimensions.height || 550
-                  )
-
-                  const defaultBrushConfig = {
-                    id: new_id,
-                    name: 'New Brush',
-                    brushType: BrushType.Noise,
-                    size: 20,
-                    opacity: 0.7,
-                    flow: 0.5,
-                    spacing: 0.25,
-                    primaryColor: [0, 0, 0, 255] as [number, number, number, number],
-                    secondaryColor: [255, 255, 255, 255] as [number, number, number, number],
-                    noiseScale: 0.01,
-                    octaves: 4,
-                    persistence: 0.5,
-                    randomSeed: Math.random() * 1000,
-                    position: {
-                      x: random_number_800,
-                      y: random_number_450
-                    },
-                    dimensions: [500, 500] as [number, number],
-                    layer: layers.length,
-                    rotation: 0
-                  }
-
-                  editorRef.current.add_brush(defaultBrushConfig, new_id, currentSequenceId)
-
-                  update()
-
-                  console.info('Brush drawing mode enabled!')
-                } else {
-                  console.info('Brush drawing mode disabled!')
-                }
-              }}
-            />
+            <>
+              {/* <option value={BrushType.Noise}>Noise</option>
+                        <option value={BrushType.Dots}>Dots</option>
+                        <option value={BrushType.Lines}>Lines</option>
+                        <option value={BrushType.Voronoi}>Voronoi</option>
+                        <option value={BrushType.Fractal}>Fractal</option>
+                        <option value={BrushType.Gradient}>Gradient</option>
+                        <option value={BrushType.Splatter}>Splatter</option> */}
+              <OptionButton
+                style={{}}
+                label={t('Noise Brush')}
+                icon="brush"
+                aria-label="Enable procedural brush drawing mode"
+                callback={() => brushClick(BrushType.Noise)}
+              />
+              <OptionButton
+                style={{}}
+                label={t('Dots Brush')}
+                icon="brush"
+                aria-label="Enable procedural brush drawing mode"
+                callback={() => brushClick(BrushType.Dots)}
+              />
+              <OptionButton
+                style={{}}
+                label={t('Lines Brush')}
+                icon="brush"
+                aria-label="Enable procedural brush drawing mode"
+                callback={() => brushClick(BrushType.Lines)}
+              />
+              <OptionButton
+                style={{}}
+                label={t('Voronoi Brush')}
+                icon="brush"
+                aria-label="Enable procedural brush drawing mode"
+                callback={() => brushClick(BrushType.Voronoi)}
+              />
+              <OptionButton
+                style={{}}
+                label={t('Fractal Brush')}
+                icon="brush"
+                aria-label="Enable procedural brush drawing mode"
+                callback={() => brushClick(BrushType.Fractal)}
+              />
+              <OptionButton
+                style={{}}
+                label={t('Gradient Brush')}
+                icon="brush"
+                aria-label="Enable procedural brush drawing mode"
+                callback={() => brushClick(BrushType.Gradient)}
+              />
+              <OptionButton
+                style={{}}
+                label={t('Splatter Brush')}
+                icon="brush"
+                aria-label="Enable procedural brush drawing mode"
+                callback={() => brushClick(BrushType.Splatter)}
+              />
+            </>
           )}
         </div>
       </div>

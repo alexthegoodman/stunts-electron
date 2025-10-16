@@ -1582,7 +1582,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
               </div>
             </div>
 
-            <div className="px-3">
+            <div className="px-3 max-w-96">
               {toolbarTab === 'tools' && (
                 <div>
                   <ToolGrid
@@ -1617,7 +1617,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
               )}
 
               {toolbarTab === 'animations' && (
-                <div className="max-h-[35vh] md:max-h-full overflow-y-scroll overflow-x-hidden">
+                <div className="max-h-[55vh] md:max-h-full overflow-hidden">
                   <AnimationTab
                     editorRef={editorRef}
                     editorStateRef={editorStateRef}
