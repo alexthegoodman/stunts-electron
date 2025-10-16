@@ -16,6 +16,7 @@ import {
   PolyfillQueue,
   PolyfillTexture
 } from './polyfill'
+import { checkRaySphereIntersection, Ray } from './editor/helpers'
 
 export interface RectInfo {
   left: number
@@ -1333,23 +1334,31 @@ export class StVideo {
     )
   }
 
-  containsPoint(point: Point): boolean {
-    // const untranslated: Point = {
-    //   x: point.x - this.transform.position[0], // Access translation from matrix
-    //   y: point.y - this.transform.position[1],
-    // };
+  // containsPoint(point: Point): boolean {
+  //   // const untranslated: Point = {
+  //   //   x: point.x - this.transform.position[0], // Access translation from matrix
+  //   //   y: point.y - this.transform.position[1],
+  //   // };
 
-    const untranslated: Point = {
-      x: point.x - this.groupTransform.position[0], // Access translation from matrix
-      y: point.y - this.groupTransform.position[1]
-    }
+  //   const untranslated: Point = {
+  //     x: point.x - this.groupTransform.position[0], // Access translation from matrix
+  //     y: point.y - this.groupTransform.position[1]
+  //   }
 
-    return (
-      untranslated.x >= -0.5 * this.dimensions[0] &&
-      untranslated.x <= 0.5 * this.dimensions[0] &&
-      untranslated.y >= -0.5 * this.dimensions[1] &&
-      untranslated.y <= 0.5 * this.dimensions[1]
-    )
+  //   return (
+  //     untranslated.x >= -0.5 * this.dimensions[0] &&
+  //     untranslated.x <= 0.5 * this.dimensions[0] &&
+  //     untranslated.y >= -0.5 * this.dimensions[1] &&
+  //     untranslated.y <= 0.5 * this.dimensions[1]
+  //   )
+  // }
+
+  containsPoint(ray: Ray, windowSize: WindowSize): boolean {
+    // Ensure you are using the sphere's world position and radius
+    const center = this.transform.position
+    const radius = toSystemScale(this.dimensions[0], windowSize.width)
+
+    return checkRaySphereIntersection(ray, center, radius)
   }
 
   toLocalSpace(worldPoint: Point): Point {

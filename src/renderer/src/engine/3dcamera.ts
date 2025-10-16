@@ -39,14 +39,9 @@ export class Camera3D extends Camera {
     this.rotation = quat.create()
 
     // Default field of view
-    // this.fov = Math.PI / 2; // not even close to enough
-    // this.fov = Math.PI / 4; // not enough still
     this.fov = Math.PI / 8 // best
-    // this.fov = Math.PI; // very wide
 
     // Set reasonable near and far clipping planes
-    // this.near = 0.0001;
-    // this.near = 1.0;
     this.near = 0.1
     this.far = 1000.0
 
@@ -134,70 +129,6 @@ export class Camera3D extends Camera {
     this.rotation = newQuaternion
   }
 
-  // Override pan method to handle 3D movement
-  // pan(delta: vec2): void {
-  //   // Pan in 3D space by moving both camera and target together
-  //   // This keeps the camera looking at the same relative point
-  //   const panVector = vec3.fromValues(delta[0], delta[1], 0);
-
-  //   // Move camera position
-  //   vec3.add(this.position3D, this.position3D, panVector);
-
-  //   // Move target by the same amount to maintain the view direction
-  //   vec3.add(this.target, this.target, panVector);
-
-  //   // Update 2D position for compatibility
-  //   this.position[0] = this.position3D[0];
-  //   this.position[1] = this.position3D[1];
-  // }
-
-  // // Override pan method to handle 3D movement
-  // pan(delta: vec2): void {
-  //   // 1. Determine camera-local vectors (Forward and Right)
-  //   const forward = vec3.create();
-  //   vec3.subtract(forward, this.target, this.position3D); // Vector from position to target (view direction)
-  //   const right = vec3.create();
-  //   vec3.cross(right, forward, this.up); // Cross product of forward and up gives the right vector
-  //   // Note: We don't normalize yet, as we need the magnitude to scale properly
-
-  //   // 2. Calculate the distance to the target (for dynamic scaling)
-  //   const distance = vec3.length(forward); // This is the distance to the target
-
-  //   // 3. Define a sensitivity factor.
-  //   // This value converts screen pixels (delta) into world units.
-  //   // Adjust this value (e.g., 0.002) to change the pan speed.
-  //   // const panSensitivity = 0.002;
-  //   // const scale = distance * panSensitivity;
-
-  //   const scale = 0.5;
-
-  //   // 4. Calculate the horizontal pan vector (based on the camera's right axis)
-  //   const horizontalPan = vec3.create();
-  //   // Move along the 'right' vector by delta[0] (X-axis screen movement)
-  //   // Negate delta[0] because typical mouse panning means dragging left moves the scene right (camera must move left)
-  //   vec3.normalize(right, right); // Now normalize the right vector
-  //   vec3.scale(horizontalPan, right, -delta[0] * scale);
-
-  //   // 5. Calculate the vertical pan vector (based on the camera's up axis)
-  //   const verticalPan = vec3.create();
-  //   // Move along the 'up' vector by delta[1] (Y-axis screen movement)
-  //   // Delta[1] usually needs to be negated if screen Y increases downwards
-  //   vec3.normalize(this.up, this.up); // Ensure up vector is normalized (should be already, but safe)
-  //   vec3.scale(verticalPan, this.up, delta[1] * scale);
-
-  //   // 6. Combine the two pan vectors to get the final translation
-  //   const panVector = vec3.create();
-  //   vec3.add(panVector, horizontalPan, verticalPan);
-
-  //   // 7. Apply the translation to both camera position and target
-  //   vec3.add(this.position3D, this.position3D, panVector);
-  //   // vec3.add(this.target, this.target, panVector);
-
-  //   // Update 2D position for compatibility (as in your original code)
-  //   this.position[0] = this.position3D[0];
-  //   this.position[1] = this.position3D[1];
-  // }
-
   pan(delta: vec2) {
     console.log('target:', this.target, 'pos:', this.position3D)
     this.position3D[0] = this.position3D[0] + delta[0]
@@ -233,16 +164,6 @@ export class Camera3D extends Camera {
 
   // Override zoom to affect field of view instead
   update_zoom(delta: number): void {
-    // super.update_zoom(delta, center);
-
-    // fov zoom is horribly dumb, much prefer moving the camera
-    // // You might want additional logic specific to 3D perspective
-    // // For example, adjusting FOV based on zoom level
-    // this.fov = Math.PI / 4 / this.zoom;
-
-    // // Clamp FOV to reasonable values
-    // this.fov = Math.max(Math.PI / 32, Math.min(this.fov, Math.PI / 2));
-
     this.position3D[2] += delta
   }
 

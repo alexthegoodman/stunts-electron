@@ -1,6 +1,7 @@
 import { Camera, CameraBinding, WindowSize } from '../camera'
 import { EasingType, PathType, UIKeyframe } from '../animations'
 import { BBox, Point } from '../editor'
+import { toNDC } from '../vertex'
 
 // used for grid snap
 export function roundUp(numToRound: number, multiple: number): number {
@@ -107,52 +108,217 @@ export function interpolatePosition(
   }
 }
 
-export interface IRay {
-  top_left: Point
-}
+import { vec3 } from 'gl-matrix'
 
-export class Ray implements IRay {
-  // Use a class for better type handling
-  top_left: Point
+// Helper for Ray-Sphere Intersection
+export function checkRaySphereIntersection(ray: Ray, center: vec3, radius: number): boolean {
+  const L = vec3.create()
+  // Vector from sphere center to ray origin: L = O - C
+  vec3.subtract(L, ray.origin, center)
 
-  constructor(top_left: Point) {
-    this.top_left = top_left
+  // a = D · D (Ray direction dot product with itself - should be 1 if D is normalized)
+  // We can assume a = 1 since the ray direction is normalized in visualize_ray_intersection.
+  const a = 1.0
+
+  // b = 2 * (D · L)
+  const b = 2.0 * vec3.dot(ray.direction, L)
+
+  // c = L · L - r²
+  const c = vec3.dot(L, L) - radius * radius
+
+  // Discriminant: Δ = b² - 4ac
+  const discriminant = b * b - 4 * a * c
+
+  if (discriminant < 0) {
+    // No real solution, ray misses the sphere
+    return false
   }
 
-  static new(top_left: Point): Ray {
-    // Static factory method (optional)
-    return new Ray(top_left)
+  // Solve for t (distance along the ray): t = (-b ± √Δ) / 2a
+  // We only care if the intersection is in front of the ray origin (t > 0).
+  const t0 = (-b - Math.sqrt(discriminant)) / (2 * a)
+  const t1 = (-b + Math.sqrt(discriminant)) / (2 * a)
+
+  // If the closest intersection point is positive, the sphere is in front of the camera.
+  return t0 > 0 || t1 > 0
+}
+
+import { vec2 } from 'gl-matrix'
+
+export function checkRayPlaneIntersection(
+  ray: Ray,
+  planePoint: vec3,
+  planeNormal: vec3
+): vec3 | null {
+  // 1. Calculate N · D (dot product of plane normal and ray direction)
+  const NdotD = vec3.dot(planeNormal, ray.direction)
+
+  // Check if the ray is parallel to the plane (or points away from the side we are facing)
+  if (Math.abs(NdotD) < 1e-6) {
+    return null // Parallel or near-parallel, no reliable intersection
+  }
+
+  // 2. Calculate N · (P_plane - O)
+  const W = vec3.create()
+  vec3.subtract(W, planePoint, ray.origin)
+  const NdotW = vec3.dot(planeNormal, W)
+
+  // 3. Calculate t (distance along the ray)
+  const t = NdotW / NdotD
+
+  // Check if intersection is behind the ray origin (usually t < 0)
+  if (t < 0) {
+    // return null; // Only check if you want to prevent clicking through the camera
+  }
+
+  // 4. Calculate intersection point: P = O + t * D
+  const intersectionPoint = vec3.create()
+  const tD = vec3.create()
+  vec3.scale(tD, ray.direction, t)
+  vec3.add(intersectionPoint, ray.origin, tD)
+
+  return intersectionPoint
+}
+
+// Assuming this helper function is available in your class/module
+export function getCameraForward(camera: Camera3D): vec3 {
+  const forward = vec3.create()
+  vec3.subtract(forward, camera.target, camera.position3D)
+  vec3.normalize(forward, forward)
+  return forward
+}
+
+// The new, proper 3D Ray interface
+export interface IRay3D {
+  origin: vec3
+  direction: vec3
+}
+
+export class Ray implements IRay3D {
+  origin: vec3
+  direction: vec3
+
+  constructor(origin: vec3, direction: vec3) {
+    this.origin = origin
+    this.direction = direction
+  }
+
+  // New static factory that returns a proper 3D Ray
+  static new(origin: vec3, direction: vec3): Ray {
+    return new Ray(origin, direction)
+  }
+
+  // Keep the old top_left for backward compatibility
+  // NOTE: This value is **not** used for 3D intersection logic.
+  // It is just the 2D screen coordinate, which you should replace usage of.
+  get top_left(): Point {
+    return { x: this.origin[0], y: this.origin[1] } // Conceptual, only for old 2D code
   }
 }
 
+// export function visualize_ray_intersection(
+//   windowSize: WindowSize,
+//   screen_x: number,
+//   screen_y: number,
+//   camera: Camera
+// ): Ray {
+//   const scale_factor = camera.zoom
+//   const zoom_center_x = windowSize.width / 2.0
+//   const zoom_center_y = windowSize.height / 2.0
+
+//   const translated_screen_x = screen_x - zoom_center_x
+//   const translated_screen_y = screen_y - zoom_center_y
+
+//   const zoomed_screen_x = translated_screen_x / scale_factor
+//   const zoomed_screen_y = translated_screen_y / scale_factor
+
+//   const scaled_screen_x = zoomed_screen_x + zoom_center_x
+//   const scaled_screen_y = zoomed_screen_y + zoom_center_y
+
+//   const pan_offset_x = camera.position[0] * 0.5
+//   const pan_offset_y = camera.position[1] * 0.5
+
+//   const top_left: Point = {
+//     x: scaled_screen_x + pan_offset_x,
+//     y: scaled_screen_y - pan_offset_y
+//   }
+
+//   return Ray.new(top_left)
+// }
+
+// export function visualize_ray_intersection(
+//   windowSize: WindowSize,
+//   screen_x: number,
+//   screen_y: number,
+//   camera: Camera
+// ): Ray {
+//   let top_left = toNDC(screen_x, screen_y, windowSize.width, windowSize.height)
+
+//   return Ray.new(top_left)
+// }
+
+import { mat4, vec4 } from 'gl-matrix'
+import { Camera3D } from '../3dcamera'
+
+// NOTE: This implementation assumes you have the gl-matrix library available.
+// NOTE: Your Camera3D.getProjection() uses a fixed aspect ratio of 500/500,
+// which may need adjustment if your windowSize is not square.
 export function visualize_ray_intersection(
   windowSize: WindowSize,
   screen_x: number,
   screen_y: number,
-  camera: Camera
+  camera: Camera3D
 ): Ray {
-  const scale_factor = camera.zoom
-  const zoom_center_x = windowSize.width / 2.0
-  const zoom_center_y = windowSize.height / 2.0
+  // 1. Convert screen coordinates (pixel space) to Normalized Device Coordinates (NDC)
+  // NDC: x from -1 (left) to 1 (right), y from 1 (top) to -1 (bottom)
+  const ndc_x = (screen_x / windowSize.width) * 2 - 1
+  const ndc_y = 1 - (screen_y / windowSize.height) * 2 // Invert Y-axis
 
-  const translated_screen_x = screen_x - zoom_center_x
-  const translated_screen_y = screen_y - zoom_center_y
+  // 2. Define the ray's start (near plane) and end (far plane) points in Clip Space.
+  // We use z = -1 (near) and z = 1 (far). w = 1 for a 3D point.
+  const ray_clip_near = vec4.fromValues(ndc_x, ndc_y, -1.0, 1.0)
+  const ray_clip_far = vec4.fromValues(ndc_x, ndc_y, 1.0, 1.0)
 
-  const zoomed_screen_x = translated_screen_x / scale_factor
-  const zoomed_screen_y = translated_screen_y / scale_factor
+  // 3. Compute the Inverse Projection-View Matrix
+  const inv_proj_view = mat4.create()
+  const projectionMatrix = camera.getProjection()
+  const viewMatrix = camera.getView()
 
-  const scaled_screen_x = zoomed_screen_x + zoom_center_x
-  const scaled_screen_y = zoomed_screen_y + zoom_center_y
+  const view_projection = mat4.create()
+  mat4.multiply(view_projection, projectionMatrix, viewMatrix) // P * V
+  mat4.invert(inv_proj_view, view_projection) // (P * V)^-1
 
-  const pan_offset_x = camera.position[0] * 0.5
-  const pan_offset_y = camera.position[1] * 0.5
+  // 4. Transform points from Clip Space to World Space
+  const ray_world_near = vec4.create()
+  const ray_world_far = vec4.create()
 
-  const top_left: Point = {
-    x: scaled_screen_x + pan_offset_x,
-    y: scaled_screen_y - pan_offset_y
-  }
+  vec4.transformMat4(ray_world_near, ray_clip_near, inv_proj_view)
+  vec4.transformMat4(ray_world_far, ray_clip_far, inv_proj_view)
 
-  return Ray.new(top_left)
+  // 5. Perform Perspective Divide (divide X, Y, Z by W)
+  // This converts from Homogeneous Coordinates (vec4) to World Coordinates (vec3)
+  const near_point = vec3.fromValues(
+    ray_world_near[0] / ray_world_near[3],
+    ray_world_near[1] / ray_world_near[3],
+    ray_world_near[2] / ray_world_near[3]
+  )
+
+  const far_point = vec3.fromValues(
+    ray_world_far[0] / ray_world_far[3],
+    ray_world_far[1] / ray_world_far[3],
+    ray_world_far[2] / ray_world_far[3]
+  )
+
+  // 6. Define the 3D Ray
+  const ray_origin = vec3.clone(camera.position3D) // Ray origin is the camera's world position
+
+  // The direction vector is from the origin to the unprojected point on the far plane.
+  const ray_direction = vec3.create()
+  vec3.subtract(ray_direction, far_point, ray_origin)
+  vec3.normalize(ray_direction, ray_direction) // Direction must be normalized
+
+  // Return the new 3D Ray
+  return Ray.new(ray_origin, ray_direction)
 }
 
 export enum InteractionTarget {

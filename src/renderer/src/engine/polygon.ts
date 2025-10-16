@@ -24,6 +24,7 @@ import {
   PolyfillDevice,
   PolyfillQueue
 } from './polyfill'
+import { checkRaySphereIntersection, Ray } from './editor/helpers'
 
 export const INTERNAL_LAYER_SPACE = 10
 
@@ -305,25 +306,33 @@ export class Polygon implements PolygonShape {
     }
   }
 
-  containsPoint(point: Point, camera: Camera): boolean {
-    const localPoint = this.toLocalSpace(point, camera) // Implement toLocalSpace
+  // containsPoint(point: Point, camera: Camera): boolean {
+  //   const localPoint = this.toLocalSpace(point, camera) // Implement toLocalSpace
 
-    let inside = false
-    let j = this.points.length - 1
-    for (let i = 0; i < this.points.length; i++) {
-      const pi = this.points[i]
-      const pj = this.points[j]
+  //   let inside = false
+  //   let j = this.points.length - 1
+  //   for (let i = 0; i < this.points.length; i++) {
+  //     const pi = this.points[i]
+  //     const pj = this.points[j]
 
-      if (
-        pi.y > localPoint.y !== pj.y > localPoint.y &&
-        localPoint.x < ((pj.x - pi.x) * (localPoint.y - pi.y)) / (pj.y - pi.y) + pi.x
-      ) {
-        inside = !inside
-      }
-      j = i
-    }
+  //     if (
+  //       pi.y > localPoint.y !== pj.y > localPoint.y &&
+  //       localPoint.x < ((pj.x - pi.x) * (localPoint.y - pi.y)) / (pj.y - pi.y) + pi.x
+  //     ) {
+  //       inside = !inside
+  //     }
+  //     j = i
+  //   }
 
-    return inside
+  //   return inside
+  // }
+
+  containsPoint(ray: Ray, windowSize: WindowSize): boolean {
+    // Ensure you are using the sphere's world position and radius
+    const center = this.transform.position
+    const radius = toSystemScale(this.dimensions[0], windowSize.width)
+
+    return checkRaySphereIntersection(ray, center, radius)
   }
 
   updateOpacity(queue: PolyfillQueue, opacity: number) {

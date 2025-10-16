@@ -485,6 +485,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
           case ObjectType.TextItem: {
             s.activeTextItems.forEach((tr) => {
               if (tr.id == object_id) {
+                console.info('update text pos', point)
                 tr.position = {
                   x: point.x,
                   y: point.y

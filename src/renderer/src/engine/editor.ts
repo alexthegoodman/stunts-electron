@@ -5,7 +5,7 @@ import { MotionPath } from './motionpath'
 import { Camera, CameraBinding, WindowSize } from './camera'
 import { StImage, StImageConfig } from './image'
 import { MousePosition, SourceData, StVideo, StVideoConfig } from './video'
-import { vec2 } from 'gl-matrix'
+import { vec2, vec3 } from 'gl-matrix'
 import { getUploadedImage, getUploadedImageData, getUploadedVideoData } from '../fetchers/projects'
 import { RepeatManager } from './repeater'
 import { DocumentSize, FormattedPage, loadFonts, MultiPageEditor, RenderItem } from './rte'
@@ -68,9 +68,11 @@ import {
   stringToF32,
   stringToU32,
   toRadians,
-  resolveOverlaps
+  resolveOverlaps,
+  checkRayPlaneIntersection,
+  getCameraForward
 } from './editor/helpers'
-import { toNDC, toSystemScale } from './vertex'
+import { fromNDC, toNDC, toSystemScale } from './vertex'
 import { radiansToDegrees } from './transform'
 
 export const TEXT_BACKGROUNDS_DEFAULT_HIDDEN = true
@@ -288,7 +290,9 @@ export class Editor {
   dsNdcPos: Point // double-width sized ndc-style positioning (screen-oriented)
   ndc: Point
   previousTopLeft: Point
-  gridSnap: number = 10
+  // gridSnap: number = 10 // screen
+  gridSnap: number = 0.001 // world
+  lastRay?: Ray
 
   // ai
   generationCount: number
@@ -842,7 +846,8 @@ export class Editor {
           rotation: s.rotation,
           backgroundFill: s.backgroundFill,
           layer: s.layer,
-          videoChild: s.videoChild
+          videoChild: s.videoChild,
+          tiltAngle: s.tiltAngle
         }
 
         const restored_mockup = new Mockup3D(
@@ -3185,6 +3190,7 @@ export class Editor {
         device!,
         queue!,
         this.modelBindGroupLayout,
+        this.groupBindGroupLayout,
         new_value,
         camera
       )
@@ -3205,6 +3211,7 @@ export class Editor {
         device!,
         queue!,
         this.modelBindGroupLayout,
+        this.groupBindGroupLayout,
         new_value,
         camera
       )
@@ -3279,6 +3286,7 @@ export class Editor {
                     device!,
                     queue!,
                     this.modelBindGroupLayout,
+                    this.groupBindGroupLayout,
                     {
                       type: 'Color',
                       value: [
@@ -3300,6 +3308,7 @@ export class Editor {
                     device!,
                     queue!,
                     this.modelBindGroupLayout,
+                    this.groupBindGroupLayout,
                     {
                       type: 'Color',
                       value: [
@@ -3321,6 +3330,7 @@ export class Editor {
                     device!,
                     queue!,
                     this.modelBindGroupLayout,
+                    this.groupBindGroupLayout,
                     {
                       type: 'Color',
                       value: [
@@ -3524,6 +3534,7 @@ export class Editor {
                     device!,
                     queue!,
                     this.modelBindGroupLayout,
+                    this.groupBindGroupLayout,
                     {
                       type: 'Color',
                       value: [
@@ -3545,6 +3556,7 @@ export class Editor {
                     device!,
                     queue!,
                     this.modelBindGroupLayout,
+                    this.groupBindGroupLayout,
                     {
                       type: 'Color',
                       value: [
@@ -3566,6 +3578,7 @@ export class Editor {
                     device!,
                     queue!,
                     this.modelBindGroupLayout,
+                    this.groupBindGroupLayout,
                     {
                       type: 'Color',
                       value: [
@@ -4184,6 +4197,7 @@ export class Editor {
 
     let ray = visualize_ray_intersection(camera.windowSize, positionX, positionY, camera)
     let top_left = ray.top_left
+    this.lastRay = ray
     this.lastTopLeft = top_left
 
     // if (
@@ -4256,31 +4270,31 @@ export class Editor {
     //     }
     // }
 
-    for (let path of this.motionPaths) {
-      for (let polygon of path.staticPolygons) {
-        // check if we're clicking on a motion path handle to drag
-        if (polygon.name == 'motion_path_handle') {
-          if (polygon.containsPoint(this.lastTopLeft, camera)) {
-            this.draggingPathHandle = polygon.id
-            this.draggingPathAssocPath = polygon.sourcePathId
-            this.draggingPathObject = polygon.sourcePolygonId
-            this.draggingPathKeyframe = polygon.sourceKeyframeId
-            this.dragStart = this.lastTopLeft
+    // for (let path of this.motionPaths) {
+    //   for (let polygon of path.staticPolygons) {
+    //     // check if we're clicking on a motion path handle to drag
+    //     if (polygon.name == 'motion_path_handle') {
+    //       if (polygon.containsPoint(this.lastTopLeft, camera)) {
+    //         this.draggingPathHandle = polygon.id
+    //         this.draggingPathAssocPath = polygon.sourcePathId
+    //         this.draggingPathObject = polygon.sourcePolygonId
+    //         this.draggingPathKeyframe = polygon.sourceKeyframeId
+    //         this.dragStart = this.lastTopLeft
 
-            return // nothing to add to undo stack
-          }
-        }
-        if (polygon.name == 'motion_path_segment') {
-          if (polygon.containsPoint(this.lastTopLeft, camera)) {
-            this.draggingPath = path.id
-            this.draggingPathObject = polygon.sourcePolygonId
-            this.dragStart = this.lastTopLeft
+    //         return // nothing to add to undo stack
+    //       }
+    //     }
+    //     if (polygon.name == 'motion_path_segment') {
+    //       if (polygon.containsPoint(this.lastTopLeft, camera)) {
+    //         this.draggingPath = path.id
+    //         this.draggingPathObject = polygon.sourcePolygonId
+    //         this.dragStart = this.lastTopLeft
 
-            return // nothing to add to undo stack
-          }
-        }
-      }
-    }
+    //         return // nothing to add to undo stack
+    //       }
+    //     }
+    //   }
+    // }
 
     // Finally, check for object interation
     let intersecting_objects: [number, InteractionTarget, number][] = []
@@ -4291,7 +4305,7 @@ export class Editor {
         continue
       }
 
-      if (polygon.containsPoint(this.lastTopLeft, camera)) {
+      if (polygon.containsPoint(ray, camera.windowSize)) {
         console.info('polygon contains pointer')
         intersecting_objects.push([polygon.layer, InteractionTarget.Polygon, i])
       }
@@ -4303,7 +4317,7 @@ export class Editor {
         continue
       }
 
-      if (text_item.containsPoint(this.lastTopLeft, camera)) {
+      if (text_item.containsPoint(ray, camera.windowSize)) {
         intersecting_objects.push([text_item.layer, InteractionTarget.Text, i])
       }
     }
@@ -4314,7 +4328,7 @@ export class Editor {
         continue
       }
 
-      if (image_item.containsPoint(this.lastTopLeft)) {
+      if (image_item.containsPoint(ray, camera.windowSize)) {
         intersecting_objects.push([image_item.layer, InteractionTarget.Image, i])
       }
     }
@@ -4327,7 +4341,7 @@ export class Editor {
 
       // console.info("Checking video point");
 
-      if (video_item.containsPoint(this.lastTopLeft)) {
+      if (video_item.containsPoint(ray, camera.windowSize)) {
         console.info('Video contains point')
         intersecting_objects.push([video_item.layer, InteractionTarget.Video, i])
       }
@@ -4341,70 +4355,70 @@ export class Editor {
             y: this.lastTopLeft.y - video_item.groupTransform.position[1]
           }
 
-          if (polygon.name == 'motion_path_handle') {
-            if (polygon.containsPoint(adjustedPoint, camera)) {
-              // console.info("triggering handle!", polygon.id);
+          // if (polygon.name == 'motion_path_handle') {
+          //   if (polygon.containsPoint(adjustedPoint, camera)) {
+          //     // console.info("triggering handle!", polygon.id);
 
-              this.draggingPathHandle = polygon.id
-              this.draggingPathAssocPath = polygon.sourcePathId // video_item.mousePath.id
-              this.draggingPathObject = polygon.sourcePolygonId
-              this.draggingPathKeyframe = polygon.sourceKeyframeId
-              this.dragStart = this.lastTopLeft
+          //     this.draggingPathHandle = polygon.id
+          //     this.draggingPathAssocPath = polygon.sourcePathId // video_item.mousePath.id
+          //     this.draggingPathObject = polygon.sourcePolygonId
+          //     this.draggingPathKeyframe = polygon.sourceKeyframeId
+          //     this.dragStart = this.lastTopLeft
 
-              return // nothing to add to undo stack
-            }
-          }
-          if (polygon.name == 'motion_path_segment') {
-            if (polygon.containsPoint(adjustedPoint, camera)) {
-              this.draggingPath = video_item.mousePath.id
-              this.draggingPathObject = polygon.sourcePolygonId
-              this.dragStart = this.lastTopLeft
+          //     return // nothing to add to undo stack
+          //   }
+          // }
+          // if (polygon.name == 'motion_path_segment') {
+          //   if (polygon.containsPoint(adjustedPoint, camera)) {
+          //     this.draggingPath = video_item.mousePath.id
+          //     this.draggingPathObject = polygon.sourcePolygonId
+          //     this.dragStart = this.lastTopLeft
 
-              return // nothing to add to undo stack
-            }
-          }
+          //     return // nothing to add to undo stack
+          //   }
+          // }
         }
       }
     }
 
     // Collect intersecting cubes
     // Convert mouse position to NDC for 3D objects
-    const ndcPoint = {
-      x: (this.lastTopLeft.x / camera.windowSize.width) * 2.0 - 1.0,
-      y: -((this.lastTopLeft.y / camera.windowSize.height) * 2.0 - 1.0)
-    }
+    // const ndcPoint = {
+    //   x: (this.lastTopLeft.x / camera.windowSize.width) * 2.0 - 1.0,
+    //   y: -((this.lastTopLeft.y / camera.windowSize.height) * 2.0 - 1.0)
+    // }
 
-    for (let [i, cube] of this.cubes3D.entries()) {
-      if (cube.hidden) {
-        continue
-      }
+    // for (let [i, cube] of this.cubes3D.entries()) {
+    //   if (cube.hidden) {
+    //     continue
+    //   }
 
-      if (cube.containsPoint(ndcPoint)) {
-        intersecting_objects.push([cube.layer, InteractionTarget.Cube3D, i])
-      }
-    }
+    //   if (cube.containsPoint(ray)) {
+    //     intersecting_objects.push([cube.layer, InteractionTarget.Cube3D, i])
+    //   }
+    // }
 
-    // Collect intersecting spheres
-    for (let [i, sphere] of this.spheres3D.entries()) {
-      if (sphere.hidden) {
-        continue
-      }
+    // // Collect intersecting spheres
+    // for (let [i, sphere] of this.spheres3D.entries()) {
+    //   if (sphere.hidden) {
+    //     continue
+    //   }
 
-      if (sphere.containsPoint(ndcPoint)) {
-        intersecting_objects.push([sphere.layer, InteractionTarget.Sphere3D, i])
-      }
-    }
+    //   if (sphere.containsPoint(ray)) {
+    //     intersecting_objects.push([sphere.layer, InteractionTarget.Sphere3D, i])
+    //   }
+    // }
 
-    // Collect intersecting mockups
-    for (let [i, mockup] of this.mockups3D.entries()) {
-      if (mockup.hidden) {
-        continue
-      }
+    // // Collect intersecting mockups
+    // for (let [i, mockup] of this.mockups3D.entries()) {
+    //   if (mockup.hidden) {
+    //     continue
+    //   }
 
-      if (mockup.containsPoint(ndcPoint, this.camera?.windowSize!)) {
-        intersecting_objects.push([mockup.layer, InteractionTarget.Mockup3D, i])
-      }
-    }
+    //   if (mockup.containsPoint(ray, this.camera?.windowSize!)) {
+    //     intersecting_objects.push([mockup.layer, InteractionTarget.Mockup3D, i])
+    //   }
+    // }
 
     // Sort intersecting objects by layer of descending order (highest layer first)
     // intersecting_objects.sort_by(|a, b| b.0.cmp(a.0));
@@ -4686,7 +4700,8 @@ export class Editor {
             ],
             backgroundFill: mockup.backgroundFill,
             layer: mockup.layer,
-            videoChild: mockup.videoChildConfig
+            videoChild: mockup.videoChildConfig,
+            tiltAngle: mockup.tiltAngle
           })
         }
 
@@ -4737,6 +4752,7 @@ export class Editor {
     // }
 
     this.lastTopLeft = top_left
+    this.lastRay = ray
 
     const ndcPoint = {
       x: (this.lastTopLeft.x / camera.windowSize.width) * 2.0 - 1.0,
@@ -4998,10 +5014,17 @@ export class Editor {
         //   return;
         // }
 
+        let human = fromNDC(
+          active_point.x,
+          active_point.y,
+          this.camera.windowSize.width,
+          this.camera.windowSize.height
+        )
+
         // let active_point = active_point;
         let data = this.onMouseUp(object_id, {
-          x: active_point.x - CANVAS_HORIZ_OFFSET,
-          y: active_point.y - CANVAS_VERT_OFFSET
+          x: human.x - CANVAS_HORIZ_OFFSET,
+          y: human.y - CANVAS_VERT_OFFSET
         })
 
         if (data) {
@@ -5295,7 +5318,7 @@ export class Editor {
     let aspect_ratio = ((camera.windowSize.width as number) / camera.windowSize.height) as number
     let dx = mouse_pos.x - start.x
     let dy = mouse_pos.y - start.y
-    let polygon = this.staticPolygons.find((p) => p.id == poly_id)
+    let polygon = this.staticPolygons.find((p) => p.id == poly_id) as Polygon
 
     if (!polygon || !this.modelBindGroupLayout) {
       return
@@ -5417,24 +5440,99 @@ export class Editor {
     // this.update_guide_lines(poly_index, windowSize);
   }
 
+  // move_text(
+  //   mouse_pos: Point,
+  //   start: Point,
+  //   text_id: string,
+  //   windowSize: WindowSize,
+  //   device: PolyfillDevice
+  // ) {
+  //   let camera = this.camera
+
+  //   if (!camera) {
+  //     return
+  //   }
+
+  //   let aspect_ratio = ((camera.windowSize.width as number) / camera.windowSize.height) as number
+
+  //   // Calculate dx and dy relative to the original drag start point
+  //   let dx = mouse_pos.x - start.x
+  //   let dy = mouse_pos.y - start.y
+
+  //   let text_item = this.textItems.find((t) => t.id == text_id)
+
+  //   if (!text_item) {
+  //     return
+  //   }
+
+  //   // Get the original position when drag started
+  //   const originalX = text_item.transform.startPosition
+  //     ? text_item.transform.startPosition[0]
+  //     : text_item.transform.position[0]
+  //   const originalY = text_item.transform.startPosition
+  //     ? text_item.transform.startPosition[1]
+  //     : text_item.transform.position[1]
+
+  //   // On first drag, store original position
+  //   if (!text_item.transform.startPosition) {
+  //     text_item.transform.startPosition = vec2.fromValues(
+  //       text_item.transform.position[0],
+  //       text_item.transform.position[1]
+  //     )
+  //   }
+
+  //   // Calculate new position based on original position + total movement
+  //   let new_position = {
+  //     x: roundToGrid(originalX + dx, this.gridSnap),
+  //     y: roundToGrid(originalY + dy, this.gridSnap)
+  //   }
+
+  //   text_item.transform.updatePosition([new_position.x, new_position.y], windowSize)
+  //   text_item.backgroundPolygon.transform.updatePosition(
+  //     [new_position.x, new_position.y],
+  //     windowSize
+  //   )
+
+  //   // Get the original group position for associated motion paths
+  //   const originalPathX =
+  //     this.motionPaths.filter((p) => p.associatedPolygonId === text_id)[0]?.transform
+  //       .startPosition[0] || 0
+  //   const originalPathY =
+  //     this.motionPaths.filter((p) => p.associatedPolygonId === text_id)[0]?.transform
+  //       .startPosition[1] || 0
+
+  //   let new_path_position = {
+  //     x: roundToGrid(originalPathX + dx, this.gridSnap),
+  //     y: roundToGrid(originalPathY + dy, this.gridSnap)
+  //   }
+
+  //   // Move associated motion paths when text object is moved
+  //   this.motionPaths.forEach((motionPath) => {
+  //     if (motionPath.associatedPolygonId === text_id) {
+  //       motionPath.updateDataFromPosition(
+  //         windowSize,
+  //         device!,
+  //         this.modelBindGroupLayout!,
+  //         new_path_position,
+  //         camera
+  //       )
+  //     }
+  //   })
+  // }
+
   move_text(
-    mouse_pos: Point,
+    mouse_pos: Point, // Screen coordinates of the current mouse position
+    // start_world_pos: vec3, // 🌟 World position of the text item when drag started
     start: Point,
     text_id: string,
     windowSize: WindowSize,
     device: PolyfillDevice
   ) {
-    let camera = this.camera
+    let camera = this.camera as Camera3D // Cast for 3D properties
 
     if (!camera) {
       return
     }
-
-    let aspect_ratio = ((camera.windowSize.width as number) / camera.windowSize.height) as number
-
-    // Calculate dx and dy relative to the original drag start point
-    let dx = mouse_pos.x - start.x
-    let dy = mouse_pos.y - start.y
 
     let text_item = this.textItems.find((t) => t.id == text_id)
 
@@ -5442,77 +5540,57 @@ export class Editor {
       return
     }
 
-    // Get the original position when drag started
-    const originalX = text_item.transform.startPosition
-      ? text_item.transform.startPosition[0]
-      : text_item.transform.position[0]
-    const originalY = text_item.transform.startPosition
-      ? text_item.transform.startPosition[1]
-      : text_item.transform.position[1]
+    // 1. Generate the Ray for the current mouse position
+    const current_ray: Ray = this.lastRay
 
-    // On first drag, store original position
-    if (!text_item.transform.startPosition) {
-      text_item.transform.startPosition = vec2.fromValues(
-        text_item.transform.position[0],
-        text_item.transform.position[1]
-      )
+    // let start_world_pos = vec3.fromValues(
+    //   text_item.transform.position[0],
+    //   text_item.transform.position[1],
+    //   text_item.transform.position[2]
+    // )
+
+    let start_ndc = toNDC(start.x, start.y, windowSize.width, windowSize.height)
+    let start_world_pos = vec3.fromValues(start_ndc.x, start_ndc.y, start_ndc.z || 0)
+
+    // 2. Define the Drag Plane
+    // Point on Plane: The object's starting world position (Z is 0 for 2D objects in 3D space)
+    const P_plane = start_world_pos
+
+    // Normal of Plane: The camera's forward vector (makes the plane parallel to the screen)
+    const N_plane = getCameraForward(camera)
+
+    // 3. Calculate New Intersection Point (P_new)
+    const P_new = checkRayPlaneIntersection(current_ray, P_plane, N_plane)
+
+    if (!P_new) {
+      console.warn('Ray is parallel to the drag plane, cannot move.')
+      return
     }
 
-    // Calculate new position based on original position + total movement
-    let new_position = {
-      x: roundToGrid(originalX + dx, this.gridSnap),
-      y: roundToGrid(originalY + dy, this.gridSnap)
-    }
+    // 4. Calculate World-Space Delta (ΔP_world = P_new - P_start)
+    const delta_world = vec3.create()
+    vec3.subtract(delta_world, P_new, start_world_pos)
 
-    text_item.transform.updatePosition([new_position.x, new_position.y], windowSize)
+    delta_world[2] = 0
+
+    // 5. Apply new position to the object
+    const new_world_pos_3D = vec3.create()
+    vec3.add(new_world_pos_3D, start_world_pos, delta_world)
+
+    // The object's transform expects a vec2 for position (x, y)
+    // const new_position_vec2 = vec2.fromValues(
+    //   roundToGrid(new_world_pos_3D[0], this.gridSnap),
+    //   roundToGrid(new_world_pos_3D[1], this.gridSnap)
+    // )
+
+    // 6. Update the text item and its background
+    text_item.transform.updatePosition([new_world_pos_3D[0], new_world_pos_3D[1]], windowSize)
     text_item.backgroundPolygon.transform.updatePosition(
-      [new_position.x, new_position.y],
+      [new_world_pos_3D[0], new_world_pos_3D[1]],
       windowSize
     )
 
-    // Get the original group position for associated motion paths
-    const originalPathX =
-      this.motionPaths.filter((p) => p.associatedPolygonId === text_id)[0]?.transform
-        .startPosition[0] || 0
-    const originalPathY =
-      this.motionPaths.filter((p) => p.associatedPolygonId === text_id)[0]?.transform
-        .startPosition[1] || 0
-
-    let new_path_position = {
-      x: roundToGrid(originalPathX + dx, this.gridSnap),
-      y: roundToGrid(originalPathY + dy, this.gridSnap)
-    }
-
-    // Move associated motion paths when text object is moved
-    this.motionPaths.forEach((motionPath) => {
-      if (motionPath.associatedPolygonId === text_id) {
-        motionPath.updateDataFromPosition(
-          windowSize,
-          device!,
-          this.modelBindGroupLayout!,
-          new_path_position,
-          camera
-        )
-      }
-    })
-
-    // Also check video items for motion paths
-    // this.videoItems.forEach((videoItem) => {
-    //   if (
-    //     videoItem.mousePath &&
-    //     videoItem.mousePath.associatedPolygonId === text_id
-    //   ) {
-    //     videoItem.mousePath.updateDataFromPosition(
-    //       windowSize,
-    //       device!,
-    //       this.modelBindGroupLayout!,
-    //       new_position,
-    //       camera
-    //     );
-    //   }
-    // });
-
-    // this.dragStart = mouse_pos;
+    // 7. Update associated motion paths (using the new world position)
   }
 
   move_image(

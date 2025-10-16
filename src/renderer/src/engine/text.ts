@@ -9,7 +9,14 @@ import {
   Point,
   TEXT_BACKGROUNDS_DEFAULT_HIDDEN
 } from './editor'
-import { getRandomNumber, InputValue, rgbToWgpu, wgpuToHuman } from '../engine/editor/helpers'
+import {
+  checkRaySphereIntersection,
+  getRandomNumber,
+  InputValue,
+  Ray,
+  rgbToWgpu,
+  wgpuToHuman
+} from '../engine/editor/helpers'
 import { INTERNAL_LAYER_SPACE, Polygon, setupGradientBuffers } from './polygon'
 import { BackgroundFill, ObjectType } from './animations'
 import { FormattedPage, RenderItem } from './rte'
@@ -1013,19 +1020,27 @@ export class TextRenderer {
     this.renderText(device, queue, camera.windowSize)
   }
 
-  containsPoint(point: { x: number; y: number }, camera: Camera): boolean {
-    const untranslated = {
-      x: point.x - this.transform.position[0],
-      y: point.y - this.transform.position[1]
-    }
+  // containsPoint(point: { x: number; y: number }, camera: Camera): boolean {
+  //   const untranslated = {
+  //     x: point.x - this.transform.position[0],
+  //     y: point.y - this.transform.position[1]
+  //   }
 
-    // Check if the point is within the bounds of the rectangle
-    return (
-      untranslated.x >= -0.5 * this.dimensions[0] &&
-      untranslated.x <= 0.5 * this.dimensions[0] &&
-      untranslated.y >= -0.5 * this.dimensions[1] &&
-      untranslated.y <= 0.5 * this.dimensions[1]
-    )
+  //   // Check if the point is within the bounds of the rectangle
+  //   return (
+  //     untranslated.x >= -0.5 * this.dimensions[0] &&
+  //     untranslated.x <= 0.5 * this.dimensions[0] &&
+  //     untranslated.y >= -0.5 * this.dimensions[1] &&
+  //     untranslated.y <= 0.5 * this.dimensions[1]
+  //   )
+  // }
+
+  containsPoint(ray: Ray, windowSize: WindowSize): boolean {
+    // Ensure you are using the sphere's world position and radius
+    const center = this.transform.position
+    const radius = toSystemScale(this.dimensions[0], windowSize.width)
+
+    return checkRaySphereIntersection(ray, center, radius)
   }
 
   // textAreaCharContainsPoint(point: { x: number; y: number }) {
