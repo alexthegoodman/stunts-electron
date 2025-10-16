@@ -329,7 +329,9 @@ export class BunnyExport {
 
     onProgress?.(1)
 
-    return new Blob([buffer], { type: 'video/mp4' })
+    const finalBlob = new Blob([buffer], { type: 'video/mp4' })
+
+    this.finalize(finalBlob)
   }
 
   async captureFrame(texture: PolyfillTexture): Promise<ImageData> {
@@ -401,9 +403,7 @@ export class BunnyExport {
     }
   }
 
-  async finalize() {
-    const videoBlob = null
-
+  async finalize(videoBlob: Blob) {
     if (!videoBlob) {
       return
     }
@@ -412,7 +412,7 @@ export class BunnyExport {
     const url = URL.createObjectURL(videoBlob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'output.mp4'
+    a.download = `output-${new Date().toISOString()}.mp4`
     a.click()
   }
 }
