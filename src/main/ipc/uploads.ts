@@ -42,11 +42,10 @@ function getMimeTypeFromBuffer(buffer: Buffer, type: 'image' | 'video' | 'model'
   } else if (type === 'model') {
     if (buffer.length < 4) return null
     // GLB (starts with glTF magic number 0x46546C67)
-    if (buffer[0] === 0x67 && buffer[1] === 0x6C && buffer[2] === 0x54 && buffer[3] === 0x46)
+    if (buffer[0] === 0x67 && buffer[1] === 0x6c && buffer[2] === 0x54 && buffer[3] === 0x46)
       return 'model/gltf-binary'
     // GLTF (JSON file, starts with '{')
-    if (buffer[0] === 0x7B)
-      return 'model/gltf+json'
+    if (buffer[0] === 0x7b) return 'model/gltf+json'
   }
   return null
 }
@@ -357,12 +356,8 @@ export function registerUploadHandlers(): void {
   })
 
   // Get video by filename (used by UI)
-  ipcMain.handle('uploads:getVideo', async (_event, fileName: string) => {
+  ipcMain.handle('uploads:getVideo', async (_event, videoPath: string) => {
     try {
-      const uploadsDir = getUploadsDir()
-      // const videoPath = path.join(uploadsDir, 'videos', fileName)
-      const videoPath = fileName
-
       console.info('reading video', videoPath)
       const buffer = await fs.readFile(videoPath)
       const mimeType = getMimeTypeFromBuffer(buffer, 'video') || 'video/mp4'

@@ -54,6 +54,7 @@
     "jsonwebtoken": "^9.0.2",
     "luxon": "^3.5.0",
     "masonic": "^4.1.0",
+    "mediabunny": "^1.23.0",
     "mp4box": "^0.5.3",
     "react-color-palette": "^7.3.0",
     "react-hook-form": "^7.54.2",
