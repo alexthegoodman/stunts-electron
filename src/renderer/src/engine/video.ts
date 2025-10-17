@@ -701,7 +701,8 @@ export class StVideo {
         // Get the next packet/sample from the current time.
         // Mediabunny handles finding the corresponding EncodedVideoChunk data.
         // const sample = await this.videoSampleSink.getSample(this.currentTimestamp)
-        let packet = await this.videoSampleSink.getKeyPacket(this.currentTimestamp)
+        // let packet = await this.videoSampleSink.getKeyPacket(this.currentTimestamp)
+        let packet = await this.videoSampleSink.getPacket(this.currentTimestamp)
 
         if (!packet) {
           throw new Error('No more frames to decode at or after current timestamp')
@@ -721,7 +722,7 @@ export class StVideo {
         this.videoDecoder!.decode(chunk)
 
         // Advance the time for the next frame
-        this.currentTimestamp += chunk.duration
+        this.currentTimestamp += chunk.duration / 1000000
       } catch (error) {
         reject(error)
       }
