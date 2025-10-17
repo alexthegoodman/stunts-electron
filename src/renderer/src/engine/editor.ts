@@ -599,7 +599,9 @@ export class Editor {
         borderRadius: i.borderRadius
       }
 
-      let blob = await getUploadedImageData(i.url)
+      let imageUrl = 'http://localhost:7301/public/uploads/images/' + i.url
+
+      let blob = await getUploadedImageData(imageUrl)
 
       const restored_image = new StImage(
         device!,
@@ -676,12 +678,12 @@ export class Editor {
         // mousePath: i.mousePath,
       }
 
-      let blob = await getUploadedVideoData(i.path)
+      // let blob = await getUploadedVideoData(i.path)
 
       const restored_video = new StVideo(
         device!,
         queue!,
-        blob!,
+        i.path,
         video_config,
         windowSize,
         this.modelBindGroupLayout!,
@@ -696,7 +698,7 @@ export class Editor {
       await restored_video.initialize(
         device!,
         queue!,
-        blob!,
+        i.path,
         video_config,
         windowSize,
         this.modelBindGroupLayout!,
@@ -896,12 +898,12 @@ export class Editor {
           // mousePath: i.mousePath,
         }
 
-        let blob = await getUploadedVideoData(i.path)
+        // let blob = await getUploadedVideoData(i.path)
 
         const restored_video = new StVideo(
           device!,
           queue!,
-          blob!,
+          i.path,
           video_config,
           windowSize,
           this.modelBindGroupLayout!,
@@ -917,7 +919,7 @@ export class Editor {
         await restored_video.initialize(
           device!,
           queue!,
-          blob!,
+          i.path,
           video_config,
           windowSize,
           this.modelBindGroupLayout!,
@@ -2928,7 +2930,7 @@ export class Editor {
     // device: Polyfilldevice!,
     // queue: PolyfillQueue,
     video_config: StVideoConfig,
-    blob: Blob,
+    url: string,
     new_id: string,
     selected_sequence_id: string,
     mouse_positions: MousePosition[],
@@ -2936,7 +2938,7 @@ export class Editor {
   ) {
     let video_item = await this.create_video_item(
       video_config,
-      blob,
+      url,
       new_id,
       selected_sequence_id,
       mouse_positions,
@@ -2955,7 +2957,7 @@ export class Editor {
     // device: Polyfilldevice!,
     // queue: PolyfillQueue,
     video_config: StVideoConfig,
-    blob: Blob,
+    url: string,
     new_id: string,
     selected_sequence_id: string,
     mouse_positions: MousePosition[],
@@ -2985,7 +2987,7 @@ export class Editor {
     let video_item = new StVideo(
       device!,
       queue!,
-      blob,
+      url,
       video_config,
       windowSize,
       this.modelBindGroupLayout,
@@ -3000,7 +3002,7 @@ export class Editor {
     await video_item.initialize(
       device!,
       queue!,
-      blob,
+      url,
       video_config,
       windowSize,
       this.modelBindGroupLayout,

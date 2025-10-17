@@ -88,7 +88,7 @@ export class StImage {
     this.id = imageConfig.id
     this.currentSequenceId = currentSequenceId
     this.name = imageConfig.name
-    this.url = url
+    this.url = 'http://localhost:7301/public/uploads/images/' + url
     this.replicateUrl = imageConfig.replicateUrl
     this.layer = imageConfig.layer
     this.layerSpacing = 0.001

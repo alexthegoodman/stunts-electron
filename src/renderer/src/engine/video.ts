@@ -4,7 +4,16 @@ import { CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Point } from './editor'
 import { createEmptyGroupTransform, Transform } from './transform'
 import { fromNDC, getZLayer, toNDC, toSystemScale, Vertex } from './vertex'
 import { INTERNAL_LAYER_SPACE, SavedPoint, setupGradientBuffers } from './polygon'
-import MP4Box, { DataStream, MP4ArrayBuffer, MP4VideoTrack } from 'mp4box'
+// import MP4Box, { DataStream, MP4ArrayBuffer, MP4VideoTrack } from 'mp4box'
+import {
+  Input,
+  UrlSource,
+  ALL_FORMATS,
+  InputVideoTrack,
+  VideoSampleSink,
+  InputDisposedError,
+  EncodedPacketSink
+} from 'mediabunny'
 import { WindowSize } from './camera'
 import { MotionPath } from './motionpath'
 import { ObjectType } from './animations'
@@ -86,7 +95,8 @@ interface VideoMetadata {
   trackId?: number
   timescale: number
   codecs: string
-  description?: Uint8Array
+  // description?: Uint8Array
+  description: VideoDecoderConfig | null
 }
 
 interface DecodedFrameInfo {
@@ -140,16 +150,26 @@ export class StVideo {
   objectTypeShader: number = 3
   isMockupChild: boolean = false
 
-  private videoDecoder?: VideoDecoder
-  private mp4File?: MP4Box.MP4File
-  private sourceBuffer?: MP4ArrayBuffer
-  private videoMetadata?: VideoMetadata
-  private isInitialized: boolean = false
-  private samples: MP4Box.MP4Sample[] = []
-  private currentSampleIndex: number = 0
-  private decodingPromise?: Promise<DecodedFrameInfo>
-  private frameCallback?: (frame: DecodedFrameInfo) => void
-  private codecString?: string
+  // mp4box
+  // private videoDecoder?: VideoDecoder
+  // private mp4File?: MP4Box.MP4File
+  // private sourceBuffer?: MP4ArrayBuffer
+  // private videoMetadata?: VideoMetadata
+  // private isInitialized: boolean = false
+  // private samples: MP4Box.MP4Sample[] = []
+  // private currentSampleIndex: number = 0
+  // private decodingPromise?: Promise<DecodedFrameInfo>
+  // private frameCallback?: (frame: DecodedFrameInfo) => void
+  // private codecString?: string
+
+  private input: Input | null = null
+  private videoTrack: InputVideoTrack | null = null
+  private videoSampleSink: EncodedPacketSink | null = null
+  private videoDecoder: VideoDecoder | null = null
+  private videoMetadata: VideoMetadata | null = null
+  private currentTimestamp: number = 0 // Use seconds
+  private frameCallback: ((frameInfo: DecodedFrameInfo) => void) | undefined
+  public isInitialized: boolean = false
 
   bytesPerFrame: number | null = null
   borderRadius: number
@@ -159,7 +179,7 @@ export class StVideo {
   constructor(
     device: PolyfillDevice,
     queue: PolyfillQueue,
-    blob: Blob,
+    url: string,
     videoConfig: StVideoConfig,
     windowSize: { width: number; height: number },
     bindGroupLayout: PolyfillBindGroupLayout,
@@ -200,7 +220,7 @@ export class StVideo {
   async initialize(
     device: PolyfillDevice,
     queue: PolyfillQueue,
-    blob: Blob,
+    url: string,
     videoConfig: StVideoConfig,
     windowSize: { width: number; height: number },
     bindGroupLayout: PolyfillBindGroupLayout,
@@ -210,6 +230,8 @@ export class StVideo {
     currentSequenceId: string,
     loadedHidden: boolean
   ) {
+    let videoUrl = 'http://localhost:7301/public/uploads/videos/' + url
+
     this.dimensions = videoConfig.dimensions
 
     const identityMatrix = mat4.create()
@@ -292,7 +314,7 @@ export class StVideo {
     this.groupTransform = group_transform
 
     if (process.env.NODE_ENV !== 'test') {
-      const mediaInfo = await this.initializeMediaSource(blob)
+      const mediaInfo = await this.initializeMediaSource(videoUrl)
 
       if (mediaInfo) {
         const { duration, durationMs, width, height, frameRate } = mediaInfo
@@ -553,6 +575,201 @@ export class StVideo {
     }
   }
 
+  // The input parameter is a URL string now, not a Blob
+  async initializeMediaSource(url: string): Promise<VideoMetadata | null> {
+    try {
+      // 1. Create Input with UrlSource
+      this.input = new Input({
+        formats: ALL_FORMATS,
+        source: new UrlSource(url)
+      })
+
+      // 2. Get the primary video track
+      const videoTrack = await this.input.getPrimaryVideoTrack()
+      if (!videoTrack) {
+        throw new Error('No video track found in the file')
+      }
+      this.videoTrack = videoTrack
+
+      // 3. Extract core metadata
+      const [duration, decoderConfig, packetStats] = await Promise.all([
+        this.input.computeDuration(),
+        videoTrack.getDecoderConfig(),
+        videoTrack.computePacketStats() // For accurate frame rate
+      ])
+
+      if (!decoderConfig || !videoTrack.codec) {
+        throw new Error('Could not get decoder configuration or codec string')
+      }
+
+      const durationMs = duration * 1000
+      const frameRate = packetStats.averagePacketRate
+
+      this.videoMetadata = {
+        duration: duration,
+        durationMs: durationMs,
+        width: videoTrack.displayWidth,
+        height: videoTrack.displayHeight,
+        frameRate: frameRate,
+        trackId: videoTrack.id,
+        timescale: videoTrack.timeResolution, // This is the 'time resolution'
+        codecs: videoTrack.codec,
+        description: decoderConfig // The full VideoDecoderConfig
+      }
+
+      console.log('Codec string:', videoTrack.codec)
+      console.log('Decoder config:', decoderConfig)
+
+      // 4. Create the VideoSampleSink for decoding (equivalent to MP4Box's extraction options)
+      // this.videoSampleSink = new VideoSampleSink(videoTrack)
+      this.videoSampleSink = new EncodedPacketSink(videoTrack)
+
+      this.isInitialized = true
+      return this.videoMetadata
+    } catch (error) {
+      console.error('Error initializing media source:', error)
+      this.input?.dispose()
+      this.isInitialized = false
+      return null
+    }
+  }
+
+  private async initializeDecoder(): Promise<void> {
+    if (this.videoDecoder) {
+      console.warn('Video decoder already initialized')
+      return
+    }
+
+    if (!this.videoMetadata || !this.videoMetadata.description) {
+      throw new Error('Codec information or decoder config not available')
+    }
+
+    return new Promise((resolve, reject) => {
+      // The output and error handling remain the same
+      this.videoDecoder = new VideoDecoder({
+        output: async (frame: VideoFrame) => {
+          try {
+            const frameInfo: DecodedFrameInfo = {
+              timestamp: frame.timestamp / 1000000, // WebCodecs timestamp is in microseconds, convert to milliseconds or seconds if needed
+              duration: (frame.duration || 0) / 1000000,
+              frame,
+              width: frame.displayWidth,
+              height: frame.displayHeight
+            }
+
+            this.frameCallback?.(frameInfo)
+          } catch (error) {
+            console.error('Error processing frame:', error)
+            frame.close()
+          }
+        },
+        error: (error: DOMException) => {
+          console.error('VideoDecoder error:', error)
+          reject(error)
+        }
+      })
+
+      // Configure the decoder using the object from metadata
+      const config: VideoDecoderConfig = {
+        ...this.videoMetadata.description,
+        // Override with your specific preferences
+        optimizeForLatency: true,
+        hardwareAcceleration: 'no-preference'
+      }
+
+      this.videoDecoder.configure(config)
+
+      resolve()
+    })
+  }
+
+  async decodeNextFrame(): Promise<DecodedFrameInfo> {
+    if (!this.isInitialized || !this.videoSampleSink) {
+      throw new Error('Video not initialized or sink not available')
+    }
+
+    return new Promise(async (resolve, reject) => {
+      this.frameCallback = (frameInfo: DecodedFrameInfo) => {
+        this.frameCallback = undefined
+        resolve(frameInfo)
+      }
+
+      try {
+        // The VideoSampleSink.samples() generator is the most direct equivalent
+        // to iterating through MP4Box samples.
+
+        // Get the next packet/sample from the current time.
+        // Mediabunny handles finding the corresponding EncodedVideoChunk data.
+        // const sample = await this.videoSampleSink.getSample(this.currentTimestamp)
+        let packet = await this.videoSampleSink.getKeyPacket(this.currentTimestamp)
+
+        if (!packet) {
+          throw new Error('No more frames to decode at or after current timestamp')
+        }
+
+        // Convert the Mediabunny packet to an EncodedVideoChunk
+        // const chunk = new EncodedVideoChunk({
+        //   type: packet.isSync ? 'key' : 'delta',
+        //   timestamp: packet.timestamp * 1000000, // Mediabunny timestamps are in seconds, WebCodecs in microseconds
+        //   duration: packet.duration * 1000000,
+        //   data: packet.data // Uint8Array
+        // })
+
+        let chunk = packet.toEncodedVideoChunk()
+
+        // This is a common pattern: decode and increment the timestamp
+        this.videoDecoder!.decode(chunk)
+
+        // Advance the time for the next frame
+        this.currentTimestamp += chunk.duration
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
+
+  async drawVideoFrame(device: PolyfillDevice, queue: PolyfillQueue, timeMs?: number) {
+    if (timeMs !== undefined) {
+      await this.seekToTime(timeMs)
+    }
+
+    const frameInfo = await this.decodeNextFrame()
+
+    // Your WebGPU logic remains the same as it uses the resulting VideoFrame
+
+    queue.writeTexture(
+      {
+        texture: this.texture,
+        mipLevel: 0,
+        origin: { x: 0, y: 0, z: 0 }
+      },
+      frameInfo.frame,
+      {
+        offset: 0,
+        bytesPerRow: frameInfo.width * 4,
+        rowsPerImage: frameInfo.height
+      },
+      {
+        width: frameInfo.width,
+        height: frameInfo.height,
+        depthOrArrayLayers: 1
+      }
+    )
+
+    frameInfo.frame.close()
+
+    return frameInfo
+  }
+
+  async seekToTime(timeMs: number): Promise<void> {
+    if (!this.isInitialized || !this.videoTrack) {
+      throw new Error('Video not initialized')
+    }
+
+    // Convert timeMs to seconds for Mediabunny
+    this.currentTimestamp = timeMs / 1000
+  }
+
   calculateCoverTextureCoordinates(
     containerWidth: number,
     containerHeight: number,
@@ -591,465 +808,402 @@ export class StVideo {
     return { u0, u1, v0, v1 }
   }
 
-  // implementCoverEffect(videoWidth: number, videoHeight: number) {
-  //   const rows = this.gridResolution[0];
-  //   const cols = this.gridResolution[1];
+  // private avcDecoderConfig?: Uint8Array
 
-  //   // Calculate aspect ratios
-  //   const videoAspect = videoWidth / videoHeight;
-  //   const gridAspect = this.dimensions[0] / this.dimensions[1];
-
-  //   // Determine scaling factor to cover the grid
-  //   let scaleX, scaleY;
-  //   if (videoAspect > gridAspect) {
-  //     // Video is wider than grid - scale based on height
-  //     scaleY = 1.0;
-  //     scaleX = videoAspect / gridAspect;
-  //   } else {
-  //     // Video is taller than grid - scale based on width
-  //     scaleX = 1.0;
-  //     scaleY = gridAspect / videoAspect;
+  // description(track: MP4VideoTrack) {
+  //   if (!this.mp4File) {
+  //     return
   //   }
 
-  //   console.info(
-  //     "scales",
-  //     scaleX,
-  //     scaleY,
-  //     gridAspect,
-  //     videoAspect,
-  //     this.dimensions[0],
-  //     this.dimensions[1]
-  //   );
+  //   const trak = this.mp4File.getTrackById(track.id)
 
-  //   this.vertices = [];
-  //   for (let y = 0; y <= rows; y++) {
-  //     for (let x = 0; x <= cols; x++) {
-  //       // Position coordinates remain the same
-  //       const posX = -0.5 + x / cols;
-  //       const posY = -0.5 + y / rows;
+  //   if (!trak.mdia || !trak.mdia.minf || !trak.mdia.minf.stbl || !trak.mdia.minf.stbl.stsd) {
+  //     return
+  //   }
 
-  //       // Modified texture coordinates for cover effect
-  //       // Center the texture and apply scaling
-  //       const texX = (x / cols - 0.5) * scaleX + 0.5;
-  //       const texY = (y / rows - 0.5) * scaleY + 0.5;
-
-  //       // console.info("tex coords", texX, texY);
-
-  //       const normalizedX =
-  //         (posX - this.transform.position[0]) / this.dimensions[0];
-  //       const normalizedY =
-  //         (posY - this.transform.position[1]) / this.dimensions[1];
-
-  //       this.vertices.push({
-  //         position: [posX, posY, 0.0],
-  //         tex_coords: [texX, texY],
-  //         color: [1.0, 1.0, 1.0, 1.0],
-  //         gradient_coords: [normalizedX, normalizedY],
-  //         object_type: 3, // OBJECT_TYPE_VIDEO
-  //       });
+  //   for (const entry of trak.mdia.minf.stbl.stsd.entries) {
+  //     const box = entry.avcC || entry.hvcC
+  //     // || entry.vpcC || entry.av1C;
+  //     if (box) {
+  //       // console.info("prepare box!");
+  //       const stream = new DataStream(undefined, 0, DataStream.BIG_ENDIAN)
+  //       box.write(stream)
+  //       return new Uint8Array(stream.buffer, 8) // Remove the box header.
   //     }
+  //   }
+  //   throw new Error('avcC, hvcC, vpcC, or av1C box not found')
+  // }
+
+  // async initializeMediaSource(blob: Blob): Promise<VideoMetadata | null> {
+  //   try {
+  //     this.sourceBuffer = (await blob.arrayBuffer()) as MP4ArrayBuffer
+  //     this.sourceBuffer.fileStart = 0
+  //     this.mp4File = MP4Box.createFile()
+
+  //     return new Promise((resolve, reject) => {
+  //       if (!this.mp4File) {
+  //         reject(new Error('MP4Box not initialized'))
+  //         return
+  //       }
+
+  //       this.mp4File.onError = (error: string) => {
+  //         reject(new Error(`MP4Box error: ${error}`))
+  //       }
+
+  //       this.mp4File.onReady = (info: MP4Box.MP4Info) => {
+  //         const videoTrack = info.videoTracks[0]
+
+  //         console.info('track length ', info.videoTracks.length)
+
+  //         if (!videoTrack) {
+  //           reject(new Error('No video track found in the file'))
+  //           return
+  //         }
+
+  //         // Store codec string for decoder configuration
+  //         this.codecString = videoTrack.codec
+
+  //         this.avcDecoderConfig = this.description(videoTrack)
+
+  //         console.log('Codec string:', videoTrack.codec)
+  //         console.log('avcC length:', this.avcDecoderConfig?.length)
+  //         if (this.avcDecoderConfig) {
+  //           const firstFewBytes = Array.from(this.avcDecoderConfig.slice(0, 10))
+  //             .map((byte) => byte.toString(16).padStart(2, '0'))
+  //             .join('')
+  //           console.log('First few bytes of avcC:', firstFewBytes)
+  //         }
+
+  //         this.mp4File!.setExtractionOptions(videoTrack.id, null, {
+  //           nbSamples: Infinity
+  //         })
+
+  //         this.mp4File!.onSamples = (track_id: number, user: any, samples: MP4Box.MP4Sample[]) => {
+  //           // console.info("onSamples");
+
+  //           this.samples = samples
+
+  //           // console.info("original duration", videoTrack.duration);
+
+  //           // const durationInSeconds = videoTrack.duration / 1000;
+  //           // const durationMs = videoTrack.duration;
+  //           // const frameRate = samples.length / durationInSeconds;
+
+  //           const durationInSeconds = info.duration / info.timescale
+  //           const durationMs = durationInSeconds * 1000
+  //           const frameRate = samples.length / durationInSeconds
+
+  //           console.info(
+  //             'samples ',
+  //             samples.length,
+  //             'info ',
+  //             info.duration,
+  //             info.timescale,
+  //             'track: ',
+  //             videoTrack.duration,
+  //             videoTrack.timescale,
+  //             'rate: ',
+  //             frameRate,
+  //             durationInSeconds
+  //           )
+
+  //           this.videoMetadata = {
+  //             duration: durationInSeconds,
+  //             durationMs: durationMs,
+  //             width: videoTrack.video.width,
+  //             height: videoTrack.video.height,
+  //             frameRate: frameRate,
+  //             trackId: videoTrack.id,
+  //             timescale: videoTrack.timescale,
+  //             codecs: videoTrack.codec,
+  //             description: this.avcDecoderConfig
+  //           }
+
+  //           this.isInitialized = true
+  //           resolve(this.videoMetadata)
+  //         }
+
+  //         this.mp4File!.start()
+  //       }
+
+  //       // (this.mp4File as any).fileStart = 0;
+  //       if (!this.sourceBuffer) {
+  //         return
+  //       }
+
+  //       console.info('append buffer')
+
+  //       this.mp4File.appendBuffer(this.sourceBuffer)
+  //     })
+  //   } catch (error) {
+  //     console.error('Error initializing media source:', error)
+  //     this.isInitialized = false
+  //     return null
   //   }
   // }
 
-  private avcDecoderConfig?: Uint8Array
-
-  description(track: MP4VideoTrack) {
-    if (!this.mp4File) {
-      return
-    }
-
-    const trak = this.mp4File.getTrackById(track.id)
-
-    if (!trak.mdia || !trak.mdia.minf || !trak.mdia.minf.stbl || !trak.mdia.minf.stbl.stsd) {
-      return
-    }
-
-    for (const entry of trak.mdia.minf.stbl.stsd.entries) {
-      const box = entry.avcC || entry.hvcC
-      // || entry.vpcC || entry.av1C;
-      if (box) {
-        // console.info("prepare box!");
-        const stream = new DataStream(undefined, 0, DataStream.BIG_ENDIAN)
-        box.write(stream)
-        return new Uint8Array(stream.buffer, 8) // Remove the box header.
-      }
-    }
-    throw new Error('avcC, hvcC, vpcC, or av1C box not found')
-  }
-
-  async initializeMediaSource(blob: Blob): Promise<VideoMetadata | null> {
-    try {
-      this.sourceBuffer = (await blob.arrayBuffer()) as MP4ArrayBuffer
-      this.sourceBuffer.fileStart = 0
-      this.mp4File = MP4Box.createFile()
-
-      return new Promise((resolve, reject) => {
-        if (!this.mp4File) {
-          reject(new Error('MP4Box not initialized'))
-          return
-        }
-
-        this.mp4File.onError = (error: string) => {
-          reject(new Error(`MP4Box error: ${error}`))
-        }
-
-        this.mp4File.onReady = (info: MP4Box.MP4Info) => {
-          const videoTrack = info.videoTracks[0]
-
-          console.info('track length ', info.videoTracks.length)
-
-          if (!videoTrack) {
-            reject(new Error('No video track found in the file'))
-            return
-          }
-
-          // Store codec string for decoder configuration
-          this.codecString = videoTrack.codec
-
-          this.avcDecoderConfig = this.description(videoTrack)
-
-          console.log('Codec string:', videoTrack.codec)
-          console.log('avcC length:', this.avcDecoderConfig?.length)
-          if (this.avcDecoderConfig) {
-            const firstFewBytes = Array.from(this.avcDecoderConfig.slice(0, 10))
-              .map((byte) => byte.toString(16).padStart(2, '0'))
-              .join('')
-            console.log('First few bytes of avcC:', firstFewBytes)
-          }
-
-          this.mp4File!.setExtractionOptions(videoTrack.id, null, {
-            nbSamples: Infinity
-          })
-
-          this.mp4File!.onSamples = (track_id: number, user: any, samples: MP4Box.MP4Sample[]) => {
-            // console.info("onSamples");
-
-            this.samples = samples
-
-            // console.info("original duration", videoTrack.duration);
-
-            // const durationInSeconds = videoTrack.duration / 1000;
-            // const durationMs = videoTrack.duration;
-            // const frameRate = samples.length / durationInSeconds;
-
-            const durationInSeconds = info.duration / info.timescale
-            const durationMs = durationInSeconds * 1000
-            const frameRate = samples.length / durationInSeconds
-
-            console.info(
-              'samples ',
-              samples.length,
-              'info ',
-              info.duration,
-              info.timescale,
-              'track: ',
-              videoTrack.duration,
-              videoTrack.timescale,
-              'rate: ',
-              frameRate,
-              durationInSeconds
-            )
-
-            this.videoMetadata = {
-              duration: durationInSeconds,
-              durationMs: durationMs,
-              width: videoTrack.video.width,
-              height: videoTrack.video.height,
-              frameRate: frameRate,
-              trackId: videoTrack.id,
-              timescale: videoTrack.timescale,
-              codecs: videoTrack.codec,
-              description: this.avcDecoderConfig
-            }
-
-            this.isInitialized = true
-            resolve(this.videoMetadata)
-          }
-
-          this.mp4File!.start()
-        }
-
-        // (this.mp4File as any).fileStart = 0;
-        if (!this.sourceBuffer) {
-          return
-        }
-
-        console.info('append buffer')
-
-        this.mp4File.appendBuffer(this.sourceBuffer)
-      })
-    } catch (error) {
-      console.error('Error initializing media source:', error)
-      this.isInitialized = false
-      return null
-    }
-  }
-
-  private async initializeDecoder(): Promise<void> {
-    // console.info("initializeDecoder");
-
-    if (this.videoDecoder) {
-      console.warn('Video decoder already initialized')
-      return
-    }
-
-    return new Promise((resolve, reject) => {
-      if (!this.codecString || !this.videoMetadata) {
-        throw new Error('Codec information not available')
-      }
-
-      this.videoDecoder = new VideoDecoder({
-        output: async (frame: VideoFrame) => {
-          try {
-            if (!this.bytesPerFrame) {
-              console.error('No bytesPerFrame set')
-              throw new Error('No bytesPerFrame')
-            }
-
-            // console.info(
-            //   "decoder output",
-            //   this.bytesPerFrame,
-            //   frame.allocationSize(),
-            //   frame.codedWidth,
-            //   frame.displayWidth,
-            //   frame.colorSpace
-            // );
-
-            // needed for webgpu?
-            // const frameData = new Uint8ClampedArray(this.bytesPerFrame);
-            // const options: VideoFrameCopyToOptions = {
-            //   colorSpace: "srgb",
-            //   format: "RGBA",
-            // };
-            // await frame.copyTo(frameData, options);
-
-            // hmmm?
-            // const bitmap = await createImageBitmap(frame);
-
-            const frameInfo: DecodedFrameInfo = {
-              timestamp: frame.timestamp,
-              duration: frame.duration || 0,
-              // frameData,
-              // bitmap,
-              frame,
-              width: frame.displayWidth,
-              height: frame.displayHeight
-            }
-
-            // console.info("this.frameCallback", this.frameCallback);
-
-            // console.info(
-            //   "frameInfo",
-            //   frameInfo.width,
-            //   frameInfo.height,
-            //   frameInfo.frame.displayWidth,
-            //   frameInfo.frame.displayHeight
-            // );
-
-            this.frameCallback?.(frameInfo)
-            // frame.close();
-          } catch (error) {
-            console.error('Error processing frame:', error)
-            frame.close()
-          }
-        },
-        error: (error: DOMException) => {
-          console.error('VideoDecoder error:', error)
-          reject(error)
-        }
-      })
-
-      // Configure the decoder with the codec information and AVC configuration
-      // const colorSpace: VideoColorSpaceInit = {
-      //   fullRange: false,
-      //   matrix: "rgb",
-      //   // primaries?: VideoColorPrimaries | null;
-      //   // transfer?: VideoTransferCharacteristics | null;
-      //   primaries: "bt709",
-      //   transfer: "iec61966-2-1",
-      // };
-
-      // let test  = new VideoColorSpace(colorSpace);
-
-      const config: VideoDecoderConfig = {
-        codec: this.codecString,
-        // optimizeForLatency: true,
-        // hardwareAcceleration: "prefer-hardware",
-        // testing settings for taller videos...
-        optimizeForLatency: true,
-        hardwareAcceleration: 'no-preference',
-        // colorSpace: colorSpace,
-
-        // Add description for AVC/H.264
-        description: this.avcDecoderConfig
-      }
-
-      this.videoDecoder.configure(config)
-
-      // console.info("decoder configured");
-
-      resolve()
-    })
-  }
-
-  async seekToTime(timeMs: number): Promise<void> {
-    if (!this.isInitialized || !this.samples.length) {
-      throw new Error('Video not initialized')
-    }
-
-    const timescale = this.videoMetadata!.timescale
-    const timeInTimescale = (timeMs / 1000) * timescale
-
-    // Find the nearest keyframe before the desired time
-    let targetIndex = 0
-    for (let i = 0; i < this.samples.length; i++) {
-      if (this.samples[i].cts > timeInTimescale) {
-        break
-      }
-      if (this.samples[i].is_sync) {
-        targetIndex = i
-      }
-    }
-
-    this.currentSampleIndex = targetIndex
-  }
-
-  async decodeNextFrame(): Promise<DecodedFrameInfo> {
-    // console.info("decodeNextFrame 1");
-
-    if (!this.isInitialized || this.currentSampleIndex >= this.samples.length) {
-      throw new Error('No more frames to decode')
-    }
-
-    return new Promise((resolve, reject) => {
-      // console.info("decodeNextFrame 2");
-
-      this.frameCallback = (frameInfo: DecodedFrameInfo) => {
-        // console.info("decodeNextFrame 3");
-
-        this.frameCallback = undefined
-        resolve(frameInfo)
-      }
-
-      let sample = this.samples[this.currentSampleIndex]
-
-      const chunk = new EncodedVideoChunk({
-        type: sample.is_sync ? 'key' : 'delta',
-        timestamp: sample.cts,
-        duration: sample.duration,
-        data: sample.data
-      })
-
-      // console.log(
-      //   "EncodedVideoChunk:",
-      //   chunk.type,
-      //   chunk.timestamp,
-      //   chunk.duration,
-      //   chunk.byteLength
-      // );
-
-      // console.info(
-      //   "decode chunk",
-      //   this.samples.length,
-      //   chunk.type,
-      //   this.currentSampleIndex,
-      //   sample.is_sync
-      // );
-
-      this.videoDecoder!.decode(chunk)
-
-      // console.info("chunk decoded", sample.data.length);
-
-      this.currentSampleIndex++
-    })
-  }
-
-  async drawVideoFrame(device: PolyfillDevice, queue: PolyfillQueue, timeMs?: number) {
-    if (timeMs !== undefined) {
-      await this.seekToTime(timeMs)
-    }
-
-    // console.info("calling decodeNextFrame", this.currentSampleIndex);
-
-    const frameInfo = await this.decodeNextFrame()
-
-    // console.info(
-    //   "frame info",
-    //   frameInfo.width,
-    //   frameInfo.height,
-    //   frameInfo.frame.displayWidth,
-    //   frameInfo.frame.displayHeight
-    // );
-
-    // this.bindGroup = device.createBindGroup({
-    //   layout: this.bindGroupLayout,
-    //   entries: [
-    //     {
-    //       binding: 0,
-    //       resource: {
-    //         buffer: this.uniformBuffer,
-    //       },
-    //     },
-    //     {
-    //       binding: 1,
-    //       resource: device.importExternalTexture({ source: frameInfo.frame }),
-    //     },
-    //     { binding: 2, resource: this.sampler },
-    //   ],
-    //   label: "Video Bind Group",
-    // });
-
-    // console.info("frameInfo", frameInfo);
-
-    // Update WebGPU texture
-    queue.writeTexture(
-      {
-        texture: this.texture,
-        mipLevel: 0,
-        origin: { x: 0, y: 0, z: 0 }
-        // aspect: "all",
-      },
-      // frameInfo.frameData,
-      frameInfo.frame,
-      {
-        offset: 0,
-        bytesPerRow: frameInfo.width * 4,
-        rowsPerImage: frameInfo.height
-      },
-      {
-        width: frameInfo.width,
-        height: frameInfo.height,
-        depthOrArrayLayers: 1
-      }
-    )
-
-    // console.info("close frame");
-
-    frameInfo.frame.close()
-
-    // console.info("texture write succesful");
-    // console.log("Texture format:", this.texture.format); // Log texture format
-
-    return frameInfo
-  }
+  // private async initializeDecoder(): Promise<void> {
+  //   // console.info("initializeDecoder");
+
+  //   if (this.videoDecoder) {
+  //     console.warn('Video decoder already initialized')
+  //     return
+  //   }
+
+  //   return new Promise((resolve, reject) => {
+  //     if (!this.codecString || !this.videoMetadata) {
+  //       throw new Error('Codec information not available')
+  //     }
+
+  //     this.videoDecoder = new VideoDecoder({
+  //       output: async (frame: VideoFrame) => {
+  //         try {
+  //           if (!this.bytesPerFrame) {
+  //             console.error('No bytesPerFrame set')
+  //             throw new Error('No bytesPerFrame')
+  //           }
+
+  //           // console.info(
+  //           //   "decoder output",
+  //           //   this.bytesPerFrame,
+  //           //   frame.allocationSize(),
+  //           //   frame.codedWidth,
+  //           //   frame.displayWidth,
+  //           //   frame.colorSpace
+  //           // );
+
+  //           // needed for webgpu?
+  //           // const frameData = new Uint8ClampedArray(this.bytesPerFrame);
+  //           // const options: VideoFrameCopyToOptions = {
+  //           //   colorSpace: "srgb",
+  //           //   format: "RGBA",
+  //           // };
+  //           // await frame.copyTo(frameData, options);
+
+  //           // hmmm?
+  //           // const bitmap = await createImageBitmap(frame);
+
+  //           const frameInfo: DecodedFrameInfo = {
+  //             timestamp: frame.timestamp,
+  //             duration: frame.duration || 0,
+  //             // frameData,
+  //             // bitmap,
+  //             frame,
+  //             width: frame.displayWidth,
+  //             height: frame.displayHeight
+  //           }
+
+  //           // console.info("this.frameCallback", this.frameCallback);
+
+  //           // console.info(
+  //           //   "frameInfo",
+  //           //   frameInfo.width,
+  //           //   frameInfo.height,
+  //           //   frameInfo.frame.displayWidth,
+  //           //   frameInfo.frame.displayHeight
+  //           // );
+
+  //           this.frameCallback?.(frameInfo)
+  //           // frame.close();
+  //         } catch (error) {
+  //           console.error('Error processing frame:', error)
+  //           frame.close()
+  //         }
+  //       },
+  //       error: (error: DOMException) => {
+  //         console.error('VideoDecoder error:', error)
+  //         reject(error)
+  //       }
+  //     })
+
+  //     // Configure the decoder with the codec information and AVC configuration
+  //     // const colorSpace: VideoColorSpaceInit = {
+  //     //   fullRange: false,
+  //     //   matrix: "rgb",
+  //     //   // primaries?: VideoColorPrimaries | null;
+  //     //   // transfer?: VideoTransferCharacteristics | null;
+  //     //   primaries: "bt709",
+  //     //   transfer: "iec61966-2-1",
+  //     // };
+
+  //     // let test  = new VideoColorSpace(colorSpace);
+
+  //     const config: VideoDecoderConfig = {
+  //       codec: this.codecString,
+  //       // optimizeForLatency: true,
+  //       // hardwareAcceleration: "prefer-hardware",
+  //       // testing settings for taller videos...
+  //       optimizeForLatency: true,
+  //       hardwareAcceleration: 'no-preference',
+  //       // colorSpace: colorSpace,
+
+  //       // Add description for AVC/H.264
+  //       description: this.avcDecoderConfig
+  //     }
+
+  //     this.videoDecoder.configure(config)
+
+  //     // console.info("decoder configured");
+
+  //     resolve()
+  //   })
+  // }
+
+  // async seekToTime(timeMs: number): Promise<void> {
+  //   if (!this.isInitialized || !this.samples.length) {
+  //     throw new Error('Video not initialized')
+  //   }
+
+  //   const timescale = this.videoMetadata!.timescale
+  //   const timeInTimescale = (timeMs / 1000) * timescale
+
+  //   // Find the nearest keyframe before the desired time
+  //   let targetIndex = 0
+  //   for (let i = 0; i < this.samples.length; i++) {
+  //     if (this.samples[i].cts > timeInTimescale) {
+  //       break
+  //     }
+  //     if (this.samples[i].is_sync) {
+  //       targetIndex = i
+  //     }
+  //   }
+
+  //   this.currentSampleIndex = targetIndex
+  // }
+
+  // async decodeNextFrame(): Promise<DecodedFrameInfo> {
+  //   // console.info("decodeNextFrame 1");
+
+  //   if (!this.isInitialized || this.currentSampleIndex >= this.samples.length) {
+  //     throw new Error('No more frames to decode')
+  //   }
+
+  //   return new Promise((resolve, reject) => {
+  //     // console.info("decodeNextFrame 2");
+
+  //     this.frameCallback = (frameInfo: DecodedFrameInfo) => {
+  //       // console.info("decodeNextFrame 3");
+
+  //       this.frameCallback = undefined
+  //       resolve(frameInfo)
+  //     }
+
+  //     let sample = this.samples[this.currentSampleIndex]
+
+  //     const chunk = new EncodedVideoChunk({
+  //       type: sample.is_sync ? 'key' : 'delta',
+  //       timestamp: sample.cts,
+  //       duration: sample.duration,
+  //       data: sample.data
+  //     })
+
+  //     // console.log(
+  //     //   "EncodedVideoChunk:",
+  //     //   chunk.type,
+  //     //   chunk.timestamp,
+  //     //   chunk.duration,
+  //     //   chunk.byteLength
+  //     // );
+
+  //     // console.info(
+  //     //   "decode chunk",
+  //     //   this.samples.length,
+  //     //   chunk.type,
+  //     //   this.currentSampleIndex,
+  //     //   sample.is_sync
+  //     // );
+
+  //     this.videoDecoder!.decode(chunk)
+
+  //     // console.info("chunk decoded", sample.data.length);
+
+  //     this.currentSampleIndex++
+  //   })
+  // }
+
+  // async drawVideoFrame(device: PolyfillDevice, queue: PolyfillQueue, timeMs?: number) {
+  //   if (timeMs !== undefined) {
+  //     await this.seekToTime(timeMs)
+  //   }
+
+  //   // console.info("calling decodeNextFrame", this.currentSampleIndex);
+
+  //   const frameInfo = await this.decodeNextFrame()
+
+  //   // console.info(
+  //   //   "frame info",
+  //   //   frameInfo.width,
+  //   //   frameInfo.height,
+  //   //   frameInfo.frame.displayWidth,
+  //   //   frameInfo.frame.displayHeight
+  //   // );
+
+  //   // this.bindGroup = device.createBindGroup({
+  //   //   layout: this.bindGroupLayout,
+  //   //   entries: [
+  //   //     {
+  //   //       binding: 0,
+  //   //       resource: {
+  //   //         buffer: this.uniformBuffer,
+  //   //       },
+  //   //     },
+  //   //     {
+  //   //       binding: 1,
+  //   //       resource: device.importExternalTexture({ source: frameInfo.frame }),
+  //   //     },
+  //   //     { binding: 2, resource: this.sampler },
+  //   //   ],
+  //   //   label: "Video Bind Group",
+  //   // });
+
+  //   // console.info("frameInfo", frameInfo);
+
+  //   // Update WebGPU texture
+  //   queue.writeTexture(
+  //     {
+  //       texture: this.texture,
+  //       mipLevel: 0,
+  //       origin: { x: 0, y: 0, z: 0 }
+  //       // aspect: "all",
+  //     },
+  //     // frameInfo.frameData,
+  //     frameInfo.frame,
+  //     {
+  //       offset: 0,
+  //       bytesPerRow: frameInfo.width * 4,
+  //       rowsPerImage: frameInfo.height
+  //     },
+  //     {
+  //       width: frameInfo.width,
+  //       height: frameInfo.height,
+  //       depthOrArrayLayers: 1
+  //     }
+  //   )
+
+  //   // console.info("close frame");
+
+  //   frameInfo.frame.close()
+
+  //   // console.info("texture write succesful");
+  //   // console.log("Texture format:", this.texture.format); // Log texture format
+
+  //   return frameInfo
+  // }
 
   getCurrentTime(): number {
-    if (!this.samples[this.currentSampleIndex]) {
-      return 0
-    }
-    return (this.samples[this.currentSampleIndex].cts / this.videoMetadata!.timescale) * 1000
+    return this.currentTimestamp
   }
 
-  getTotalFrames(): number {
-    return this.samples.length
-  }
+  // getTotalFrames(): number {
+  //   return this.samples.length
+  // }
 
   getCurrentFrame(): number {
-    return this.currentSampleIndex
+    return this.currentTimestamp
   }
 
   resetPlayback() {
-    this.currentSampleIndex = 0
+    this.currentTimestamp = 0
     this.numFramesDrawn = 0
   }
 

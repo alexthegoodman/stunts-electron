@@ -703,11 +703,11 @@ export const ToolGrid = ({
           console.info('File url:', url)
 
           // Get the resized video blob
-          const resizedVideoBlob = await getUploadedVideoData(url)
+          // const resizedVideoBlob = await getUploadedVideoData(url)
 
-          if (!resizedVideoBlob) {
-            throw new Error('Failed to get resized video blob')
-          }
+          // if (!resizedVideoBlob) {
+          //   throw new Error('Failed to get resized video blob')
+          // }
 
           if (!editor.settings) {
             console.error('Editor settings are not defined.')
@@ -760,7 +760,7 @@ export const ToolGrid = ({
 
           await editor.add_video_item(
             video_config,
-            resizedVideoBlob,
+            url,
             new_id,
             sequence_id,
             mousePositions || [],
@@ -1016,7 +1016,7 @@ export const ToolGrid = ({
           // First add the video item (the mockup will reference it)
           let new_video_item = await editor.create_video_item(
             videoConfig,
-            resizedVideoBlob,
+            url,
             new_video_id,
             sequence_id,
             [],

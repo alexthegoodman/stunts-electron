@@ -442,9 +442,9 @@ export default function FlowQuestions({
           // Create blob from video URL for video processing
           // const response = await fetch(file.url);
           // const blob = await response.blob();
-          const blob = new Blob() // Placeholder, as we don't want to fetch the actual video
+          // const blob = new Blob() // Placeholder, as we don't want to fetch the actual video
 
-          await editor.add_video_item(video_config, blob, new_id, currentSequenceId, [], null)
+          await editor.add_video_item(video_config, '', new_id, currentSequenceId, [], null)
 
           console.info('Adding video: {:?}', new_id)
 

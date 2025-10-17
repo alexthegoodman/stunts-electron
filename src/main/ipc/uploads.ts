@@ -89,7 +89,8 @@ export function registerUploadHandlers(): void {
         return {
           success: true,
           data: {
-            url: savePath,
+            // url: savePath,
+            url: uniqueFileName,
             fileName: uniqueFileName,
             size: buffer.length,
             mimeType: mimeType
@@ -137,7 +138,8 @@ export function registerUploadHandlers(): void {
       return {
         success: true,
         data: {
-          url: savePath,
+          // url: savePath,
+          url: uniqueFileName,
           fileName: uniqueFileName,
           size: buffer.length,
           mimeType: mimeType
@@ -185,7 +187,8 @@ export function registerUploadHandlers(): void {
         return {
           success: true,
           data: {
-            url: savePath,
+            // url: savePath,
+            url: uniqueFileName,
             fileName: uniqueFileName,
             size: buffer.length,
             mimeType: mimeType
@@ -232,7 +235,8 @@ export function registerUploadHandlers(): void {
         return {
           success: true,
           data: {
-            url: savePath,
+            // url: savePath,
+            url: uniqueFileName,
             fileName: uniqueFileName,
             size: buffer.length,
             mimeType: mimeType
@@ -423,7 +427,8 @@ export function registerUploadHandlers(): void {
         return {
           success: true,
           data: {
-            url: savePath,
+            // url: savePath,
+            url: uniqueFileName,
             fileName: uniqueFileName,
             size: buffer.length,
             mimeType: mimeType,
