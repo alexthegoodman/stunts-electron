@@ -18,6 +18,7 @@ import {
 } from '../../fetchers/projects'
 import { mutate } from 'swr'
 import { useTranslation } from 'react-i18next'
+import { BunnyExport } from '@renderer/engine/export-bunny'
 
 export const ProjectItem = ({
   project_id,
@@ -676,10 +677,42 @@ export const ExportVideoButton: React.FC<{
       return
     }
 
+    // raw webcodecs and mp4box
+    // try {
+    //   let isVertical = editorState.savedState.settings?.dimensions.height === 900 ? true : false
+
+    //   const exporter = new FullExporter(isVertical)
+
+    //   console.info('Initializing FullExporter')
+
+    //   setIsExporting(true)
+
+    //   let progressInterval = setInterval(() => {
+    //     let exportProgress = (window as any).exportProgress
+    //     if (exportProgress) {
+    //       setProgress(exportProgress)
+    //     }
+    //   }, 1000)
+
+    //   await exporter.initialize(editorState.savedState, (progress, currentTime, totalDuration) => {
+    //     let perc = (progress * 100).toFixed(1)
+    //     console.log(`Export progress: ${perc}%`)
+    //     console.log(`Time: ${currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s`)
+    //     ;(window as any).exportProgress = perc
+    //   })
+
+    //   setIsExporting(false)
+    //   clearInterval(progressInterval)
+    // } catch (error: any) {
+    //   console.error('export error', error)
+    //   toast.error(error.message || 'An error occurred')
+    // }
+
+    // mediabunny
     try {
       let isVertical = editorState.savedState.settings?.dimensions.height === 900 ? true : false
 
-      const exporter = new FullExporter(isVertical)
+      const exporter = new BunnyExport()
 
       console.info('Initializing FullExporter')
 
@@ -692,12 +725,20 @@ export const ExportVideoButton: React.FC<{
         }
       }, 1000)
 
+      // sets up pipeline and editor
       await exporter.initialize(editorState.savedState, (progress, currentTime, totalDuration) => {
         let perc = (progress * 100).toFixed(1)
-        console.log(`Export progress: ${perc}%`)
-        console.log(`Time: ${currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s`)
+        console.info(`Export progress: ${perc}%`, progress)
+        // console.log(`Time: ${currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s`)
         ;(window as any).exportProgress = perc
       })
+
+      console.info('Encoding file...')
+
+      // calls frame loop and finalizes with auto downoad
+      await exporter.encodeFile()
+
+      console.info('Exporting finished!')
 
       setIsExporting(false)
       clearInterval(progressInterval)

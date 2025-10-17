@@ -15,7 +15,6 @@ import { getSequenceDuration, SavedState } from './animations'
 import { WindowSize } from './camera'
 
 export class BunnyExport {
-  device: PolyfillDevice
   width: number
   height: number
   audioBuffer?: AudioBuffer
@@ -40,8 +39,7 @@ export class BunnyExport {
   pipeline: CanvasPipeline | null = null
   isVertical: boolean
 
-  constructor(device: PolyfillDevice) {
-    this.device = device
+  constructor() {
     this.isVertical = false
   }
 
@@ -339,7 +337,7 @@ export class BunnyExport {
     const bytesPerRow = Math.ceil(minimumBytesPerRow / 256) * 256
     const bufferSize = bytesPerRow * this.height
 
-    const outputBuffer = this.device.createBuffer(
+    const outputBuffer = this.editor.gpuResources.device.createBuffer(
       {
         size: bufferSize,
         usage:
@@ -349,7 +347,7 @@ export class BunnyExport {
     )
 
     // Create command encoder and copy texture to buffer
-    const paddedData = this.device.copyTextureToBuffer(
+    const paddedData = this.editor.gpuResources.device.copyTextureToBuffer(
       {
         texture: texture,
         mipLevel: 0,
