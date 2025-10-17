@@ -212,8 +212,8 @@ export class BunnyExport {
     // ## 2. Setup the Video Track using VideoSampleSource
     // This source is designed to accept raw video data, frame by frame.
     const videoSource = new VideoSampleSource({
-      codec: video.codec ?? 'avc',
-      bitrate: video.bitrate ?? 5_000_000 // Default to 5 Mbps, matching your original
+      codec: video?.codec ?? 'avc',
+      bitrate: video?.bitrate ?? 5_000_000 // Default to 5 Mbps, matching your original
     })
     output.addVideoTrack(videoSource, { frameRate: fps })
 
