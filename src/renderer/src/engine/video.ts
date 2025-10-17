@@ -230,7 +230,7 @@ export class StVideo {
     currentSequenceId: string,
     loadedHidden: boolean
   ) {
-    let videoUrl = 'http://localhost:7301/public/uploads/videos/' + url
+    let videoUrl = 'http://localhost:7301/public/videos/' + url
 
     this.dimensions = videoConfig.dimensions
 

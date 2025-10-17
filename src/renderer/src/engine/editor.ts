@@ -599,7 +599,7 @@ export class Editor {
         borderRadius: i.borderRadius
       }
 
-      let imageUrl = 'http://localhost:7301/public/uploads/images/' + i.url
+      let imageUrl = 'http://localhost:7301/public/images/' + i.url
 
       let blob = await getUploadedImageData(imageUrl)
 
