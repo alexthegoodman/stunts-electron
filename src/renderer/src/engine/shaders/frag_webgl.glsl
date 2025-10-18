@@ -28,8 +28,8 @@ layout(std140) uniform bindGroup2_0 {
     float u_border_radius;
 };
 
-// Bind group 3: Scene Shader uniforms
-layout(std140) uniform bindGroup3_0 {
+// Bind group 4: Scene Shader uniforms
+layout(std140) uniform bindGroup4_0 {
     float u_scene_shader_type;   // 0 = None, 1 = Painting, 2 = Future effects...
     float u_scene_intensity;     // Effect intensity
     float u_scene_brush_scale;   // Scale for brush strokes / edge size

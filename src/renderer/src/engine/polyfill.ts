@@ -287,6 +287,24 @@ export class PolyfillBindGroup {
             // }
             break
 
+          case 'uniform4f':
+            // Get uniform location and set vec2 data
+            const vec4Location = gl.getUniformLocation(program, uniformName)
+            if (vec4Location) {
+              if (!resource.resource.data) {
+                console.warn(`No data found for matrix uniform ${uniformName}`)
+                return
+              }
+
+              // Assuming the buffer contains 2 floats (e.g., window size)
+              const vec4Data = new Float32Array(resource.resource.data!)
+              gl.uniform4fv(vec4Location, vec4Data)
+            }
+            //  else {
+            //   console.warn(`Vec2 uniform ${uniformName} not found in program`);
+            // }
+            break
+
           case 'UBO':
             // Bind uniform buffer
             const uniformBlockIndex = gl.getUniformBlockIndex(program, uniformName)
@@ -298,7 +316,7 @@ export class PolyfillBindGroup {
             if (uniformBlockIndex !== gl.INVALID_INDEX) {
               // Bind the uniform block to a binding point
               // const bindingPoint = resource.groupIndex * 10 + resource.binding; // Unique binding point
-              const bindingPoint = 0
+              const bindingPoint = resource.groupIndex
               gl.uniformBlockBinding(program, uniformBlockIndex, bindingPoint)
               gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, resource.resource.buffer)
             }

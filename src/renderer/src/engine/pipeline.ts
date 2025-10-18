@@ -217,20 +217,20 @@ export class CanvasPipeline {
           process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         mappedAtCreation: true
       },
-      'uniform2f'
+      'UBO'
     )
-
-    sceneShaderBuffer.unmap() // Unmap after creation
 
     // Update window size buffer
     const sceneShaderData = new Float32Array([0, 0, 0, 0])
     gpuResources.queue!.writeBuffer(sceneShaderBuffer, 0, sceneShaderData)
 
+    // sceneShaderBuffer.unmap() // Unmap after creation // writeBuffer already calls subData in webgl
+
     const sceneShaderBindGroupLayout = gpuResources.device!.createBindGroupLayout({
       entries: [
         {
           binding: 0,
-          visibility: GPUShaderStage.VERTEX,
+          visibility: GPUShaderStage.FRAGMENT,
           buffer: {
             type: 'uniform'
           }
@@ -242,8 +242,8 @@ export class CanvasPipeline {
       layout: sceneShaderBindGroupLayout,
       entries: [
         {
-          binding: 1,
-          groupIndex: 0,
+          binding: 0,
+          groupIndex: 4,
           resource: {
             pbuffer: sceneShaderBuffer
           }
@@ -869,6 +869,14 @@ export class CanvasPipeline {
       editor.windowSizeBindGroup.bindWebGLBindGroup(gl)
     } else {
       console.error("Couldn't get window size group")
+      return
+    }
+
+    // Bind scene shader uniform buffer
+    if (editor.sceneShaderBindGroup) {
+      editor.sceneShaderBindGroup.bindWebGLBindGroup(gl)
+    } else {
+      console.error("Couldn't get scene shader group")
       return
     }
 

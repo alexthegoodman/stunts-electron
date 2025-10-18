@@ -111,6 +111,7 @@ import { TextProperties } from './properties/TextProperties'
 import { KeyframeProperties } from './properties/KeyframeProperties'
 import { Model3DConfig } from '@renderer/engine/model3d'
 import { ProjectSelector } from '../ProjectSelector'
+import { SceneShaderPicker } from './SceneShaderPicker'
 
 export function update_keyframe(
   editor_state: EditorState,
@@ -1546,6 +1547,17 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                   icon={'palette'}
                   label={'Themes'}
                 />
+                <MiniSquareButton
+                  onClick={() => {
+                    if (toolbarTab === 'shaders') {
+                      setToolbarTab('none')
+                    } else {
+                      setToolbarTab('shaders')
+                    }
+                  }}
+                  icon={'shaders'}
+                  label={'Shaders'}
+                />
                 {/* <MiniSquareButton
                   onClick={() => {
                     if (toolbarTab === 'layers') {
@@ -1647,37 +1659,17 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                     saveTarget={SaveTarget.Videos}
                     userLanguage={user?.userLanguage || 'en'}
                   />
+                </div>
+              )}
 
-                  <label className="text-sm">Background Color</label>
-                  <div className="flex flex-row gap-2 mb-4">
-                    <DebouncedInput
-                      id="background_red"
-                      label="Red"
-                      placeholder="Red"
-                      initialValue={background_red.toString()}
-                      onDebounce={(value) => {
-                        set_background_red(parseInt(value))
-                      }}
-                    />
-                    <DebouncedInput
-                      id="background_green"
-                      label="Green"
-                      placeholder="Green"
-                      initialValue={background_green.toString()}
-                      onDebounce={(value) => {
-                        set_background_green(parseInt(value))
-                      }}
-                    />
-                    <DebouncedInput
-                      id="background_blue"
-                      label="Blue"
-                      placeholder="Blue"
-                      initialValue={background_blue.toString()}
-                      onDebounce={(value) => {
-                        set_background_blue(parseInt(value))
-                      }}
-                    />
-                  </div>
+              {toolbarTab === 'shaders' && current_sequence_id && (
+                <div className="max-h-[35vh] md:max-h-full overflow-y-scroll overflow-x-hidden">
+                  <SceneShaderPicker
+                    editorRef={editorRef}
+                    editorStateRef={editorStateRef}
+                    currentSequenceId={current_sequence_id}
+                    saveTarget={SaveTarget.Videos}
+                  />
                 </div>
               )}
 

@@ -401,11 +401,20 @@ export class Editor {
   }
 
   setSceneShader(type: number, intensity: number, brush_scale: number, noise_strength: number) {
+    console.info('setSceneShader', type, intensity, brush_scale, noise_strength)
     this.gpuResources.queue.writeBuffer(
       this.sceneShaderBuffer,
       0,
-      new Float32Array([type, intensity, brush_scale, noise_strength])
+      new Float32Array([type, intensity, brush_scale, noise_strength]).buffer
     )
+
+    // this.sceneShaderBuffer.data = new Float32Array([
+    //   type,
+    //   intensity,
+    //   brush_scale,
+    //   noise_strength
+    // ]).buffer
+    // this.sceneShaderBuffer.unmap()
   }
 
   private processPrmoptItem(
