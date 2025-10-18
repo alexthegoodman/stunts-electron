@@ -32,14 +32,83 @@ Stunts is completely free and open source. Contributors are more than welcome!
 
 ### Install
 
-- Install ffmpeg on your system. It is the only external requirement.
-  Install with either scoop or homebrew
+#### Install ffmpeg on your system. It is the only external requirement.
+
+🍎 macOS (Homebrew) Instructions
+
+Homebrew is a free and open-source package management system that simplifies the installation of software on Apple's macOS.
+
+Step 1: Install Homebrew (If needed) You should open the Terminal application (found in Applications > Utilities) and paste the following command, then press Enter. (You may be prompted to enter their password)
+
+```
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Step 2: Install FFmpeg:
+Once Homebrew is installed, just need to run this command in the Terminal:
+
+```
+brew install ffmpeg
+```
+
+What this does: Homebrew will download the latest stable version of FFmpeg and all its required dependencies, compiling and installing it on your system.
+
+Step 3: Verify the Installation
+To check that FFmpeg is installed and working correctly, you can run:
+
+```
+ffmpeg -version
+```
+
+This should output the version number and build configuration, confirming the installation.
+
+💻 Windows (Scoop) Instructions
+Scoop is a command-line installer for Windows that keeps programs separate from the Program Files, making installations cleaner and simpler.
+
+Step 1: Install Scoop (If needed)
+First open PowerShell. You can do this by searching for "PowerShell" in the Windows Start Menu.
+
+A. Allow Remote Scripts (Initial Setup)
+Before installing Scoop, you need to ensure your system allows running the installation script. You only need to run this once:
+
+```
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+You will be prompted; you should type A (for Yes to All) and press Enter.
+
+B. Install Scoop
+Now, you run the Scoop installation command:
+
+```
+irm get.scoop.sh | iex
+```
+
+Step 2: Install FFmpeg
+After Scoop is installed, you can install FFmpeg with one command in PowerShell:
+
+```
+scoop install ffmpeg
+```
+
+What this does: Scoop downloads and installs the official FFmpeg static builds.
+
+Step 3: Verify the Installation
+To check that FFmpeg is installed and working correctly, you can run:
+
+```
+ffmpeg -version
+```
+
+This should output the version number and build configuration, confirming the installation.
+
+#### Install NPM dependencies
 
 ```bash
 $ npm install
 ```
 
-### Development
+### Development / Local Use
 
 ```bash
 $ npm run dev

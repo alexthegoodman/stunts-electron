@@ -26,7 +26,8 @@ export function registerVideoHandlers(): void {
       return {
         success: true,
         data: {
-          filePath,
+          filePath, // return full path here
+          // filePath: path.basename(filePath),
           fileName: path.basename(filePath),
           size: stats.size
         }
@@ -53,12 +54,7 @@ export function registerVideoHandlers(): void {
 
         console.log(`Resizing video with max dimensions: ${maxWidth}x${maxHeight}`)
 
-        const outputPath = await resizeVideo(
-          data.inputPath,
-          maxWidth,
-          maxHeight,
-          data.outputDir
-        )
+        const outputPath = await resizeVideo(data.inputPath, maxWidth, maxHeight, data.outputDir)
 
         const stats = await fs.stat(outputPath)
 

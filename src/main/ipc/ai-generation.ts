@@ -79,7 +79,8 @@ export function registerAiGenerationHandlers(): void {
       return {
         success: true,
         data: {
-          url: savePath,
+          // url: savePath,
+          url: fileName,
           fileName: fileName,
           replicateUrl: imageUrl.href // Store the original Replicate URL
         }
@@ -132,7 +133,8 @@ export function registerAiGenerationHandlers(): void {
 
           results.push({
             prompt,
-            url: savePath,
+            // url: savePath,
+            url: fileName,
             fileName: fileName
           })
         } catch (error) {
@@ -450,7 +452,7 @@ User Request: ${data.prompt}`
       return {
         success: true,
         data: {
-          url: savePath,
+          url: fileName,
           fileName: fileName
         }
       }
@@ -527,7 +529,7 @@ User Request: ${data.prompt}`
       return {
         success: true,
         data: {
-          url: savePath,
+          url: fileName,
           fileName: fileName
         }
       }

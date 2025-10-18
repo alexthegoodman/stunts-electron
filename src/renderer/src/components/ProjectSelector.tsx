@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useRouter } from '../hooks/useRouter'
-import { getProjects } from '../fetchers/projects'
+import { deleteProject, getProjects } from '../fetchers/projects'
 import { useLocalStorage } from '@uidotdev/usehooks'
 import { AuthToken } from '../fetchers/projects'
-import useSWR from 'swr'
+import useSWR, { mutate } from 'swr'
 import { CaretDown } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
+import toast from 'react-hot-toast'
 
 interface ProjectSelectorProps {
   currentProjectId: string
@@ -18,6 +19,7 @@ export function ProjectSelector({ currentProjectId, currentProjectName }: Projec
   const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const [loading, setLoading] = useState(false)
 
   const { data: projects, isLoading } = useSWR('projects', () => getProjects(authToken))
 
@@ -44,6 +46,36 @@ export function ProjectSelector({ currentProjectId, currentProjectName }: Projec
       // Use redirect page to force a full navigation
       router.push(`/redirect?to=/project/${projectId}/videos`)
     }
+  }
+
+  const handleDelete = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+    project_label: string,
+    project_id: string
+  ) => {
+    event.preventDefault()
+
+    // if (!authToken || !user || user.role !== 'ADMIN') {
+    //   return
+    // }
+
+    if (
+      !confirm(`Are you sure you want to delete "${project_label}"? This action cannot be undone.`)
+    ) {
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      await deleteProject('', project_id)
+      mutate('projects', () => getProjects(authToken))
+      toast.success('Project deleted successfully')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete project')
+    }
+
+    setLoading(false)
   }
 
   const displayName =
@@ -73,15 +105,26 @@ export function ProjectSelector({ currentProjectId, currentProjectName }: Projec
           ) : (
             <>
               {projects?.map((project) => (
-                <button
-                  key={project.project_id}
-                  onClick={() => handleProjectSelect(project.project_id)}
-                  className={`w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-sm ${
-                    project.project_id === currentProjectId ? 'bg-gray-700 font-semibold' : ''
-                  }`}
-                >
-                  {project.project_name}
-                </button>
+                <div>
+                  <button
+                    key={project.project_id}
+                    onClick={() => handleProjectSelect(project.project_id)}
+                    className={`w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-sm ${
+                      project.project_id === currentProjectId ? 'bg-gray-700 font-semibold' : ''
+                    }`}
+                  >
+                    {project.project_name}
+                  </button>
+                  <button
+                    className="custom-color w-24 text-xs rounded flex items-center justify-center p-1 bg-red-500
+               hover:bg-red-600 hover:cursor-pointer 
+              active:bg-red-700 transition-colors text-white h-6"
+                    disabled={loading}
+                    onClick={(e) => handleDelete(e, project.project_name, project.project_id)}
+                  >
+                    {t('Delete')}
+                  </button>
+                </div>
               ))}
               <hr className="border-gray-700 my-1" />
               <button

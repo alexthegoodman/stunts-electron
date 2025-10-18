@@ -686,18 +686,18 @@ export const ToolGrid = ({
       }
 
       try {
-        setUserMessage(`Resizing video: ${fileName}...`)
-        console.info(`Resizing video: ${fileName}...`, filePath)
+        setUserMessage(`Adding video: ${fileName}...`)
+        console.info(`Adding video: ${fileName}...`, filePath)
 
         // Resize video from path
-        const { outputPath } = await resizeVideoFromPath(filePath, 1200, 900)
+        // const { outputPath } = await resizeVideoFromPath(filePath, 1200, 900)
 
         // Save the resized video
-        const response = await saveVideoFromPath(outputPath, fileName)
+        const response = await saveVideoFromPath(filePath, fileName)
 
         setUserMessage('')
 
-        if (response) {
+        if (response.url) {
           let url = response.url
 
           console.info('File url:', url)
@@ -843,6 +843,7 @@ export const ToolGrid = ({
     async (sequence_id: string) => {
       try {
         const { filePath, fileName } = await selectVideo()
+        console.info('on_add_video', sequence_id, filePath, fileName)
         await import_video(sequence_id, filePath, fileName)
       } catch (error: any) {
         if (error.message !== 'No file selected') {
