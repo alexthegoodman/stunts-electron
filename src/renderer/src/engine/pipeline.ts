@@ -179,7 +179,7 @@ export class CanvasPipeline {
 
     windowSizeBuffer.unmap() // Unmap after creation
 
-    // Update window size buffer
+    // Update initial scene shader buffer
     const windowSizeData = new Float32Array([windowSize.width, windowSize.height])
     gpuResources.queue!.writeBuffer(windowSizeBuffer, 0, windowSizeData)
 
@@ -208,6 +208,49 @@ export class CanvasPipeline {
       ]
     })
 
+    // Create window size buffer and bind group
+    const sceneShaderBuffer = gpuResources.device!.createBuffer(
+      {
+        label: 'Scene Shader Buffer',
+        size: 16, // 4 floats, 4 bytes each
+        usage:
+          process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
+      },
+      'uniform2f'
+    )
+
+    sceneShaderBuffer.unmap() // Unmap after creation
+
+    // Update window size buffer
+    const sceneShaderData = new Float32Array([0, 0, 0, 0])
+    gpuResources.queue!.writeBuffer(sceneShaderBuffer, 0, sceneShaderData)
+
+    const sceneShaderBindGroupLayout = gpuResources.device!.createBindGroupLayout({
+      entries: [
+        {
+          binding: 0,
+          visibility: GPUShaderStage.VERTEX,
+          buffer: {
+            type: 'uniform'
+          }
+        }
+      ]
+    })
+
+    const sceneShaderBindGroup = gpuResources.device!.createBindGroup({
+      layout: sceneShaderBindGroupLayout,
+      entries: [
+        {
+          binding: 1,
+          groupIndex: 0,
+          resource: {
+            pbuffer: sceneShaderBuffer
+          }
+        }
+      ]
+    })
+
     // gpuResources.queue!.writeBuffer(windowSizeBuffer, 0, windowSizeData);
 
     // Create pipeline layout
@@ -217,7 +260,8 @@ export class CanvasPipeline {
         // cameraBinding.bindGroupLayout,
         modelBindGroupLayout,
         windowSizeBindGroupLayout,
-        groupBindGroupLayout
+        groupBindGroupLayout,
+        sceneShaderBindGroupLayout
         // gradientBindGroupLayout,
       ]
     })
@@ -283,14 +327,18 @@ export class CanvasPipeline {
 
     console.info('Initialized...')
 
-    // editor.cursorDot = cursorRingDot;
     editor.gpuResources = gpuResources
+
+    // TODO: consolidate bind groups with multiple buffers each
     editor.modelBindGroupLayout = modelBindGroupLayout
     editor.groupBindGroupLayout = groupBindGroupLayout
-    // editor.gradientBindGroupLayout = gradientBindGroupLayout;
     editor.windowSizeBindGroup = windowSizeBindGroup
     editor.windowSizeBindGroupLayout = windowSizeBindGroupLayout
     editor.windowSizeBuffer = windowSizeBuffer
+    editor.sceneShaderBuffer = sceneShaderBuffer
+    editor.sceneShaderBindGroupLayout = sceneShaderBindGroupLayout
+    editor.sceneShaderBindGroup = sceneShaderBindGroup
+
     editor.renderPipeline = renderPipeline
 
     editor.updateCameraBinding()

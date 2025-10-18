@@ -259,6 +259,9 @@ export class Editor {
   windowSizeBindGroup: PolyfillBindGroup | null = null
   windowSizeBuffer: PolyfillBuffer | null = null
   renderPipeline: PolyfillRenderPipeline | null = null
+  sceneShaderBuffer: PolyfillBuffer | null = null
+  sceneShaderBindGroupLayout: PolyfillBindGroupLayout | null = null
+  sceneShaderBindGroup: PolyfillBindGroup | null = null
 
   // Events
   onMouseUp: OnMouseUp | null
@@ -395,6 +398,14 @@ export class Editor {
     //     y: 550.0, // allow for 50.0 padding below and above the canvas
     //   },
     // };
+  }
+
+  setSceneShader(type: number, intensity: number, brush_scale: number, noise_strength: number) {
+    this.gpuResources.queue.writeBuffer(
+      this.sceneShaderBuffer,
+      0,
+      new Float32Array([type, intensity, brush_scale, noise_strength])
+    )
   }
 
   private processPrmoptItem(

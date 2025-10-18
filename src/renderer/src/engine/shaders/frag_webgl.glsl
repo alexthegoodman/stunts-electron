@@ -28,6 +28,14 @@ layout(std140) uniform bindGroup2_0 {
     float u_border_radius;
 };
 
+// Bind group 3: Scene Shader uniforms
+layout(std140) uniform bindGroup3_0 {
+    float u_scene_shader_type;   // 0 = None, 1 = Painting, 2 = Future effects...
+    float u_scene_intensity;     // Effect intensity
+    float u_scene_brush_scale;   // Scale for brush strokes / edge size
+    float u_scene_noise_strength; // Adds canvas noise
+};
+
 // Brush parameters (will use same uniform block, reusing unused fields for brushes)
 // When v_object_type == 4u (brush), interpret fields as:
 // u_num_stops = brushType (0=Noise, 1=Dots, 2=Lines, 3=Voronoi)
@@ -429,6 +437,38 @@ vec4 calculateBrushColor(vec2 worldPos) {
     return vec4(vec3(1.0), proceduralValue);
 }
 
+// ============ SCENE SHADER: PAINTING EFFECT ============
+vec4 paintingSceneShader(vec2 uv, vec4 color) {
+    // Parameters
+    float scale = u_scene_brush_scale;
+    float intensity = u_scene_intensity;
+    float noiseStrength = u_scene_noise_strength;
+
+    // Apply small coordinate perturbation to mimic brush texture
+    float n1 = fbm(uv * scale * 2.0, 3, 0.5, 12.3);
+    float n2 = fbm(uv * scale * 3.0 + vec2(3.7), 3, 0.5, 45.1);
+    vec2 offset = vec2(n1, n2) * 0.005 * intensity;
+
+    vec2 newUV = uv + offset;
+
+    // Slightly blur / simplify colors (posterization)
+    vec4 texCol = texture(bindGroup1_1, newUV);
+    vec4 mixedColor = mix(color, texCol, 0.4);
+
+    // Posterize to emulate paint layers
+    vec3 quantized = floor(mixedColor.rgb * (6.0 - 4.0 * intensity)) / (6.0 - 4.0 * intensity);
+
+    // Add subtle canvas noise
+    float canvas = random(uv * 500.0, 1.0) * noiseStrength;
+    vec3 finalRGB = quantized + vec3(canvas * 0.1);
+
+    // Slight saturation boost
+    float avg = dot(finalRGB, vec3(0.333));
+    finalRGB = mix(vec3(avg), finalRGB, 1.2);
+
+    return vec4(finalRGB, color.a);
+}
+
 void main() {
     vec4 tex_color = getTextureColor(v_tex_coords);
     vec4 final_color;
@@ -486,6 +526,14 @@ void main() {
 
     // testing
     // final_color = v_color;
+
+    // Apply Scene Shader if enabled
+    if (u_scene_shader_type > 0.5) {
+        if (u_scene_shader_type < 1.5) {
+            final_color = paintingSceneShader(v_tex_coords, final_color);
+        }
+        // (Future effects could go here: e.g. 2.0 = watercolor, 3.0 = pixelation, etc.)
+    }
 
     fragColor = final_color;
 }
