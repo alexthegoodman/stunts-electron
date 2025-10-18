@@ -1867,7 +1867,8 @@ export class Editor {
             // console.info(
             //   `Drawing video frame for ${videoItem.id} at time ${currentTimeMs} (start: ${startTimeMs}, duration: ${animation.duration})`
             // );
-            await videoItem.drawVideoFrame(gpuResources.device!, gpuResources.queue!)
+            // await videoItem.drawVideoFrame(gpuResources.device!, gpuResources.queue!)
+            videoItem.drawVideoFrame(gpuResources.device!, gpuResources.queue!)
             // console.info("drew frame");
             animateProperties = true
             videoItem.numFramesDrawn += 1
@@ -1886,7 +1887,8 @@ export class Editor {
             // console.info("Catching up video frames:", framesToDraw);
 
             for (let i = 0; i < framesToDraw; i++) {
-              await videoItem.drawVideoFrame(gpuResources.device!, gpuResources.queue!)
+              // await videoItem.drawVideoFrame(gpuResources.device!, gpuResources.queue!)
+              videoItem.drawVideoFrame(gpuResources.device!, gpuResources.queue!)
               videoItem.numFramesDrawn += 1
             }
 

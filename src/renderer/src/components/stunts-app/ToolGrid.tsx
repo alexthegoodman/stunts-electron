@@ -690,10 +690,10 @@ export const ToolGrid = ({
         console.info(`Resizing video: ${fileName}...`, filePath)
 
         // Resize video from path
-        const { outputPath } = await resizeVideoFromPath(filePath, 1200, 900)
+        // const { outputPath } = await resizeVideoFromPath(filePath, 1200, 900)
 
         // Save the resized video
-        const response = await saveVideoFromPath(outputPath, fileName)
+        const response = await saveVideoFromPath(filePath, fileName)
 
         setUserMessage('')
 

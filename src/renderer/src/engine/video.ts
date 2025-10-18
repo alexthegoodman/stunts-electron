@@ -171,6 +171,8 @@ export class StVideo {
   private frameCallback: ((frameInfo: DecodedFrameInfo) => void) | undefined
   public isInitialized: boolean = false
 
+  framesDecoded: number = 0
+
   bytesPerFrame: number | null = null
   borderRadius: number
   gradientBuffer!: PolyfillBuffer
@@ -562,7 +564,8 @@ export class StVideo {
         console.info('prep to draw video frame')
 
         try {
-          await this.drawVideoFrame(device, queue)
+          let flush = true
+          await this.drawVideoFrame(device, queue, 0, flush)
         } catch (error) {
           console.error('Error drawing video frame:', error)
           throw new Error('Failed to draw video frame')
@@ -648,6 +651,9 @@ export class StVideo {
       // The output and error handling remain the same
       this.videoDecoder = new VideoDecoder({
         output: async (frame: VideoFrame) => {
+          this.framesDecoded += 1
+          // console.info('decoding!')
+
           try {
             const frameInfo: DecodedFrameInfo = {
               timestamp: frame.timestamp / 1000000, // WebCodecs timestamp is in microseconds, convert to milliseconds or seconds if needed
@@ -671,10 +677,10 @@ export class StVideo {
 
       // Configure the decoder using the object from metadata
       const config: VideoDecoderConfig = {
-        ...this.videoMetadata.description,
+        ...this.videoMetadata.description
         // Override with your specific preferences
-        optimizeForLatency: true,
-        hardwareAcceleration: 'no-preference'
+        // optimizeForLatency: true,
+        // hardwareAcceleration: 'no-preference'
       }
 
       this.videoDecoder.configure(config)
@@ -683,7 +689,7 @@ export class StVideo {
     })
   }
 
-  async decodeNextFrame(): Promise<DecodedFrameInfo> {
+  async decodeNextFrame(flush: boolean = false): Promise<DecodedFrameInfo> {
     if (!this.isInitialized || !this.videoSampleSink) {
       throw new Error('Video not initialized or sink not available')
     }
@@ -704,6 +710,10 @@ export class StVideo {
         // let packet = await this.videoSampleSink.getKeyPacket(this.currentTimestamp)
         let packet = await this.videoSampleSink.getPacket(this.currentTimestamp)
 
+        // if (this.currentTimestamp === 0) {
+        //   packet = await this.videoSampleSink.getNextPacket(packet)
+        // }
+
         if (!packet) {
           throw new Error('No more frames to decode at or after current timestamp')
         }
@@ -718,8 +728,23 @@ export class StVideo {
 
         let chunk = packet.toEncodedVideoChunk()
 
+        // console.info('about to decode', chunk)
+
+        // setTimeout(async () => {
+        //   if (this.framesDecoded === 0) {
+        //     let nextPacket = await this.videoSampleSink.getNextPacket(packet)
+        //     let chunk2 = nextPacket.toEncodedVideoChunk()
+        //     this.videoDecoder!.decode(chunk2)
+        //     this.currentTimestamp += chunk.duration / 1000000
+        //   }
+        // }, 50)
+
         // This is a common pattern: decode and increment the timestamp
         this.videoDecoder!.decode(chunk)
+
+        if (flush) {
+          await this.videoDecoder.flush()
+        }
 
         // Advance the time for the next frame
         this.currentTimestamp += chunk.duration / 1000000
@@ -729,12 +754,17 @@ export class StVideo {
     })
   }
 
-  async drawVideoFrame(device: PolyfillDevice, queue: PolyfillQueue, timeMs?: number) {
-    if (timeMs !== undefined) {
+  async drawVideoFrame(
+    device: PolyfillDevice,
+    queue: PolyfillQueue,
+    timeMs?: number,
+    flush?: boolean
+  ) {
+    if (timeMs) {
       await this.seekToTime(timeMs)
     }
 
-    const frameInfo = await this.decodeNextFrame()
+    const frameInfo = await this.decodeNextFrame(flush)
 
     // Your WebGPU logic remains the same as it uses the resulting VideoFrame
 

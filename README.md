@@ -32,7 +32,7 @@ Stunts is completely free and open source. Contributors are more than welcome!
 
 ### Install
 
-#### Install ffmpeg on your system. It is the only external requirement.
+#### You may wish to install ffmpeg on your system. It is optional, but sometimes a video may perform better if pre-processed by FFmpeg.
 
 🍎 macOS (Homebrew) Instructions
 
