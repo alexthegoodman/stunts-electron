@@ -115,15 +115,19 @@ export function ProjectSelector({ currentProjectId, currentProjectName }: Projec
                   >
                     {project.project_name}
                   </button>
-                  <button
-                    className="custom-color w-24 text-xs rounded flex items-center justify-center p-1 bg-red-500
+                  {project.project_id !== currentProjectId ? (
+                    <button
+                      className="custom-color w-24 text-xs rounded flex items-center justify-center p-1 bg-red-500
                hover:bg-red-600 hover:cursor-pointer 
               active:bg-red-700 transition-colors text-white h-6"
-                    disabled={loading}
-                    onClick={(e) => handleDelete(e, project.project_name, project.project_id)}
-                  >
-                    {t('Delete')}
-                  </button>
+                      disabled={loading}
+                      onClick={(e) => handleDelete(e, project.project_name, project.project_id)}
+                    >
+                      {t('Delete')}
+                    </button>
+                  ) : (
+                    <></>
+                  )}
                 </div>
               ))}
               <hr className="border-gray-700 my-1" />

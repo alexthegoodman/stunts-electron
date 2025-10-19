@@ -1,3 +1,4 @@
+import { useWindowSize } from '@uidotdev/usehooks'
 import React, { useState, useCallback, useMemo } from 'react'
 
 interface TimelineTicksProps {
@@ -14,12 +15,16 @@ export const TimelineTicks: React.FC<TimelineTicksProps> = ({
   onSeek
 }) => {
   const [hoverPositionX, setHoverPositionX] = useState<number | null>(null)
+  const { width: screenWidth, height: screenHeight } = useWindowSize()
+  const sidebarWidth = 500
 
   // Constants calculated from props
   const pixelsPerMs = useMemo(() => pixelsPerSecond / 1000, [pixelsPerSecond])
   const msPerPixel = useMemo(() => 1000 / pixelsPerSecond, [pixelsPerSecond])
   const totalWidth = trackWidth
-  const totalSeconds = Math.ceil(durationMs / 1000)
+  const allSeconds = Math.ceil(durationMs / 1000)
+  // calculate based on window width and pixelsPerSecond instead for visual ticks, Math.max(x, allSeconds)
+  const totalSeconds = Math.max((screenWidth - sidebarWidth) / pixelsPerSecond, allSeconds)
 
   // --- Utility Functions ---
 
