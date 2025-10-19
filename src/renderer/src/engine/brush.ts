@@ -264,10 +264,23 @@ export class ProceduralBrush implements BrushStrokeShape {
   }
 
   // Start a new stroke
-  startStroke(point: BrushPoint, config: BrushConfig): void {
+  startStroke(point: BrushPoint, config: BrushConfig, windowSize: WindowSize): void {
+    const world = fromNDC(
+      this.transform.position[0],
+      this.transform.position[1],
+      windowSize.width,
+      windowSize.height
+    )
+
+    let brushPoint = {
+      ...point,
+      x: point.x - world.x,
+      y: point.y - world.y
+    }
+
     this.currentStroke = {
       id: `stroke_${Date.now()}_${Math.random()}`,
-      points: [point],
+      points: [brushPoint],
       brushConfigSnapshot: {
         brushType: config.brushType,
         size: config.size,
@@ -287,7 +300,7 @@ export class ProceduralBrush implements BrushStrokeShape {
   }
 
   // Add point to current stroke
-  addStrokePoint(point: BrushPoint): void {
+  addStrokePoint(point: BrushPoint, windowSize: WindowSize): void {
     if (!this.currentStroke) return
 
     // Check spacing - only add point if it's far enough from last point
@@ -298,7 +311,20 @@ export class ProceduralBrush implements BrushStrokeShape {
 
     const minDistance = this.size * this.spacing
     if (distance >= minDistance) {
-      this.currentStroke.points.push(point)
+      const world = fromNDC(
+        this.transform.position[0],
+        this.transform.position[1],
+        windowSize.width,
+        windowSize.height
+      )
+
+      let brushPoint = {
+        ...point,
+        x: point.x - world.x,
+        y: point.y - world.y
+      }
+
+      this.currentStroke.points.push(brushPoint)
       this.currentStroke.endTime = point.timestamp
     }
   }

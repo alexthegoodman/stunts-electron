@@ -4353,7 +4353,7 @@ export class Editor {
 
       this.brushes.push(newBrush)
       this.currentBrush = newBrush
-      this.currentBrush.startStroke(brushPoint, config)
+      this.currentBrush.startStroke(brushPoint, config, camera.windowSize)
       return
     }
 
@@ -4889,7 +4889,7 @@ export class Editor {
         timestamp: Date.now()
       }
 
-      this.currentBrush.addStrokePoint(brushPoint)
+      this.currentBrush.addStrokePoint(brushPoint, camera.windowSize)
 
       // Update brush geometry in real-time
       this.currentBrush.createGeometry(camera, windowSize)

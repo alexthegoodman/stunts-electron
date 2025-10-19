@@ -105,7 +105,7 @@ export function ProjectSelector({ currentProjectId, currentProjectName }: Projec
           ) : (
             <>
               {projects?.map((project) => (
-                <div>
+                <div className="flex flex-row">
                   <button
                     key={project.project_id}
                     onClick={() => handleProjectSelect(project.project_id)}
