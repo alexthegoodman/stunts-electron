@@ -132,10 +132,10 @@ export const TimelineTicks: React.FC<TimelineTicksProps> = ({
             style={{ left: `${hoverPositionX}px`, transform: 'translateX(-50%)' }}
           >
             {/* Hover Tick Line (Make it distinct, e.g., red) */}
-            <div className="h-[30px] w-[1px] bg-red-400 opacity-70" />
+            <div className="h-[30px] w-[1px] bg-teal-400 opacity-70" />
 
             {/* Tooltip */}
-            <div className="absolute top-[18px] bg-red-600 text-white text-[10px] px-1 py-0.5 rounded-sm whitespace-nowrap">
+            <div className="absolute top-[18px] bg-teal-600 text-white text-[10px] px-1 py-0.5 rounded-sm whitespace-nowrap">
               {hoverTimeLabel}
             </div>
           </div>

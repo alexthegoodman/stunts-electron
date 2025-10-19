@@ -444,16 +444,16 @@ vec4 calculateBrushColor(vec2 worldPos) {
     vec2 uv = worldPos * noiseScale;
     float proceduralValue = 1.0;
 
-    if (brushType > 0.5 && brushType < 1.5) {
+    if (brushType == 1.0) {
         // Noise brush
         proceduralValue = fbm(uv, octaves, persistence, randomSeed);
-    } else if (brushType > 1.5 && brushType < 2.5) {
+    } else if (brushType == 2.0) {
         // Dots brush
         proceduralValue = dotPattern(uv, param1);
-    } else if (brushType > 2.5 && brushType < 3.5) {
+    } else if (brushType == 3.0) {
         // Lines brush
         proceduralValue = linePattern(uv, param1, param2);
-    } else if (brushType > 3.5 && brushType < 4.5) {
+    } else if (brushType == 4.0) {
         // Voronoi brush
         proceduralValue = voronoi(uv, param1, randomSeed);
     }
@@ -507,8 +507,8 @@ void main() {
     } else if (v_object_type > 3.5 && v_object_type < 4.5) {
         // Brush with procedural texture
         vec4 proceduralColor = calculateBrushColor(v_gradient_coords);
-        final_color = proceduralColor;
-        // final_color = v_color * proceduralColor;
+        // final_color = proceduralColor;
+        final_color = v_color * proceduralColor;
         // final_color = vec4(0.0,1.0,0.0,1.0);
     } else if (v_object_type == 9.0 || v_object_type == 6.0) {
         // Shader background (object_type == 9.0)

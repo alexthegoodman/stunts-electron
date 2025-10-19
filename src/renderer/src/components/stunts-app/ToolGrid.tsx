@@ -1262,8 +1262,8 @@ export const ToolGrid = ({
         // defaults
         dotDensity: 10,
         lineAngle: 15,
-        lineSpacing: 0.5,
-        cellSize: 10.0,
+        lineSpacing: 1.5,
+        cellSize: 50.0,
         strokes: []
       }
 

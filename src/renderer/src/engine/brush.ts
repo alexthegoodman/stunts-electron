@@ -387,10 +387,22 @@ export class ProceduralBrush implements BrushStrokeShape {
         //   window_size.height
         // )
 
-        let x1 = toSystemScale(point.x - halfSize, window_size.width)
-        let x2 = toSystemScale(point.x + halfSize, window_size.width)
-        let y1 = toSystemScale(point.y - halfSize, window_size.height)
-        let y2 = toSystemScale(point.y + halfSize, window_size.height)
+        let x1a = point.x - halfSize
+        let x2a = point.x + halfSize
+        let y1a = point.y - halfSize
+        let y2a = point.y + halfSize
+
+        const cornersb = [
+          { x: x1a, y: y1a },
+          { x: x2a, y: y1a },
+          { x: x2a, y: y2a },
+          { x: x1a, y: y2a }
+        ]
+
+        let x1 = toSystemScale(x1a, window_size.width)
+        let x2 = toSystemScale(x2a, window_size.width)
+        let y1 = toSystemScale(y1a, window_size.height)
+        let y2 = toSystemScale(y2a, window_size.height)
 
         // Four corners of the quad
         const corners = [
@@ -416,7 +428,7 @@ export class ProceduralBrush implements BrushStrokeShape {
           )
 
           // Set gradient_coords to world position for procedural texture
-          vertex.gradient_coords = [corners[j].x, corners[j].y]
+          vertex.gradient_coords = [cornersb[j].x, cornersb[j].y]
 
           this.vertices.push(vertex)
         }
