@@ -4350,6 +4350,7 @@ export class Editor {
       const windowSize = camera.windowSize
       const config = this.currentBrush.toSavedConfig(windowSize)
       config.id = `brush_stroke_${Date.now()}_${Math.random()}`
+      config.strokes = []
 
       const newBrush = new ProceduralBrush(
         windowSize,
