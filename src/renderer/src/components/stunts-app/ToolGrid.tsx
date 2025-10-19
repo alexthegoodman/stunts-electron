@@ -274,6 +274,8 @@ export const ToolGrid = ({
 
     setLayers(layers)
 
+    update()
+
     console.info('Square added!')
   }
 
@@ -401,6 +403,8 @@ export const ToolGrid = ({
 
         setLayers(layers)
 
+        update()
+
         console.info('Image added!')
       }
     } catch (error: any) {
@@ -511,6 +515,8 @@ export const ToolGrid = ({
     })
 
     setLayers(layers)
+
+    update()
 
     // drop(editor);
   }
@@ -666,6 +672,8 @@ export const ToolGrid = ({
     editor.updateMotionPaths(sequence_cloned)
 
     setLayers([...layers])
+
+    update()
 
     toast.success(`Created ${lines.length} text blocks!`)
   }
@@ -828,6 +836,8 @@ export const ToolGrid = ({
           })
 
           setLayers(layers)
+
+          update()
 
           console.info('video added!')
         }
@@ -1075,6 +1085,8 @@ export const ToolGrid = ({
 
           setLayers(layers)
 
+          update()
+
           console.info('Mockup3D added!')
           toast.success('Laptop mockup added successfully!')
         }
@@ -1186,6 +1198,8 @@ export const ToolGrid = ({
           })
 
           setLayers(layers)
+
+          update()
 
           console.info('Model3D added!')
           toast.success('3D model imported successfully!')
