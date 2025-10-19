@@ -1039,7 +1039,8 @@ export class Editor {
             this.groupBindGroupLayout,
             camera,
             brush,
-            saved_sequence.id
+            saved_sequence.id,
+            this.scaleMultiplier
           )
 
           restored_brush.hidden = hidden
@@ -2768,7 +2769,8 @@ export class Editor {
       this.groupBindGroupLayout,
       camera,
       brush_config,
-      selected_sequence_id
+      selected_sequence_id,
+      1.0
     )
 
     this.brushes.push(brush)
@@ -4364,7 +4366,8 @@ export class Editor {
         this.groupBindGroupLayout!,
         camera,
         config,
-        this.currentBrush.currentSequenceId
+        this.currentBrush.currentSequenceId,
+        1.0
       )
 
       newBrush.transform.updatePosition([ndc.x, ndc.y], windowSize)

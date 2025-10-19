@@ -181,6 +181,8 @@ export class ProceduralBrush implements BrushStrokeShape {
   totalIndices: number = 0 // New property to store the maximum index count
   drawCount: number = 0
 
+  scaleMultiplier: number = 1.0
+
   constructor(
     window_size: WindowSize,
     device: PolyfillDevice,
@@ -189,9 +191,11 @@ export class ProceduralBrush implements BrushStrokeShape {
     groupBindGroupLayout: PolyfillBindGroupLayout,
     camera: Camera,
     config: SavedBrushConfig,
-    currentSequenceId: string
+    currentSequenceId: string,
+    scaleMultiplier: number
   ) {
     this.points = []
+    this.scaleMultiplier = scaleMultiplier
     this.dimensions = config.dimensions
     this.position = config.position
     this.rotation = config.rotation
@@ -346,16 +350,21 @@ export class ProceduralBrush implements BrushStrokeShape {
 
     for (const stroke of allStrokes) {
       for (let i = 0; i < stroke.points.length; i++) {
-        const point = stroke.points[i]
-        const pressureSize = this.size * point.pressure
+        const prePoint = stroke.points[i]
+        const scaledPoint = {
+          x: prePoint.x * this.scaleMultiplier,
+          y: prePoint.y * this.scaleMultiplier
+        }
+
+        const pressureSize = this.size * prePoint.pressure * this.scaleMultiplier
 
         // Create quad for each point (brush dab)
         const halfSize = pressureSize / 2
 
-        let x1a = point.x - halfSize
-        let x2a = point.x + halfSize
-        let y1a = point.y - halfSize
-        let y2a = point.y + halfSize
+        let x1a = scaledPoint.x - halfSize
+        let x2a = scaledPoint.x + halfSize
+        let y1a = scaledPoint.y - halfSize
+        let y2a = scaledPoint.y + halfSize
 
         const cornersb = [
           { x: x1a, y: y1a },
@@ -378,26 +387,26 @@ export class ProceduralBrush implements BrushStrokeShape {
         // ]
 
         const corner1 = toNDC(
-          point.x - halfSize,
-          point.y - halfSize,
+          scaledPoint.x - halfSize,
+          scaledPoint.y - halfSize,
           window_size.width,
           window_size.height
         )
         const corner2 = toNDC(
-          point.x + halfSize,
-          point.y - halfSize,
+          scaledPoint.x + halfSize,
+          scaledPoint.y - halfSize,
           window_size.width,
           window_size.height
         )
         const corner3 = toNDC(
-          point.x + halfSize,
-          point.y + halfSize,
+          scaledPoint.x + halfSize,
+          scaledPoint.y + halfSize,
           window_size.width,
           window_size.height
         )
         const corner4 = toNDC(
-          point.x - halfSize,
-          point.y + halfSize,
+          scaledPoint.x - halfSize,
+          scaledPoint.y + halfSize,
           window_size.width,
           window_size.height
         )
