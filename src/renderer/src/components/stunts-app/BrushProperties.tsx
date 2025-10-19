@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Editor } from '../../engine/editor'
 import { BrushType } from '../../engine/brush'
 import { X } from '@phosphor-icons/react'
+import { hexString, rgbParse } from '@kurkle/color'
 
 interface BrushPropertiesProps {
   editorRef: React.RefObject<Editor | null>
@@ -34,49 +35,43 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
 
     const brush = editor.currentBrush
 
-    // // Update brush configuration
-    // brush.brushType = brushType
-    // brush.size = size
-    // brush.opacity = opacity
-    // brush.flow = flow
-    // brush.spacing = spacing
-    // brush.noiseScale = noiseScale
-    // brush.octaves = octaves
-    // brush.persistence = persistence
+    setBrushType(brush.brushType)
+    setSize(brush.size)
+    setOpacity(brush.opacity)
+    setFlow(brush.flow)
+    setSpacing(brush.spacing)
+    setNoiseScale(brush.noiseScale)
+    setOctaves(brush.octaves)
+    setPersistence(brush.persistence)
 
-    // // Convert hex to RGBA
-    // const hexToRgba = (hex: string) => {
-    //   const r = parseInt(hex.slice(1, 3), 16)
-    //   const g = parseInt(hex.slice(3, 5), 16)
-    //   const b = parseInt(hex.slice(5, 7), 16)
-    //   return [r, g, b, 255] as [number, number, number, number]
-    // }
+    let primaryHex = hexString(
+      rgbParse(
+        `rgba(${brush.primaryColor[0]},${brush.primaryColor[1]},${brush.primaryColor[2]},${brush.primaryColor[3]})`
+      )
+    )
+    let secondaryHex = hexString(
+      rgbParse(
+        `rgba(${brush.secondaryColor[0]},${brush.secondaryColor[1]},${brush.secondaryColor[2]},${brush.secondaryColor[3]})`
+      )
+    )
 
-    // brush.primaryColor = hexToRgba(primaryColor)
-    // brush.secondaryColor = hexToRgba(secondaryColor)
+    setPrimaryColor(primaryHex as string)
+    setSecondaryColor(secondaryHex as string)
 
-    // // Pattern-specific
-    // brush.dotDensity = dotDensity
-    // brush.lineAngle = (lineAngle * Math.PI) / 180 // Convert to radians
-    // brush.lineSpacing = lineSpacing
-    // brush.cellSize = cellSize
-  }, [
-    editorRef,
-    brushType,
-    size,
-    opacity,
-    flow,
-    spacing,
-    noiseScale,
-    octaves,
-    persistence,
-    primaryColor,
-    secondaryColor,
-    dotDensity,
-    lineAngle,
-    lineSpacing,
-    cellSize
-  ])
+    setDotDensity(brush.dotDensity)
+    setLineAngle(brush.lineAngle)
+    setLineSpacing(brush.lineSpacing)
+    setCellSize(brush.cellSize)
+  }, [editorRef])
+
+  const updateBrushProperty = (prop: string, value: any) => {
+    const editor = editorRef.current
+    if (!editor || !editor.currentBrush) return
+
+    const brush = editor.currentBrush
+
+    brush[prop] = value
+  }
 
   return (
     <div className="w-full p-4 theme-bg-primary border-t">
@@ -98,7 +93,10 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
         <label className="block text-sm font-medium mb-2">Brush Type</label>
         <select
           value={brushType}
-          onChange={(e) => setBrushType(e.target.value as BrushType)}
+          onChange={(e) => {
+            setBrushType(e.target.value as BrushType)
+            updateBrushProperty('brushType', e.target.value)
+          }}
           className="w-full p-2 border rounded"
         >
           <option value={BrushType.Noise}>Noise</option>
@@ -119,7 +117,10 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
           min="5"
           max="100"
           value={size}
-          onChange={(e) => setSize(Number(e.target.value))}
+          onChange={(e) => {
+            setSize(Number(e.target.value))
+            updateBrushProperty('size', parseFloat(e.target.value))
+          }}
           className="w-full"
         />
       </div>
@@ -134,7 +135,10 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
           max="1"
           step="0.01"
           value={opacity}
-          onChange={(e) => setOpacity(Number(e.target.value))}
+          onChange={(e) => {
+            setOpacity(Number(e.target.value))
+            updateBrushProperty('opacity', parseFloat(e.target.value))
+          }}
           className="w-full"
         />
       </div>
@@ -147,7 +151,10 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
           max="1"
           step="0.01"
           value={flow}
-          onChange={(e) => setFlow(Number(e.target.value))}
+          onChange={(e) => {
+            setFlow(Number(e.target.value))
+            updateBrushProperty('flow', parseFloat(e.target.value))
+          }}
           className="w-full"
         />
       </div>
@@ -162,7 +169,10 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
           max="1"
           step="0.01"
           value={spacing}
-          onChange={(e) => setSpacing(Number(e.target.value))}
+          onChange={(e) => {
+            setSpacing(Number(e.target.value))
+            updateBrushProperty('spacing', parseFloat(e.target.value))
+          }}
           className="w-full"
         />
       </div>
@@ -199,7 +209,10 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
           max="0.1"
           step="0.001"
           value={noiseScale}
-          onChange={(e) => setNoiseScale(Number(e.target.value))}
+          onChange={(e) => {
+            setNoiseScale(Number(e.target.value))
+            updateBrushProperty('noiseScale', parseFloat(e.target.value))
+          }}
           className="w-full"
         />
       </div>
@@ -211,7 +224,10 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
           min="1"
           max="8"
           value={octaves}
-          onChange={(e) => setOctaves(Number(e.target.value))}
+          onChange={(e) => {
+            setOctaves(Number(e.target.value))
+            updateBrushProperty('octaves', parseFloat(e.target.value))
+          }}
           className="w-full"
         />
       </div>
@@ -226,7 +242,10 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
           max="1"
           step="0.05"
           value={persistence}
-          onChange={(e) => setPersistence(Number(e.target.value))}
+          onChange={(e) => {
+            setPersistence(Number(e.target.value))
+            updateBrushProperty('persistence', parseFloat(e.target.value))
+          }}
           className="w-full"
         />
       </div>
@@ -240,7 +259,10 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
             min="1"
             max="50"
             value={dotDensity}
-            onChange={(e) => setDotDensity(Number(e.target.value))}
+            onChange={(e) => {
+              setDotDensity(Number(e.target.value))
+              updateBrushProperty('dotDensity', parseFloat(e.target.value))
+            }}
             className="w-full"
           />
         </div>
@@ -255,7 +277,10 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
               min="0"
               max="360"
               value={lineAngle}
-              onChange={(e) => setLineAngle(Number(e.target.value))}
+              onChange={(e) => {
+                setLineAngle(Number(e.target.value))
+                updateBrushProperty('lineAngle', parseFloat(e.target.value))
+              }}
               className="w-full"
             />
           </div>
@@ -266,7 +291,10 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
               min="1"
               max="20"
               value={lineSpacing}
-              onChange={(e) => setLineSpacing(Number(e.target.value))}
+              onChange={(e) => {
+                setLineSpacing(Number(e.target.value))
+                updateBrushProperty('lineSpacing', parseFloat(e.target.value))
+              }}
               className="w-full"
             />
           </div>
@@ -281,7 +309,10 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
             min="10"
             max="200"
             value={cellSize}
-            onChange={(e) => setCellSize(Number(e.target.value))}
+            onChange={(e) => {
+              setCellSize(Number(e.target.value))
+              updateBrushProperty('cellSize', parseFloat(e.target.value))
+            }}
             className="w-full"
           />
         </div>

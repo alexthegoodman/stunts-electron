@@ -214,7 +214,7 @@ export default class EditorState {
       savable_brush.id,
       ObjectType.Brush,
       savable_brush.position,
-      20000
+      5000
     )
 
     let saved_state = this.savedState
