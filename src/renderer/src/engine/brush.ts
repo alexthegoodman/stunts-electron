@@ -255,22 +255,22 @@ export class ProceduralBrush implements BrushStrokeShape {
 
   // Start a new stroke
   startStroke(point: BrushPoint, config: BrushConfig, windowSize: WindowSize): void {
-    const world = fromNDC(
-      this.transform.position[0],
-      this.transform.position[1],
-      windowSize.width,
-      windowSize.height
-    )
+    // const world = fromNDC(
+    //   this.transform.position[0],
+    //   this.transform.position[1],
+    //   windowSize.width,
+    //   windowSize.height
+    // )
 
-    let brushPoint = {
-      ...point,
-      x: point.x - world.x,
-      y: point.y - world.y
-    }
+    // let brushPoint = {
+    //   ...point,
+    //   x: point.x - world.x,
+    //   y: point.y - world.y
+    // }
 
     this.currentStroke = {
       id: `stroke_${Date.now()}_${Math.random()}`,
-      points: [brushPoint],
+      points: [point],
       brushConfigSnapshot: {
         brushType: config.brushType,
         size: config.size,
@@ -301,20 +301,20 @@ export class ProceduralBrush implements BrushStrokeShape {
 
     const minDistance = this.size * this.spacing
     if (distance >= minDistance) {
-      const world = fromNDC(
-        this.transform.position[0],
-        this.transform.position[1],
-        windowSize.width,
-        windowSize.height
-      )
+      // const world = fromNDC(
+      //   this.transform.position[0],
+      //   this.transform.position[1],
+      //   windowSize.width,
+      //   windowSize.height
+      // )
 
-      let brushPoint = {
-        ...point,
-        x: point.x - world.x,
-        y: point.y - world.y
-      }
+      // let brushPoint = {
+      //   ...point,
+      //   x: point.x - world.x,
+      //   y: point.y - world.y
+      // }
 
-      this.currentStroke.points.push(brushPoint)
+      this.currentStroke.points.push(point)
       this.currentStroke.endTime = point.timestamp
     }
   }
@@ -364,18 +364,45 @@ export class ProceduralBrush implements BrushStrokeShape {
           { x: x1a, y: y2a }
         ]
 
-        let x1 = toSystemScale(x1a, window_size.width)
-        let x2 = toSystemScale(x2a, window_size.width)
-        let y1 = toSystemScale(y1a, window_size.height)
-        let y2 = toSystemScale(y2a, window_size.height)
+        // let x1 = toSystemScale(x1a, window_size.width)
+        // let x2 = toSystemScale(x2a, window_size.width)
+        // let y1 = toSystemScale(y1a, window_size.height)
+        // let y2 = toSystemScale(y2a, window_size.height)
 
-        // Four corners of the quad
-        const corners = [
-          { x: x1, y: y1 },
-          { x: x2, y: y1 },
-          { x: x2, y: y2 },
-          { x: x1, y: y2 }
-        ]
+        // // Four corners of the quad
+        // const corners = [
+        //   { x: x1, y: y1 },
+        //   { x: x2, y: y1 },
+        //   { x: x2, y: y2 },
+        //   { x: x1, y: y2 }
+        // ]
+
+        const corner1 = toNDC(
+          point.x - halfSize,
+          point.y - halfSize,
+          window_size.width,
+          window_size.height
+        )
+        const corner2 = toNDC(
+          point.x + halfSize,
+          point.y - halfSize,
+          window_size.width,
+          window_size.height
+        )
+        const corner3 = toNDC(
+          point.x + halfSize,
+          point.y + halfSize,
+          window_size.width,
+          window_size.height
+        )
+        const corner4 = toNDC(
+          point.x - halfSize,
+          point.y + halfSize,
+          window_size.width,
+          window_size.height
+        )
+
+        const corners = [corner1, corner2, corner3, corner4]
 
         // Add vertices with proper gradient_coords for world position
         for (let j = 0; j < 4; j++) {
@@ -520,6 +547,11 @@ export class ProceduralBrush implements BrushStrokeShape {
       camera.windowSize.height
     )
 
+    // let systemX = toSystemScale(this.position.x, camera.windowSize.width)
+    // let systemY = toSystemScale(this.position.y, camera.windowSize.height)
+
+    // console.info('crate bind group ndc', this.position, ndc)
+
     this.transform = new Transform(
       // Position will be set via groupTransform
       vec3.fromValues(ndc.x, ndc.y, 0),
@@ -528,6 +560,8 @@ export class ProceduralBrush implements BrushStrokeShape {
       modelBuffer
       // window_size,
     )
+
+    this.transform.updateUniformBuffer(queue, camera.windowSize)
 
     // Create white texture (brushes don't use textures but need something bound)
     const textureSize = { width: 1, height: 1, depthOrArrayLayers: 1 }
