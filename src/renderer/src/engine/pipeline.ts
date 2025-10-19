@@ -1164,13 +1164,16 @@ export class CanvasPipeline {
           brush.transform.updateUniformBuffer(queue, editor.camera.windowSize)
         }
 
+        const indicesToDraw = editor.isPlaying ? brush.drawCount : brush.totalIndices
+
         brush.bindGroup.bindWebGLBindGroup(gl)
         brush.groupBindGroup?.bindWebGLBindGroup(gl)
 
         drawIndexedGeometry(
           brush.vertexBuffer as PolyfillBuffer,
           brush.indexBuffer as PolyfillBuffer,
-          brush.indices.length
+          // brush.indices.length
+          indicesToDraw
         )
       }
     }

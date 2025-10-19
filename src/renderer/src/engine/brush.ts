@@ -176,6 +176,11 @@ export class ProceduralBrush implements BrushStrokeShape {
   brushParamsBuffer?: PolyfillBuffer
   brushParamsBindGroup?: PolyfillBindGroup
 
+  // Animation properties
+  animationDurationMs: number = 5000 // Default duration of 5000ms (5s)
+  totalIndices: number = 0 // New property to store the maximum index count
+  drawCount: number = 0
+
   constructor(
     window_size: WindowSize,
     device: PolyfillDevice,
@@ -224,28 +229,13 @@ export class ProceduralBrush implements BrushStrokeShape {
     this.currentStroke = null
     this.strokes = config.strokes ?? []
 
-    // Initialize transform
-    // this.transform = createEmptyGroupTransform(
-    //   this.position.x,
-    //   this.position.y,
-    //   this.dimensions[0],
-    //   this.dimensions[1],
-    //   this.rotation
-    // );
-    // let [group_bind_group, group_transform] = createEmptyGroupTransform(
-    //   device,
-    //   groupBindGroupLayout,
-    //   camera.windowSize
-    // )
-
-    // this.transform = group_transform
-
+    // also bind transform
     this.bindGroup = this.createBindGroup(device, bindGroupLayout, camera, queue)
 
     // Create initial geometry (empty until strokes are added)
     this.createGeometry(camera, window_size)
 
-    console.info('brush vertices', this.vertices, this.transform.position)
+    // console.info('brush vertices', this.vertices, this.transform.position)
 
     // Create buffers
     this.vertexBuffer = this.createVertexBuffer(device, queue)
@@ -361,31 +351,6 @@ export class ProceduralBrush implements BrushStrokeShape {
 
         // Create quad for each point (brush dab)
         const halfSize = pressureSize / 2
-
-        // const corner1 = toNDC(
-        //   point.x - halfSize,
-        //   point.y - halfSize,
-        //   window_size.width,
-        //   window_size.height
-        // )
-        // const corner2 = toNDC(
-        //   point.x + halfSize,
-        //   point.y - halfSize,
-        //   window_size.width,
-        //   window_size.height
-        // )
-        // const corner3 = toNDC(
-        //   point.x + halfSize,
-        //   point.y + halfSize,
-        //   window_size.width,
-        //   window_size.height
-        // )
-        // const corner4 = toNDC(
-        //   point.x - halfSize,
-        //   point.y + halfSize,
-        //   window_size.width,
-        //   window_size.height
-        // )
 
         let x1a = point.x - halfSize
         let x2a = point.x + halfSize
@@ -507,6 +472,8 @@ export class ProceduralBrush implements BrushStrokeShape {
   }
 
   createIndexBuffer(device: PolyfillDevice, queue: PolyfillQueue): PolyfillBuffer {
+    this.totalIndices = this.indices.length
+
     const buffer = device.createBuffer(
       {
         // size: indexData.byteLength,
@@ -748,6 +715,36 @@ export class ProceduralBrush implements BrushStrokeShape {
     // Recreate buffers
     this.vertexBuffer = this.createVertexBuffer(device, queue)
     this.indexBuffer = this.createIndexBuffer(device, queue)
+  }
+
+  /**
+   * Calculates the number of indices to draw based on animation time.
+   * This method avoids expensive buffer updates on the GPU.
+   * @param currentTimeMs Current time in milliseconds from the start of the animation sequence.
+   * @returns The number of indices to draw for the current frame.
+   */
+  updateAnimation(currentTimeMs: number): number {
+    if (this.totalIndices === 0) {
+      return 0
+    }
+
+    // Calculate animation progress (normalized time from 0.0 to 1.0)
+    const progress = Math.min(currentTimeMs / this.animationDurationMs, 1.0)
+
+    // 1. Calculate the target index count
+    // Since each brush dab is a quad (4 vertices, 6 indices), the total index count
+    // corresponds directly to the number of dabs * 6.
+    const targetIndexCount = Math.ceil(this.totalIndices * progress)
+
+    // Ensure the count is a multiple of 6 (indices per quad) unless at the very end
+    // This makes sure we draw complete brush dabs/quads.
+    // We only draw `targetIndexCount` which should be a multiple of 6 for full quads.
+    const drawCount = Math.floor(targetIndexCount / 6) * 6
+
+    // console.info('drawCount', targetIndexCount, progress, currentTimeMs, drawCount)
+
+    // return drawCount
+    this.drawCount = drawCount
   }
 
   // Convert to config for saving

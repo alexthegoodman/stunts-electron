@@ -2437,6 +2437,7 @@ export class Editor {
     // Update text animations
     // console.info("About to call updateTextAnimations, totalDt:", totalDt);
     this.updateTextAnimations(totalDt * 1000, gpuResources.queue!)
+    this.updateBrushAnimations(totalDt * 1000)
   }
 
   seekTo(timeMs: number) {
@@ -2961,6 +2962,19 @@ export class Editor {
       if (!textItem.hidden && textItem.hasTextAnimation()) {
         // console.info("Calling updateTextAnimation for:", textItem.id);
         textItem.updateTextAnimation(currentTimeMs, queue, this.camera.windowSize)
+      }
+    }
+  }
+
+  // Update text animations for all brush items
+  updateBrushAnimations(currentTimeMs: number): void {
+    // console.info("Editor.updateTextAnimations called with", this.textItems.length, "text items");
+
+    for (const brush of this.brushes) {
+      // console.info("Checking text item:", textItem.id, "hidden:", textItem.hidden, "hasAnimation:", textItem.hasTextAnimation());
+      if (!brush.hidden) {
+        // console.info("Calling updateTextAnimation for:", textItem.id);
+        brush.updateAnimation(currentTimeMs)
       }
     }
   }
