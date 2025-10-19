@@ -2404,6 +2404,53 @@ export class Editor {
     this.updateTextAnimations(totalDt * 1000, gpuResources.queue!)
   }
 
+  seekTo(timeMs: number) {
+    let gpuResources = this.gpuResources
+    let device = gpuResources.device
+    let queue = gpuResources.queue
+    let windowSize = this.camera.windowSize
+
+    const timeS = timeMs / 1000
+
+    this.videoItems.forEach((v) => {
+      // v.seekToTime(timeMs) // runs in drawVideoFrame
+      v.drawVideoFrame(gpuResources.device!, gpuResources.queue!, timeMs, true)
+    })
+
+    this.stepAnimateSequence(timeS, this.camera, false)
+
+    this.polygons.forEach((x) => {
+      x.transform.updateUniformBuffer(queue, windowSize)
+    })
+    this.textItems.forEach((x) => {
+      x.backgroundPolygon.transform.updateUniformBuffer(queue, windowSize)
+
+      x.transform.updateUniformBuffer(queue, windowSize)
+    })
+    this.videoItems.forEach((x) => {
+      x.groupTransform.updateUniformBuffer(queue, windowSize)
+    })
+    this.imageItems.forEach((x) => {
+      x.transform.updateUniformBuffer(queue, windowSize)
+    })
+    this.brushes.forEach((x) => {
+      x.transform.updateUniformBuffer(queue, windowSize)
+    })
+    this.mockups3D.forEach((x) => {
+      x.groupTransform.updateUniformBuffer(queue, windowSize)
+      x.videoChild.transform.updateUniformBuffer(queue, windowSize)
+    })
+    this.cubes3D.forEach((x) => {
+      x.transform.updateUniformBuffer(queue, windowSize)
+    })
+    this.spheres3D.forEach((x) => {
+      x.transform.updateUniformBuffer(queue, windowSize)
+    })
+    this.models3D.forEach((x) => {
+      x.transform.updateUniformBuffer(queue, windowSize)
+    })
+  }
+
   getSurroundingKeyframes(
     keyframes: UIKeyframe[],
     current_time: number

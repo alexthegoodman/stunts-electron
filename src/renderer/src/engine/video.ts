@@ -663,7 +663,11 @@ export class StVideo {
               height: frame.displayHeight
             }
 
-            this.frameCallback?.(frameInfo)
+            if (this.frameCallback) {
+              await this.frameCallback(frameInfo)
+            } else {
+              frame.close()
+            }
           } catch (error) {
             console.error('Error processing frame:', error)
             frame.close()
@@ -689,11 +693,56 @@ export class StVideo {
     })
   }
 
-  async decodeNextFrame(flush: boolean = false): Promise<DecodedFrameInfo> {
+  async decodeNextFrame(
+    flush: boolean = false,
+    decodeFromKeyTimeS: number | null = null
+  ): Promise<DecodedFrameInfo> {
     if (!this.isInitialized || !this.videoSampleSink) {
       throw new Error('Video not initialized or sink not available')
     }
 
+    // seeking
+    if (decodeFromKeyTimeS !== null) {
+      return new Promise(async (resolve, reject) => {
+        this.frameCallback = null
+
+        try {
+          let packet = await this.videoSampleSink.getPacket(decodeFromKeyTimeS)
+          let endPacket = await this.videoSampleSink.getPacket(this.currentTimestamp)
+
+          let packets = this.videoSampleSink.packets(packet, endPacket)
+
+          // console.info('decode seek', packet, endPacket, decodeFromKeyTimeS)
+
+          for await (const packet of packets) {
+            if (!packet) {
+              throw new Error('No more frames to decode at or after current timestamp')
+            }
+
+            let chunk = packet.toEncodedVideoChunk()
+
+            // This is a common pattern: decode and increment the timestamp
+            this.videoDecoder!.decode(chunk)
+          }
+
+          this.frameCallback = async (frameInfo: DecodedFrameInfo) => {
+            this.frameCallback = undefined
+
+            resolve(frameInfo)
+          }
+
+          let chunk = endPacket.toEncodedVideoChunk()
+
+          // console.info('finsihed packets')
+
+          this.videoDecoder!.decode(chunk)
+        } catch (error) {
+          reject(error)
+        }
+      })
+    }
+
+    // not seeking
     return new Promise(async (resolve, reject) => {
       this.frameCallback = (frameInfo: DecodedFrameInfo) => {
         this.frameCallback = undefined
@@ -701,43 +750,13 @@ export class StVideo {
       }
 
       try {
-        // The VideoSampleSink.samples() generator is the most direct equivalent
-        // to iterating through MP4Box samples.
-
-        // Get the next packet/sample from the current time.
-        // Mediabunny handles finding the corresponding EncodedVideoChunk data.
-        // const sample = await this.videoSampleSink.getSample(this.currentTimestamp)
-        // let packet = await this.videoSampleSink.getKeyPacket(this.currentTimestamp)
         let packet = await this.videoSampleSink.getPacket(this.currentTimestamp)
-
-        // if (this.currentTimestamp === 0) {
-        //   packet = await this.videoSampleSink.getNextPacket(packet)
-        // }
 
         if (!packet) {
           throw new Error('No more frames to decode at or after current timestamp')
         }
 
-        // Convert the Mediabunny packet to an EncodedVideoChunk
-        // const chunk = new EncodedVideoChunk({
-        //   type: packet.isSync ? 'key' : 'delta',
-        //   timestamp: packet.timestamp * 1000000, // Mediabunny timestamps are in seconds, WebCodecs in microseconds
-        //   duration: packet.duration * 1000000,
-        //   data: packet.data // Uint8Array
-        // })
-
         let chunk = packet.toEncodedVideoChunk()
-
-        // console.info('about to decode', chunk)
-
-        // setTimeout(async () => {
-        //   if (this.framesDecoded === 0) {
-        //     let nextPacket = await this.videoSampleSink.getNextPacket(packet)
-        //     let chunk2 = nextPacket.toEncodedVideoChunk()
-        //     this.videoDecoder!.decode(chunk2)
-        //     this.currentTimestamp += chunk.duration / 1000000
-        //   }
-        // }, 50)
 
         // This is a common pattern: decode and increment the timestamp
         this.videoDecoder!.decode(chunk)
@@ -757,16 +776,22 @@ export class StVideo {
   async drawVideoFrame(
     device: PolyfillDevice,
     queue: PolyfillQueue,
-    timeMs?: number,
+    timeMs?: number, // use to seek
     flush?: boolean
   ) {
+    let decodeFromKeyTime = null
     if (timeMs) {
-      await this.seekToTime(timeMs)
+      let mostRecentKeyPacket = await this.videoSampleSink.getKeyPacket(this.currentTimestamp)
+      decodeFromKeyTime = mostRecentKeyPacket.timestamp
+
+      this.currentTimestamp = timeMs / 1000
     }
 
-    const frameInfo = await this.decodeNextFrame(flush)
+    const frameInfo = await this.decodeNextFrame(flush, decodeFromKeyTime)
 
     // Your WebGPU logic remains the same as it uses the resulting VideoFrame
+
+    // console.info('draw new texture')
 
     queue.writeTexture(
       {
@@ -790,15 +815,6 @@ export class StVideo {
     frameInfo.frame.close()
 
     return frameInfo
-  }
-
-  async seekToTime(timeMs: number): Promise<void> {
-    if (!this.isInitialized || !this.videoTrack) {
-      throw new Error('Video not initialized')
-    }
-
-    // Convert timeMs to seconds for Mediabunny
-    this.currentTimestamp = timeMs / 1000
   }
 
   calculateCoverTextureCoordinates(

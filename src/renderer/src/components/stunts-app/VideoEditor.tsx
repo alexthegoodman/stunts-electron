@@ -2141,6 +2141,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                 !selected_video_id && (
                   <>
                     <div
+                      key={`object-timeline-${refreshUINow}`}
                       className={`flex flex-col justify-end w-full mx-auto md:self-end md:m-0 md:overflow-x-scroll`}
                       style={{
                         maxWidth: `${(settings?.dimensions.width || 0) + 100}px`
@@ -2149,14 +2150,30 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       {sequences
                         .filter((s) => s.id === current_sequence_id)
                         .map((sequence) => {
+                          const pixelsPerSecond = 15
                           if (sequence.polygonMotionPaths) {
                             return (
                               <div key={`trackSequence${sequence.id}`}>
                                 {/* Timeline tick marks */}
                                 <TimelineTicks
                                   trackWidth={settings?.dimensions.width || 960}
-                                  pixelsPerSecond={15}
+                                  pixelsPerSecond={pixelsPerSecond}
                                   durationMs={getSequenceDuration(sequence).durationMs}
+                                  onSeek={(timeMs: number) => {
+                                    console.info('onSeek', timeMs)
+                                    let editor = editorRef.current
+
+                                    if (!editor) {
+                                      return
+                                    }
+
+                                    console.info('seq uences', sequences, current_sequence_id)
+
+                                    editor.currentSequenceData = sequence
+                                    editor.videoCurrentSequencesData = sequences
+
+                                    editor.seekTo(timeMs)
+                                  }}
                                 />
 
                                 {sequence.polygonMotionPaths.map((animation) => {
@@ -2202,7 +2219,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                       trackWidth={settings?.dimensions.width || 960}
                                       objectName={objectName}
                                       objectData={animation}
-                                      pixelsPerSecond={15}
+                                      pixelsPerSecond={pixelsPerSecond}
                                       onSequenceDragEnd={handleObjectDragEnd}
                                       onDeleteObject={async (id: string, kind: ObjectType) => {
                                         let editor = editorRef.current
