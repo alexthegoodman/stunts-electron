@@ -168,13 +168,37 @@ float voronoi(vec2 st, float cellSize, float seed) {
 
 // Dot pattern (halftone style)
 float dotPattern(vec2 st, float density) {
-    vec2 scaledSt = st * density;
-    vec2 gridPos = fract(scaledSt);
-    vec2 center = vec2(0.5, 0.5);
-    float dist = distance(gridPos, center);
+   vec2 scaledSt = st * density;
+   vec2 gridPos = fract(scaledSt);
+   vec2 center = vec2(0.5, 0.5);
+   float dist = distance(gridPos, center);
 
-    return smoothstep(0.4, 0.3, dist);
+   return smoothstep(0.4, 0.3, dist);
 }
+
+// // New function for better control
+// float dotPattern(vec2 st, float dotScale) {
+//   // 1. Scale coordinates based on the input 'dotScale'
+//   // Higher dotScale = smaller grid cells = more dots
+//   vec2 scaledSt = st * dotScale; 
+
+//   // 2. Find the fractional part (position within the current grid cell)
+//   vec2 gridPos = fract(scaledSt);
+
+//   // 3. Find the distance from the center of the cell
+//   vec2 center = vec2(0.5, 0.5);
+//   float dist = distance(gridPos, center);
+  
+//   // 4. Determine the dot radius based on the density.
+//   // A simple way to get a constant size dot within the grid cell.
+//   // The dot will occupy about 30% of the cell size.
+//   float dotRadius = 0.3; 
+
+//   // 5. Use smoothstep to create an anti-aliased circle mask.
+//   // This ensures the output is 1.0 (opaque) near the center, 
+//   // and smoothly transitions to 0.0 (transparent) outside the radius.
+//   return 1.0 - smoothstep(dotRadius - 0.05, dotRadius + 0.05, dist);
+// }
 
 // Line pattern (hatching style)
 float linePattern(vec2 st, float angle, float spacing) {

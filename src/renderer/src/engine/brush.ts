@@ -1,181 +1,180 @@
-import { mat4, vec2, vec3 } from "gl-matrix";
-import { Camera, WindowSize } from "./camera";
+import { mat4, vec2, vec3 } from 'gl-matrix'
+import { Camera, WindowSize } from './camera'
+import { BoundingBox, CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Point } from './editor'
+import { createEmptyGroupTransform, matrix4ToRawArray, Transform } from './transform'
 import {
-  BoundingBox,
-  CANVAS_HORIZ_OFFSET,
-  CANVAS_VERT_OFFSET,
-  Point,
-} from "./editor";
-import {
-  createEmptyGroupTransform,
-  matrix4ToRawArray,
-  Transform,
-} from "./transform";
-import { createVertex, getZLayer, Vertex, vertexByteSize } from "./vertex";
-import { BackgroundFill, ObjectType } from "./animations";
-import { makeShaderDataDefinitions, makeStructuredView } from "webgpu-utils";
+  createVertex,
+  fromNDC,
+  getZLayer,
+  toNDC,
+  toSystemScale,
+  Vertex,
+  vertexByteSize
+} from './vertex'
+import { BackgroundFill, ObjectType } from './animations'
+import { makeShaderDataDefinitions, makeStructuredView } from 'webgpu-utils'
 import {
   PolyfillBindGroup,
   PolyfillBindGroupLayout,
   PolyfillBuffer,
   PolyfillDevice,
-  PolyfillQueue,
-} from "./polyfill";
+  PolyfillQueue
+} from './polyfill'
 
-export const INTERNAL_LAYER_SPACE = 10;
+export const INTERNAL_LAYER_SPACE = 10
 
 // Brush type enumeration
 export enum BrushType {
-  Noise = "Noise",
-  Dots = "Dots",
-  Lines = "Lines",
-  Voronoi = "Voronoi",
-  Fractal = "Fractal",
-  Gradient = "Gradient",
-  Splatter = "Splatter",
+  Noise = 'Noise',
+  Dots = 'Dots',
+  Lines = 'Lines',
+  Voronoi = 'Voronoi',
+  Fractal = 'Fractal',
+  Gradient = 'Gradient',
+  Splatter = 'Splatter'
 }
 
 // Point with pressure information for stroke variation
 export interface BrushPoint {
-  x: number;
-  y: number;
-  pressure: number; // 0.0 to 1.0
-  timestamp: number; // milliseconds
+  x: number
+  y: number
+  pressure: number // 0.0 to 1.0
+  timestamp: number // milliseconds
 }
 
 // Brush configuration
 export interface BrushConfig {
-  id: string;
-  name: string;
-  brushType: BrushType;
-  size: number; // Base brush size in pixels
-  opacity: number; // 0.0 to 1.0
-  flow: number; // 0.0 to 1.0 (paint accumulation per dab)
-  spacing: number; // Distance between dabs (0.0 to 1.0 of brush size)
+  id: string
+  name: string
+  brushType: BrushType
+  size: number // Base brush size in pixels
+  opacity: number // 0.0 to 1.0
+  flow: number // 0.0 to 1.0 (paint accumulation per dab)
+  spacing: number // Distance between dabs (0.0 to 1.0 of brush size)
 
   // Color
-  primaryColor: [number, number, number, number]; // RGBA
-  secondaryColor: [number, number, number, number]; // RGBA for gradients/patterns
+  primaryColor: [number, number, number, number] // RGBA
+  secondaryColor: [number, number, number, number] // RGBA for gradients/patterns
 
   // Procedural texture parameters
-  noiseScale: number; // Scale of noise pattern
-  octaves: number; // Number of noise octaves (detail level)
-  persistence: number; // Amplitude falloff per octave
-  randomSeed: number; // Seed for reproducible randomness
+  noiseScale: number // Scale of noise pattern
+  octaves: number // Number of noise octaves (detail level)
+  persistence: number // Amplitude falloff per octave
+  randomSeed: number // Seed for reproducible randomness
 
   // Pattern-specific parameters
-  dotDensity?: number; // For Dots brush
-  lineAngle?: number; // For Lines brush (in radians)
-  lineSpacing?: number; // For Lines brush
-  cellSize?: number; // For Voronoi brush
+  dotDensity?: number // For Dots brush
+  lineAngle?: number // For Lines brush (in radians)
+  lineSpacing?: number // For Lines brush
+  cellSize?: number // For Voronoi brush
 
   // Layer and positioning
-  position: Point;
-  dimensions: [number, number]; // Width and height of brush area
-  layer: number;
-  rotation: number;
+  position: Point
+  dimensions: [number, number] // Width and height of brush area
+  layer: number
+  rotation: number
 }
 
 // Saved brush configuration (for serialization)
 export interface SavedBrushConfig {
-  id: string;
-  name: string;
-  brushType: BrushType;
-  size: number;
-  opacity: number;
-  flow: number;
-  spacing: number;
-  primaryColor: [number, number, number, number];
-  secondaryColor: [number, number, number, number];
-  noiseScale: number;
-  octaves: number;
-  persistence: number;
-  randomSeed: number;
-  dotDensity?: number;
-  lineAngle?: number;
-  lineSpacing?: number;
-  cellSize?: number;
-  position: { x: number; y: number };
-  dimensions: [number, number];
-  layer: number;
-  rotation: number;
-  strokes: BrushStroke[]; // Store all strokes made with this brush
+  id: string
+  name: string
+  brushType: BrushType
+  size: number
+  opacity: number
+  flow: number
+  spacing: number
+  primaryColor: [number, number, number, number]
+  secondaryColor: [number, number, number, number]
+  noiseScale: number
+  octaves: number
+  persistence: number
+  randomSeed: number
+  dotDensity?: number
+  lineAngle?: number
+  lineSpacing?: number
+  cellSize?: number
+  position: { x: number; y: number }
+  dimensions: [number, number]
+  layer: number
+  rotation: number
+  strokes: BrushStroke[] // Store all strokes made with this brush
 }
 
 // Individual brush stroke
 export interface BrushStroke {
-  id: string;
-  points: BrushPoint[];
-  brushConfigSnapshot: Partial<BrushConfig>; // Capture config at stroke time
-  startTime: number;
-  endTime: number;
+  id: string
+  points: BrushPoint[]
+  brushConfigSnapshot: Partial<BrushConfig> // Capture config at stroke time
+  startTime: number
+  endTime: number
 }
 
 // Brush stroke shape for rendering
 export interface BrushStrokeShape {
-  points: BrushPoint[];
-  dimensions: [number, number];
-  position: Point;
-  rotation: number;
-  primaryColor: [number, number, number, number];
-  secondaryColor: [number, number, number, number];
-  baseLayer: number;
-  transformLayer: number;
-  id: string;
-  brushType: BrushType;
+  points: BrushPoint[]
+  dimensions: [number, number]
+  position: Point
+  rotation: number
+  primaryColor: [number, number, number, number]
+  secondaryColor: [number, number, number, number]
+  baseLayer: number
+  transformLayer: number
+  id: string
+  brushType: BrushType
 }
 
 export class ProceduralBrush implements BrushStrokeShape {
-  points: BrushPoint[];
-  dimensions: [number, number];
-  position: Point;
-  rotation: number;
-  primaryColor: [number, number, number, number];
-  secondaryColor: [number, number, number, number];
-  baseLayer: number;
-  transformLayer: number;
-  id: string;
-  name: string;
-  currentSequenceId: string;
-  brushType: BrushType;
+  points: BrushPoint[]
+  dimensions: [number, number]
+  position: Point
+  rotation: number
+  primaryColor: [number, number, number, number]
+  secondaryColor: [number, number, number, number]
+  baseLayer: number
+  transformLayer: number
+  id: string
+  name: string
+  currentSequenceId: string
+  brushType: BrushType
 
   // Brush-specific properties
-  size: number;
-  opacity: number;
-  flow: number;
-  spacing: number;
-  noiseScale: number;
-  octaves: number;
-  persistence: number;
-  randomSeed: number;
+  size: number
+  opacity: number
+  flow: number
+  spacing: number
+  noiseScale: number
+  octaves: number
+  persistence: number
+  randomSeed: number
 
   // Pattern-specific
-  dotDensity?: number;
-  lineAngle?: number;
-  lineSpacing?: number;
-  cellSize?: number;
+  dotDensity?: number
+  lineAngle?: number
+  lineSpacing?: number
+  cellSize?: number
 
   // Rendering resources
-  activeGroupPosition: [number, number];
-  groupBindGroup: PolyfillBindGroup;
-  hidden: boolean;
-  vertices: Vertex[];
-  indices: number[];
-  vertexBuffer: PolyfillBuffer;
-  indexBuffer: PolyfillBuffer;
-  bindGroup: PolyfillBindGroup;
-  transform: Transform;
-  layer: number;
-  layerSpacing: number;
-  objectType: ObjectType;
+  activeGroupPosition: [number, number]
+  groupBindGroup: PolyfillBindGroup
+  hidden: boolean
+  vertices: Vertex[]
+  indices: number[]
+  vertexBuffer: PolyfillBuffer
+  indexBuffer: PolyfillBuffer
+  bindGroup: PolyfillBindGroup
+  transform: Transform
+  layer: number
+  layerSpacing: number
+  objectType: ObjectType
 
   // Stroke collection
-  currentStroke: BrushStroke | null;
-  strokes: BrushStroke[];
+  currentStroke: BrushStroke | null
+  strokes: BrushStroke[]
 
   // Uniform buffer for brush parameters
-  brushParamsBuffer?: PolyfillBuffer;
-  brushParamsBindGroup?: PolyfillBindGroup;
+  brushParamsBuffer?: PolyfillBuffer
+  brushParamsBindGroup?: PolyfillBindGroup
 
   constructor(
     window_size: WindowSize,
@@ -184,46 +183,46 @@ export class ProceduralBrush implements BrushStrokeShape {
     bindGroupLayout: PolyfillBindGroupLayout,
     groupBindGroupLayout: PolyfillBindGroupLayout,
     camera: Camera,
-    config: BrushConfig,
+    config: SavedBrushConfig,
     currentSequenceId: string
   ) {
-    this.points = [];
-    this.dimensions = config.dimensions;
-    this.position = config.position;
-    this.rotation = config.rotation;
-    this.primaryColor = config.primaryColor;
-    this.secondaryColor = config.secondaryColor;
-    this.baseLayer = config.layer;
-    this.transformLayer = 0;
-    this.id = config.id;
-    this.name = config.name;
-    this.currentSequenceId = currentSequenceId;
-    this.brushType = config.brushType;
+    this.points = []
+    this.dimensions = config.dimensions
+    this.position = config.position
+    this.rotation = config.rotation
+    this.primaryColor = config.primaryColor
+    this.secondaryColor = config.secondaryColor
+    this.baseLayer = config.layer
+    this.transformLayer = 0
+    this.id = config.id
+    this.name = config.name
+    this.currentSequenceId = currentSequenceId
+    this.brushType = config.brushType
 
-    this.size = config.size;
-    this.opacity = config.opacity;
-    this.flow = config.flow;
-    this.spacing = config.spacing;
-    this.noiseScale = config.noiseScale;
-    this.octaves = config.octaves;
-    this.persistence = config.persistence;
-    this.randomSeed = config.randomSeed;
+    this.size = config.size
+    this.opacity = config.opacity
+    this.flow = config.flow
+    this.spacing = config.spacing
+    this.noiseScale = config.noiseScale
+    this.octaves = config.octaves
+    this.persistence = config.persistence
+    this.randomSeed = config.randomSeed
 
-    this.dotDensity = config.dotDensity;
-    this.lineAngle = config.lineAngle;
-    this.lineSpacing = config.lineSpacing;
-    this.cellSize = config.cellSize;
+    this.dotDensity = config.dotDensity
+    this.lineAngle = config.lineAngle
+    this.lineSpacing = config.lineSpacing
+    this.cellSize = config.cellSize
 
-    this.activeGroupPosition = [0, 0];
-    this.hidden = false;
-    this.vertices = [];
-    this.indices = [];
-    this.layer = config.layer;
-    this.layerSpacing = 0.001;
-    this.objectType = ObjectType.Polygon; // Treat as polygon-like object for now
+    this.activeGroupPosition = [0, 0]
+    this.hidden = false
+    this.vertices = []
+    this.indices = []
+    this.layer = config.layer
+    this.layerSpacing = 0.001
+    this.objectType = ObjectType.Brush // Treat as polygon-like object for now
 
-    this.currentStroke = null;
-    this.strokes = [];
+    this.currentStroke = null
+    this.strokes = config.strokes ?? []
 
     // Initialize transform
     // this.transform = createEmptyGroupTransform(
@@ -233,26 +232,24 @@ export class ProceduralBrush implements BrushStrokeShape {
     //   this.dimensions[1],
     //   this.rotation
     // );
-    let [group_bind_group, group_transform] = createEmptyGroupTransform(
-      device,
-      groupBindGroupLayout,
-      camera.windowSize
-    );
+    // let [group_bind_group, group_transform] = createEmptyGroupTransform(
+    //   device,
+    //   groupBindGroupLayout,
+    //   camera.windowSize
+    // )
 
-    this.transform = group_transform;
+    // this.transform = group_transform
+
+    this.bindGroup = this.createBindGroup(device, bindGroupLayout, camera, queue)
 
     // Create initial geometry (empty until strokes are added)
-    this.createGeometry(camera, window_size);
+    this.createGeometry(camera, window_size)
+
+    console.info('brush vertices', this.vertices, this.transform.position)
 
     // Create buffers
-    this.vertexBuffer = this.createVertexBuffer(device, queue);
-    this.indexBuffer = this.createIndexBuffer(device, queue);
-    this.bindGroup = this.createBindGroup(
-      device,
-      bindGroupLayout,
-      camera,
-      queue
-    );
+    this.vertexBuffer = this.createVertexBuffer(device, queue)
+    this.indexBuffer = this.createIndexBuffer(device, queue)
     // this.groupBindGroup = this.createGroupBindGroup(
     //   device,
     //   groupBindGroupLayout,
@@ -262,8 +259,8 @@ export class ProceduralBrush implements BrushStrokeShape {
       device,
       groupBindGroupLayout,
       camera.windowSize
-    );
-    this.groupBindGroup = tmp_group_bind_group;
+    )
+    this.groupBindGroup = tmp_group_bind_group
   }
 
   // Start a new stroke
@@ -282,91 +279,120 @@ export class ProceduralBrush implements BrushStrokeShape {
         noiseScale: config.noiseScale,
         octaves: config.octaves,
         persistence: config.persistence,
-        randomSeed: config.randomSeed,
+        randomSeed: config.randomSeed
       },
       startTime: point.timestamp,
-      endTime: point.timestamp,
-    };
+      endTime: point.timestamp
+    }
   }
 
   // Add point to current stroke
   addStrokePoint(point: BrushPoint): void {
-    if (!this.currentStroke) return;
+    if (!this.currentStroke) return
 
     // Check spacing - only add point if it's far enough from last point
-    const lastPoint =
-      this.currentStroke.points[this.currentStroke.points.length - 1];
+    const lastPoint = this.currentStroke.points[this.currentStroke.points.length - 1]
     const distance = Math.sqrt(
       Math.pow(point.x - lastPoint.x, 2) + Math.pow(point.y - lastPoint.y, 2)
-    );
+    )
 
-    const minDistance = this.size * this.spacing;
+    const minDistance = this.size * this.spacing
     if (distance >= minDistance) {
-      this.currentStroke.points.push(point);
-      this.currentStroke.endTime = point.timestamp;
+      this.currentStroke.points.push(point)
+      this.currentStroke.endTime = point.timestamp
     }
   }
 
   // End current stroke and add to strokes array
   endStroke(): void {
     if (this.currentStroke && this.currentStroke.points.length > 0) {
-      this.strokes.push(this.currentStroke);
-      this.currentStroke = null;
+      this.strokes.push(this.currentStroke)
+      this.currentStroke = null
     }
   }
 
   // Create geometry from all strokes
   createGeometry(camera: Camera, window_size: WindowSize): void {
-    this.vertices = [];
-    this.indices = [];
+    this.vertices = []
+    this.indices = []
 
     if (this.strokes.length === 0 && !this.currentStroke) {
-      return;
+      return
     }
 
     // Combine all strokes into vertices/indices
-    const allStrokes = [...this.strokes];
+    const allStrokes = [...this.strokes]
     if (this.currentStroke) {
-      allStrokes.push(this.currentStroke);
+      allStrokes.push(this.currentStroke)
     }
 
-    let vertexOffset = 0;
+    let vertexOffset = 0
 
     for (const stroke of allStrokes) {
       for (let i = 0; i < stroke.points.length; i++) {
-        const point = stroke.points[i];
-        const pressureSize = this.size * point.pressure;
+        const point = stroke.points[i]
+        const pressureSize = this.size * point.pressure
 
         // Create quad for each point (brush dab)
-        const halfSize = pressureSize / 2;
+        const halfSize = pressureSize / 2
+
+        // const corner1 = toNDC(
+        //   point.x - halfSize,
+        //   point.y - halfSize,
+        //   window_size.width,
+        //   window_size.height
+        // )
+        // const corner2 = toNDC(
+        //   point.x + halfSize,
+        //   point.y - halfSize,
+        //   window_size.width,
+        //   window_size.height
+        // )
+        // const corner3 = toNDC(
+        //   point.x + halfSize,
+        //   point.y + halfSize,
+        //   window_size.width,
+        //   window_size.height
+        // )
+        // const corner4 = toNDC(
+        //   point.x - halfSize,
+        //   point.y + halfSize,
+        //   window_size.width,
+        //   window_size.height
+        // )
+
+        let x1 = toSystemScale(point.x - halfSize, window_size.width)
+        let x2 = toSystemScale(point.x + halfSize, window_size.width)
+        let y1 = toSystemScale(point.y - halfSize, window_size.height)
+        let y2 = toSystemScale(point.y + halfSize, window_size.height)
 
         // Four corners of the quad
         const corners = [
-          { x: point.x - halfSize, y: point.y - halfSize },
-          { x: point.x + halfSize, y: point.y - halfSize },
-          { x: point.x + halfSize, y: point.y + halfSize },
-          { x: point.x - halfSize, y: point.y + halfSize },
-        ];
+          { x: x1, y: y1 },
+          { x: x2, y: y1 },
+          { x: x2, y: y2 },
+          { x: x1, y: y2 }
+        ]
 
         // Add vertices with proper gradient_coords for world position
         for (let j = 0; j < 4; j++) {
           const vertex = createVertex(
             corners[j].x,
             corners[j].y,
-            getZLayer(this.transformLayer),
+            0.03,
             [
               this.primaryColor[0] / 255,
               this.primaryColor[1] / 255,
               this.primaryColor[2] / 255,
-              (this.primaryColor[3] / 255) * this.opacity,
+              (this.primaryColor[3] / 255) * this.opacity
             ],
             ObjectType.Brush
-          );
+          )
 
           // Set gradient_coords to world position for procedural texture
-          vertex.gradient_coords = [corners[j].x, corners[j].y];
+          vertex.gradient_coords = [corners[j].x, corners[j].y]
 
-          this.vertices.push(vertex);
+          this.vertices.push(vertex)
         }
 
         // Add indices (two triangles per quad)
@@ -377,53 +403,50 @@ export class ProceduralBrush implements BrushStrokeShape {
           vertexOffset + 0,
           vertexOffset + 2,
           vertexOffset + 3
-        );
+        )
 
-        vertexOffset += 4;
+        vertexOffset += 4
       }
     }
   }
 
-  createVertexBuffer(
-    device: PolyfillDevice,
-    queue: PolyfillQueue
-  ): PolyfillBuffer {
+  createVertexBuffer(device: PolyfillDevice, queue: PolyfillQueue): PolyfillBuffer {
     // Vertex layout: position(3) + tex_coords(2) + color(4) + gradient_coords(2) + object_type(1)
-    const floatsPerVertex = 12;
-    const vertexData = new Float32Array(this.vertices.length * floatsPerVertex);
+    const floatsPerVertex = 12
+    const vertexData = new Float32Array(this.vertices.length * floatsPerVertex)
 
     this.vertices.forEach((vertex, i) => {
-      const offset = i * floatsPerVertex;
-      vertexData[offset + 0] = vertex.position[0];
-      vertexData[offset + 1] = vertex.position[1];
-      vertexData[offset + 2] = vertex.position[2];
-      vertexData[offset + 3] = vertex.tex_coords[0];
-      vertexData[offset + 4] = vertex.tex_coords[1];
-      vertexData[offset + 5] = vertex.color[0];
-      vertexData[offset + 6] = vertex.color[1];
-      vertexData[offset + 7] = vertex.color[2];
-      vertexData[offset + 8] = vertex.color[3];
-      vertexData[offset + 9] = vertex.gradient_coords[0];
-      vertexData[offset + 10] = vertex.gradient_coords[1];
-      vertexData[offset + 11] = vertex.object_type;
-    });
+      const offset = i * floatsPerVertex
+      vertexData[offset + 0] = vertex.position[0]
+      vertexData[offset + 1] = vertex.position[1]
+      vertexData[offset + 2] = vertex.position[2]
+      vertexData[offset + 3] = vertex.tex_coords[0]
+      vertexData[offset + 4] = vertex.tex_coords[1]
+      vertexData[offset + 5] = vertex.color[0]
+      vertexData[offset + 6] = vertex.color[1]
+      vertexData[offset + 7] = vertex.color[2]
+      vertexData[offset + 8] = vertex.color[3]
+      vertexData[offset + 9] = vertex.gradient_coords[0]
+      vertexData[offset + 10] = vertex.gradient_coords[1]
+      vertexData[offset + 11] = vertex.object_type
+    })
 
     console.info(
-      "brush data ",
+      'brush data ',
       this.vertices.length,
       vertexData.byteLength,
       this.vertices.length * Float32Array.BYTES_PER_ELEMENT * 100
-    );
+    )
 
     const buffer = device.createBuffer(
       {
         // size: vertexData.byteLength,
         size: this.vertices.length * Float32Array.BYTES_PER_ELEMENT * 100,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, // VERTEX | COPY_DST
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST // VERTEX | COPY_DST
         // mappedAtCreation: true,
       },
-      ""
-    );
+      ''
+    )
 
     // new Float32Array(buffer.getMappedRange()).set(vertexData);
     // buffer.unmap();
@@ -437,36 +460,28 @@ export class ProceduralBrush implements BrushStrokeShape {
           ...v.tex_coords,
           ...v.color,
           ...v.gradient_coords,
-          v.object_type,
+          v.object_type
         ])
       )
-    );
+    )
 
-    return buffer;
+    return buffer
   }
 
-  createIndexBuffer(
-    device: PolyfillDevice,
-    queue: PolyfillQueue
-  ): PolyfillBuffer {
-    const indexData = new Uint16Array(this.indices);
-
+  createIndexBuffer(device: PolyfillDevice, queue: PolyfillQueue): PolyfillBuffer {
     const buffer = device.createBuffer(
       {
         // size: indexData.byteLength,
         size: this.indices.length * Uint32Array.BYTES_PER_ELEMENT * 24,
-        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST, // INDEX | COPY_DST
+        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST // INDEX | COPY_DST
         // mappedAtCreation: true,
       },
-      ""
-    );
+      ''
+    )
 
-    // new Uint16Array(buffer.getMappedRange()).set(indexData);
-    // buffer.unmap();
+    queue.writeBuffer(buffer, 0, new Uint32Array(this.indices))
 
-    queue.writeBuffer(buffer, 0, new Uint32Array(this.indices));
-
-    return buffer;
+    return buffer
   }
 
   createBindGroup(
@@ -475,69 +490,79 @@ export class ProceduralBrush implements BrushStrokeShape {
     camera: Camera,
     queue: PolyfillQueue
   ): PolyfillBindGroup {
-    const emptyMatrix = mat4.create();
-    const modelMatrix = matrix4ToRawArray(emptyMatrix);
+    const emptyMatrix = mat4.create()
+    const modelMatrix = matrix4ToRawArray(emptyMatrix)
     const modelBuffer = device.createBuffer(
       {
-        label: "Brush Uniform Buffer",
+        label: 'Brush Uniform Buffer',
         size: modelMatrix.byteLength,
         usage:
-          process.env.NODE_ENV === "test"
-            ? 0
-            : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        mappedAtCreation: true,
+          process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
       },
-      "uniformMatrix4fv"
-    );
+      'uniformMatrix4fv'
+    )
 
-    if (process.env.NODE_ENV !== "test") {
-      new Float32Array(modelBuffer.getMappedRange()).set(modelMatrix);
-      modelBuffer.unmap();
+    if (process.env.NODE_ENV !== 'test') {
+      new Float32Array(modelBuffer.getMappedRange()).set(modelMatrix)
+      modelBuffer.unmap()
     }
 
-    // Create white texture (brushes don't use textures but need something bound)
-    const textureSize = { width: 1, height: 1, depthOrArrayLayers: 1 };
-    const texture = device.createTexture({
-      label: "Brush White Texture",
-      size: textureSize,
-      format: "rgba8unorm",
-      usage:
-        process.env.NODE_ENV === "test"
-          ? 0
-          : GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
-    });
+    let ndc = toNDC(
+      this.position.x,
+      this.position.y,
+      camera.windowSize.width,
+      camera.windowSize.height
+    )
 
-    const whitePixel = new Uint8Array([255, 255, 255, 255]);
+    this.transform = new Transform(
+      // Position will be set via groupTransform
+      vec3.fromValues(ndc.x, ndc.y, 0),
+      0.0,
+      vec2.fromValues(1, 1),
+      modelBuffer
+      // window_size,
+    )
+
+    // Create white texture (brushes don't use textures but need something bound)
+    const textureSize = { width: 1, height: 1, depthOrArrayLayers: 1 }
+    const texture = device.createTexture({
+      label: 'Brush White Texture',
+      size: textureSize,
+      format: 'rgba8unorm',
+      usage:
+        process.env.NODE_ENV === 'test'
+          ? 0
+          : GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+    })
+
+    const whitePixel = new Uint8Array([255, 255, 255, 255])
     queue.writeTexture(
       {
         texture,
         mipLevel: 0,
-        origin: { x: 0, y: 0, z: 0 },
+        origin: { x: 0, y: 0, z: 0 }
       },
       whitePixel,
       { offset: 0, bytesPerRow: 4, rowsPerImage: undefined },
       textureSize
-    );
+    )
 
     const brushParamsBuffer = device.createBuffer(
       {
-        label: "Brush Params Buffer",
+        label: 'Brush Params Buffer',
         size: 212,
         usage:
-          process.env.NODE_ENV === "test"
-            ? 0
-            : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        mappedAtCreation: true,
+          process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
       },
       // "uniform"
-      "UBO"
-    );
+      'UBO'
+    )
 
     // Create brush parameters buffer (reusing gradient buffer structure)
     // const brushParamsData = new Float32Array(64); // Match gradient buffer size
-    const brushParamsData = new Float32Array(
-      brushParamsBuffer.getMappedRange()
-    );
+    const brushParamsData = new Float32Array(brushParamsBuffer.getMappedRange())
 
     // Pack brush parameters into the buffer
     // Layout in bindGroup2_0:
@@ -556,56 +581,50 @@ export class ProceduralBrush implements BrushStrokeShape {
 
     // Fill u_stop_offsets[2] (8 floats) - placeholder zeros
     for (let i = 0; i < 8; i++) {
-      brushParamsData[i] = 0.0;
+      brushParamsData[i] = 0.0
     }
 
     // Fill u_stop_colors[8] (32 floats) - placeholder zeros
     for (let i = 8; i < 40; i++) {
-      brushParamsData[i] = 0.0;
+      brushParamsData[i] = 0.0
     }
 
-    console.info("brush type", this.brushTypeToNumber());
+    console.info('brush type', this.brushTypeToNumber())
 
     // Fill actual brush parameters
-    brushParamsData[40] = this.brushTypeToNumber(); // u_num_stops = brushType
-    brushParamsData[41] = this.noiseScale; // u_gradient_type = noiseScale
-    brushParamsData[42] = this.octaves; // u_start_point.x = octaves
-    brushParamsData[43] = this.persistence; // u_start_point.y = persistence
-    brushParamsData[44] = this.randomSeed; // u_end_point.x = randomSeed
+    brushParamsData[40] = this.brushTypeToNumber() // u_num_stops = brushType
+    brushParamsData[41] = this.noiseScale // u_gradient_type = noiseScale
+    brushParamsData[42] = this.octaves // u_start_point.x = octaves
+    brushParamsData[43] = this.persistence // u_start_point.y = persistence
+    brushParamsData[44] = this.randomSeed // u_end_point.x = randomSeed
 
     // Set pattern-specific param based on brush type
-    let param1 = 0.0;
+    let param1 = 0.0
     if (this.brushType === BrushType.Dots && this.dotDensity !== undefined) {
-      param1 = this.dotDensity;
-    } else if (
-      this.brushType === BrushType.Lines &&
-      this.lineAngle !== undefined
-    ) {
-      param1 = this.lineAngle;
-    } else if (
-      this.brushType === BrushType.Voronoi &&
-      this.cellSize !== undefined
-    ) {
-      param1 = this.cellSize;
+      param1 = this.dotDensity
+    } else if (this.brushType === BrushType.Lines && this.lineAngle !== undefined) {
+      param1 = this.lineAngle
+    } else if (this.brushType === BrushType.Voronoi && this.cellSize !== undefined) {
+      param1 = this.cellSize
     }
-    brushParamsData[45] = param1; // u_end_point.y
+    brushParamsData[45] = param1 // u_end_point.y
 
-    let lineSpacing = 0.0;
+    let lineSpacing = 0.0
     if (this.brushType === BrushType.Lines && this.lineSpacing !== undefined) {
-      lineSpacing = this.lineSpacing;
+      lineSpacing = this.lineSpacing
     }
-    brushParamsData[46] = lineSpacing; // u_center.x
-    brushParamsData[47] = 0.0; // u_center.y (unused)
+    brushParamsData[46] = lineSpacing // u_center.x
+    brushParamsData[47] = 0.0 // u_center.y (unused)
 
-    brushParamsData[48] = 0.0; // u_radius (unused)
-    brushParamsData[49] = 0.0; // u_time (unused)
-    brushParamsData[50] = 0.0; // u_animation_speed (unused)
-    brushParamsData[51] = 0.0; // u_enabled (unused)
-    brushParamsData[52] = 0.0; // u_border_radius (unused)
+    brushParamsData[48] = 0.0 // u_radius (unused)
+    brushParamsData[49] = 0.0 // u_time (unused)
+    brushParamsData[50] = 0.0 // u_animation_speed (unused)
+    brushParamsData[51] = 0.0 // u_enabled (unused)
+    brushParamsData[52] = 0.0 // u_border_radius (unused)
 
-    if (process.env.NODE_ENV !== "test") {
+    if (process.env.NODE_ENV !== 'test') {
       // new Float32Array(brushParamsBuffer.getMappedRange()).set(brushParamsData);
-      brushParamsBuffer.unmap();
+      brushParamsBuffer.unmap()
     }
 
     return device.createBindGroup({
@@ -615,39 +634,39 @@ export class ProceduralBrush implements BrushStrokeShape {
           binding: 0,
           groupIndex: 1,
           resource: {
-            pbuffer: modelBuffer,
-          },
+            pbuffer: modelBuffer
+          }
         },
         { binding: 1, groupIndex: 1, resource: texture },
         {
           binding: 0,
           groupIndex: 2,
           resource: {
-            pbuffer: brushParamsBuffer,
-          },
-        },
-      ],
-    });
+            pbuffer: brushParamsBuffer
+          }
+        }
+      ]
+    })
   }
 
   brushTypeToNumber(): number {
     switch (this.brushType) {
       case BrushType.Noise:
-        return 1;
+        return 1
       case BrushType.Dots:
-        return 2;
+        return 2
       case BrushType.Lines:
-        return 3;
+        return 3
       case BrushType.Voronoi:
-        return 4;
+        return 4
       case BrushType.Fractal:
-        return 5;
+        return 5
       case BrushType.Gradient:
-        return 6;
+        return 6
       case BrushType.Splatter:
-        return 7;
+        return 7
       default:
-        return 1;
+        return 1
     }
   }
 
@@ -682,15 +701,15 @@ export class ProceduralBrush implements BrushStrokeShape {
     camera: Camera,
     window_size: WindowSize
   ): void {
-    this.createGeometry(camera, window_size);
+    this.createGeometry(camera, window_size)
 
     if (this.vertices.length === 0) {
-      return;
+      return
     }
 
     // Recreate buffers
-    this.vertexBuffer = this.createVertexBuffer(device, queue);
-    this.indexBuffer = this.createIndexBuffer(device, queue);
+    this.vertexBuffer = this.createVertexBuffer(device, queue)
+    this.indexBuffer = this.createIndexBuffer(device, queue)
   }
 
   // Convert to config for saving
@@ -716,11 +735,18 @@ export class ProceduralBrush implements BrushStrokeShape {
       position: this.position,
       dimensions: this.dimensions,
       layer: this.layer,
-      rotation: this.rotation,
-    };
+      rotation: this.rotation
+    }
   }
 
-  toSavedConfig(): SavedBrushConfig {
+  toSavedConfig(windowSize: WindowSize): SavedBrushConfig {
+    const world = fromNDC(
+      this.transform.position[0],
+      this.transform.position[1],
+      windowSize.width,
+      windowSize.height
+    )
+
     return {
       id: this.id,
       name: this.name,
@@ -739,11 +765,11 @@ export class ProceduralBrush implements BrushStrokeShape {
       lineAngle: this.lineAngle,
       lineSpacing: this.lineSpacing,
       cellSize: this.cellSize,
-      position: { x: this.position.x, y: this.position.y },
+      position: world,
       dimensions: this.dimensions,
       layer: this.layer,
       rotation: this.rotation,
-      strokes: this.strokes,
-    };
+      strokes: this.strokes
+    }
   }
 }

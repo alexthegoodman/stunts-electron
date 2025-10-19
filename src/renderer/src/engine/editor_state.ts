@@ -209,6 +209,14 @@ export default class EditorState {
   }
 
   async add_saved_brush(selected_sequence_id: string, savable_brush: SavedBrushConfig) {
+    let new_motion_path = save_default_keyframes(
+      this,
+      savable_brush.id,
+      ObjectType.Brush,
+      savable_brush.position,
+      20000
+    )
+
     let saved_state = this.savedState
 
     saved_state.sequences.forEach((s) => {
@@ -217,6 +225,10 @@ export default class EditorState {
           s.activeBrushes = []
         }
         s.activeBrushes.push(savable_brush)
+
+        if (this.supportsMotionPaths && s.polygonMotionPaths) {
+          s.polygonMotionPaths.push(new_motion_path)
+        }
       }
     })
 

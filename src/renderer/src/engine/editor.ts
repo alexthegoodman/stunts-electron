@@ -22,7 +22,7 @@ import {
   WebGpuResources
 } from './polyfill'
 import { UnifiedRichTextEditor } from './rte-one'
-import { ProceduralBrush, BrushConfig } from './brush'
+import { ProceduralBrush, BrushConfig, SavedBrushConfig } from './brush'
 import { Cube3D, Cube3DConfig } from './cube3d'
 import { Sphere3D, Sphere3DConfig } from './sphere3d'
 import { Mockup3D, Mockup3DConfig } from './mockup3d'
@@ -267,6 +267,7 @@ export class Editor {
   onMouseUp: OnMouseUp | null
   onHandleMouseUp: OnHandleMouseUp | null
   onPathMouseUp: OnPathMouseUp | null
+  onBrushStrokeUp?: (brushId: string) => void
   currentView: string
   // interactiveBounds: BoundingBox;
 
@@ -1018,52 +1019,86 @@ export class Editor {
       }
     }
 
+    if (saved_sequence.activeBrushes) {
+      for (const brush of saved_sequence.activeBrushes) {
+        if (
+          !this.gpuResources ||
+          !this.camera ||
+          !this.modelBindGroupLayout ||
+          !this.groupBindGroupLayout
+        ) {
+          continue
+        }
+
+        try {
+          const restored_brush = new ProceduralBrush(
+            windowSize,
+            this.gpuResources.device!,
+            this.gpuResources.queue!,
+            this.modelBindGroupLayout,
+            this.groupBindGroupLayout,
+            camera,
+            brush,
+            saved_sequence.id
+          )
+
+          restored_brush.hidden = hidden
+
+          this.brushes.push(restored_brush)
+
+          console.info('brush restored')
+        } catch (error) {
+          console.error('Error restoring model:', error)
+        }
+      }
+    }
+
     // restored layer spacing
     // Update all objects with new layer spacing
 
-    const newSpacing = layerSpacing
-    let gpuResources = this.gpuResources
-    // Update all object types
-    this.textItems.forEach((textItem) => {
-      textItem.layerSpacing = newSpacing
-      textItem.updateLayer(
-        gpuResources.device,
-        gpuResources.queue,
-        this.camera.windowSize,
-        textItem.layer
-      )
-    })
-    this.imageItems.forEach((imageItem) => {
-      imageItem.layerSpacing = newSpacing
-      imageItem.updateLayer(imageItem.layer)
-      imageItem.transform.updateUniformBuffer(gpuResources.queue, this.camera.windowSize)
-    })
-    this.videoItems.forEach((videoItem) => {
-      videoItem.layerSpacing = newSpacing
-      videoItem.updateLayer(videoItem.layer)
-      videoItem.transform.updateUniformBuffer(gpuResources.queue, this.camera.windowSize)
-    })
-    this.polygons.forEach((polygon) => {
-      polygon.layerSpacing = newSpacing
-      polygon.updateLayer(polygon.layer)
-      polygon.transform.updateUniformBuffer(gpuResources.queue, this.camera.windowSize)
-    })
-    // editor.brushes.forEach((brush) => {
-    //   brush.layerSpacing = newSpacing
-    //   brush.updateLayer(brush.layer)
+    // const newSpacing = layerSpacing
+    // let gpuResources = this.gpuResources
+    // // Update all object types
+    // this.textItems.forEach((textItem) => {
+    //   textItem.layerSpacing = newSpacing
+    //   textItem.updateLayer(
+    //     gpuResources.device,
+    //     gpuResources.queue,
+    //     this.camera.windowSize,
+    //     textItem.layer
+    //   )
     // })
-    // editor.cubes3d.forEach((cube) => {
-    //   cube.layerSpacing = newSpacing
-    //   cube.updateLayer(cube.layer)
+    // this.imageItems.forEach((imageItem) => {
+    //   imageItem.layerSpacing = newSpacing
+    //   imageItem.updateLayer(imageItem.layer)
+    //   imageItem.transform.updateUniformBuffer(gpuResources.queue, this.camera.windowSize)
     // })
-    // editor.spheres3d.forEach((sphere) => {
-    //   sphere.layerSpacing = newSpacing
-    //   sphere.updateLayer(sphere.layer)
+    // this.videoItems.forEach((videoItem) => {
+    //   videoItem.layerSpacing = newSpacing
+    //   videoItem.updateLayer(videoItem.layer)
+    //   videoItem.transform.updateUniformBuffer(gpuResources.queue, this.camera.windowSize)
     // })
-    // editor.mockups3d.forEach((mockup) => {
-    //   mockup.layerSpacing = newSpacing
-    //   mockup.updateLayer(mockup.layer)
+    // this.polygons.forEach((polygon) => {
+    //   polygon.layerSpacing = newSpacing
+    //   polygon.updateLayer(polygon.layer)
+    //   polygon.transform.updateUniformBuffer(gpuResources.queue, this.camera.windowSize)
     // })
+    // // editor.brushes.forEach((brush) => {
+    // //   brush.layerSpacing = newSpacing
+    // //   brush.updateLayer(brush.layer)
+    // // })
+    // // editor.cubes3d.forEach((cube) => {
+    // //   cube.layerSpacing = newSpacing
+    // //   cube.updateLayer(cube.layer)
+    // // })
+    // // editor.spheres3d.forEach((sphere) => {
+    // //   sphere.layerSpacing = newSpacing
+    // //   sphere.updateLayer(sphere.layer)
+    // // })
+    // // editor.mockups3d.forEach((mockup) => {
+    // //   mockup.layerSpacing = newSpacing
+    // //   mockup.updateLayer(mockup.layer)
+    // // })
   }
 
   reset_sequence_objects() {
@@ -2709,7 +2744,7 @@ export class Editor {
     this.polygons.push(polygon)
   }
 
-  add_brush(brush_config: BrushConfig, new_id: string, selected_sequence_id: string) {
+  add_brush(brush_config: SavedBrushConfig, new_id: string, selected_sequence_id: string) {
     let gpuResources = this.gpuResources
     let camera = this.camera
     let windowSize = camera?.windowSize
@@ -4271,6 +4306,8 @@ export class Editor {
     this.lastRay = ray
     this.lastTopLeft = top_left
 
+    let ndc = toNDC(positionX, positionY, camera.windowSize.width, camera.windowSize.height)
+
     // if (
     //   this.lastScreen.x < this.interactiveBounds.min.x ||
     //   this.lastScreen.x > this.interactiveBounds.max.x ||
@@ -4283,8 +4320,8 @@ export class Editor {
     // First, check if brush drawing mode
     if (this.brushDrawingMode && this.currentBrush) {
       const brushPoint = {
-        x: top_left.x,
-        y: top_left.y,
+        x: positionX,
+        y: positionY,
         pressure: 1.0, // Could be read from pointer event if supported
         timestamp: Date.now()
       }
@@ -4297,7 +4334,7 @@ export class Editor {
       }
 
       const windowSize = camera.windowSize
-      const config = this.currentBrush.toConfig()
+      const config = this.currentBrush.toSavedConfig(windowSize)
       config.id = `brush_stroke_${Date.now()}_${Math.random()}`
 
       const newBrush = new ProceduralBrush(
@@ -4310,6 +4347,9 @@ export class Editor {
         config,
         this.currentBrush.currentSequenceId
       )
+
+      newBrush.transform.updatePosition([ndc.x, ndc.y], windowSize)
+      newBrush.transform.updateUniformBuffer(this.gpuResources.queue, windowSize)
 
       this.brushes.push(newBrush)
       this.currentBrush = newBrush
@@ -4843,8 +4883,8 @@ export class Editor {
     // handle brush drawing
     if (this.brushDrawingMode && this.currentBrush && this.currentBrush.currentStroke) {
       const brushPoint = {
-        x: top_left.x,
-        y: top_left.y,
+        x: x, // converts to ndc in brush.ts
+        y: y,
         pressure: 1.0, // Could be read from pointer event if supported
         timestamp: Date.now()
       }
@@ -4987,6 +5027,10 @@ export class Editor {
       if (windowSize && device && queue) {
         this.currentBrush.createGeometry(camera, windowSize)
         this.currentBrush.updateBuffers(device, queue, camera, windowSize)
+      }
+
+      if (this.onBrushStrokeUp) {
+        this.onBrushStrokeUp(this.currentBrush.id)
       }
 
       return

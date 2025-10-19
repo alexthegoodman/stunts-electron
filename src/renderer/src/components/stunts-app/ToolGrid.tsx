@@ -36,7 +36,7 @@ import toast from 'react-hot-toast'
 import { SourceSelectionModal } from './SourceSelectionModal'
 import { TextRollModal, TextRollConfig } from './TextRollModal'
 import { TextAnimationConfig, createTextAnimationPreset } from '../../engine/textAnimator'
-import { BrushType } from '@renderer/engine/brush'
+import { BrushConfig, BrushType, SavedBrushConfig } from '@renderer/engine/brush'
 
 export const ToolGrid = ({
   editorRef,
@@ -1215,33 +1215,30 @@ export const ToolGrid = ({
     [authToken, setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
   )
 
-  const brushClick = (brushType: BrushType) => {
-    if (!editorRef.current || !currentSequenceId) {
+  const brushClick = async (brushType: BrushType) => {
+    let editor = editorRef.current
+    let editor_state = editorStateRef.current
+
+    if (!editor || !editor_state || !currentSequenceId) {
       return
     }
 
     // Toggle brush drawing mode
-    editorRef.current.brushDrawingMode = !editorRef.current.brushDrawingMode
+    editor.brushDrawingMode = !editor.brushDrawingMode
 
-    if (editorRef.current.brushDrawingMode) {
+    if (editor.brushDrawingMode) {
       // Create new brush with default config
 
       const new_id = uuidv4()
 
-      const random_number_800 = getRandomNumber(
-        100,
-        editorRef.current.settings?.dimensions.width || 900
-      )
-      const random_number_450 = getRandomNumber(
-        100,
-        editorRef.current.settings?.dimensions.height || 550
-      )
+      const random_number_800 = getRandomNumber(100, editor.settings?.dimensions.width || 900)
+      const random_number_450 = getRandomNumber(100, editor.settings?.dimensions.height || 550)
 
-      const defaultBrushConfig = {
+      const defaultBrushConfig: SavedBrushConfig = {
         id: new_id,
         name: 'New Brush',
         brushType,
-        size: 20,
+        size: 20.0,
         opacity: 0.7,
         flow: 0.5,
         spacing: 0.25,
@@ -1251,22 +1248,32 @@ export const ToolGrid = ({
         octaves: 4,
         persistence: 0.5,
         randomSeed: Math.random() * 1000,
+        // position: {
+        //   x: random_number_800,
+        //   y: random_number_450
+        // },
         position: {
-          x: random_number_800,
-          y: random_number_450
+          x: 0,
+          y: 0
         },
-        dimensions: [500, 500] as [number, number],
+        dimensions: [1, 1] as [number, number],
         layer: layers.length,
-        rotation: 0
+        rotation: 0,
+        // defaults
+        dotDensity: 10,
+        lineAngle: 15,
+        lineSpacing: 0.5,
+        cellSize: 10.0,
+        strokes: []
       }
 
-      editorRef.current.add_brush(defaultBrushConfig, new_id, currentSequenceId)
+      editor.add_brush(defaultBrushConfig, new_id, currentSequenceId)
 
       update()
 
-      console.info('Brush drawing mode enabled!')
+      toast.success(`Brush (type ${brushType}) mode enabled!`)
     } else {
-      console.info('Brush drawing mode disabled!')
+      toast.success('Brush mode disabled!')
     }
   }
 

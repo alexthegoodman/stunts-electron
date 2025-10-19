@@ -34,32 +34,32 @@ export default function BrushProperties({ editorRef, onClose }: BrushPropertiesP
 
     const brush = editor.currentBrush
 
-    // Update brush configuration
-    brush.brushType = brushType
-    brush.size = size
-    brush.opacity = opacity
-    brush.flow = flow
-    brush.spacing = spacing
-    brush.noiseScale = noiseScale
-    brush.octaves = octaves
-    brush.persistence = persistence
+    // // Update brush configuration
+    // brush.brushType = brushType
+    // brush.size = size
+    // brush.opacity = opacity
+    // brush.flow = flow
+    // brush.spacing = spacing
+    // brush.noiseScale = noiseScale
+    // brush.octaves = octaves
+    // brush.persistence = persistence
 
-    // Convert hex to RGBA
-    const hexToRgba = (hex: string) => {
-      const r = parseInt(hex.slice(1, 3), 16)
-      const g = parseInt(hex.slice(3, 5), 16)
-      const b = parseInt(hex.slice(5, 7), 16)
-      return [r, g, b, 255] as [number, number, number, number]
-    }
+    // // Convert hex to RGBA
+    // const hexToRgba = (hex: string) => {
+    //   const r = parseInt(hex.slice(1, 3), 16)
+    //   const g = parseInt(hex.slice(3, 5), 16)
+    //   const b = parseInt(hex.slice(5, 7), 16)
+    //   return [r, g, b, 255] as [number, number, number, number]
+    // }
 
-    brush.primaryColor = hexToRgba(primaryColor)
-    brush.secondaryColor = hexToRgba(secondaryColor)
+    // brush.primaryColor = hexToRgba(primaryColor)
+    // brush.secondaryColor = hexToRgba(secondaryColor)
 
-    // Pattern-specific
-    brush.dotDensity = dotDensity
-    brush.lineAngle = (lineAngle * Math.PI) / 180 // Convert to radians
-    brush.lineSpacing = lineSpacing
-    brush.cellSize = cellSize
+    // // Pattern-specific
+    // brush.dotDensity = dotDensity
+    // brush.lineAngle = (lineAngle * Math.PI) / 180 // Convert to radians
+    // brush.lineSpacing = lineSpacing
+    // brush.cellSize = cellSize
   }, [
     editorRef,
     brushType,

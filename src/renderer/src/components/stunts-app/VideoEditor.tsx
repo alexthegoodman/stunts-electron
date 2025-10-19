@@ -112,6 +112,7 @@ import { KeyframeProperties } from './properties/KeyframeProperties'
 import { Model3DConfig } from '@renderer/engine/model3d'
 import { ProjectSelector } from '../ProjectSelector'
 import { SceneShaderPicker } from './SceneShaderPicker'
+import { BrushConfig } from '@renderer/engine/brush'
 
 export function update_keyframe(
   editor_state: EditorState,
@@ -854,8 +855,55 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       editorRef.current.handleMockup3DClick = handle_mockup3d_click
       editorRef.current.onMouseUp = handle_mouse_up
       editorRef.current.onHandleMouseUp = on_handle_mouse_up
+      editorRef.current.onBrushStrokeUp = on_brush_stroke_up
     }
   }, [editorIsSet, current_sequence_id])
+
+  let on_brush_stroke_up = async (brushId: string) => {
+    let editor = editorRef.current
+    let editorState = editorStateRef.current
+
+    if (!editor || !editorState) {
+      toast.error('Your editor or editor state failed to initialize')
+
+      return
+    }
+
+    let brushData = editor.brushes.find((b) => b.id === brushId)
+    let brushConfig = brushData.toSavedConfig(editor.camera.windowSize)
+
+    // Save model to state
+    await editorState.add_saved_brush(current_sequence_id, brushConfig)
+
+    console.info('Saved brush!')
+
+    let saved_state = editorState.savedState
+    let updated_sequence = saved_state.sequences.find((s) => s.id == current_sequence_id)
+
+    let sequence_cloned = updated_sequence
+
+    if (!sequence_cloned) {
+      return
+    }
+
+    if (set_sequences) {
+      set_sequences(saved_state.sequences)
+    }
+
+    editor.currentSequenceData = sequence_cloned
+    editor.updateMotionPaths(sequence_cloned)
+
+    // Add layer only for the model
+    editor.brushes.forEach((model) => {
+      if (!model.hidden && model.id === brushConfig.id) {
+        let model_config: BrushConfig = model.toConfig()
+        let new_layer: Layer = LayerFromConfig.fromBrushConfig(model_config)
+        layers.push(new_layer)
+      }
+    })
+
+    set_layers(layers)
+  }
 
   let on_create_sequence = async () => {
     let editor = editorRef.current
@@ -1038,6 +1086,9 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       editor?.models3D.forEach((t) => {
         t.hidden = true
       })
+      editor?.brushes.forEach((t) => {
+        t.hidden = true
+      })
 
       saved_sequence.activePolygons.forEach((ap) => {
         let polygon = editor.polygons.find((p) => p.id == ap.id)
@@ -1112,6 +1163,15 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         }
 
         model.hidden = false
+      })
+      saved_sequence.activeBrushes?.forEach((ap) => {
+        let brush = editor.brushes.find((p) => p.id == ap.id)
+
+        if (!brush) {
+          return
+        }
+
+        brush.hidden = false
       })
 
       if (!editor.camera) {
@@ -1207,6 +1267,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
         if (!model.hidden) {
           let model_config: Model3DConfig = model.toConfig()
           let new_layer: Layer = LayerFromConfig.fromModel3DConfig(model_config)
+          new_layers.push(new_layer)
+        }
+      })
+      editor.brushes.forEach((brush) => {
+        if (!brush.hidden) {
+          let model_config: BrushConfig = brush.toConfig()
+          let new_layer: Layer = LayerFromConfig.fromBrushConfig(model_config)
           new_layers.push(new_layer)
         }
       })
@@ -2210,6 +2277,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                     objectName = sequence.activeModels3D?.find(
                                       (pol) => pol.id === animation.polygonId
                                     )?.name
+                                  } else if (animation.objectType === ObjectType.Brush) {
+                                    objectName = sequence.activeBrushes?.find(
+                                      (pol) => pol.id === animation.polygonId
+                                    )?.name
                                   }
 
                                   return (
@@ -2294,6 +2365,15 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                               sequence.activeMockups3D?.filter((v) => v.id !== id)
                                             break
 
+                                          case ObjectType.Brush:
+                                            editor.brushes = editor.brushes.filter(
+                                              (v) => v.id !== id
+                                            )
+                                            sequence.activeBrushes = sequence.activeBrushes?.filter(
+                                              (v) => v.id !== id
+                                            )
+                                            break
+
                                           default:
                                             break
                                         }
@@ -2345,6 +2425,10 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
                                           case ObjectType.Model3D:
                                             handle_model3d_click(objectId)
+                                            break
+
+                                          case ObjectType.Brush:
+                                            // handle_brush_click(objectId)
                                             break
 
                                           default:
