@@ -10,7 +10,7 @@ import { getUploadedImage, getUploadedImageData, getUploadedVideoData } from '..
 import { RepeatManager } from './repeater'
 import { DocumentSize, FormattedPage, loadFonts, MultiPageEditor, RenderItem } from './rte'
 import EditorState, { SaveTarget } from './editor_state'
-import { Camera3D } from './3dcamera'
+import { Camera3D, CameraAnimation } from './3dcamera'
 import {
   GPUPolyfill,
   PolyfillBindGroup,
@@ -2439,6 +2439,7 @@ export class Editor {
     // console.info("About to call updateTextAnimations, totalDt:", totalDt);
     this.updateTextAnimations(totalDt * 1000, gpuResources.queue!)
     this.updateBrushAnimations(totalDt * 1000)
+    this.updateCameraAnimation(totalDt * 1000)
   }
 
   seekTo(timeMs: number) {
@@ -2978,6 +2979,25 @@ export class Editor {
         // console.info("Calling updateTextAnimation for:", textItem.id);
         brush.updateAnimation(currentTimeMs)
       }
+    }
+  }
+
+  updateCameraAnimation(currentTimeMs: number) {
+    let camera = this.camera
+
+    switch (camera.animation) {
+      case CameraAnimation.PanDownReveal:
+        camera.animatePanDownReveal(currentTimeMs)
+        this.updateCameraBinding()
+        break
+
+      case CameraAnimation.ZoomRotateIn:
+        camera.animateZoomRotateIn(currentTimeMs)
+        this.updateCameraBinding()
+        break
+
+      default:
+        break
     }
   }
 

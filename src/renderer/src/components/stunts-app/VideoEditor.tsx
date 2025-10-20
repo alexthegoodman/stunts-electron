@@ -79,7 +79,7 @@ import { WebCapture } from '../../engine/capture'
 import { ToolGrid } from './ToolGrid'
 import { PageSequence } from '../../engine/data'
 import { WindowSize } from '../../engine/camera'
-import { Camera3D } from '../../engine/3dcamera'
+import { Camera3D, CameraAnimation } from '../../engine/3dcamera'
 import { ThemePicker } from './ThemePicker'
 import { ShaderThemePicker } from './ShaderThemePicker'
 import { ObjectTrack } from './ObjectTimeline'
@@ -1823,56 +1823,6 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       }}
                     />
 
-                    {/* <div>
-                      <label className="block text-sm font-medium mb-2">Orbit Horizontal</label>
-                      <input
-                        type="range"
-                        min="-3.14159"
-                        max="3.14159"
-                        step="0.01"
-                        value={orbitX}
-                        className="w-full"
-                        onChange={(e) => {
-                          const editor = editorRef.current
-                          if (editor && editor.camera) {
-                            const newValue = parseFloat(e.target.value)
-                            const deltaX = newValue - orbitX
-                            ;(editor.camera as Camera3D).orbit(deltaX, 0)
-                            editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
-                            setOrbitX(newValue)
-                          }
-                        }}
-                      />
-                      <div className="text-xs text-gray-500 mt-1">
-                        Rotate camera around target (horizontal)
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Orbit Vertical</label>
-                      <input
-                        type="range"
-                        min="-1.57"
-                        max="1.57"
-                        step="0.01"
-                        value={orbitY}
-                        className="w-full"
-                        onChange={(e) => {
-                          const editor = editorRef.current
-                          if (editor && editor.camera) {
-                            const newValue = parseFloat(e.target.value)
-                            const deltaY = newValue - orbitY
-                            ;(editor.camera as Camera3D).orbit(0, deltaY)
-                            editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
-                            setOrbitY(newValue)
-                          }
-                        }}
-                      />
-                      <div className="text-xs text-gray-500 mt-1">
-                        Rotate camera around target (vertical)
-                      </div>
-                    </div> */}
-
                     {/* <h6 className="text-sm font-medium mb-3">Pan Camera</h6> */}
 
                     <div>
@@ -1987,6 +1937,8 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                           const panDeltaY = -panY
                           editor.camera.pan(vec2.fromValues(panDeltaX, panDeltaY))
 
+                          editor.camera.setPosition(0, 0, editor.camera.resetZ)
+
                           editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
 
                           // Reset state
@@ -2001,6 +1953,35 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       }}
                     >
                       Reset Camera
+                    </button>
+
+                    <hr className="invisible py-2" />
+
+                    <h5 className="block text-sm font-medium mb-2 text-white">Camera Animations</h5>
+
+                    <button
+                      className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
+                      onClick={() => {
+                        const editor = editorRef.current
+                        if (editor && editor.camera) {
+                          editor.camera.animation = CameraAnimation.PanDownReveal
+                          toast.success('Applied camera animation')
+                        }
+                      }}
+                    >
+                      Pan Down Reveal
+                    </button>
+                    <button
+                      className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
+                      onClick={() => {
+                        const editor = editorRef.current
+                        if (editor && editor.camera) {
+                          editor.camera.animation = CameraAnimation.ZoomRotateIn
+                          toast.success('Applied camera animation')
+                        }
+                      }}
+                    >
+                      Zoom Rotate In
                     </button>
                   </div>
                 </div>

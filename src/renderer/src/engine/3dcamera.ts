@@ -3,6 +3,43 @@ import { Point } from './editor'
 import { Camera } from './camera' // Import your existing Camera class
 import { WindowSize } from './camera'
 import { degreesToRadians } from './transform'
+import { EasingType } from './animations'
+
+// // Helper function for Ease-In-Out (Smootherstep) for a nice, elegant transition
+// const easeInOut = (t: number) => {
+//   // A common smoothstep function: 3*t^2 - 2*t^3
+//   // For a more subtle ease-in-out, we can use: t * t * (3 - 2 * t)
+//   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+// }
+
+export const calcEasing = (easing: EasingType, progress: number) => {
+  // let progress = elapsed / duration
+
+  // Apply easing based on keyframe setting
+  switch (easing) {
+    case EasingType.Linear:
+      break // progress stays as is
+    case EasingType.EaseIn:
+      progress = progress * progress
+      break
+    case EasingType.EaseOut:
+      progress = 1.0 - (1.0 - progress) * (1.0 - progress)
+      break
+    case EasingType.EaseInOut:
+      progress =
+        progress < 0.5 ? 2.0 * progress * progress : 1.0 - Math.pow(-2.0 * progress + 2.0, 2) / 2.0
+      break
+    default:
+      break // Default to linear
+  }
+
+  return progress
+}
+
+export enum CameraAnimation {
+  PanDownReveal,
+  ZoomRotateIn
+}
 
 export class Camera3D extends Camera {
   // 3D position instead of 2D
@@ -29,6 +66,16 @@ export class Camera3D extends Camera {
 
   resetZ: number = 7.0
 
+  // New properties for animation control
+  animationStartTime: number | null = null
+  animationDuration: number = 5000 // Default duration 5000ms
+  animation: CameraAnimation | null = null
+
+  // Constants for default (reset) camera state
+  defaultPosition3D: vec3
+  defaultRotation: quat
+  defaultTarget: vec3
+
   constructor(windowSize: WindowSize) {
     super(windowSize)
 
@@ -51,6 +98,11 @@ export class Camera3D extends Camera {
     // Default target - point in front of camera (negative Z direction)
     // This allows orbiting around the content which is in front of the camera
     this.target = vec3.fromValues(0, 0, -25)
+
+    // Store default state
+    this.defaultPosition3D = vec3.clone(this.position3D)
+    this.defaultRotation = quat.clone(this.rotation)
+    this.defaultTarget = vec3.clone(this.target)
   }
 
   // Override the projection matrix to use perspective instead of orthographic
@@ -218,5 +270,122 @@ export class Camera3D extends Camera {
 
     this.lastOrbitX = deltaX
     this.lastOrbitY = deltaY
+  }
+
+  /**
+   * "Zoom & Rotate In" Animation: Camera starts zoomed out (high Z) and rotated,
+   * then smoothly moves to its default position and orientation.
+   * @param currentTimeMs The current time in milliseconds (e.g., from requestAnimationFrame).
+   * @returns True if the animation is still running, false otherwise.
+   */
+  animateZoomRotateIn(currentTimeMs: number): boolean {
+    if (this.animationStartTime === null) {
+      this.animationStartTime = currentTimeMs
+    }
+
+    const elapsed = currentTimeMs - this.animationStartTime
+    let t = Math.min(1, elapsed / this.animationDuration)
+
+    // Apply ease-in-out for a smooth start and stop
+    const smoothT = calcEasing(EasingType.EaseOut, t)
+
+    // --- Initial State for Zoom & Rotate In ---
+    // Start position: Further back (higher Z), slightly panned up/down
+    const startPosition = vec3.fromValues(
+      this.defaultPosition3D[0],
+      this.defaultPosition3D[1] + 5,
+      this.defaultPosition3D[2] + 20
+    )
+
+    // Start rotation: Tilted along the X-axis (looking slightly down)
+    const startRotation = quat.create()
+    quat.rotateX(startRotation, startRotation, degreesToRadians(-35))
+
+    // Target remains the default target
+    const endTarget = this.defaultTarget
+    const endPosition = this.defaultPosition3D
+    const endRotation = this.defaultRotation
+
+    // --- Interpolate ---
+
+    // Position interpolation (linear)
+    vec3.lerp(this.position3D, startPosition, endPosition, smoothT)
+
+    // Target interpolation (linear)
+    vec3.lerp(this.target, this.target, endTarget, smoothT)
+
+    // Rotation interpolation (spherical linear interpolation is smoother)
+    quat.slerp(this.rotation, startRotation, endRotation, smoothT)
+
+    // Update 2D compatibility state
+    this.position[0] = this.position3D[0]
+    this.position[1] = this.position3D[1]
+
+    return t < 1
+  }
+
+  /**
+   * "Pan Down & Reveal" Animation: Camera starts high and looking down,
+   * then smoothly pans down and levels out to its default position and target.
+   * @param currentTimeMs The current time in milliseconds.
+   * @returns True if the animation is still running, false otherwise.
+   */
+  animatePanDownReveal(currentTimeMs: number): boolean {
+    if (this.animationStartTime === null) {
+      this.animationStartTime = currentTimeMs
+    }
+
+    const elapsed = currentTimeMs - this.animationStartTime
+    let t = Math.min(1, elapsed / this.animationDuration)
+
+    // const smoothT = easeInOut(t)
+
+    const smoothT = calcEasing(EasingType.EaseOut, t)
+
+    // --- Initial State for Pan Down & Reveal ---
+    // Start position: Above the default position
+    const startPosition = vec3.fromValues(
+      this.defaultPosition3D[0],
+      this.defaultPosition3D[1] + 3,
+      this.defaultPosition3D[2]
+    )
+
+    // Start target: Aiming for a point slightly lower than the final target, but we'll interpolate the target as well
+    // const startTarget = vec3.fromValues(
+    //   this.defaultTarget[0],
+    //   this.defaultTarget[1],
+    //   this.defaultTarget[2] + 0.5
+    // )
+
+    // Start rotation: We can calculate the necessary rotation to look at the startTarget from the startPosition,
+    // but for simplicity, let's keep the rotation flat and let the position/target interpolation do the work,
+    // or interpolate the rotation from an initial tilted state if needed.
+    // For a 'pan down' effect, the rotation should ideally track the lookAt.
+    // For this simplified example, we'll focus on position and target interpolation.
+    const startRotation = this.defaultRotation // Keep rotation identity for a 'swooping' effect
+
+    const endTarget = this.defaultTarget
+    const endPosition = this.defaultPosition3D
+    const endRotation = this.defaultRotation
+
+    // --- Interpolate ---
+
+    // Position interpolation (linear)
+
+    vec3.lerp(this.position3D, startPosition, endPosition, smoothT)
+
+    // console.info('t', smoothT, this.position3D, startPosition, endPosition)
+
+    // // Target interpolation (linear)
+    // vec3.lerp(this.target, startTarget, endTarget, smoothT)
+
+    // // Rotation interpolation
+    // quat.slerp(this.rotation, startRotation, endRotation, smoothT) // Using default rotation as a start is simple
+
+    // Update 2D compatibility state
+    this.position[0] = this.position3D[0]
+    this.position[1] = this.position3D[1]
+
+    return t < 1
   }
 }
