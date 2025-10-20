@@ -445,7 +445,7 @@ export function registerUploadHandlers(): void {
   // Get 3D model by filename (used by UI)
   ipcMain.handle('uploads:getModel', async (_event, fileName: string) => {
     try {
-      const modelPath = fileName
+      const modelPath = getUploadsDir() + '/models/' + fileName
 
       console.info('reading model', modelPath)
       const buffer = await fs.readFile(modelPath)
