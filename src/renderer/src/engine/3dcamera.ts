@@ -299,7 +299,7 @@ export class Camera3D extends Camera {
 
     // Start rotation: Tilted along the X-axis (looking slightly down)
     const startRotation = quat.create()
-    quat.rotateX(startRotation, startRotation, degreesToRadians(-35))
+    quat.rotateY(startRotation, startRotation, degreesToRadians(45))
 
     // Target remains the default target
     const endTarget = this.defaultTarget
