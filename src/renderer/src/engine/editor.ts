@@ -484,7 +484,7 @@ export class Editor {
     const device = gpu_resources.device
     const queue = gpu_resources.queue
 
-    camera.animation = saved_sequence.camera.animation
+    camera.animation = saved_sequence?.camera?.animation
 
     saved_sequence.activePolygons.forEach((p) => {
       const restored_polygon = new Polygon(
