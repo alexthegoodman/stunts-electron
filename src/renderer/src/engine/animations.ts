@@ -9,6 +9,7 @@ import { SavedSphere3DConfig } from './sphere3d'
 import { SavedMockup3DConfig } from './mockup3d'
 import { SavedModel3DConfig } from './model3d'
 import { ShaderThemeConfig } from './shader_themes'
+import { CameraAnimation } from './3dcamera'
 
 export interface SavedState {
   sequences: Sequence[]
@@ -86,9 +87,14 @@ export interface CurveData {
   controlPoint2?: ControlPoint
 }
 
+export interface CameraSettings {
+  animation: CameraAnimation | null
+}
+
 export interface Sequence {
   id: string
   name?: string
+  camera?: CameraSettings
   backgroundFill?: BackgroundFill
   // durationMs?: number; // going dynamic
   activePolygons: SavedPolygonConfig[]

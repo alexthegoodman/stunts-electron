@@ -293,8 +293,8 @@ export class Camera3D extends Camera {
     // Start position: Further back (higher Z), slightly panned up/down
     const startPosition = vec3.fromValues(
       this.defaultPosition3D[0],
-      this.defaultPosition3D[1] + 5,
-      this.defaultPosition3D[2] + 20
+      this.defaultPosition3D[1] + 3,
+      this.defaultPosition3D[2] + 5
     )
 
     // Start rotation: Tilted along the X-axis (looking slightly down)

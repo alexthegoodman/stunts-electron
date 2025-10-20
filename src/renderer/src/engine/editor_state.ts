@@ -26,6 +26,7 @@ import { getRandomNumber, InputValue, rgbToWgpu, wgpuToHuman } from '../engine/e
 import { TextAnimationConfig } from './textAnimator'
 import { save_default_keyframes } from './state/keyframes'
 import { create_keyframes_from_mouse_positions, MousePosition } from './state/mouse-keyframes'
+import { CameraAnimation } from './3dcamera'
 
 export enum SaveTarget {
   Videos = 'Videos',
@@ -44,6 +45,25 @@ export default class EditorState {
 
   constructor(savedState: SavedState) {
     this.savedState = savedState
+  }
+
+  async updateCameraAnimation(selected_sequence_id: string, animation: CameraAnimation) {
+    let saved_state = this.savedState
+
+    saved_state.sequences.forEach((s) => {
+      if (s.id == selected_sequence_id) {
+        s.camera = {
+          ...s.camera,
+          animation
+        }
+      }
+    })
+
+    let sequences = saved_state.sequences
+
+    await saveSequencesData(sequences, this.saveTarget)
+
+    this.savedState = saved_state
   }
 
   async add_saved_polygon(selected_sequence_id: string, savable_polygon: SavedPolygonConfig) {

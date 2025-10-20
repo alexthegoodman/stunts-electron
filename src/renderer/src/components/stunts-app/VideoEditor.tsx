@@ -1963,8 +1963,14 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
                       onClick={() => {
                         const editor = editorRef.current
-                        if (editor && editor.camera) {
+                        const editorState = editorStateRef.current
+
+                        if (editor && editorState && editor.camera) {
                           editor.camera.animation = CameraAnimation.PanDownReveal
+                          editorState.updateCameraAnimation(
+                            current_sequence_id,
+                            CameraAnimation.PanDownReveal
+                          )
                           toast.success('Applied camera animation')
                         }
                       }}
@@ -1975,8 +1981,14 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                       className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
                       onClick={() => {
                         const editor = editorRef.current
-                        if (editor && editor.camera) {
+                        const editorState = editorStateRef.current
+
+                        if (editor && editorState && editor.camera) {
                           editor.camera.animation = CameraAnimation.ZoomRotateIn
+                          editorState.updateCameraAnimation(
+                            current_sequence_id,
+                            CameraAnimation.ZoomRotateIn
+                          )
                           toast.success('Applied camera animation')
                         }
                       }}
