@@ -167,6 +167,12 @@ export class StVideo {
   private readonly RESCHEDULE_THRESHOLD_SECONDS: number = 2 // Reschedule when less than 2s of audio remain
   private isScheduling: boolean = false
 
+  // Add these to your Video class properties
+  private frameBuffer: VideoFrame[] = []
+  private maxBufferSize: number = 30 // Example: store up to 30 frames (about 1 second at 30fps)
+  // Optional: a property to track if the buffer needs filling (for continuous background decoding)
+  private isBuffering: boolean = false
+
   framesDecoded: number = 0
 
   bytesPerFrame: number | null = null
@@ -497,7 +503,7 @@ export class StVideo {
 
         try {
           let flush = true
-          await this.drawVideoFrame(device, queue, 0, flush)
+          await this.drawVideoFrame(device, queue, null, flush)
         } catch (error) {
           console.error('Error drawing video frame:', error)
           throw new Error('Failed to draw video frame')
@@ -596,22 +602,31 @@ export class StVideo {
           this.framesDecoded += 1
           // console.info('decoding!')
 
-          try {
-            const frameInfo: DecodedFrameInfo = {
-              timestamp: frame.timestamp / 1000000, // WebCodecs timestamp is in microseconds, convert to milliseconds or seconds if needed
-              duration: (frame.duration || 0) / 1000000,
-              frame,
-              width: frame.displayWidth,
-              height: frame.displayHeight
-            }
+          // try {
+          //   const frameInfo: DecodedFrameInfo = {
+          //     timestamp: frame.timestamp / 1000000, // WebCodecs timestamp is in microseconds, convert to milliseconds or seconds if needed
+          //     duration: (frame.duration || 0) / 1000000,
+          //     frame,
+          //     width: frame.displayWidth,
+          //     height: frame.displayHeight
+          //   }
 
-            if (this.frameCallback) {
-              await this.frameCallback(frameInfo)
-            } else {
-              frame.close()
-            }
-          } catch (error) {
-            console.error('Error processing frame:', error)
+          //   if (this.frameCallback) {
+          //     await this.frameCallback(frameInfo)
+          //   } else {
+          //     frame.close()
+          //   }
+          // } catch (error) {
+          //   console.error('Error processing frame:', error)
+          //   frame.close()
+          // }
+
+          // 🚀 PUSH FRAME TO BUFFER
+          if (this.frameBuffer.length < this.maxBufferSize) {
+            this.frameBuffer.push(frame)
+          } else {
+            // Frame buffer is full; discard the new frame to prevent memory leak
+            console.warn('Frame buffer full. Closing excess frame.')
             frame.close()
           }
         },
@@ -635,113 +650,266 @@ export class StVideo {
     })
   }
 
+  // async decodeNextFrame(
+  //   flush: boolean = false,
+  //   decodeFromKeyTimeS: number | null = null
+  // ): Promise<DecodedFrameInfo> {
+  //   if (!this.isInitialized || !this.videoSampleSink) {
+  //     throw new Error('Video not initialized or sink not available')
+  //   }
+
+  //   // seeking
+  //   if (decodeFromKeyTimeS !== null) {
+  //     return new Promise(async (resolve, reject) => {
+  //       this.frameCallback = null
+
+  //       try {
+  //         let packet = await this.videoSampleSink.getPacket(decodeFromKeyTimeS)
+  //         let endPacket = await this.videoSampleSink.getPacket(this.currentTimestamp)
+
+  //         let packets = this.videoSampleSink.packets(packet, endPacket)
+
+  //         // console.info('decode seek', packet, endPacket, decodeFromKeyTimeS)
+
+  //         for await (const packet of packets) {
+  //           if (!packet) {
+  //             throw new Error('No more frames to decode at or after current timestamp')
+  //           }
+
+  //           let chunk = packet.toEncodedVideoChunk()
+
+  //           // This is a common pattern: decode and increment the timestamp
+  //           this.videoDecoder!.decode(chunk)
+  //         }
+
+  //         this.frameCallback = async (frameInfo: DecodedFrameInfo) => {
+  //           this.frameCallback = undefined
+
+  //           resolve(frameInfo)
+  //         }
+
+  //         let chunk = endPacket.toEncodedVideoChunk()
+
+  //         // console.info('finsihed packets')
+
+  //         this.videoDecoder!.decode(chunk)
+  //       } catch (error) {
+  //         reject(error)
+  //       }
+  //     })
+  //   }
+
+  //   // not seeking
+  //   return new Promise(async (resolve, reject) => {
+  //     this.frameCallback = (frameInfo: DecodedFrameInfo) => {
+  //       this.frameCallback = undefined
+  //       resolve(frameInfo)
+  //     }
+
+  //     try {
+  //       let packet = await this.videoSampleSink.getPacket(this.currentTimestamp)
+
+  //       if (!packet) {
+  //         throw new Error('No more frames to decode at or after current timestamp')
+  //       }
+
+  //       let chunk = packet.toEncodedVideoChunk()
+
+  //       // This is a common pattern: decode and increment the timestamp
+  //       this.videoDecoder!.decode(chunk)
+
+  //       if (flush) {
+  //         await this.videoDecoder.flush()
+  //       }
+
+  //       // Advance the time for the next frame
+  //       this.currentTimestamp += chunk.duration / 1000000
+  //     } catch (error) {
+  //       reject(error)
+  //     }
+  //   })
+  // }
+
+  // async drawVideoFrame(
+  //   device: PolyfillDevice,
+  //   queue: PolyfillQueue,
+  //   timeMs?: number, // use to seek
+  //   flush?: boolean
+  // ) {
+  //   let decodeFromKeyTime = null
+  //   if (timeMs) {
+  //     let mostRecentKeyPacket = await this.videoSampleSink.getKeyPacket(this.currentTimestamp)
+  //     decodeFromKeyTime = mostRecentKeyPacket.timestamp
+
+  //     this.currentTimestamp = timeMs / 1000
+  //   }
+
+  //   const frameInfo = await this.decodeNextFrame(flush, decodeFromKeyTime)
+
+  //   // Your WebGPU logic remains the same as it uses the resulting VideoFrame
+
+  //   // console.info('draw new texture')
+
+  //   queue.writeTexture(
+  //     {
+  //       texture: this.texture,
+  //       mipLevel: 0,
+  //       origin: { x: 0, y: 0, z: 0 }
+  //     },
+  //     frameInfo.frame,
+  //     {
+  //       offset: 0,
+  //       bytesPerRow: frameInfo.width * 4,
+  //       rowsPerImage: frameInfo.height
+  //     },
+  //     {
+  //       width: frameInfo.width,
+  //       height: frameInfo.height,
+  //       depthOrArrayLayers: 1
+  //     }
+  //   )
+
+  //   frameInfo.frame.close()
+
+  //   return frameInfo
+  // }
+
   async decodeNextFrame(
     flush: boolean = false,
     decodeFromKeyTimeS: number | null = null
-  ): Promise<DecodedFrameInfo> {
-    if (!this.isInitialized || !this.videoSampleSink) {
-      throw new Error('Video not initialized or sink not available')
+  ): Promise<void> {
+    if (!this.isInitialized || !this.videoSampleSink || !this.videoDecoder) {
+      throw new Error('Video not initialized or sink/decoder not available')
     }
 
-    // seeking
+    console.info('decodeNextFrame', this.frameBuffer.length, this.maxBufferSize, decodeFromKeyTimeS)
+
+    // 💡 Early exit if the buffer is already full (stops unnecessary decode calls)
+    if (this.frameBuffer.length >= this.maxBufferSize) {
+      // console.log("Buffer full, skipping decodeNextFrame call.")
+      return
+    }
+
+    // --- Seeking Logic ---
     if (decodeFromKeyTimeS !== null) {
-      return new Promise(async (resolve, reject) => {
-        this.frameCallback = null
+      // Since we are decoupling, we will decode the entire range needed for the seek
+      // and then return. The frames will land in the buffer asynchronously.
+      try {
+        // Get the starting packet (key frame)
+        let packet = await this.videoSampleSink.getPacket(decodeFromKeyTimeS)
+        // Get the ending packet (current playback time)
+        let endPacket = await this.videoSampleSink.getPacket(this.currentTimestamp)
 
-        try {
-          let packet = await this.videoSampleSink.getPacket(decodeFromKeyTimeS)
-          let endPacket = await this.videoSampleSink.getPacket(this.currentTimestamp)
+        let packets = this.videoSampleSink.packets(packet, endPacket)
 
-          let packets = this.videoSampleSink.packets(packet, endPacket)
-
-          // console.info('decode seek', packet, endPacket, decodeFromKeyTimeS)
-
-          for await (const packet of packets) {
-            if (!packet) {
-              throw new Error('No more frames to decode at or after current timestamp')
-            }
-
+        for await (const packet of packets) {
+          if (packet) {
             let chunk = packet.toEncodedVideoChunk()
-
-            // This is a common pattern: decode and increment the timestamp
-            this.videoDecoder!.decode(chunk)
+            this.videoDecoder.decode(chunk)
           }
-
-          this.frameCallback = async (frameInfo: DecodedFrameInfo) => {
-            this.frameCallback = undefined
-
-            resolve(frameInfo)
-          }
-
-          let chunk = endPacket.toEncodedVideoChunk()
-
-          // console.info('finsihed packets')
-
-          this.videoDecoder!.decode(chunk)
-        } catch (error) {
-          reject(error)
         }
-      })
+
+        // It's critical to flush after a seek to force any buffered frames out
+        await this.videoDecoder.flush()
+      } catch (error) {
+        console.error('Error during seek decode:', error)
+        // You might choose to re-throw or handle the error here
+        throw error
+      }
+      return // Return after initiating the seek decode
     }
 
-    // not seeking
-    return new Promise(async (resolve, reject) => {
-      this.frameCallback = (frameInfo: DecodedFrameInfo) => {
-        this.frameCallback = undefined
-        resolve(frameInfo)
+    // --- Not Seeking (Normal Playback) Logic ---
+    try {
+      // console.info('get packet')
+      let packet = await this.videoSampleSink.getPacket(this.currentTimestamp)
+
+      if (!packet) {
+        console.warn('End of media stream reached.')
+        return
       }
 
-      try {
-        let packet = await this.videoSampleSink.getPacket(this.currentTimestamp)
+      let chunk = packet.toEncodedVideoChunk()
 
-        if (!packet) {
-          throw new Error('No more frames to decode at or after current timestamp')
-        }
+      // console.info('send to decoder')
 
-        let chunk = packet.toEncodedVideoChunk()
+      // Send the chunk to the decoder
+      this.videoDecoder.decode(chunk)
 
-        // This is a common pattern: decode and increment the timestamp
-        this.videoDecoder!.decode(chunk)
-
-        if (flush) {
-          await this.videoDecoder.flush()
-        }
-
-        // Advance the time for the next frame
-        this.currentTimestamp += chunk.duration / 1000000
-      } catch (error) {
-        reject(error)
+      if (flush) {
+        // Flush only if explicitly requested (usually not needed for playback)
+        await this.videoDecoder.flush()
       }
-    })
+
+      // Advance the time for the next requested packet
+      this.currentTimestamp += chunk.duration / 1000000
+    } catch (error) {
+      console.error('Error during normal frame decode:', error)
+      throw error
+    }
   }
 
   async drawVideoFrame(
     device: PolyfillDevice,
     queue: PolyfillQueue,
-    timeMs?: number, // use to seek
+    timeMs?: number | null,
     flush?: boolean
   ) {
-    let decodeFromKeyTime = null
-    if (timeMs) {
-      let mostRecentKeyPacket = await this.videoSampleSink.getKeyPacket(this.currentTimestamp)
-      decodeFromKeyTime = mostRecentKeyPacket.timestamp
+    // 1. Handle Seeking/Pre-buffering
+    if (timeMs !== undefined) {
+      // Clear old frames before starting a new seek
+      this.frameBuffer.forEach((f) => f.close())
+      this.frameBuffer = []
 
+      let mostRecentKeyPacket = await this.videoSampleSink.getKeyPacket(timeMs / 1000)
+      const decodeFromKeyTime = mostRecentKeyPacket.timestamp
+
+      // Update the current timestamp to the target time
       this.currentTimestamp = timeMs / 1000
+
+      // Initiate the seek decode operation
+      await this.decodeNextFrame(true, timeMs ? decodeFromKeyTime : null)
+
+      // Wait for at least one frame to be outputted to the buffer after a seek
+      // This is necessary because the above call only *starts* the process.
+      // You'll need a simple loop or a Promise utility to wait for frameBuffer.length > 0.
+      // For simplicity here, assume the decoder is fast enough or use a timeout/polling if needed.
+      while (this.frameBuffer.length === 0) {
+        await new Promise((r) => setTimeout(r, 5)) // Polling loop until a frame arrives
+      }
+    }
+    // 2. Continuous Playback: Ensure buffer is being filled (non-blocking call)
+    else if (this.frameBuffer.length < 5) {
+      // If buffer drops below 5 frames, ask for more
+      await this.decodeNextFrame(flush) // await here is fine, doesnt await a callback to VideoDecoder output which would get stuck
     }
 
-    const frameInfo = await this.decodeNextFrame(flush, decodeFromKeyTime)
+    // 3. Consume the Frame
+    const frame = this.frameBuffer.shift() // Get the oldest frame and remove it
 
-    // Your WebGPU logic remains the same as it uses the resulting VideoFrame
+    if (!frame) {
+      console.warn('Frame buffer empty. Cannot draw frame.')
+      throw new Error('No decoded frame available to draw.')
+    }
 
-    // console.info('draw new texture')
+    // Prepare info structure (as before)
+    const frameInfo = {
+      timestamp: frame.timestamp / 1000000,
+      duration: (frame.duration || 0) / 1000000,
+      frame,
+      width: frame.displayWidth,
+      height: frame.displayHeight
+    }
 
+    // 4. WebGPU Drawing Logic
     queue.writeTexture(
+      // ... (your writeTexture arguments using frame, width, height)
       {
         texture: this.texture,
         mipLevel: 0,
         origin: { x: 0, y: 0, z: 0 }
       },
-      frameInfo.frame,
+      frameInfo.frame, // Use the frame directly
       {
         offset: 0,
         bytesPerRow: frameInfo.width * 4,
@@ -754,7 +922,8 @@ export class StVideo {
       }
     )
 
-    frameInfo.frame.close()
+    // 5. CRITICAL: Close the frame after use
+    frame.close()
 
     return frameInfo
   }
