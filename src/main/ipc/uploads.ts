@@ -339,9 +339,9 @@ export function registerUploadHandlers(): void {
   ipcMain.handle('uploads:getImage', async (_event, fileName: string) => {
     try {
       const uploadsDir = getUploadsDir()
-      // const imagePath = path.join(uploadsDir, 'images', fileName)
+      const imagePath = path.join(uploadsDir, 'images', fileName)
       console.info('uploads:getImage', fileName)
-      const imagePath = fileName // already has full path stored
+      // const imagePath = fileName // already has full path stored
 
       const buffer = await fs.readFile(imagePath)
       const mimeType = getMimeTypeFromBuffer(buffer, 'image') || 'image/jpeg'

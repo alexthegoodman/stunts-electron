@@ -622,9 +622,9 @@ export class Editor {
         borderRadius: i.borderRadius
       }
 
-      let imageUrl = 'http://localhost:7301/public/images/' + i.url
+      let blob = await getUploadedImageData(i.url)
 
-      let blob = await getUploadedImageData(imageUrl)
+      let imageUrl = 'http://localhost:7301/public/images/' + i.url
 
       const restored_image = new StImage(
         device!,
@@ -1910,6 +1910,9 @@ export class Editor {
             // console.info("drew frame");
             animateProperties = true
             videoItem.numFramesDrawn += 1
+
+            // buffers the next 5s of audio whenever there is 2s of audio left to play
+            videoItem.checkAndScheduleAudio()
           }
         } else {
           // Determine how many video frames to draw to catch up

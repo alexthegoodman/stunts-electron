@@ -4,7 +4,6 @@ import { CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Point } from './editor'
 import { createEmptyGroupTransform, Transform } from './transform'
 import { fromNDC, getZLayer, toNDC, toSystemScale, Vertex } from './vertex'
 import { INTERNAL_LAYER_SPACE, SavedPoint, setupGradientBuffers } from './polygon'
-// import MP4Box, { DataStream, MP4ArrayBuffer, MP4VideoTrack } from 'mp4box'
 import {
   Input,
   UrlSource,
@@ -12,7 +11,8 @@ import {
   InputVideoTrack,
   VideoSampleSink,
   InputDisposedError,
-  EncodedPacketSink
+  EncodedPacketSink,
+  AudioBufferSink
 } from 'mediabunny'
 import { WindowSize } from './camera'
 import { MotionPath } from './motionpath'
@@ -150,18 +150,6 @@ export class StVideo {
   objectTypeShader: number = 3
   isMockupChild: boolean = false
 
-  // mp4box
-  // private videoDecoder?: VideoDecoder
-  // private mp4File?: MP4Box.MP4File
-  // private sourceBuffer?: MP4ArrayBuffer
-  // private videoMetadata?: VideoMetadata
-  // private isInitialized: boolean = false
-  // private samples: MP4Box.MP4Sample[] = []
-  // private currentSampleIndex: number = 0
-  // private decodingPromise?: Promise<DecodedFrameInfo>
-  // private frameCallback?: (frame: DecodedFrameInfo) => void
-  // private codecString?: string
-
   private input: Input | null = null
   private videoTrack: InputVideoTrack | null = null
   private videoSampleSink: EncodedPacketSink | null = null
@@ -170,6 +158,14 @@ export class StVideo {
   private currentTimestamp: number = 0 // Use seconds
   private frameCallback: ((frameInfo: DecodedFrameInfo) => void) | undefined
   public isInitialized: boolean = false
+
+  audioContext: AudioContext | null = null
+  audioSink: AudioBufferSink | null = null
+  private baseTime: number = 0 // The audioContext.currentTime when video track time 0.0s starts
+  private scheduledTime: number = 0 // The latest video track timestamp (in seconds) that has been scheduled
+  private readonly AHEAD_BUFFER_SECONDS: number = 5 // Target buffer time (5s ahead)
+  private readonly RESCHEDULE_THRESHOLD_SECONDS: number = 2 // Reschedule when less than 2s of audio remain
+  private isScheduling: boolean = false
 
   framesDecoded: number = 0
 
@@ -400,37 +396,6 @@ export class StVideo {
         )
 
         this.vertices = []
-        // for (let y = 0; y <= rows; y++) {
-        //   for (let x = 0; x <= cols; x++) {
-        //     // Keep your original position calculation
-        //     // const posX = -0.5 + x / cols;
-        //     // const posY = -0.5 + y / rows;
-
-        //     // Center the position by offsetting by half dimensions (using system scale)
-        //     const posX = -systemDimensions[0] / 2 + systemDimensions[0] * (x / cols)
-        //     const posY = -systemDimensions[1] / 2 + systemDimensions[1] * (y / rows)
-
-        //     // Map texture coordinates to properly implement cover
-        //     const percentX = x / cols // 0 to 1 across the grid
-        //     const percentY = y / rows // 0 to 1 across the grid
-
-        //     // Apply the cover bounds to the texture coordinates
-        //     const texX = u0 + (u1 - u0) * percentX
-        //     // const texY = v0 + (v1 - v0) * percentY
-        //     const texY = v0 + (v1 - v0) * (1 - percentY)
-
-        //     const normalizedX = (posX - this.transform.position[0]) / this.dimensions[0]
-        //     const normalizedY = (posY - this.transform.position[1]) / this.dimensions[1]
-
-        //     this.vertices.push({
-        //       position: [posX, posY, 0.0],
-        //       tex_coords: [texX, texY],
-        //       color: [1.0, 1.0, 1.0, 1.0],
-        //       gradient_coords: [normalizedX, normalizedY],
-        //       object_type: this.objectTypeShader // OBJECT_TYPE_VIDEO
-        //     })
-        //   }
-        // }
 
         // IMPORTANT: never change these vertices, they are intentionally above in local space, without use of transform
         for (let y = 0; y <= rows; y++) {
@@ -465,34 +430,6 @@ export class StVideo {
             })
           }
         }
-
-        // this.implementCoverEffect(
-        //   this.sourceDimensions[0],
-        //   this.sourceDimensions[1]
-        // );
-
-        // this.vertices = [];
-        // for (let y = 0; y <= rows; y++) {
-        //   for (let x = 0; x <= cols; x++) {
-        //     const posX = -0.5 + x / cols;
-        //     const posY = -0.5 + y / rows;
-        //     const texX = x / cols;
-        //     const texY = y / rows;
-
-        //     const normalizedX =
-        //       (posX - this.transform.position[0]) / this.dimensions[0];
-        //     const normalizedY =
-        //       (posY - this.transform.position[1]) / this.dimensions[1];
-
-        //     this.vertices.push({
-        //       position: [posX, posY, 0.0],
-        //       tex_coords: [texX, texY],
-        //       color: [1.0, 1.0, 1.0, 1.0],
-        //       gradient_coords: [normalizedX, normalizedY],
-        //       object_type: 3, // OBJECT_TYPE_VIDEO
-        //     });
-        //   }
-        // }
 
         console.info('video vertices', this.vertices)
 
@@ -547,11 +484,6 @@ export class StVideo {
 
         queue.writeBuffer(this.indexBuffer, 0, this.indices)
 
-        // this.initializeDecoder().then(() => {
-        //   // draw initial preview frame
-        //   this.drawVideoFrame(device, queue).catch(console.error); // Handle potential errors
-        // });
-
         console.info('prep to decode video')
 
         try {
@@ -586,6 +518,16 @@ export class StVideo {
         formats: ALL_FORMATS,
         source: new UrlSource(url)
       })
+
+      const audioTrack = await this.input.getPrimaryAudioTrack()
+
+      if (audioTrack) {
+        this.audioContext = new AudioContext()
+        this.audioSink = new AudioBufferSink(audioTrack)
+        this.baseTime = this.audioContext.currentTime
+
+        // this.checkAndScheduleAudio() // schedule initial buffers for instant playback? // would need play button instantiation
+      }
 
       // 2. Get the primary video track
       const videoTrack = await this.input.getPrimaryVideoTrack()
@@ -817,6 +759,118 @@ export class StVideo {
     return frameInfo
   }
 
+  /**
+   * Fetches and schedules the next batch of audio buffers up to AHEAD_BUFFER_SECONDS.
+   */
+  private async scheduleNextBuffers(): Promise<void> {
+    if (!this.audioSink || !this.audioContext) {
+      return // No audio track or context
+    }
+
+    if (this.isScheduling) {
+      return
+    }
+
+    this.isScheduling = true
+
+    const endTime = Math.min(
+      this.scheduledTime + this.AHEAD_BUFFER_SECONDS,
+      this.sourceDuration // Ensure we don't schedule past the end of the video
+    )
+
+    // Check if there's any duration left to schedule
+    if (this.scheduledTime >= endTime) {
+      return
+    }
+
+    console.info('schedule next buffers', this.scheduledTime, endTime)
+
+    // Request buffers from the current scheduled point up to the end point.
+    try {
+      for await (const { buffer, timestamp } of this.audioSink.buffers(
+        this.scheduledTime,
+        endTime
+      )) {
+        const source = this.audioContext.createBufferSource()
+        source.buffer = buffer
+        source.connect(this.audioContext.destination)
+
+        // Schedule the buffer to start at the precise time:
+        // baseTime (context start ref) + timestamp (track time of the buffer)
+        source.start(this.baseTime + timestamp)
+
+        // Update the highest time we've scheduled so far.
+        this.scheduledTime = timestamp + buffer.duration
+      }
+
+      this.isScheduling = false
+    } catch (error) {
+      console.error('Error scheduling audio buffers:', error)
+    }
+  }
+
+  /**
+   * Called on every frame loop to check if we need to schedule more audio buffers.
+   * The audioContext.currentTime is the master clock.
+   */
+  public checkAndScheduleAudio(): void {
+    if (!this.audioContext) {
+      return
+    }
+
+    const audioLengthS = this.videoMetadata.duration
+
+    if (this.audioContext.currentTime + this.RESCHEDULE_THRESHOLD_SECONDS >= audioLengthS) {
+      return
+    }
+
+    // 1. Calculate the current playback position (track time)
+    const currentTrackTime = this.audioContext.currentTime - this.baseTime
+
+    // 2. Determine the time difference between the scheduled time and the current time
+    const timeRemainingInSchedule = this.scheduledTime - currentTrackTime
+
+    // 3. Check if the remaining scheduled time is below the threshold
+    if (timeRemainingInSchedule < this.RESCHEDULE_THRESHOLD_SECONDS) {
+      // Schedule the next batch (don't await this; let it run in the background)
+      this.scheduleNextBuffers()
+    }
+  }
+
+  public pauseAudio(): void {
+    if (this.audioContext && this.audioContext.state === 'running') {
+      // Suspend the context to pause the clock and all scheduled playback
+      this.audioContext.suspend()
+      console.log('Audio Paused. Context State:', this.audioContext.state)
+    }
+  }
+
+  public resumeAudio(): void {
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      // Resume the context to restart the clock and scheduled playback
+      this.audioContext.resume()
+      console.log('Audio Resumed. Context State:', this.audioContext.state)
+    }
+  }
+
+  /**
+   * Stops all audio playback and cleans up resources.
+   * This is usually only called when the video is permanently finished or unloaded.
+   */
+  public async stopAndDisposeAudio(): Promise<void> {
+    if (this.audioContext) {
+      // 1. Stop all processing and free hardware resources
+      await this.audioContext.close()
+      this.audioContext = null
+
+      // 2. Reset scheduling state
+      this.baseTime = 0
+      this.scheduledTime = 0
+
+      console.log('Audio Stopped and Disposed.')
+    }
+  }
+
   calculateCoverTextureCoordinates(
     containerWidth: number,
     containerHeight: number,
@@ -855,395 +909,9 @@ export class StVideo {
     return { u0, u1, v0, v1 }
   }
 
-  // private avcDecoderConfig?: Uint8Array
-
-  // description(track: MP4VideoTrack) {
-  //   if (!this.mp4File) {
-  //     return
-  //   }
-
-  //   const trak = this.mp4File.getTrackById(track.id)
-
-  //   if (!trak.mdia || !trak.mdia.minf || !trak.mdia.minf.stbl || !trak.mdia.minf.stbl.stsd) {
-  //     return
-  //   }
-
-  //   for (const entry of trak.mdia.minf.stbl.stsd.entries) {
-  //     const box = entry.avcC || entry.hvcC
-  //     // || entry.vpcC || entry.av1C;
-  //     if (box) {
-  //       // console.info("prepare box!");
-  //       const stream = new DataStream(undefined, 0, DataStream.BIG_ENDIAN)
-  //       box.write(stream)
-  //       return new Uint8Array(stream.buffer, 8) // Remove the box header.
-  //     }
-  //   }
-  //   throw new Error('avcC, hvcC, vpcC, or av1C box not found')
-  // }
-
-  // async initializeMediaSource(blob: Blob): Promise<VideoMetadata | null> {
-  //   try {
-  //     this.sourceBuffer = (await blob.arrayBuffer()) as MP4ArrayBuffer
-  //     this.sourceBuffer.fileStart = 0
-  //     this.mp4File = MP4Box.createFile()
-
-  //     return new Promise((resolve, reject) => {
-  //       if (!this.mp4File) {
-  //         reject(new Error('MP4Box not initialized'))
-  //         return
-  //       }
-
-  //       this.mp4File.onError = (error: string) => {
-  //         reject(new Error(`MP4Box error: ${error}`))
-  //       }
-
-  //       this.mp4File.onReady = (info: MP4Box.MP4Info) => {
-  //         const videoTrack = info.videoTracks[0]
-
-  //         console.info('track length ', info.videoTracks.length)
-
-  //         if (!videoTrack) {
-  //           reject(new Error('No video track found in the file'))
-  //           return
-  //         }
-
-  //         // Store codec string for decoder configuration
-  //         this.codecString = videoTrack.codec
-
-  //         this.avcDecoderConfig = this.description(videoTrack)
-
-  //         console.log('Codec string:', videoTrack.codec)
-  //         console.log('avcC length:', this.avcDecoderConfig?.length)
-  //         if (this.avcDecoderConfig) {
-  //           const firstFewBytes = Array.from(this.avcDecoderConfig.slice(0, 10))
-  //             .map((byte) => byte.toString(16).padStart(2, '0'))
-  //             .join('')
-  //           console.log('First few bytes of avcC:', firstFewBytes)
-  //         }
-
-  //         this.mp4File!.setExtractionOptions(videoTrack.id, null, {
-  //           nbSamples: Infinity
-  //         })
-
-  //         this.mp4File!.onSamples = (track_id: number, user: any, samples: MP4Box.MP4Sample[]) => {
-  //           // console.info("onSamples");
-
-  //           this.samples = samples
-
-  //           // console.info("original duration", videoTrack.duration);
-
-  //           // const durationInSeconds = videoTrack.duration / 1000;
-  //           // const durationMs = videoTrack.duration;
-  //           // const frameRate = samples.length / durationInSeconds;
-
-  //           const durationInSeconds = info.duration / info.timescale
-  //           const durationMs = durationInSeconds * 1000
-  //           const frameRate = samples.length / durationInSeconds
-
-  //           console.info(
-  //             'samples ',
-  //             samples.length,
-  //             'info ',
-  //             info.duration,
-  //             info.timescale,
-  //             'track: ',
-  //             videoTrack.duration,
-  //             videoTrack.timescale,
-  //             'rate: ',
-  //             frameRate,
-  //             durationInSeconds
-  //           )
-
-  //           this.videoMetadata = {
-  //             duration: durationInSeconds,
-  //             durationMs: durationMs,
-  //             width: videoTrack.video.width,
-  //             height: videoTrack.video.height,
-  //             frameRate: frameRate,
-  //             trackId: videoTrack.id,
-  //             timescale: videoTrack.timescale,
-  //             codecs: videoTrack.codec,
-  //             description: this.avcDecoderConfig
-  //           }
-
-  //           this.isInitialized = true
-  //           resolve(this.videoMetadata)
-  //         }
-
-  //         this.mp4File!.start()
-  //       }
-
-  //       // (this.mp4File as any).fileStart = 0;
-  //       if (!this.sourceBuffer) {
-  //         return
-  //       }
-
-  //       console.info('append buffer')
-
-  //       this.mp4File.appendBuffer(this.sourceBuffer)
-  //     })
-  //   } catch (error) {
-  //     console.error('Error initializing media source:', error)
-  //     this.isInitialized = false
-  //     return null
-  //   }
-  // }
-
-  // private async initializeDecoder(): Promise<void> {
-  //   // console.info("initializeDecoder");
-
-  //   if (this.videoDecoder) {
-  //     console.warn('Video decoder already initialized')
-  //     return
-  //   }
-
-  //   return new Promise((resolve, reject) => {
-  //     if (!this.codecString || !this.videoMetadata) {
-  //       throw new Error('Codec information not available')
-  //     }
-
-  //     this.videoDecoder = new VideoDecoder({
-  //       output: async (frame: VideoFrame) => {
-  //         try {
-  //           if (!this.bytesPerFrame) {
-  //             console.error('No bytesPerFrame set')
-  //             throw new Error('No bytesPerFrame')
-  //           }
-
-  //           // console.info(
-  //           //   "decoder output",
-  //           //   this.bytesPerFrame,
-  //           //   frame.allocationSize(),
-  //           //   frame.codedWidth,
-  //           //   frame.displayWidth,
-  //           //   frame.colorSpace
-  //           // );
-
-  //           // needed for webgpu?
-  //           // const frameData = new Uint8ClampedArray(this.bytesPerFrame);
-  //           // const options: VideoFrameCopyToOptions = {
-  //           //   colorSpace: "srgb",
-  //           //   format: "RGBA",
-  //           // };
-  //           // await frame.copyTo(frameData, options);
-
-  //           // hmmm?
-  //           // const bitmap = await createImageBitmap(frame);
-
-  //           const frameInfo: DecodedFrameInfo = {
-  //             timestamp: frame.timestamp,
-  //             duration: frame.duration || 0,
-  //             // frameData,
-  //             // bitmap,
-  //             frame,
-  //             width: frame.displayWidth,
-  //             height: frame.displayHeight
-  //           }
-
-  //           // console.info("this.frameCallback", this.frameCallback);
-
-  //           // console.info(
-  //           //   "frameInfo",
-  //           //   frameInfo.width,
-  //           //   frameInfo.height,
-  //           //   frameInfo.frame.displayWidth,
-  //           //   frameInfo.frame.displayHeight
-  //           // );
-
-  //           this.frameCallback?.(frameInfo)
-  //           // frame.close();
-  //         } catch (error) {
-  //           console.error('Error processing frame:', error)
-  //           frame.close()
-  //         }
-  //       },
-  //       error: (error: DOMException) => {
-  //         console.error('VideoDecoder error:', error)
-  //         reject(error)
-  //       }
-  //     })
-
-  //     // Configure the decoder with the codec information and AVC configuration
-  //     // const colorSpace: VideoColorSpaceInit = {
-  //     //   fullRange: false,
-  //     //   matrix: "rgb",
-  //     //   // primaries?: VideoColorPrimaries | null;
-  //     //   // transfer?: VideoTransferCharacteristics | null;
-  //     //   primaries: "bt709",
-  //     //   transfer: "iec61966-2-1",
-  //     // };
-
-  //     // let test  = new VideoColorSpace(colorSpace);
-
-  //     const config: VideoDecoderConfig = {
-  //       codec: this.codecString,
-  //       // optimizeForLatency: true,
-  //       // hardwareAcceleration: "prefer-hardware",
-  //       // testing settings for taller videos...
-  //       optimizeForLatency: true,
-  //       hardwareAcceleration: 'no-preference',
-  //       // colorSpace: colorSpace,
-
-  //       // Add description for AVC/H.264
-  //       description: this.avcDecoderConfig
-  //     }
-
-  //     this.videoDecoder.configure(config)
-
-  //     // console.info("decoder configured");
-
-  //     resolve()
-  //   })
-  // }
-
-  // async seekToTime(timeMs: number): Promise<void> {
-  //   if (!this.isInitialized || !this.samples.length) {
-  //     throw new Error('Video not initialized')
-  //   }
-
-  //   const timescale = this.videoMetadata!.timescale
-  //   const timeInTimescale = (timeMs / 1000) * timescale
-
-  //   // Find the nearest keyframe before the desired time
-  //   let targetIndex = 0
-  //   for (let i = 0; i < this.samples.length; i++) {
-  //     if (this.samples[i].cts > timeInTimescale) {
-  //       break
-  //     }
-  //     if (this.samples[i].is_sync) {
-  //       targetIndex = i
-  //     }
-  //   }
-
-  //   this.currentSampleIndex = targetIndex
-  // }
-
-  // async decodeNextFrame(): Promise<DecodedFrameInfo> {
-  //   // console.info("decodeNextFrame 1");
-
-  //   if (!this.isInitialized || this.currentSampleIndex >= this.samples.length) {
-  //     throw new Error('No more frames to decode')
-  //   }
-
-  //   return new Promise((resolve, reject) => {
-  //     // console.info("decodeNextFrame 2");
-
-  //     this.frameCallback = (frameInfo: DecodedFrameInfo) => {
-  //       // console.info("decodeNextFrame 3");
-
-  //       this.frameCallback = undefined
-  //       resolve(frameInfo)
-  //     }
-
-  //     let sample = this.samples[this.currentSampleIndex]
-
-  //     const chunk = new EncodedVideoChunk({
-  //       type: sample.is_sync ? 'key' : 'delta',
-  //       timestamp: sample.cts,
-  //       duration: sample.duration,
-  //       data: sample.data
-  //     })
-
-  //     // console.log(
-  //     //   "EncodedVideoChunk:",
-  //     //   chunk.type,
-  //     //   chunk.timestamp,
-  //     //   chunk.duration,
-  //     //   chunk.byteLength
-  //     // );
-
-  //     // console.info(
-  //     //   "decode chunk",
-  //     //   this.samples.length,
-  //     //   chunk.type,
-  //     //   this.currentSampleIndex,
-  //     //   sample.is_sync
-  //     // );
-
-  //     this.videoDecoder!.decode(chunk)
-
-  //     // console.info("chunk decoded", sample.data.length);
-
-  //     this.currentSampleIndex++
-  //   })
-  // }
-
-  // async drawVideoFrame(device: PolyfillDevice, queue: PolyfillQueue, timeMs?: number) {
-  //   if (timeMs !== undefined) {
-  //     await this.seekToTime(timeMs)
-  //   }
-
-  //   // console.info("calling decodeNextFrame", this.currentSampleIndex);
-
-  //   const frameInfo = await this.decodeNextFrame()
-
-  //   // console.info(
-  //   //   "frame info",
-  //   //   frameInfo.width,
-  //   //   frameInfo.height,
-  //   //   frameInfo.frame.displayWidth,
-  //   //   frameInfo.frame.displayHeight
-  //   // );
-
-  //   // this.bindGroup = device.createBindGroup({
-  //   //   layout: this.bindGroupLayout,
-  //   //   entries: [
-  //   //     {
-  //   //       binding: 0,
-  //   //       resource: {
-  //   //         buffer: this.uniformBuffer,
-  //   //       },
-  //   //     },
-  //   //     {
-  //   //       binding: 1,
-  //   //       resource: device.importExternalTexture({ source: frameInfo.frame }),
-  //   //     },
-  //   //     { binding: 2, resource: this.sampler },
-  //   //   ],
-  //   //   label: "Video Bind Group",
-  //   // });
-
-  //   // console.info("frameInfo", frameInfo);
-
-  //   // Update WebGPU texture
-  //   queue.writeTexture(
-  //     {
-  //       texture: this.texture,
-  //       mipLevel: 0,
-  //       origin: { x: 0, y: 0, z: 0 }
-  //       // aspect: "all",
-  //     },
-  //     // frameInfo.frameData,
-  //     frameInfo.frame,
-  //     {
-  //       offset: 0,
-  //       bytesPerRow: frameInfo.width * 4,
-  //       rowsPerImage: frameInfo.height
-  //     },
-  //     {
-  //       width: frameInfo.width,
-  //       height: frameInfo.height,
-  //       depthOrArrayLayers: 1
-  //     }
-  //   )
-
-  //   // console.info("close frame");
-
-  //   frameInfo.frame.close()
-
-  //   // console.info("texture write succesful");
-  //   // console.log("Texture format:", this.texture.format); // Log texture format
-
-  //   return frameInfo
-  // }
-
   getCurrentTime(): number {
     return this.currentTimestamp
   }
-
-  // getTotalFrames(): number {
-  //   return this.samples.length
-  // }
 
   getCurrentFrame(): number {
     return this.currentTimestamp
@@ -1252,6 +920,7 @@ export class StVideo {
   resetPlayback() {
     this.currentTimestamp = 0
     this.numFramesDrawn = 0
+    this.stopAndDisposeAudio()
   }
 
   updateOpacity(queue: PolyfillQueue, opacity: number): void {
@@ -1333,27 +1002,6 @@ export class StVideo {
       this.sourceDimensions[1]
     )
 
-    // let n = 0
-    // for (let y = 0; y <= rows; y++) {
-    //   for (let x = 0; x <= cols; x++) {
-    //     // Center the position by offsetting by half dimensions (using system scale)
-    //     const posX = -systemDimensions[0] / 2 + systemDimensions[0] * (x / cols)
-    //     const posY = -systemDimensions[1] / 2 + systemDimensions[1] * (y / rows)
-
-    //     // Map texture coordinates to properly implement cover
-    //     const percentX = x / cols // 0 to 1 across the grid
-    //     const percentY = y / rows // 0 to 1 across the grid
-    //     // Apply the cover bounds to the texture coordinates
-    //     const texX = u0 + (u1 - u0) * percentX
-    //     const texY = v0 + (v1 - v0) * percentY
-
-    //     this.vertices[n].position = [posX, posY, 0]
-    //     this.vertices[n].tex_coords = [texX, texY]
-
-    //     n++
-    //   }
-    // }
-
     let n = 0
     for (let y = 0; y <= rows; y++) {
       for (let x = 0; x <= cols; x++) {
@@ -1411,16 +1059,6 @@ export class StVideo {
     let uvMaxX = uvCenterX + halfWidth
     let uvMinY = uvCenterY - halfHeight
     let uvMaxY = uvCenterY + halfHeight
-
-    // console.info(
-    //   "pre clamp uv",
-    //   uvCenterX,
-    //   uvCenterY,
-    //   uvMinX,
-    //   uvMinY,
-    //   uvMaxX,
-    //   uvMaxY
-    // );
 
     // Check for clamping and adjust other UVs accordingly to prevent warping
     if (uvMinX < 0.0) {
@@ -1534,25 +1172,6 @@ export class StVideo {
       )
     )
   }
-
-  // containsPoint(point: Point): boolean {
-  //   // const untranslated: Point = {
-  //   //   x: point.x - this.transform.position[0], // Access translation from matrix
-  //   //   y: point.y - this.transform.position[1],
-  //   // };
-
-  //   const untranslated: Point = {
-  //     x: point.x - this.groupTransform.position[0], // Access translation from matrix
-  //     y: point.y - this.groupTransform.position[1]
-  //   }
-
-  //   return (
-  //     untranslated.x >= -0.5 * this.dimensions[0] &&
-  //     untranslated.x <= 0.5 * this.dimensions[0] &&
-  //     untranslated.y >= -0.5 * this.dimensions[1] &&
-  //     untranslated.y <= 0.5 * this.dimensions[1]
-  //   )
-  // }
 
   containsPoint(ray: Ray, windowSize: WindowSize): boolean {
     // Ensure you are using the sphere's world position and radius
