@@ -2,17 +2,26 @@ import {
   Output,
   Mp4OutputFormat,
   BufferTarget,
-  VideoSampleSource, // Changed from CanvasSource
-  VideoSample, // New import
-  // EncodedAudioChunkSource,
-  VideoEncodingConfig
+  VideoSampleSource,
+  VideoSample,
+  VideoEncodingConfig,
+  AudioBufferSource,
+  AudioBufferSink
 } from 'mediabunny'
 import { PolyfillDevice, PolyfillTexture } from './polyfill'
 import { CanvasPipeline } from './pipeline'
 import EditorState from './editor_state'
 import { Editor, Viewport } from './editor'
-import { getSequenceDuration, SavedState } from './animations'
+import { AnimationData, getSequenceDuration, SavedState } from './animations'
 import { WindowSize } from './camera'
+import { SavedStVideoConfig } from './video'
+
+export interface AudioSource {
+  audioSink: AudioBufferSink // The Mediabunny AudioBufferSink - replace 'any' with actual type
+  timelineStartMs: number
+  durationMs: number
+  trackStartMs: number // The "trim" start time within the audio
+}
 
 export class BunnyExport {
   width: number
@@ -39,6 +48,9 @@ export class BunnyExport {
   pipeline: CanvasPipeline | null = null
   isVertical: boolean
 
+  outputSampleRate: number = 48000
+  outputChannels: number = 2
+
   constructor() {
     this.isVertical = false
   }
@@ -49,14 +61,6 @@ export class BunnyExport {
   ) {
     this.onProgress = onProgress
     let windowSize: WindowSize = {
-      // legacy
-      // // 1x
-      // // width: 800,
-      // // height: 450,
-      // // 2x
-      // width: 1600,
-      // height: 900,
-      // full hd proper (2x still though)
       width: 1920,
       height: 1080
     }
@@ -65,8 +69,6 @@ export class BunnyExport {
       windowSize = {
         width: 450,
         height: 800
-        // width: 900,
-        // height: 1600,
       }
     }
 
@@ -78,7 +80,7 @@ export class BunnyExport {
     this.editor = new Editor(this.viewport)
 
     this.editor.isExporting = true
-    this.editor.scaleMultiplier = this.isVertical ? 1.0 : 2.0 // 2x WindowSize
+    this.editor.scaleMultiplier = this.isVertical ? 1.0 : 2.0
 
     this.editorState = new EditorState(savedState)
 
@@ -99,14 +101,6 @@ export class BunnyExport {
       return
     }
 
-    // // // this.editor.camera.position = vec2.fromValues(100.0, 100.0);
-    // this.editor.camera.setPosition(0.1, 0.1, 0);
-    // // // this.editor.camera.zoom = 2.0;
-    // this.editor.cameraBinding?.update(
-    //   this.editor.gpuResources?.queue!,
-    //   this.editor.camera
-    // );
-
     let targetFrameRate = 60
 
     this.pipeline.recreateDepthView(windowSize?.width, windowSize?.height)
@@ -123,33 +117,16 @@ export class BunnyExport {
       )
     }
 
-    // const frameEncoder = async (renderTexture: PolyfillTexture) => {
-    //   if (!this.webExport) {
-    //     return
-    //   }
-
-    //   // console.info("Encoding frame...");
-
-    //   await this.webExport.encodeFrame(renderTexture)
-
-    //   // console.info("Frame encoded.");
-    // }
-
     // Calculate total duration from sequences (in milliseconds)
     let totalDurationMs = 0
     cloned_sequences.forEach((s) => {
-      // if (s.durationMs) {
-      //   totalDurationMs += s.durationMs
-      // }
       totalDurationMs += getSequenceDuration(s).durationMs
     })
 
-    let totalDurationS = totalDurationMs / 1000 // Convert to seconds
+    let totalDurationS = totalDurationMs / 1000
 
     this.duration = totalDurationS
     this.durationMs = totalDurationMs
-
-    // this.encoder.totalDurationMs = totalDurationMs
 
     if (!totalDurationMs) {
       console.warn('No duration')
@@ -168,154 +145,110 @@ export class BunnyExport {
 
     console.info('Begin encoding frames...', totalDurationS)
 
-    // Frame loop
-    const frameTimeS = 1 / targetFrameRate // Time per frame in seconds
-    const frameTimeMs = frameTimeS * 1000 // Convert to milliseconds
+    const frameTimeS = 1 / targetFrameRate
+    const frameTimeMs = frameTimeS * 1000
     let currentTimeMs = 0
     let lastProgressUpdateMs = 0
 
-    // TODO: start export with BunnyExport
-
-    // Final progress update
     onProgress?.(1.0, totalDurationS, totalDurationS)
-    // onProgress?.(progress, currentTimeMs / 1000, totalDurationS);
-
-    // Finalize the export
-    // if (this.webExport) {
-    //   setTimeout(async () => {
-    //     if (!this.webExport) {
-    //       return
-    //     }
-
-    //     console.info('Finalizing export...')
-    //     await this.webExport.finalize()
-    //   }, 1000)
-    // }
   }
 
   /**
-   * Exports a video from programmatically rendered frames and an optional audio buffer.
-   * @param options The configuration for the export.
+   * Exports a video from programmatically rendered frames and timeline audio.
    * @returns A Promise that resolves with a Blob of the final MP4 video.
    */
   async encodeFile() {
-    const { width, height, audioBuffer, duration, onProgress, video, audio } = this
-    const fps = 60 // Matching your original implementation's frame rate
+    const { width, height, duration, onProgress, video, audio } = this
+    const fps = 60
 
-    // ## 1. Setup the Output Target and Format (No change)
+    // Setup the Output Target and Format
     const target = new BufferTarget()
     const format = new Mp4OutputFormat({
       fastStart: 'in-memory'
     })
     const output = new Output({ target, format })
 
-    // ## 2. Setup the Video Track using VideoSampleSource
-    // This source is designed to accept raw video data, frame by frame.
+    // Setup the Video Track
     const videoSource = new VideoSampleSource({
       codec: video?.codec ?? 'avc',
-      bitrate: video?.bitrate ?? 5_000_000 // Default to 5 Mbps, matching your original
+      bitrate: video?.bitrate ?? 5_000_000
     })
     output.addVideoTrack(videoSource, { frameRate: fps })
 
-    // ## 3. Setup the Audio Track (No change)
-    // let audioSource: EncodedAudioChunkSource | null = null;
-    // if (audioBuffer) {
-    // 	audioSource = new EncodedAudioChunkSource();
-    // 	output.addAudioTrack(audioSource);
-    // }
+    // Setup the Audio Track
+    const allAudioSources = await this.getActiveAudioSources()
+    console.log(`Found ${allAudioSources.length} audio sources for export.`)
 
-    // ## 4. Start the Output (No change)
+    let audioSource: AudioBufferSource | null = null
+
+    if (allAudioSources.length > 0) {
+      audioSource = new AudioBufferSource({
+        codec: 'aac',
+        bitrate: 128_000
+      })
+      output.addAudioTrack(audioSource)
+    }
+
+    // Start the Output
     await output.start()
     console.log('Mediabunny output started.')
 
-    // ## 5. Encode and Add Media Data
-    // Video and audio encoding run in parallel.
+    if (allAudioSources.length > 0) {
+      // Pre-mix all audio sources into a single AudioBuffer
+      console.log('Pre-mixing audio sources...')
+      const mixedAudioBuffer = await this.mixAudioSources(allAudioSources)
 
-    const videoEncodingPromise = (async () => {
+      // Add the mixed audio buffer to the source
+      await audioSource.add(mixedAudioBuffer)
+      console.log('Audio buffer added to source.')
+    }
+
+    // Encode video frames
+    const videoEncodingPromise = async () => {
       const frameDuration = 1 / fps
       const totalFrames = Math.round(duration * fps)
 
       for (let i = 0; i < totalFrames; i++) {
         const timestamp = i * frameDuration
 
-        // Get the raw pixel data for the current timestamp.
         const frameEncoder = async (renderTexture: PolyfillTexture) => {
-          // await this.webExport.encodeFrame(renderTexture)
           this.lastImageData = await this.captureFrame(renderTexture)
         }
 
         await this.pipeline.renderWebglFrame(this.editor, frameEncoder, timestamp)
 
-        // Create a VideoSample from the ImageData buffer.
-        // This is the direct replacement for creating a VideoFrame.
         const sample = new VideoSample(this.lastImageData.data.buffer, {
-          format: 'RGBA', // ImageData is always in RGBA format
+          format: 'RGBA',
           codedWidth: width,
           codedHeight: height,
-          timestamp: timestamp, // Timestamps are in seconds
-          duration: frameDuration // Duration is in seconds
+          timestamp: timestamp,
+          duration: frameDuration
         })
 
-        // Add the sample to the source for encoding.
         await videoSource.add(sample)
-        sample.close() // Release the underlying resources, same as VideoFrame.close()
+        sample.close()
 
-        // Update progress
         if (onProgress) {
           onProgress(i / totalFrames)
         }
       }
       console.log('Video encoding complete.')
-    })()
+    }
 
-    // const audioEncodingPromise = (async () => {
-    // 	// This audio encoding logic remains unchanged.
-    // 	if (!audioBuffer || !audioSource) return;
+    // Audio encoding placeholder
+    const audioEncodingPromise = async () => {
+      if (!audioSource) {
+        console.log('No audio to encode.')
+        return
+      }
+      console.log('Audio encoding will be handled by AudioBufferSource.')
+    }
 
-    // 	const audioEncoder = new AudioEncoder({
-    // 		output: (chunk) => audioSource!.add(chunk),
-    // 		error: (e) => console.error('Audio encoder error:', e),
-    // 	});
+    // Run in sequence for better performance
+    await videoEncodingPromise()
+    await audioEncodingPromise()
 
-    // 	await audioEncoder.configure({
-    // 		codec: audio.codec ?? 'mp4a.40.2',
-    // 		numberOfChannels: audioBuffer.numberOfChannels,
-    // 		sampleRate: audio.sampleRate ?? audioBuffer.sampleRate,
-    // 		bitrate: audio.bitrate ?? 128_000,
-    // 	});
-
-    // 	const CHUNK_DURATION_SECONDS = 0.1;
-    // 	const samplesPerChunk = audioEncoder.sampleRate * CHUNK_DURATION_SECONDS;
-    // 	const totalChunks = Math.ceil(audioBuffer.length / samplesPerChunk);
-
-    // 	for (let i = 0; i < totalChunks; i++) {
-    // 		const offset = i * samplesPerChunk;
-    // 		const sampleCount = Math.min(samplesPerChunk, audioBuffer.length - offset);
-    // 		const timestamp = (offset / audioEncoder.sampleRate) * 1_000_000;
-
-    // 		const audioData = new AudioData({
-    // 			format: audioBuffer.numberOfChannels > 1 ? 'f32-planar' : 'f32',
-    // 			sampleRate: audioEncoder.sampleRate,
-    // 			numberOfFrames: sampleCount,
-    // 			numberOfChannels: audioBuffer.numberOfChannels,
-    // 			timestamp: timestamp,
-    // 			data: audioBuffer.getChannelData(0).subarray(offset, offset + sampleCount) // Simplified for mono; adapt for stereo if needed
-    // 		});
-    // 		audioEncoder.encode(audioData);
-    // 	}
-
-    // 	await audioEncoder.flush();
-    // 	audioEncoder.close();
-    // 	console.log('Audio encoding complete.');
-    // })();
-
-    // Wait for both processes
-    await Promise.all([
-      videoEncodingPromise
-      // audioEncodingPromise
-    ])
-
-    // ## 6. Finalize the Output (No change)
+    // Finalize the Output
     console.log('Finalizing output...')
     await output.finalize()
     console.log('Output finalized.')
@@ -332,8 +265,171 @@ export class BunnyExport {
     this.finalize(finalBlob)
   }
 
+  /**
+   * Pre-mixes all audio sources into a single AudioBuffer using OfflineAudioContext.
+   * This handles timeline positioning, trimming, and mixing all at once.
+   */
+  async mixAudioSources(sources: AudioSource[]): Promise<AudioBuffer> {
+    if (sources.length === 0) {
+      throw new Error('No audio sources to mix')
+    }
+
+    const sampleRate = this.outputSampleRate
+    const numberOfChannels = this.outputChannels
+    const lengthInSamples = Math.ceil((this.durationMs / 1000) * sampleRate)
+
+    // Create an offline context to render the mixed audio
+    const offlineContext = new OfflineAudioContext(numberOfChannels, lengthInSamples, sampleRate)
+
+    // For each source, we need to concatenate all its buffers into one
+    for (const source of sources) {
+      // Calculate the time range we need from this source
+      // We need audio starting from trackStartMs for durationMs
+      const sourceStartS = source.trackStartMs / 1000
+      const sourceEndS = (source.trackStartMs + source.durationMs) / 1000
+
+      console.log(`Loading audio source: ${sourceStartS}s to ${sourceEndS}s`)
+
+      // Collect all buffers in the required time range
+      const bufferChunks: AudioBuffer[] = []
+
+      for await (const wrappedBuffer of source.audioSink.buffers(sourceStartS, sourceEndS)) {
+        if (wrappedBuffer) {
+          bufferChunks.push(wrappedBuffer.buffer)
+        }
+      }
+
+      if (bufferChunks.length === 0) {
+        console.warn('No audio buffers found for source, skipping')
+        continue
+      }
+
+      // Concatenate all buffer chunks into a single AudioBuffer
+      const concatenatedBuffer = this.concatenateAudioBuffers(bufferChunks)
+
+      // Create a buffer source node
+      const bufferSource = offlineContext.createBufferSource()
+      bufferSource.buffer = concatenatedBuffer
+
+      // Connect to destination
+      bufferSource.connect(offlineContext.destination)
+
+      // Calculate when to start playing this clip on the timeline (in seconds)
+      const startTime = source.timelineStartMs / 1000
+
+      // Since we already loaded the specific range we need (trackStartMs to trackStartMs + durationMs),
+      // we start at offset 0 in our concatenated buffer
+      const offset = 0
+
+      // Play the entire concatenated buffer
+      const duration = source.durationMs / 1000
+
+      // Schedule the playback
+      bufferSource.start(startTime, offset, duration)
+    }
+
+    // Render the mixed audio
+    console.log('Rendering mixed audio...')
+    const renderedBuffer = await offlineContext.startRendering()
+    console.log('Audio mixing complete.')
+
+    return renderedBuffer
+  }
+
+  /**
+   * Concatenates multiple AudioBuffers into a single AudioBuffer.
+   * All buffers must have the same sample rate and number of channels.
+   */
+  private concatenateAudioBuffers(buffers: AudioBuffer[]): AudioBuffer {
+    if (buffers.length === 0) {
+      throw new Error('No buffers to concatenate')
+    }
+
+    if (buffers.length === 1) {
+      return buffers[0]
+    }
+
+    const sampleRate = buffers[0].sampleRate
+    const numberOfChannels = buffers[0].numberOfChannels
+
+    // Verify all buffers have the same format
+    for (const buffer of buffers) {
+      if (buffer.sampleRate !== sampleRate || buffer.numberOfChannels !== numberOfChannels) {
+        throw new Error('All audio buffers must have the same sample rate and channel count')
+      }
+    }
+
+    // Calculate total length
+    const totalLength = buffers.reduce((sum, buffer) => sum + buffer.length, 0)
+
+    // Create a new buffer with the combined length
+    const concatenated = new AudioContext().createBuffer(numberOfChannels, totalLength, sampleRate)
+
+    // Copy data from each buffer into the concatenated buffer
+    let offset = 0
+    for (const buffer of buffers) {
+      for (let channel = 0; channel < numberOfChannels; channel++) {
+        const channelData = buffer.getChannelData(channel)
+        concatenated.getChannelData(channel).set(channelData, offset)
+      }
+      offset += buffer.length
+    }
+
+    return concatenated
+  }
+
+  /**
+   * Finds all audio items in the editor's timeline.
+   */
+  async getActiveAudioSources(): Promise<AudioSource[]> {
+    if (!this.editor) {
+      return []
+    }
+
+    let videoItems = [...this.editor.videoItems, ...this.editor.mockups3D.map((m) => m.videoChild)]
+
+    console.info('get active sources', videoItems)
+
+    // Filter items with audio first
+    const itemsWithAudio = videoItems.filter((item) => item.audioContext && item.audioSink)
+
+    // Use Promise.all to handle async operations
+    const sources: AudioSource[] = await Promise.all(
+      itemsWithAudio.map(async (item) => {
+        let parentMockup = this.editor.mockups3D.find((m) => m?.videoChild?.id === item.id)
+        let pathId = parentMockup ? parentMockup.id : item.id
+
+        let savedItem: SavedStVideoConfig = null
+        let savedAnim: AnimationData = null
+        this.editorState.savedState.sequences.forEach((s) => {
+          s.activeVideoItems.forEach((v) => {
+            if (v.id === item.id) {
+              savedItem = v
+            }
+          })
+          s.polygonMotionPaths.forEach((v) => {
+            if (v.polygonId === pathId) {
+              savedAnim = v
+            }
+          })
+        })
+
+        const source: AudioSource = {
+          audioSink: item.audioSink,
+          timelineStartMs: savedAnim.startTimeMs,
+          durationMs: savedAnim.duration,
+          trackStartMs: 0 // TODO: Set this if you support audio trimming
+        }
+
+        return source
+      })
+    )
+
+    return sources
+  }
+
   async captureFrame(texture: PolyfillTexture): Promise<ImageData> {
-    const minimumBytesPerRow = this.width * 4 // RGBA8Unorm format
+    const minimumBytesPerRow = this.width * 4
     const bytesPerRow = Math.ceil(minimumBytesPerRow / 256) * 256
     const bufferSize = bytesPerRow * this.height
 
@@ -343,10 +439,9 @@ export class BunnyExport {
         usage:
           process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
       },
-      '' // uniformMatrix4fv, uniform1f, UBO, etc
+      ''
     )
 
-    // Create command encoder and copy texture to buffer
     const paddedData = this.editor.gpuResources.device.copyTextureToBuffer(
       {
         texture: texture,
@@ -366,14 +461,11 @@ export class BunnyExport {
     )
 
     try {
-      // Calculate the actual and padded bytes per row
       const minimumBytesPerRow = this.width * 4
       const alignedBytesPerRow = Math.ceil(minimumBytesPerRow / 256) * 256
 
-      // Create an array with the correct size for the image without padding
       const unpackedData = new Uint8Array(this.width * this.height * 4)
 
-      // Copy the data row by row, removing the padding
       for (let row = 0; row < this.height; row++) {
         const sourceStart = row * alignedBytesPerRow
         const sourceEnd = sourceStart + minimumBytesPerRow
@@ -384,7 +476,6 @@ export class BunnyExport {
 
       outputBuffer.unmap()
 
-      // Now create ImageData with the unpacked data
       const imageData = new ImageData(
         new Uint8ClampedArray(unpackedData.buffer),
         this.width,
@@ -396,7 +487,6 @@ export class BunnyExport {
       outputBuffer.destroy()
     } catch (error) {
       console.error('Error encoding frame:', error)
-      // Handle the error appropriately (e.g., re-throw it)
       throw error
     }
   }
@@ -406,7 +496,6 @@ export class BunnyExport {
       return
     }
 
-    // Save or process the video
     const url = URL.createObjectURL(videoBlob)
     const a = document.createElement('a')
     a.href = url

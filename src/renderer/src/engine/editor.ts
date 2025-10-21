@@ -1912,7 +1912,9 @@ export class Editor {
             videoItem.numFramesDrawn += 1
 
             // buffers the next 5s of audio whenever there is 2s of audio left to play
-            videoItem.checkAndScheduleAudio()
+            if (!isExport) {
+              videoItem.checkAndScheduleAudio()
+            }
           }
         } else {
           // Determine how many video frames to draw to catch up

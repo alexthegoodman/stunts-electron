@@ -317,7 +317,7 @@ export class Mockup3D {
     const hingeAnchor = vec3.fromValues(0, hh * 0.5, baseThickness)
     // const hingeAnchor = vec3.fromValues(0, 1, 1)
 
-    console.info('hingeAnchor', this.transform, hingeAnchor)
+    // console.info('hingeAnchor', this.transform, hingeAnchor)
 
     // this.groupTransform.updateAnchor(hingeAnchor)
 
@@ -338,13 +338,13 @@ export class Mockup3D {
   updateChildRotations(queue: PolyfillQueue, camera: Camera3D, rotation: [number, number, number]) {
     if (this.videoChild) {
       const screenBounds = this.getScreenBounds()
-      console.info(
-        'udpate video child rotation',
-        this.transform.rotation,
-        rotation[0] + screenBounds.rotation[0],
-        rotation,
-        screenBounds.rotation[0]
-      )
+      // console.info(
+      //   'udpate video child rotation',
+      //   this.transform.rotation,
+      //   rotation[0] + screenBounds.rotation[0],
+      //   rotation,
+      //   screenBounds.rotation[0]
+      // )
 
       this.videoChild.transform.updateRotationX(
         degreesToRadians(rotation[0]) + screenBounds.rotation[0]
