@@ -73,11 +73,17 @@ import {
   BooksIcon,
   TextAaIcon,
   PowerIcon,
-  LightbulbFilamentIcon
+  LightbulbFilamentIcon,
+  MouseIcon,
+  SelectionIcon,
+  FolderOpenIcon
 } from '@phosphor-icons/react'
 
 export const CreateIcon = ({ icon, size }: { icon: string; size: string }) => {
   switch (icon) {
+    case 'mouse': {
+      return <SelectionIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
+    }
     case 'shaders': {
       return <LightbulbFilamentIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
     }
@@ -221,6 +227,9 @@ export const CreateIcon = ({ icon, size }: { icon: string; size: string }) => {
     }
     case 'folder-plus': {
       return <FolderPlus data-testid={`icon-${icon}`} weight="thin" size={size} />
+    }
+    case 'folder-open': {
+      return <FolderOpenIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
     }
     case 'bone': {
       return <Bone data-testid={`icon-${icon}`} weight="thin" size={size} />

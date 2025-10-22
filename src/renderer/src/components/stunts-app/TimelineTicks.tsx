@@ -26,6 +26,8 @@ export const TimelineTicks: React.FC<TimelineTicksProps> = ({
   // calculate based on window width and pixelsPerSecond instead for visual ticks, Math.max(x, allSeconds)
   const totalSeconds = Math.max((screenWidth - sidebarWidth) / pixelsPerSecond, allSeconds)
 
+  console.info('timeline ticks', durationMs, allSeconds, totalSeconds)
+
   // --- Utility Functions ---
 
   // Calculates the time in milliseconds based on the X position
@@ -81,13 +83,13 @@ export const TimelineTicks: React.FC<TimelineTicksProps> = ({
     for (let i = 0; i <= totalSeconds; i++) {
       const position = i * 1000 * pixelsPerMs
 
-      if (position <= totalWidth) {
-        generatedTicks.push({
-          position,
-          label: `${i}s`,
-          isMajor: i % 5 === 0
-        })
-      }
+      // if (position <= totalWidth) {
+      generatedTicks.push({
+        position,
+        label: `${i}s`,
+        isMajor: i % 5 === 0
+      })
+      // }
     }
     return generatedTicks
   }, [totalSeconds, pixelsPerMs, totalWidth])

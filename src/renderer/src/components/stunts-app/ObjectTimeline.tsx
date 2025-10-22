@@ -19,6 +19,7 @@ interface TrackProps {
   objectName: string | null | undefined
   objectData: AnimationData
   pixelsPerSecond: number
+  visibleDurationMs: number
   onSequenceDragEnd: (animation: AnimationData, newStartTimeMs: number) => void
   onSelectObject: (objectType: ObjectType, objectId: string) => void
   onDeleteObject: (id: string, kind: ObjectType) => void
@@ -65,14 +66,14 @@ const DraggableSequence: React.FC<SequenceProps> = ({
       {...listeners}
       {...attributes}
     >
-      <span className="truncate">{objectName}</span>
       {/* <span className="text-xs">({animation.polygonId})</span> */}
-      <div className="flex flex-row gap-1">
+      <div className="flex flex-row gap-1 justify-center">
         <div
           className="bg-black hover:bg-gray-600 pb-1 px-2 rounded"
           onClick={() => onSelectObject(animation.objectType, animation.polygonId)}
         >
           <span className="text-xs">Select</span>
+          {/* <CreateIcon icon="folder-open" size="18px" /> */}
         </div>
         <div
           className="bg-red-500 hover:bg-gray-600 pb-1 px-2 rounded pt-1"
@@ -82,7 +83,9 @@ const DraggableSequence: React.FC<SequenceProps> = ({
         >
           <CreateIcon icon="trash" size="18px" />
         </div>
+        <span className="block truncate text-xs pt-[6px] pl-1">{objectName}</span>
       </div>
+      <div>{/** right-side ctrls */}</div>
     </div>
   )
 }
@@ -93,6 +96,7 @@ export const ObjectTrack: React.FC<TrackProps> = ({
   objectName,
   objectData,
   pixelsPerSecond,
+  visibleDurationMs = 0,
   onSequenceDragEnd,
   onSelectObject,
   onDeleteObject
@@ -100,10 +104,10 @@ export const ObjectTrack: React.FC<TrackProps> = ({
   const pixelsPerMs = pixelsPerSecond / 1000
 
   const [localLeft, setLocalLeft] = useState(objectData.startTimeMs * pixelsPerMs)
-  const [localWidth, setLocalWidth] = useState(objectData.duration * pixelsPerMs)
+  const [localWidth, setLocalWidth] = useState(visibleDurationMs * pixelsPerMs)
 
   const trackColor = type === TrackType.Audio ? 'bg-slate-600' : 'bg-slate-600'
-  const sequenceColor = type === TrackType.Audio ? 'bg-blue-400' : 'bg-green-400'
+  const sequenceColor = type === TrackType.Audio ? 'bg-blue-400' : 'bg-[#3eb56c]'
 
   // Set up sensors for drag detection
   const sensors = useSensors(

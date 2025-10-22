@@ -754,35 +754,38 @@ export class Editor {
             // prop.name.startsWith("Position")
             prop.propertyPath === 'zoom'
         )
-        if (!zoomProperty) {
-          // console.warn(`Couldn't find zoom property for object ${objectId}`);
-          return
-        } else {
-          console.info('Found zoom property for ', objectId)
+        // if (!zoomProperty) {
+        //   // console.warn(`Couldn't find zoom property for object ${objectId}`);
+        //   return
+        // } else {
+        //   console.info('Found zoom property for ', objectId)
+        // }
+
+        if (zoomProperty) {
+          // Sort keyframes by time
+          const zoomKeyframes = [...zoomProperty.keyframes].sort((a, b) => a.time - b.time)
+          const initialZoomPosition: [number, number] = animationData.position
+
+          console.info('creating new zoom path', initialZoomPosition)
+
+          const zoomPath = new MotionPath(
+            device!,
+            queue!,
+            this.modelBindGroupLayout!,
+            this.groupBindGroupLayout!,
+            // this.gradientBindGroupLayout,
+            objectId, // good association? no need to drag full zoom path?
+            camera.windowSize,
+            zoomKeyframes,
+            camera,
+            saved_sequence,
+            1,
+            objectId,
+            initialZoomPosition
+          )
+
+          restored_video.mousePath = zoomPath
         }
-        // Sort keyframes by time
-        const zoomKeyframes = [...zoomProperty.keyframes].sort((a, b) => a.time - b.time)
-        const initialZoomPosition: [number, number] = animationData.position
-
-        console.info('creating new zoom path', initialZoomPosition)
-
-        const zoomPath = new MotionPath(
-          device!,
-          queue!,
-          this.modelBindGroupLayout!,
-          this.groupBindGroupLayout!,
-          // this.gradientBindGroupLayout,
-          objectId, // good association? no need to drag full zoom path?
-          camera.windowSize,
-          zoomKeyframes,
-          camera,
-          saved_sequence,
-          1,
-          objectId,
-          initialZoomPosition
-        )
-
-        restored_video.mousePath = zoomPath
       }
 
       this.videoItems.push(restored_video)
@@ -1691,7 +1694,11 @@ export class Editor {
       // Find the duration of the sequence
       // const durationMs =
       //   videoCurrentSequencesData.find((s) => s.id === ts.sequenceId)?.durationMs || 0
-      const { startTimeMs, durationMs } = getSequencesDuration(videoCurrentSequencesData, sequence)
+      const { startTimeMs, durationMs } = getSequencesDuration(
+        this,
+        videoCurrentSequencesData,
+        sequence
+      )
 
       // Check if this sequence should be playing at the current time
       if (currentTimeMs >= startTimeMs && currentTimeMs < startTimeMs + durationMs) {
@@ -1811,7 +1818,7 @@ export class Editor {
     const sequence = this.currentSequenceData
     // const { startTimeMs, durationMs: sequencDurationMs } = getSequenceDuration(sequence)
     const { startTimeMs: sequenceStartTimeMs, durationMs: sequenceDurationMs } =
-      getSequencesDuration(this.videoCurrentSequencesData, sequence)
+      getSequencesDuration(this, this.videoCurrentSequencesData, sequence)
     if (!sequence || !sequence.polygonMotionPaths) {
       throw new Error("Couldn't get sequence")
     }
@@ -1875,6 +1882,79 @@ export class Editor {
         //   );
         // }
         continue
+      }
+
+      let visibleDurationMs = animation.duration
+
+      if (animation.objectType === ObjectType.VideoItem) {
+        visibleDurationMs = this.videoItems[objectIdx].sourceDurationMs
+      }
+
+      if (animation.objectType === ObjectType.Mockup3D) {
+        visibleDurationMs = this.mockups3D[objectIdx].videoChild.sourceDurationMs
+      }
+
+      if (animation.visibleDurationMs) {
+        visibleDurationMs = animation.visibleDurationMs
+      }
+
+      if (
+        currentTimeMs < animation.startTimeMs ||
+        currentTimeMs > animation.startTimeMs + visibleDurationMs
+      ) {
+        switch (animation.objectType) {
+          case 'Polygon':
+            this.polygons[objectIdx].hidden = true
+            break
+          case 'TextItem':
+            this.textItems[objectIdx].hidden = true
+            break
+          case 'ImageItem':
+            this.imageItems[objectIdx].hidden = true
+            break
+          case 'VideoItem':
+            this.videoItems[objectIdx].hidden = true
+            break
+          case 'Cube3D':
+            this.cubes3D[objectIdx].hidden = true
+            break
+          case 'Sphere3D':
+            this.spheres3D[objectIdx].hidden = true
+            break
+          case 'Mockup3D':
+            this.mockups3D[objectIdx].hidden = true
+            break
+          case 'Model3D':
+            this.models3D[objectIdx].hidden = true
+            break
+        }
+      } else {
+        switch (animation.objectType) {
+          case 'Polygon':
+            this.polygons[objectIdx].hidden = false
+            break
+          case 'TextItem':
+            this.textItems[objectIdx].hidden = false
+            break
+          case 'ImageItem':
+            this.imageItems[objectIdx].hidden = false
+            break
+          case 'VideoItem':
+            this.videoItems[objectIdx].hidden = false
+            break
+          case 'Cube3D':
+            this.cubes3D[objectIdx].hidden = false
+            break
+          case 'Sphere3D':
+            this.spheres3D[objectIdx].hidden = false
+            break
+          case 'Mockup3D':
+            this.mockups3D[objectIdx].hidden = false
+            break
+          case 'Model3D':
+            this.models3D[objectIdx].hidden = false
+            break
+        }
       }
 
       // if (isExport) {

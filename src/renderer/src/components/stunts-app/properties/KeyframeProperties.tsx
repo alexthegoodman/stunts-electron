@@ -22,6 +22,7 @@ import {
 import { CreateIcon } from '../icon'
 import {
   remove_position_keyframes,
+  remove_zoom_keyframes,
   save_bouncing_ball_keyframes,
   save_circular_motion_keyframes,
   save_configurable_perspective_keyframes,
@@ -36,6 +37,7 @@ import {
 } from '@renderer/engine/state/keyframes'
 import { saveSequencesData } from '@renderer/fetchers/projects'
 import { update_keyframe } from '../VideoEditor'
+import toast from 'react-hot-toast'
 
 export const AnimationOptions = ({
   editorRef,
@@ -120,6 +122,74 @@ export const AnimationOptions = ({
       </button>
       {showProceduralAnimations ? (
         <section className="flex flex-col gap-2 p-2 border rounded">
+          {objectType === ObjectType.VideoItem ? (
+            <button
+              className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
+              onClick={async () => {
+                let editor = editorRef.current
+                let editorState = editorStateRef.current
+
+                if (!editorState || !editor) {
+                  return
+                }
+
+                let currentSequence = editorState.savedState.sequences.find(
+                  (s) => s.id === currentSequenceId
+                )
+
+                if (!currentSequence || !currentSequence?.polygonMotionPaths) {
+                  return
+                }
+
+                let current_animation_data = currentSequence?.polygonMotionPaths.find(
+                  (p) => p.polygonId === currentObjectId
+                )
+
+                if (!current_animation_data) {
+                  return
+                }
+
+                let newAnimationData = remove_zoom_keyframes(
+                  editorState,
+                  currentObjectId,
+                  objectType,
+                  current_animation_data
+                )
+
+                let sequence_cloned: any = null
+
+                editorState.savedState.sequences.forEach((s) => {
+                  if (s.id == currentSequenceId) {
+                    sequence_cloned = s
+
+                    if (s.polygonMotionPaths) {
+                      let currentIndex = s.polygonMotionPaths.findIndex(
+                        (p) => p.id === current_animation_data.id
+                      )
+                      s.polygonMotionPaths[currentIndex] = newAnimationData
+                    }
+                  }
+                })
+
+                if (!sequence_cloned) {
+                  return
+                }
+
+                let sequences = editorState.savedState.sequences
+
+                await saveSequencesData(sequences, editorState.saveTarget)
+
+                // update motion path preview
+                editor.updateMotionPaths(sequence_cloned)
+
+                toast.success('Keyframes removed')
+              }}
+            >
+              Remove Zoom Keyframes
+            </button>
+          ) : (
+            <></>
+          )}
           <button
             className="text-xs rounded-md text-white stunts-gradient px-2 py-1"
             onClick={async () => {
@@ -178,6 +248,8 @@ export const AnimationOptions = ({
 
               // update motion path preview
               editor.updateMotionPaths(sequence_cloned)
+
+              toast.success('Keyframes removed')
             }}
           >
             Remove Position Keyframes
@@ -330,6 +402,8 @@ export const AnimationOptions = ({
                     let sequences = editorState.savedState.sequences
 
                     await saveSequencesData(sequences, editorState.saveTarget)
+
+                    toast.success('Animation applied')
                   }}
                 >
                   Apply Perspective Animation
@@ -384,6 +458,8 @@ export const AnimationOptions = ({
                     let sequences = editorState.savedState.sequences
 
                     await saveSequencesData(sequences, editorState.saveTarget)
+
+                    toast.success('Animation cleared')
                   }}
                 >
                   Clear Perspective

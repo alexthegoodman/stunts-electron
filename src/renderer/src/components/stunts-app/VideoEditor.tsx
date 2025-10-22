@@ -978,7 +978,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       // if (s.durationMs) {
       //   durations[s.id] = s.durationMs
       // }
-      durations[s.id] = getSequenceDuration(s).durationMs
+      durations[s.id] = getSequenceDuration(editor, s).durationMs
     })
 
     setSequenceDurations(durations)
@@ -2211,14 +2211,18 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                         .filter((s) => s.id === current_sequence_id)
                         .map((sequence) => {
                           const pixelsPerSecond = 15
+
+                          let editor = editorRef.current
+
                           if (sequence.polygonMotionPaths) {
                             return (
                               <div key={`trackSequence${sequence.id}`}>
                                 {/* Timeline tick marks */}
                                 <TimelineTicks
+                                  key={`ticks-${refreshUINow}`}
                                   trackWidth={settings?.dimensions.width || 960}
                                   pixelsPerSecond={pixelsPerSecond}
-                                  durationMs={getSequenceDuration(sequence).durationMs}
+                                  durationMs={getSequenceDuration(editor, sequence).durationMs}
                                   onSeek={(timeMs: number) => {
                                     console.info('onSeek', timeMs)
                                     let editor = editorRef.current
@@ -2276,6 +2280,24 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                     )?.name
                                   }
 
+                                  let visibleDurationMs = animation.duration
+
+                                  if (animation.objectType === ObjectType.VideoItem) {
+                                    visibleDurationMs = editor.videoItems.find(
+                                      (v) => v.id === animation.polygonId
+                                    ).sourceDurationMs
+                                  }
+
+                                  if (animation.objectType === ObjectType.Mockup3D) {
+                                    visibleDurationMs = editor.mockups3D.find(
+                                      (v) => v.id === animation.polygonId
+                                    ).videoChild.sourceDurationMs
+                                  }
+
+                                  if (animation.visibleDurationMs) {
+                                    visibleDurationMs = animation.visibleDurationMs
+                                  }
+
                                   return (
                                     <ObjectTrack
                                       key={`objectTrack${animation.id}`}
@@ -2283,6 +2305,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                       trackWidth={settings?.dimensions.width || 960}
                                       objectName={objectName}
                                       objectData={animation}
+                                      visibleDurationMs={visibleDurationMs}
                                       pixelsPerSecond={pixelsPerSecond}
                                       onSequenceDragEnd={handleObjectDragEnd}
                                       onDeleteObject={async (id: string, kind: ObjectType) => {

@@ -637,6 +637,37 @@ export function remove_position_keyframes(
   return new_motion_path
 }
 
+export function remove_zoom_keyframes(
+  editorState: EditorState,
+  savable_item_id: string,
+  object_type: ObjectType,
+  current_keyframes: AnimationData
+) {
+  let durationMs = current_keyframes.duration
+
+  let properties: AnimationProperty[] = []
+
+  let non_positions = current_keyframes.properties.filter((p) => p.propertyPath !== 'zoom')
+
+  if (non_positions) {
+    non_positions.forEach((pos) => {
+      properties.push(pos)
+    })
+  }
+
+  let new_motion_path: AnimationData = {
+    id: uuidv4().toString(),
+    objectType: object_type,
+    polygonId: savable_item_id,
+    duration: durationMs,
+    startTimeMs: current_keyframes.startTimeMs,
+    position: current_keyframes.position,
+    properties: properties
+  }
+
+  return new_motion_path
+}
+
 export function save_perspective_x_keyframes(
   editorState: EditorState,
   savable_item_id: string,

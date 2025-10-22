@@ -10,6 +10,7 @@ import { SavedMockup3DConfig } from './mockup3d'
 import { SavedModel3DConfig } from './model3d'
 import { ShaderThemeConfig } from './shader_themes'
 import { CameraAnimation } from './3dcamera'
+import { Editor } from './editor'
 
 export interface SavedState {
   sequences: Sequence[]
@@ -109,13 +110,32 @@ export interface Sequence {
   activeModels3D?: SavedModel3DConfig[]
 }
 
-export const getSequenceDuration = (sequence: Sequence) => {
+export const getSequenceDuration = (editor: Editor, sequence: Sequence) => {
   let totalMs = 0
 
   // Check polygon motion paths
   if (sequence.polygonMotionPaths && sequence.polygonMotionPaths.length > 0) {
     const maxPolygonEnd = Math.max(
-      ...sequence.polygonMotionPaths.map((path) => path.startTimeMs + path.duration)
+      ...sequence.polygonMotionPaths.map((path) => {
+        let visibleDurationMs = path.duration
+
+        if (path.objectType === ObjectType.VideoItem) {
+          visibleDurationMs = editor.videoItems.find(
+            (v) => v.id === path.polygonId
+          ).sourceDurationMs
+        }
+
+        if (path.objectType === ObjectType.Mockup3D) {
+          visibleDurationMs = editor.mockups3D.find((v) => v.id === path.polygonId).videoChild
+            .sourceDurationMs
+        }
+
+        if (path.visibleDurationMs) {
+          visibleDurationMs = path.visibleDurationMs
+        }
+
+        return path.startTimeMs + visibleDurationMs
+      })
     )
     totalMs = Math.max(totalMs, maxPolygonEnd)
   }
@@ -123,13 +143,17 @@ export const getSequenceDuration = (sequence: Sequence) => {
   return { durationMs: totalMs, startTimeMs: 0 }
 }
 
-export const getSequencesDuration = (sequences: Sequence[], current_sequence: Sequence) => {
+export const getSequencesDuration = (
+  editor: Editor,
+  sequences: Sequence[],
+  current_sequence: Sequence
+) => {
   // If no motion paths, return zeros
   if (!current_sequence.polygonMotionPaths || current_sequence.polygonMotionPaths.length === 0) {
     return { startTimeMs: 0, durationMs: 0 }
   }
 
-  const { durationMs } = getSequenceDuration(current_sequence)
+  const { durationMs } = getSequenceDuration(editor, current_sequence)
 
   let startTimeMs = 0
   for (let seq of sequences) {
@@ -137,7 +161,7 @@ export const getSequencesDuration = (sequences: Sequence[], current_sequence: Se
       break
     }
 
-    startTimeMs += getSequenceDuration(seq).durationMs
+    startTimeMs += getSequenceDuration(editor, seq).durationMs
   }
 
   return {
@@ -152,6 +176,7 @@ export interface AnimationData {
   polygonId: string
   duration: number // Duration in milliseconds
   startTimeMs: number
+  visibleDurationMs?: number
   properties: AnimationProperty[]
   position: [number, number]
 }
