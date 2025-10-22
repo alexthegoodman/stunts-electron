@@ -1,9 +1,9 @@
 import { mat4, vec2, vec3 } from 'gl-matrix'
 import { StImage } from './image'
-import { Polygon } from './polygon'
+import { Polygon, setupGradientBuffers } from './polygon'
 import { TextRenderer } from './text'
 import { createEmptyGroupTransform, Transform } from './transform'
-import { Vertex } from './vertex'
+import { fromNDC, toNDC, Vertex } from './vertex'
 import { v4 as uuidv4 } from 'uuid'
 import { WindowSize } from './camera'
 import {
@@ -140,6 +140,7 @@ export class RepeatObject {
 
   private createBindGroup(
     device: PolyfillDevice,
+    queue: PolyfillQueue,
     bindGroupLayout: PolyfillBindGroupLayout,
     instance: RepeatInstance
   ): PolyfillBuffer {
@@ -167,13 +168,63 @@ export class RepeatObject {
     //   mipmapFilter: "linear",
     // });
 
+    // instance.bindGroup = device.createBindGroup({
+    //   layout: bindGroupLayout,
+    //   entries: [
+    //     { binding: 0, groupIndex: 3, resource: { pbuffer: uniformBuffer } }
+    //     // { binding: 1, resource: this.sourceObject.textureView },
+    //     // { binding: 2, resource: sampler },
+    //   ]
+    // })
+
+    const textureSize = { width: 1, height: 1, depthOrArrayLayers: 1 }
+    const texture = device.createTexture({
+      label: 'Default White Texture',
+      size: textureSize,
+      // mipLevelCount: 1,
+      // sampleCount: 1,
+      // dimension: "2d",
+      format: 'rgba8unorm',
+      usage:
+        process.env.NODE_ENV === 'test'
+          ? 0
+          : GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+    })
+    const whitePixel = new Uint8Array([255, 255, 255, 255])
+    queue.writeTexture(
+      {
+        texture,
+        mipLevel: 0,
+        origin: { x: 0, y: 0, z: 0 } //aspect: "all"
+      },
+      whitePixel,
+      { offset: 0, bytesPerRow: 4, rowsPerImage: undefined },
+      textureSize
+    )
+    let [gradient, gradientBuffer] = setupGradientBuffers(device, queue, null, undefined, null)
+
     instance.bindGroup = device.createBindGroup({
       layout: bindGroupLayout,
       entries: [
-        { binding: 0, groupIndex: 3, resource: { pbuffer: uniformBuffer } }
-        // { binding: 1, resource: this.sourceObject.textureView },
+        {
+          binding: 0,
+          groupIndex: 1,
+          resource: {
+            pbuffer: uniformBuffer
+          }
+        },
+        // { binding: 1, resource: this.textureView },
+        { binding: 1, groupIndex: 1, resource: texture },
         // { binding: 2, resource: sampler },
+        {
+          binding: 0,
+          groupIndex: 2,
+          resource: {
+            pbuffer: gradientBuffer
+          }
+        }
       ]
+      // label: "Image Bind Group",
     })
 
     uniformBuffer.unmap()
@@ -191,13 +242,32 @@ export class RepeatObject {
     for (let i = 0; i < this.pattern.count; i++) {
       let instance = new RepeatInstance()
 
-      let uniformBuffer = this.createBindGroup(device, bindGroupLayout, instance)
+      let uniformBuffer = this.createBindGroup(device, queue, bindGroupLayout, instance)
+
+      let worldTransform = fromNDC(
+        baseTransform.position[0],
+        baseTransform.position[1],
+        windowSize.width,
+        windowSize.height
+      )
+
+      worldTransform.x = worldTransform.x + i * this.pattern.spacing
+
+      let systemTransform = toNDC(
+        worldTransform.x,
+        worldTransform.y,
+        windowSize.width,
+        windowSize.height
+      )
 
       let position = vec3.fromValues(
-        baseTransform.position[0] + i * this.pattern.spacing,
-        baseTransform.position[1],
+        systemTransform.x,
+        systemTransform.y,
         baseTransform.position[2]
       )
+
+      console.info('repeat post ', this.pattern, position)
+
       let rotation = baseTransform.rotation + (this.pattern.rotation || 0) * i
       let scale = vec2.scale(
         vec2.create(),
@@ -227,13 +297,36 @@ export class RepeatObject {
     for (let i = 0; i < this.pattern.count; i++) {
       let instance = new RepeatInstance()
 
-      let uniformBuffer = this.createBindGroup(device, bindGroupLayout, instance)
+      let uniformBuffer = this.createBindGroup(device, queue, bindGroupLayout, instance)
+
+      // let position = vec3.fromValues(
+      //   baseTransform.position[0],
+      //   baseTransform.position[1] + i * this.pattern.spacing,
+      //   baseTransform.position[2]
+      // )
+
+      let worldTransform = fromNDC(
+        baseTransform.position[0],
+        baseTransform.position[1],
+        windowSize.width,
+        windowSize.height
+      )
+
+      worldTransform.y = worldTransform.y + i * this.pattern.spacing
+
+      let systemTransform = toNDC(
+        worldTransform.x,
+        worldTransform.y,
+        windowSize.width,
+        windowSize.height
+      )
 
       let position = vec3.fromValues(
-        baseTransform.position[0],
-        baseTransform.position[1] + i * this.pattern.spacing,
+        systemTransform.x,
+        systemTransform.y,
         baseTransform.position[2]
       )
+
       let rotation = baseTransform.rotation + (this.pattern.rotation || 0) * i
       let scale = vec2.scale(
         vec2.create(),
@@ -266,15 +359,39 @@ export class RepeatObject {
     for (let i = 0; i < this.pattern.count; i++) {
       let instance = new RepeatInstance()
 
-      let uniformBuffer = this.createBindGroup(device, bindGroupLayout, instance)
+      let uniformBuffer = this.createBindGroup(device, queue, bindGroupLayout, instance)
 
       const angle = i * angleStep
 
+      // let position = vec3.fromValues(
+      //   baseTransform.position[0] + radius * Math.cos(angle),
+      //   baseTransform.position[1] + radius * Math.sin(angle),
+      //   baseTransform.position[2]
+      // )
+
+      let worldTransform = fromNDC(
+        baseTransform.position[0],
+        baseTransform.position[1],
+        windowSize.width,
+        windowSize.height
+      )
+
+      worldTransform.x = worldTransform.x + radius * Math.cos(angle)
+      worldTransform.y = worldTransform.y + radius * Math.sin(angle)
+
+      let systemTransform = toNDC(
+        worldTransform.x,
+        worldTransform.y,
+        windowSize.width,
+        windowSize.height
+      )
+
       let position = vec3.fromValues(
-        baseTransform.position[0] + radius * Math.cos(angle),
-        baseTransform.position[1] + radius * Math.sin(angle),
+        systemTransform.x,
+        systemTransform.y,
         baseTransform.position[2]
       )
+
       let rotation = baseTransform.rotation + angle + (this.pattern.rotation || 0)
       let scale = vec2.scale(
         vec2.create(),
@@ -308,13 +425,37 @@ export class RepeatObject {
       for (let x = 0; x < gridSize && instanceCount < this.pattern.count; x++) {
         let instance = new RepeatInstance()
 
-        let uniformBuffer = this.createBindGroup(device, bindGroupLayout, instance)
+        let uniformBuffer = this.createBindGroup(device, queue, bindGroupLayout, instance)
+
+        // let position = vec3.fromValues(
+        //   baseTransform.position[0] + x * this.pattern.spacing,
+        //   baseTransform.position[1] + y * this.pattern.spacing,
+        //   baseTransform.position[2]
+        // )
+
+        let worldTransform = fromNDC(
+          baseTransform.position[0],
+          baseTransform.position[1],
+          windowSize.width,
+          windowSize.height
+        )
+
+        worldTransform.x = worldTransform.x + x * this.pattern.spacing
+        worldTransform.y = worldTransform.y + y * this.pattern.spacing
+
+        let systemTransform = toNDC(
+          worldTransform.x,
+          worldTransform.y,
+          windowSize.width,
+          windowSize.height
+        )
 
         let position = vec3.fromValues(
-          baseTransform.position[0] + x * this.pattern.spacing,
-          baseTransform.position[1] + y * this.pattern.spacing,
+          systemTransform.x,
+          systemTransform.y,
           baseTransform.position[2]
         )
+
         let rotation = baseTransform.rotation + (this.pattern.rotation || 0) * instanceCount
         let scale = vec2.scale(
           vec2.create(),

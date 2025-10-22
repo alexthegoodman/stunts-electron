@@ -22,6 +22,15 @@ import {
 import { CreateIcon } from '../icon'
 import { RepeatPattern } from '@renderer/engine/repeater'
 
+let defaultRepeatPattern: RepeatPattern = {
+  count: 5,
+  spacing: 20,
+  direction: 'horizontal',
+  rotation: 0,
+  scale: 1,
+  fadeOut: false
+}
+
 export const RepeatProperties = ({
   editorRef,
   editorStateRef,
@@ -36,11 +45,11 @@ export const RepeatProperties = ({
   objectType: ObjectType
 }) => {
   const [defaultsSet, setDefaultsSet] = useState(false)
-  const [defaultCount, setDefaultCount] = useState(0)
-  const [defaultDirection, setDefaultDirection] = useState('horizontal')
-  const [defaultSpacing, setDefaultSpacing] = useState(0)
-  const [defaultScale, setDefaultScale] = useState(1)
-  const [defaultRotation, setDefaultRotation] = useState(0)
+  const [defaultCount, setDefaultCount] = useState(defaultRepeatPattern.count)
+  const [defaultDirection, setDefaultDirection] = useState(defaultRepeatPattern.direction)
+  const [defaultSpacing, setDefaultSpacing] = useState(defaultRepeatPattern.spacing)
+  const [defaultScale, setDefaultScale] = useState(defaultRepeatPattern.scale * 100)
+  const [defaultRotation, setDefaultRotation] = useState(defaultRepeatPattern.rotation)
   const [is_repeat, set_is_repeat] = useState(false)
 
   useEffect(() => {
@@ -50,29 +59,29 @@ export const RepeatProperties = ({
       return
     }
 
-    let currentObject = editor.repeatManager.getRepeatObject(currentObjectId)
+    // let currentObject = editor.repeatManager.getRepeatObject(currentObjectId)
 
-    if (!currentObject) {
-      set_is_repeat(false)
-      setDefaultsSet(true)
-      return
-    }
+    // if (!currentObject) {
+    //   set_is_repeat(false)
+    //   setDefaultsSet(true)
+    //   return
+    // }
 
-    let currentPattern = currentObject?.pattern
+    // let currentPattern = currentObject?.pattern
 
-    setDefaultCount(currentPattern.count)
-    setDefaultDirection(currentPattern.direction)
-    setDefaultSpacing(currentPattern.spacing)
+    // setDefaultCount(currentPattern.count)
+    // setDefaultDirection(currentPattern.direction)
+    // setDefaultSpacing(currentPattern.spacing)
 
-    if (currentPattern.scale) {
-      setDefaultScale(currentPattern.scale)
-    }
+    // if (currentPattern.scale) {
+    //   setDefaultScale(currentPattern.scale)
+    // }
 
-    if (currentPattern.rotation) {
-      setDefaultRotation(currentPattern.rotation)
-    }
+    // if (currentPattern.rotation) {
+    //   setDefaultRotation(currentPattern.rotation)
+    // }
 
-    set_is_repeat(true)
+    // set_is_repeat(true)
     setDefaultsSet(true)
   }, [currentObjectId])
 
@@ -142,15 +151,6 @@ export const RepeatProperties = ({
 
           set_is_repeat(ev.target.checked)
 
-          let defaultRepeatPattern: RepeatPattern = {
-            count: 5,
-            spacing: 50,
-            direction: 'horizontal',
-            rotation: 0,
-            scale: 1,
-            fadeOut: false
-          }
-
           editor.repeatManager.createRepeatObject(
             gpuResources?.device!,
             gpuResources?.queue!,
@@ -193,6 +193,8 @@ export const RepeatProperties = ({
                 direction: ev.target.value as 'horizontal' | 'vertical' | 'circular' | 'grid'
               }
 
+              setDefaultDirection(ev.target.value as any)
+
               set_prop(partialPattern)
             }}
           >
@@ -209,7 +211,7 @@ export const RepeatProperties = ({
             initialValue={defaultSpacing.toString()}
             onDebounce={(value) => {
               let partialPattern: Partial<RepeatPattern> = {
-                spacing: parseInt(value)
+                spacing: parseFloat(value)
               }
 
               set_prop(partialPattern)
