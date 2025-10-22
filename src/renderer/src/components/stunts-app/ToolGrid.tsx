@@ -1780,6 +1780,33 @@ export const ToolGrid = ({
             </>
           )}
         </div>
+        <span className="block mb-2 text-white text-xs">Repeat FX</span>
+        <div className="flex flex-row flex-wrap gap-2 mb-4">
+          <OptionButton
+            style={{}}
+            label={t('Matrix Polygons')}
+            icon="cube"
+            aria-label="Create Matrix-style animated Polygons"
+            callback={() => {
+              if (!currentSequenceId) {
+                return
+              }
+              // on_add_model3d(currentSequenceId)
+            }}
+          />
+          <OptionButton
+            style={{}}
+            label={t('Floating Speheres')}
+            icon="sphere"
+            aria-label="Create animated floating spheres"
+            callback={() => {
+              if (!currentSequenceId) {
+                return
+              }
+              // on_add_model3d(currentSequenceId)
+            }}
+          />
+        </div>
       </div>
 
       <SourceSelectionModal
