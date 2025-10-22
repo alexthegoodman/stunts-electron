@@ -156,6 +156,7 @@ export const RepeatProperties = ({
             gpuResources?.queue!,
             camera.windowSize,
             editor.modelBindGroupLayout,
+            editor.groupBindGroupLayout,
             sourceObject,
             defaultRepeatPattern
           )

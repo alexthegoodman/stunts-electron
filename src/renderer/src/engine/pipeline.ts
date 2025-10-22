@@ -1337,8 +1337,8 @@ export class CanvasPipeline {
             // this.bindWebGLBindGroup(gl, instance.bindGroup!, 1);
             // this.bindWebGLBindGroup(gl, sourceObject.groupBindGroup, 3);
 
-            //             repeatObject.bindGroup.bindWebGLBindGroup(gl);
-            // repeatObject.groupBindGroup?.bindWebGLBindGroup(gl);
+            instance.bindGroup.bindWebGLBindGroup(gl)
+            repeatObject.groupBindGroup?.bindWebGLBindGroup(gl)
 
             drawIndexedGeometry(
               repeatObject.vertexBuffer as PolyfillBuffer,

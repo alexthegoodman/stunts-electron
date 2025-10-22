@@ -2,7 +2,7 @@ import { mat4, vec2, vec3 } from 'gl-matrix'
 import { StImage } from './image'
 import { Polygon } from './polygon'
 import { TextRenderer } from './text'
-import { Transform } from './transform'
+import { createEmptyGroupTransform, Transform } from './transform'
 import { Vertex } from './vertex'
 import { v4 as uuidv4 } from 'uuid'
 import { WindowSize } from './camera'
@@ -42,12 +42,14 @@ export class RepeatObject {
   layer: number
   vertices: Vertex[] = []
   indices: number[] = []
+  groupBindGroup: PolyfillBindGroup
 
   constructor(
     device: PolyfillDevice,
     queue: PolyfillQueue,
     windowSize: WindowSize,
     bindGroupLayout: PolyfillBindGroupLayout,
+    groupBindGroupLayout: PolyfillBindGroupLayout,
     sourceObject: RepeatableObject,
     pattern: RepeatPattern
   ) {
@@ -101,6 +103,14 @@ export class RepeatObject {
 
     // Copy the bind group from the source object
     // this.bindGroup = sourceObject.bindGroup; // not workable, need our own uniform per instance
+
+    let [group_bind_group, group_transform] = createEmptyGroupTransform(
+      device,
+      groupBindGroupLayout,
+      windowSize
+    )
+
+    this.groupBindGroup = group_bind_group
   }
 
   private generateInstances(
@@ -351,6 +361,7 @@ export class RepeatManager {
     queue: PolyfillQueue,
     windowSize: WindowSize,
     bindGroupLayout: PolyfillBindGroupLayout,
+    groupBindGroupLayout: PolyfillBindGroupLayout,
     sourceObject: RepeatableObject,
     pattern: RepeatPattern
   ): RepeatObject {
@@ -359,6 +370,7 @@ export class RepeatManager {
       queue,
       windowSize,
       bindGroupLayout,
+      groupBindGroupLayout,
       sourceObject,
       pattern
     )
