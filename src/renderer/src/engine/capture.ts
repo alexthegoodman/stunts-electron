@@ -27,7 +27,7 @@ export class WebCapture {
       // Use Electron's desktopCapturer via the exposed API
       // The sourceId should be obtained from the SourceSelectionModal
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
+        audio: true, // make configurable
         video: {
           // @ts-ignore - Electron-specific constraint
           mandatory: {

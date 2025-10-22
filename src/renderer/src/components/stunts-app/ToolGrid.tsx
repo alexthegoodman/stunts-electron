@@ -1415,9 +1415,8 @@ export const ToolGrid = ({
 
           {options.includes('capture') && (
             <OptionButton
-              style={{
-                backgroundColor: isCapturing ? 'transparent' : 'red'
-              }}
+              redHot={isCapturing}
+              style={{}}
               label={isCapturing ? 'Stop Capture' : 'Screen Capture'}
               icon={isCapturing ? 'pause' : 'video'}
               aria-label={isCapturing ? 'Stop screen recording' : 'Start screen recording'}

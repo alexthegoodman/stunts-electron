@@ -246,6 +246,7 @@ export const MiniSquareButton = ({ label, icon, onClick }) => {
 
 interface OptionButtonProps {
   style: any
+  redHot?: boolean
   label: string
   icon: string
   callback: () => void
@@ -254,6 +255,7 @@ interface OptionButtonProps {
 
 export const OptionButton: React.FC<OptionButtonProps> = ({
   style,
+  redHot,
   label,
   icon,
   callback,
@@ -266,9 +268,9 @@ export const OptionButton: React.FC<OptionButtonProps> = ({
 
   return (
     <button
-      className="w-[60px] h-[60px] flex flex-col justify-center items-center border border-gray-400 rounded-[15px]
+      className={`w-[60px] h-[60px] flex flex-col justify-center items-center border border-gray-400 rounded-[15px]
         transition-colors duration-200 ease-in-out hover:cursor-pointer 
-        focus-visible:border-2 focus-visible:border-blue-500"
+        focus-visible:border-2 focus-visible:border-blue-500 ${redHot ? 'bg-red-500' : ''}`}
       style={style} // Apply the style string
       onClick={handleClick}
       aria-label={ariaLabel || label}
