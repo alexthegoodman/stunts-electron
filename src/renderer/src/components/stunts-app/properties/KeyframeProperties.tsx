@@ -97,6 +97,7 @@ export const AnimationOptions = ({
   const [perspectiveFadeIn, setPerspectiveFadeIn] = useState<boolean>(true)
   const [perspectiveFadeOut, setPerspectiveFadeOut] = useState<boolean>(true)
   const [perspectiveAnimateTo, setPerspectiveAnimateTo] = useState<boolean>(false)
+  const [perspectiveDuration, setPerspectiveDuration] = useState<number>(5000)
 
   // Spin animation state
   const [spinAxisX, setSpinAxisX] = useState<boolean>(false)
@@ -260,6 +261,18 @@ export const AnimationOptions = ({
                 </label>
               </div>
 
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-600">Duration:</label>
+                <input
+                  type="number"
+                  value={perspectiveDuration}
+                  onChange={(e) => setPerspectiveDuration(Number(e.target.value))}
+                  className="text-xs border rounded px-2 py-1"
+                  min="0"
+                  max="90"
+                />
+              </div>
+
               <div className="flex flex-row gap-2">
                 <button
                   className="text-xs rounded-md text-white stunts-gradient px-2 py-1 flex-1"
@@ -298,7 +311,8 @@ export const AnimationOptions = ({
                         degrees: perspectiveDegrees,
                         fadeIn: perspectiveFadeIn,
                         fadeOut: perspectiveFadeOut,
-                        animateTo: perspectiveAnimateTo
+                        animateTo: perspectiveAnimateTo,
+                        duration: perspectiveDuration
                       }
                     )
 

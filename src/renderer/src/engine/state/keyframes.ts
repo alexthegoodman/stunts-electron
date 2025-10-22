@@ -1157,9 +1157,10 @@ export function save_configurable_perspective_keyframes(
     fadeIn: boolean
     fadeOut: boolean
     animateTo: boolean // true = animate TO perspective, false = animate FROM perspective
+    duration?: number
   }
 ) {
-  let durationMs = current_keyframes.duration
+  let durationMs = options.duration ? options.duration : current_keyframes.duration
 
   let properties: AnimationProperty[] = []
 
