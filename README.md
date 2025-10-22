@@ -1,6 +1,6 @@
 # Stunts Cross-Platform
 
-![Stunts 10/07/25](resources/screenshot1.png 'Stunts 10/07/25')
+![Stunts 10/22/25](resources/screenshot2.png 'Stunts 10/22/25')
 
 **The motion graphics editor of the future!** A bold claim based on high-quality zooms, generative keyframes, perspective, and 3D mockups, as well as a powerful, custom-built 3D engine built on-top of both WebGPU and WebGL.
 
