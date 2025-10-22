@@ -782,7 +782,7 @@ export class StVideo {
       throw new Error('Video not initialized or sink/decoder not available')
     }
 
-    console.info('decodeNextFrame', this.frameBuffer.length, this.maxBufferSize, decodeFromKeyTimeS)
+    // console.info('decodeNextFrame', this.frameBuffer.length, this.maxBufferSize, decodeFromKeyTimeS)
 
     // 💡 Early exit if the buffer is already full (stops unnecessary decode calls)
     if (this.frameBuffer.length >= this.maxBufferSize) {

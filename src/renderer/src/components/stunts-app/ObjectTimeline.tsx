@@ -22,6 +22,7 @@ interface TrackProps {
   visibleDurationMs: number
   onSequenceDragEnd: (animation: AnimationData, newStartTimeMs: number) => void
   onSelectObject: (objectType: ObjectType, objectId: string) => void
+  onDuplicateObject: (id: string, kind: ObjectType) => void
   onDeleteObject: (id: string, kind: ObjectType) => void
 }
 
@@ -33,6 +34,7 @@ interface SequenceProps {
   localLeft: number
   localWidth: number
   onSelectObject: (objectType: ObjectType, objectId: string) => void
+  onDuplicateObject: (id: string, kind: ObjectType) => void
   onDeleteObject: (id: string, kind: ObjectType) => void
 }
 
@@ -45,6 +47,7 @@ const DraggableSequence: React.FC<SequenceProps> = ({
   localLeft,
   localWidth,
   onSelectObject,
+  onDuplicateObject,
   onDeleteObject
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -76,7 +79,15 @@ const DraggableSequence: React.FC<SequenceProps> = ({
           {/* <CreateIcon icon="folder-open" size="18px" /> */}
         </div>
         <div
-          className="bg-red-500 hover:bg-gray-600 pb-1 px-2 rounded pt-1"
+          className="bg-slate-800 hover:bg-gray-600 pb-1 px-2 rounded pt-[6px]"
+          onClick={() => {
+            onDuplicateObject(animation.polygonId, animation.objectType)
+          }}
+        >
+          <CreateIcon icon="copy" size="18px" />
+        </div>
+        <div
+          className="bg-red-500 hover:bg-gray-600 pb-1 px-2 rounded pt-[6px]"
           onClick={() => {
             onDeleteObject(animation.polygonId, animation.objectType)
           }}
@@ -99,6 +110,7 @@ export const ObjectTrack: React.FC<TrackProps> = ({
   visibleDurationMs = 0,
   onSequenceDragEnd,
   onSelectObject,
+  onDuplicateObject,
   onDeleteObject
 }) => {
   const pixelsPerMs = pixelsPerSecond / 1000
@@ -164,6 +176,7 @@ export const ObjectTrack: React.FC<TrackProps> = ({
               localLeft={localLeft}
               localWidth={localWidth}
               onSelectObject={onSelectObject}
+              onDuplicateObject={onDuplicateObject}
               onDeleteObject={onDeleteObject}
             />
           )}

@@ -36,6 +36,7 @@ import { useLocalStorage } from '@uidotdev/usehooks'
 import {
   AuthToken,
   getSingleProject,
+  getUploadedImageData,
   saveImage,
   saveSequencesData,
   saveSettingsData,
@@ -2308,6 +2309,229 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                       visibleDurationMs={visibleDurationMs}
                                       pixelsPerSecond={pixelsPerSecond}
                                       onSequenceDragEnd={handleObjectDragEnd}
+                                      onDuplicateObject={async (id: string, kind: ObjectType) => {
+                                        let editor = editorRef.current
+                                        let editorState = editorStateRef.current
+
+                                        if (!editor || !editorState) {
+                                          return
+                                        }
+
+                                        let sequence = editorState.savedState.sequences.find(
+                                          (s) => s.id === current_sequence_id
+                                        )
+
+                                        if (!sequence) {
+                                          return
+                                        }
+
+                                        switch (kind) {
+                                          case ObjectType.Polygon:
+                                            let newId1 = uuidv4()
+                                            let activePolygon = editor.polygons
+                                              .find((p) => p.id === id)
+                                              .toConfig(editor.camera.windowSize)
+
+                                            activePolygon.id = newId1
+
+                                            editor.add_polygon(
+                                              activePolygon,
+                                              'Duplicated Polygon',
+                                              newId1,
+                                              current_sequence_id
+                                            )
+
+                                            await editorState.add_saved_polygon(
+                                              current_sequence_id,
+                                              activePolygon
+                                            )
+
+                                            break
+                                          case ObjectType.ImageItem:
+                                            let newId2 = uuidv4()
+                                            let activeImage = editor.imageItems
+                                              .find((p) => p.id === id)
+                                              .toConfig(editor.camera.windowSize)
+
+                                            activeImage.id = newId2
+
+                                            let blob = await getUploadedImageData(activeImage.url)
+
+                                            editor.add_image_item(
+                                              activeImage,
+                                              activeImage.url,
+                                              blob,
+                                              newId2,
+                                              current_sequence_id
+                                            )
+
+                                            await editorState.add_saved_image_item(
+                                              current_sequence_id,
+                                              activeImage
+                                            )
+
+                                            break
+
+                                          case ObjectType.TextItem:
+                                            let newId3 = uuidv4()
+                                            let activeText = editor.textItems
+                                              .find((p) => p.id === id)
+                                              .toConfig(editor.camera.windowSize)
+
+                                            activeText.id = newId3
+
+                                            editor.add_text_item(
+                                              activeText,
+                                              'Duplicated Polygon',
+                                              newId3,
+                                              current_sequence_id
+                                            )
+
+                                            await editorState.add_saved_text_item(
+                                              current_sequence_id,
+                                              activeText
+                                            )
+
+                                            break
+
+                                          case ObjectType.VideoItem:
+                                            let newId4 = uuidv4()
+                                            let video = editor.videoItems.find((p) => p.id === id)
+                                            let activeVideo = editor.videoItems
+                                              .find((p) => p.id === id)
+                                              .toConfig(editor.camera.windowSize)
+
+                                            activeVideo.id = newId4
+
+                                            editor.add_video_item(
+                                              activeVideo,
+                                              'Duplicated Polygon',
+                                              newId4,
+                                              current_sequence_id,
+                                              [],
+                                              null
+                                            )
+
+                                            await editorState.add_saved_video_item(
+                                              current_sequence_id,
+                                              activeVideo,
+                                              video.sourceDurationMs
+                                            )
+
+                                            break
+
+                                          case ObjectType.Cube3D:
+                                            let newId5 = uuidv4()
+                                            let activeCube = editor.cubes3D
+                                              .find((p) => p.id === id)
+                                              .toConfig()
+
+                                            activeCube.id = newId5
+
+                                            editor.add_cube3d(
+                                              activeCube,
+                                              newId5,
+                                              current_sequence_id
+                                            )
+
+                                            await editorState.add_saved_cube3d(
+                                              current_sequence_id,
+                                              activeCube
+                                            )
+
+                                            break
+
+                                          case ObjectType.Sphere3D:
+                                            let newId6 = uuidv4()
+                                            let activeSphere = editor.spheres3D
+                                              .find((p) => p.id === id)
+                                              .toConfig()
+
+                                            activeSphere.id = newId6
+
+                                            editor.add_sphere3d(
+                                              activeSphere,
+                                              newId6,
+                                              current_sequence_id
+                                            )
+
+                                            await editorState.add_saved_sphere3d(
+                                              current_sequence_id,
+                                              activeSphere
+                                            )
+
+                                            break
+
+                                          case ObjectType.Mockup3D:
+                                            let newId7 = uuidv4()
+                                            let activeMockup = editor.mockups3D
+                                              .find((p) => p.id === id)
+                                              .toConfig()
+
+                                            activeMockup.id = newId7
+
+                                            editor.add_mockup3d(
+                                              activeMockup,
+                                              newId7,
+                                              current_sequence_id
+                                            )
+
+                                            await editorState.add_saved_mockup3d(
+                                              current_sequence_id,
+                                              activeMockup
+                                            )
+
+                                            break
+
+                                          case ObjectType.Brush:
+                                            let newId8 = uuidv4()
+                                            let activeBrush = editor.brushes
+                                              .find((p) => p.id === id)
+                                              .toSavedConfig(editor.camera.windowSize)
+
+                                            activeBrush.id = newId8
+
+                                            editor.add_brush(
+                                              activeBrush,
+                                              newId8,
+                                              current_sequence_id
+                                            )
+
+                                            await editorState.add_saved_brush(
+                                              current_sequence_id,
+                                              activeBrush
+                                            )
+
+                                            break
+
+                                          default:
+                                            break
+                                        }
+
+                                        let saved_state = editorState.savedState
+                                        let updated_sequence = saved_state.sequences.find(
+                                          (s) => s.id == current_sequence_id
+                                        )
+
+                                        let sequence_cloned = updated_sequence
+
+                                        if (!sequence_cloned) {
+                                          return
+                                        }
+
+                                        if (set_sequences) {
+                                          set_sequences(saved_state.sequences)
+                                        }
+
+                                        editor.currentSequenceData = sequence_cloned
+                                        editor.updateMotionPaths(sequence_cloned)
+
+                                        setRefreshUINow(Date.now())
+
+                                        toast.success('Duplicated!')
+
+                                        // update_layer_list()
+                                      }}
                                       onDeleteObject={async (id: string, kind: ObjectType) => {
                                         let editor = editorRef.current
                                         let editorState = editorStateRef.current
