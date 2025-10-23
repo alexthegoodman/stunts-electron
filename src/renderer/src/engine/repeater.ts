@@ -15,7 +15,8 @@ import {
 } from './polyfill'
 
 export enum RepeatAnimationType {
-  LightlyFloating = 'LightlyFloating'
+  LightlyFloating = 'LightlyFloating',
+  OrganicChimes = 'OrganicChimes'
 }
 
 // Types for repeat patterns
@@ -256,7 +257,7 @@ export class RepeatObject {
         windowSize.height
       )
 
-      worldTransform.x = worldTransform.x + i * this.pattern.spacing
+      worldTransform.x = worldTransform.x + (i + 1) * this.pattern.spacing
 
       let systemTransform = toNDC(
         worldTransform.x,
@@ -317,7 +318,7 @@ export class RepeatObject {
         windowSize.height
       )
 
-      worldTransform.y = worldTransform.y + i * this.pattern.spacing
+      worldTransform.y = worldTransform.y + (i + 1) * this.pattern.spacing
 
       let systemTransform = toNDC(
         worldTransform.x,
@@ -517,6 +518,10 @@ export class RepeatObject {
       let animationFn: AnimationStep = null
 
       switch (this.pattern.animation) {
+        case RepeatAnimationType.OrganicChimes:
+          animationFn = organicChimesEffect
+          break
+
         case RepeatAnimationType.LightlyFloating:
           animationFn = lightFloatingEffect
           break
@@ -651,6 +656,29 @@ export type AnimationStep = (
  * @returns { positionOffset: vec3 }
  */
 export const lightFloatingEffect: AnimationStep = (currentTimeMs, instanceIndex) => {
+  const loopDurationMs = 4000 // Slow, gentle cycle
+  const time = (currentTimeMs % loopDurationMs) / loopDurationMs // Normalized [0, 1]
+
+  // Seeded pseudo-random phase shift (consistent per instance)
+  const seed = instanceIndex + 1
+  const random = Math.sin(seed * 12.9898 + seed * 78.233) * 43758.5453
+  const phaseShift = (random - Math.floor(random)) * Math.PI * 2 // Random value [0, 2π]
+
+  // Simple up and down motion
+  const verticalOffset = Math.sin(time * 2 * Math.PI + phaseShift) * 0.012
+
+  return {
+    positionOffset: vec3.fromValues(0, verticalOffset, 0)
+  }
+}
+
+/**
+ * Animation Step Function: Light Floating Effect (Sine Wave)
+ * @param currentTimeMs Current time in milliseconds.
+ * @param instanceIndex Index of the repeating instance.
+ * @returns { positionOffset: vec3 }
+ */
+export const organicChimesEffect: AnimationStep = (currentTimeMs, instanceIndex) => {
   const loopDurationMs = 2500 // Slightly faster for more life
   const time = (currentTimeMs % loopDurationMs) / loopDurationMs // Normalized [0, 1]
   const phaseShift = instanceIndex * 0.3 // More stagger for variety

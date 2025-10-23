@@ -327,7 +327,8 @@ export const RepeatProperties = ({
           >
             {/* "horizontal" | "vertical" | "circular" | "grid" */}
             <option value="">Select preset</option>
-            <option value="LightlyFloating">LightlyFloating</option>
+            <option value="LightlyFloating">Lightly Floating</option>
+            <option value="OrganicChimes">Organic Chimes</option>
           </select>
         </>
       )}
