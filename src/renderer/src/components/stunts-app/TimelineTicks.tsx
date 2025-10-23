@@ -26,7 +26,7 @@ export const TimelineTicks: React.FC<TimelineTicksProps> = ({
   // calculate based on window width and pixelsPerSecond instead for visual ticks, Math.max(x, allSeconds)
   const totalSeconds = Math.max((screenWidth - sidebarWidth) / pixelsPerSecond, allSeconds)
 
-  console.info('timeline ticks', durationMs, allSeconds, totalSeconds)
+  // console.info('timeline ticks', durationMs, allSeconds, totalSeconds)
 
   // --- Utility Functions ---
 

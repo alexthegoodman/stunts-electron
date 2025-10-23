@@ -800,9 +800,9 @@ export class TextRenderer {
     this.indices = indices
 
     // Re-initialize text animations if they exist
-    if (this.textAnimator) {
-      this.textAnimator.updateConfig({ ...this.textAnimator.getConfig() }, this)
-    }
+    // if (this.textAnimator) {
+    //   this.textAnimator.updateConfig({ ...this.textAnimator.getConfig() }, this)
+    // }
   }
 
   update(

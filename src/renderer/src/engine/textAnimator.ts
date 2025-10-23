@@ -94,6 +94,8 @@ export class TextAnimator {
   private initializeCharacters(textRenderer: TextRenderer): void {
     if (!textRenderer.vertices) return
 
+    console.warn('INITIALIZE CHARS')
+
     this.animatedCharacters = []
     const text = textRenderer.text
 
@@ -122,7 +124,11 @@ export class TextAnimator {
 
       const charVertices = textRenderer.vertices.slice(vertexIndex, vertexIndex + 4)
       if (charVertices.length === 4) {
-        const position = vec2.fromValues(charVertices[0].position[0], charVertices[0].position[1])
+        // const position = vec2.fromValues(charVertices[0].position[0], charVertices[0].position[1])
+
+        const centerX = (charVertices[0].position[0] + charVertices[2].position[0]) / 2
+        const centerY = (charVertices[0].position[1] + charVertices[2].position[1]) / 2
+        const position = vec2.fromValues(centerX, centerY)
 
         const isLastWord = lastWordIndices.has(i)
 
@@ -136,7 +142,14 @@ export class TextAnimator {
           opacity: 1.0,
           color: [...charVertices[0].color] as [number, number, number, number],
           originalColor: [...charVertices[0].color] as [number, number, number, number],
-          vertices: charVertices,
+          // vertices: charVertices,
+          vertices: textRenderer.vertices.slice(vertexIndex, vertexIndex + 4).map((v) => ({
+            position: [...v.position],
+            tex_coords: [...v.tex_coords],
+            color: [...v.color],
+            gradient_coords: [...v.gradient_coords],
+            object_type: v.object_type
+          })),
           animationProgress: 0.0,
           animationDelay: this.calculateCharacterDelay(
             charIndex,
@@ -239,22 +252,24 @@ export class TextAnimator {
       return (totalChars - numLastWordChars) * baseDelay
     }
 
-    switch (this.animationConfig.timing) {
-      case TextAnimationTiming.AllAtOnce:
-        return 0
-      case TextAnimationTiming.CharByChar:
-        return charIndex * baseDelay
-      case TextAnimationTiming.RandomOrder:
-        return Math.random() * (totalChars * baseDelay)
-      case TextAnimationTiming.FromCenter:
-        const centerIndex = Math.floor(totalChars / 2)
-        return Math.abs(charIndex - centerIndex) * baseDelay
-      case TextAnimationTiming.FromEdges:
-        const edgeDistance = Math.min(charIndex, totalChars - 1 - charIndex)
-        return (Math.floor(totalChars / 2) - edgeDistance) * baseDelay
-      default:
-        return charIndex * baseDelay
-    }
+    return 0
+
+    // switch (this.animationConfig.timing) {
+    //   case TextAnimationTiming.AllAtOnce:
+    //     return 0
+    //   case TextAnimationTiming.CharByChar:
+    //     return charIndex * baseDelay
+    //   case TextAnimationTiming.RandomOrder:
+    //     return Math.random() * (totalChars * baseDelay)
+    //   case TextAnimationTiming.FromCenter:
+    //     const centerIndex = Math.floor(totalChars / 2)
+    //     return Math.abs(charIndex - centerIndex) * baseDelay
+    //   case TextAnimationTiming.FromEdges:
+    //     const edgeDistance = Math.min(charIndex, totalChars - 1 - charIndex)
+    //     return (Math.floor(totalChars / 2) - edgeDistance) * baseDelay
+    //   default:
+    //     return charIndex * baseDelay
+    // }
   }
 
   public startAnimation(startTime: number = 0): void {
@@ -341,9 +356,10 @@ export class TextAnimator {
         ) {
           needsFontRerender = true
         }
-      } else {
-        this.resetCharacterToInitialState(char)
       }
+      // else {
+      //   this.resetCharacterToInitialState(char)
+      // }
     }
 
     // Apply character styles to TextRenderer if needed for StylePunch (only once)
@@ -406,7 +422,7 @@ export class TextAnimator {
         // Wave in and settle - amplitude decreases over time
         const waveOffset =
           Math.sin(progress * Math.PI * 2 + char.index * 0.5) * 30 * intensity * (1 - progress)
-        char.position[1] = char.originalPosition[1] + waveOffset
+        char.position[1] = char.originalPosition[1] + waveOffset * 0.001
         char.opacity = Math.min(progress * 1.5, 1.0)
         break
 
@@ -432,6 +448,8 @@ export class TextAnimator {
       case TextAnimationType.PopIn:
         const popScale = progress < 0.7 ? progress * 1.4 : 1.0 + (1 - progress) * 0.3
         char.scale = popScale
+        // console.info('progress', progress)
+        // char.scale = progress
         char.opacity = progress
         break
 
@@ -543,7 +561,7 @@ export class TextAnimator {
 
   private resetCharacters(): void {
     for (const char of this.animatedCharacters) {
-      this.resetCharacterToInitialState(char)
+      // this.resetCharacterToInitialState(char)
     }
   }
 
@@ -586,16 +604,30 @@ export class TextAnimator {
           if (char.isVisible) {
             // Apply scale to vertex position relative to character center
             const originalVertex = char.vertices[i]
-            const centerX = char.originalPosition[0]
+            const centerX = char.originalPosition[0] // originalPosition and position is local space
             const centerY = char.originalPosition[1]
 
             // Scale relative to character center
-            const scaledX = centerX + (originalVertex.position[0] - centerX) * char.scale
-            const scaledY = centerY + (originalVertex.position[1] - centerY) * char.scale
+            // const scaledX = centerX + (originalVertex.position[0] - centerX) * char.scale // TODO: this causes a lot of offset, although it does scale the size correctly
+            // const scaledY = centerY + (originalVertex.position[1] - centerY) * char.scale
+
+            // const scaledX = originalVertex.position[0] * char.scale // TODO: this causes a lot of offset, although it does scale the size correctly
+            // const scaledY = originalVertex.position[1] * char.scale
+
+            let scale = char.scale
+
+            const scaledX = centerX + (originalVertex.position[0] - centerX) * scale // TODO: this causes a lot of offset, although it does scale the size correctly
+            const scaledY = centerY + (originalVertex.position[1] - centerY) * scale
 
             // Apply position offset
+            // vertex.position[0] = scaledX + (char.position[0] - char.originalPosition[0])
+            // vertex.position[1] = scaledY + (char.position[1] - char.originalPosition[1])
+
             vertex.position[0] = scaledX + (char.position[0] - char.originalPosition[0])
             vertex.position[1] = scaledY + (char.position[1] - char.originalPosition[1])
+
+            // console.info('vertex.position', char.originalPosition, vertex.position)
+
             vertex.color = [...char.color]
           } else {
             vertex.color = [0, 0, 0, 0] // Make invisible
