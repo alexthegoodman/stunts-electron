@@ -529,6 +529,18 @@ export class Editor {
       this.polygons.push(restored_polygon)
 
       console.log('Polygon restored...')
+
+      if (p.repeatPattern) {
+        this.repeatManager.createRepeatObject(
+          this.gpuResources?.device!,
+          this.gpuResources?.queue!,
+          camera.windowSize,
+          this.modelBindGroupLayout,
+          this.groupBindGroupLayout,
+          restored_polygon,
+          p.repeatPattern
+        )
+      }
     })
 
     // saved_sequence.activeTextItems.forEach(async (t) => {
@@ -1058,53 +1070,6 @@ export class Editor {
         }
       }
     }
-
-    // restored layer spacing
-    // Update all objects with new layer spacing
-
-    // const newSpacing = layerSpacing
-    // let gpuResources = this.gpuResources
-    // // Update all object types
-    // this.textItems.forEach((textItem) => {
-    //   textItem.layerSpacing = newSpacing
-    //   textItem.updateLayer(
-    //     gpuResources.device,
-    //     gpuResources.queue,
-    //     this.camera.windowSize,
-    //     textItem.layer
-    //   )
-    // })
-    // this.imageItems.forEach((imageItem) => {
-    //   imageItem.layerSpacing = newSpacing
-    //   imageItem.updateLayer(imageItem.layer)
-    //   imageItem.transform.updateUniformBuffer(gpuResources.queue, this.camera.windowSize)
-    // })
-    // this.videoItems.forEach((videoItem) => {
-    //   videoItem.layerSpacing = newSpacing
-    //   videoItem.updateLayer(videoItem.layer)
-    //   videoItem.transform.updateUniformBuffer(gpuResources.queue, this.camera.windowSize)
-    // })
-    // this.polygons.forEach((polygon) => {
-    //   polygon.layerSpacing = newSpacing
-    //   polygon.updateLayer(polygon.layer)
-    //   polygon.transform.updateUniformBuffer(gpuResources.queue, this.camera.windowSize)
-    // })
-    // // editor.brushes.forEach((brush) => {
-    // //   brush.layerSpacing = newSpacing
-    // //   brush.updateLayer(brush.layer)
-    // // })
-    // // editor.cubes3d.forEach((cube) => {
-    // //   cube.layerSpacing = newSpacing
-    // //   cube.updateLayer(cube.layer)
-    // // })
-    // // editor.spheres3d.forEach((sphere) => {
-    // //   sphere.layerSpacing = newSpacing
-    // //   sphere.updateLayer(sphere.layer)
-    // // })
-    // // editor.mockups3d.forEach((mockup) => {
-    // //   mockup.layerSpacing = newSpacing
-    // //   mockup.updateLayer(mockup.layer)
-    // // })
   }
 
   reset_sequence_objects() {

@@ -25,6 +25,7 @@ import {
   PolyfillQueue
 } from './polyfill'
 import { checkRaySphereIntersection, Ray } from './editor/helpers'
+import { RepeatPattern } from './repeater'
 
 export const INTERNAL_LAYER_SPACE = 10
 
@@ -70,6 +71,7 @@ export interface SavedPolygonConfig {
   stroke: SavedStroke
   layer: number
   isCircle: boolean
+  repeatPattern?: RepeatPattern | null
 }
 
 export interface PolygonShape {
