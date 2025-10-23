@@ -20,7 +20,7 @@ import {
   EasingType
 } from '../../../engine/animations'
 import { CreateIcon } from '../icon'
-import { RepeatPattern } from '@renderer/engine/repeater'
+import { RepeatAnimationType, RepeatPattern } from '@renderer/engine/repeater'
 import { saveSequencesData } from '@renderer/fetchers/projects'
 
 let defaultRepeatPattern: RepeatPattern = {
@@ -51,6 +51,7 @@ export const RepeatProperties = ({
   const [defaultSpacing, setDefaultSpacing] = useState(defaultRepeatPattern.spacing)
   const [defaultScale, setDefaultScale] = useState(defaultRepeatPattern.scale * 100)
   const [defaultRotation, setDefaultRotation] = useState(defaultRepeatPattern.rotation)
+  const [defaultAnimation, setDefaultAnimation] = useState('')
   const [is_repeat, set_is_repeat] = useState(false)
 
   useEffect(() => {
@@ -300,6 +301,34 @@ export const RepeatProperties = ({
               set_prop(partialPattern)
             }}
           />
+          <label htmlFor="repeat_direction" className="text-xs">
+            Choose animation
+          </label>
+          <select
+            id="repeat_direction"
+            name="repeat_direction"
+            className="text-xs"
+            value={defaultAnimation}
+            onChange={(ev) => {
+              let value = ev.target.value
+
+              if (!value) {
+                return
+              }
+
+              let partialPattern: Partial<RepeatPattern> = {
+                animation: value as RepeatAnimationType
+              }
+
+              setDefaultAnimation(value as any)
+
+              set_prop(partialPattern)
+            }}
+          >
+            {/* "horizontal" | "vertical" | "circular" | "grid" */}
+            <option value="">Select preset</option>
+            <option value="LightlyFloating">LightlyFloating</option>
+          </select>
         </>
       )}
     </>

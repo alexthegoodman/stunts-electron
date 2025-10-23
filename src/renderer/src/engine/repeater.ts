@@ -14,6 +14,10 @@ import {
   PolyfillQueue
 } from './polyfill'
 
+export enum RepeatAnimationType {
+  LightlyFloating = 'LightlyFloating'
+}
+
 // Types for repeat patterns
 export type RepeatPattern = {
   count: number
@@ -22,6 +26,7 @@ export type RepeatPattern = {
   rotation?: number
   scale?: number
   fadeOut?: boolean
+  animation?: RepeatAnimationType | null
 }
 
 export type RepeatableObject = Polygon | TextRenderer | StImage
@@ -488,6 +493,75 @@ export class RepeatObject {
     this.pattern = { ...this.pattern, ...newPattern }
     this.generateInstances(device, queue, windowSize, bindGroupLayout)
   }
+
+  /**
+   * 3. Animate each instance based on the current time and the animation step function.
+   * @param currentTimeMs The current time in milliseconds.
+   * @param queue The PolyfillQueue for updating uniform buffers.
+   * @param windowSize The current window size.
+   */
+  animationStep(currentTimeMs: number, queue: PolyfillQueue, windowSize: WindowSize) {
+    if (!this.pattern.animation) {
+      return // No animation defined
+    }
+
+    // Normalize time to a [0, 1] range over a 3000ms loop
+    const loopDurationMs = 3000
+    const normalizedTime = (currentTimeMs % loopDurationMs) / loopDurationMs
+
+    let animatedInstances = [...this.instances, this.sourceObject]
+
+    animatedInstances.forEach((instance, index) => {
+      if (!instance.transform) return
+
+      let animationFn: AnimationStep = null
+
+      switch (this.pattern.animation) {
+        case RepeatAnimationType.LightlyFloating:
+          animationFn = lightFloatingEffect
+          break
+
+        default:
+          break
+      }
+
+      if (!animationFn) {
+        return
+      }
+
+      const animationUpdates = animationFn(currentTimeMs, index)
+      const transform = instance.transform
+
+      // Apply position offset
+      if (animationUpdates.positionOffset) {
+        vec3.add(transform.position, transform.startPosition, animationUpdates.positionOffset)
+      } else {
+        vec3.copy(transform.position, transform.startPosition) // Reset to base if no offset
+      }
+
+      let baseRotation = 0
+
+      // Apply rotation offset
+      if (animationUpdates.rotationOffset !== undefined) {
+        transform.rotation = baseRotation + animationUpdates.rotationOffset
+      } else {
+        transform.rotation = baseRotation // Reset to base if no offset
+      }
+
+      let baseScale = vec2.fromValues(1, 1)
+
+      // Apply scale offset (requires vec2 for addition/multiplication)
+      if (animationUpdates.scaleOffset) {
+        // Assuming additive scale offset here: scale = baseScale + scaleOffset
+        vec2.add(transform.scale, baseScale, animationUpdates.scaleOffset)
+      } else {
+        vec2.copy(transform.scale, baseScale) // Reset to base if no offset
+      }
+
+      // Update the uniform buffer with the new transform
+      // transform.updateUniformBuffer(queue, windowSize) // this runs in the pipeline during playback
+    })
+  }
 }
 
 export class RepeatManager {
@@ -550,5 +624,50 @@ export class RepeatManager {
 
   getAllRepeatObjects(): RepeatObject[] {
     return Array.from(this.repeatedObjects.values())
+  }
+}
+
+/**
+ * An animation step function that takes the current time in milliseconds
+ * and the instance index, and returns an object of transform updates.
+ *
+ * @param currentTimeMs The current time in milliseconds (loops every 3000ms).
+ * @param instanceIndex The index of the current instance.
+ * @returns An object containing changes to position, rotation, or scale.
+ */
+export type AnimationStep = (
+  currentTimeMs: number,
+  instanceIndex: number
+) => {
+  positionOffset?: vec3
+  rotationOffset?: number
+  scaleOffset?: vec2
+}
+
+/**
+ * Animation Step Function: Light Floating Effect (Sine Wave)
+ * @param currentTimeMs Current time in milliseconds.
+ * @param instanceIndex Index of the repeating instance.
+ * @returns { positionOffset: vec3 }
+ */
+export const lightFloatingEffect: AnimationStep = (currentTimeMs, instanceIndex) => {
+  const loopDurationMs = 2500 // Slightly faster for more life
+  const time = (currentTimeMs % loopDurationMs) / loopDurationMs // Normalized [0, 1]
+  const phaseShift = instanceIndex * 0.3 // More stagger for variety
+
+  // Primary bob (main up/down motion)
+  const primaryBob = Math.sin(time * 2 * Math.PI + phaseShift) * 0.015
+
+  // Secondary bob (adds natural irregularity)
+  const secondaryBob = Math.sin(time * 4 * Math.PI + phaseShift * 0.5) * 0.005
+
+  // Gentle sway (subtle horizontal drift)
+  const horizontalSway = Math.sin(time * 2 * Math.PI * 0.6 + phaseShift) * 0.008
+
+  const verticalOffset = primaryBob + secondaryBob
+  const horizontalOffset = horizontalSway
+
+  return {
+    positionOffset: vec3.fromValues(horizontalOffset, verticalOffset, 0)
   }
 }

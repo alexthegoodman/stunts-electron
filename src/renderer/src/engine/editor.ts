@@ -2492,6 +2492,7 @@ export class Editor {
     this.updateTextAnimations(totalDt * 1000, gpuResources.queue!)
     this.updateBrushAnimations(totalDt * 1000)
     this.updateCameraAnimation(totalDt * 1000)
+    this.updateRepeatAnimations(totalDt * 1000)
   }
 
   seekTo(timeMs: number) {
@@ -3051,6 +3052,14 @@ export class Editor {
       default:
         break
     }
+  }
+
+  updateRepeatAnimations(currentTimeMs: number) {
+    let objects = this.repeatManager.getAllRepeatObjects()
+
+    objects.forEach((o) => {
+      o.animationStep(currentTimeMs, this.gpuResources.queue, this.camera.windowSize)
+    })
   }
 
   async add_image_item(
