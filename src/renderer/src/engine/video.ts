@@ -821,7 +821,25 @@ export class StVideo {
 
     // --- Not Seeking (Normal Playback) Logic ---
     try {
-      // console.info('get packet')
+      // // console.info('get packet')
+      // if (this.currentTimestamp === 0) {
+      //   let keyPacket = await this.videoSampleSink.getKeyPacket(this.currentTimestamp)
+
+      //   if (!keyPacket) {
+      //     console.warn('no key packet?')
+      //     return
+      //   }
+
+      //   let chunk = keyPacket.toEncodedVideoChunk()
+
+      //   this.videoDecoder.decode(chunk)
+
+      //   console.warn('got key packet')
+
+      //   // Advance the time for the next requested packet
+      //   this.currentTimestamp += chunk.duration / 1000000
+      // }
+
       let packet = await this.videoSampleSink.getPacket(this.currentTimestamp)
 
       if (!packet) {
@@ -841,10 +859,12 @@ export class StVideo {
         await this.videoDecoder.flush()
       }
 
-      // Advance the time for the next requested packet
-      this.currentTimestamp += chunk.duration / 1000000
+      if (!flush) {
+        // Advance the time for the next requested packet
+        this.currentTimestamp += chunk.duration / 1000000
+      }
     } catch (error) {
-      console.error('Error during normal frame decode:', error)
+      console.error('Error during normal frame decode:', this.currentTimestamp, error)
       throw error
     }
   }
@@ -865,7 +885,7 @@ export class StVideo {
       const decodeFromKeyTime = mostRecentKeyPacket.timestamp
 
       // Update the current timestamp to the target time
-      this.currentTimestamp = timeMs / 1000
+      // this.currentTimestamp = timeMs / 1000 // this is done elsewhere
 
       // Initiate the seek decode operation
       await this.decodeNextFrame(true, timeMs ? decodeFromKeyTime : null)

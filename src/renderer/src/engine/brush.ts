@@ -418,7 +418,7 @@ export class ProceduralBrush implements BrushStrokeShape {
           const vertex = createVertex(
             corners[j].x,
             corners[j].y,
-            0.03,
+            0.53,
             [
               this.primaryColor[0] / 255,
               this.primaryColor[1] / 255,
@@ -563,7 +563,8 @@ export class ProceduralBrush implements BrushStrokeShape {
 
     this.transform = new Transform(
       // Position will be set via groupTransform
-      vec3.fromValues(ndc.x, ndc.y, 0),
+      // vec3.fromValues(ndc.x, ndc.y, 0),
+      vec3.fromValues(0, 0, 0),
       0.0,
       vec2.fromValues(1, 1),
       modelBuffer

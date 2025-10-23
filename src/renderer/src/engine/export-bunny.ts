@@ -120,7 +120,7 @@ export class BunnyExport {
     // Calculate total duration from sequences (in milliseconds)
     let totalDurationMs = 0
     cloned_sequences.forEach((s) => {
-      totalDurationMs += getSequenceDuration(s).durationMs
+      totalDurationMs += getSequenceDuration(this.editor, s).durationMs
     })
 
     let totalDurationS = totalDurationMs / 1000

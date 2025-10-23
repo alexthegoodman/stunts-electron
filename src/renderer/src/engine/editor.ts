@@ -1988,7 +1988,7 @@ export class Editor {
       }
 
       // Check if the current time is within the animation's active period
-      if (currentTimeMs < startTimeMs || currentTimeMs > startTimeMs + animation.duration) {
+      if (currentTimeMs < startTimeMs || currentTimeMs > startTimeMs + visibleDurationMs) {
         // if (isExport) {
         //   console.warn(
         //     `Skipping animation for ${animation.objectType} with ID ${animation.polygonId} at time ${currentTimeMs} (start: ${startTimeMs}, duration: ${animation.duration})`
@@ -4468,8 +4468,8 @@ export class Editor {
         1.0
       )
 
-      newBrush.transform.updatePosition([ndc.x, ndc.y], windowSize)
-      newBrush.transform.updateUniformBuffer(this.gpuResources.queue, windowSize)
+      // newBrush.transform.updatePosition([ndc.x, ndc.y], windowSize)
+      // newBrush.transform.updateUniformBuffer(this.gpuResources.queue, windowSize)
 
       this.brushes.push(newBrush)
       this.currentBrush = newBrush
