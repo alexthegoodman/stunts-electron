@@ -414,7 +414,7 @@ export class TextAnimator {
       case TextAnimationType.Bounce:
         // Bounce in from above and settle - decreasing bounce amplitude
         const bounceHeight = Math.sin(progress * Math.PI * 3) * 50 * intensity * (1 - progress)
-        char.position[1] = char.originalPosition[1] + bounceHeight
+        char.position[1] = char.originalPosition[1] + bounceHeight * 0.001
         char.opacity = Math.min(progress * 2, 1.0) // Fade in quickly
         break
 
