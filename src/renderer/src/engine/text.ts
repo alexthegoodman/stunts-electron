@@ -126,8 +126,8 @@ export class TextRenderer {
   // gradientBindGroup: PolyfillBindGroup;
 
   // Text Animation Properties
-  private textAnimator: TextAnimator | null = null
-  private animationConfig: TextAnimationConfig | null = null
+  public textAnimator: TextAnimator | null = null
+  public animationConfig: TextAnimationConfig | null = null
   public animationManager: TextAnimationManager
 
   // Style Punch character tracking

@@ -2328,14 +2328,22 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                         switch (kind) {
                                           case ObjectType.Polygon:
                                             let newId1 = uuidv4()
-                                            let activePolygon = editor.polygons
-                                              .find((p) => p.id === id)
-                                              .toConfig(editor.camera.windowSize)
+                                            let activePolygon = editor.polygons.find(
+                                              (p) => p.id === id
+                                            )
 
-                                            activePolygon.id = newId1
+                                            let polygonConfig = activePolygon.toConfig(
+                                              editor.camera.windowSize
+                                            )
+                                            let savedPolygon = activePolygon.toConfig(
+                                              editor.camera.windowSize
+                                            )
+
+                                            polygonConfig.id = newId1
+                                            savedPolygon.id = newId1
 
                                             editor.add_polygon(
-                                              activePolygon,
+                                              polygonConfig,
                                               'Duplicated Polygon',
                                               newId1,
                                               current_sequence_id
@@ -2343,22 +2351,30 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
                                             await editorState.add_saved_polygon(
                                               current_sequence_id,
-                                              activePolygon
+                                              savedPolygon
                                             )
 
                                             break
                                           case ObjectType.ImageItem:
                                             let newId2 = uuidv4()
-                                            let activeImage = editor.imageItems
-                                              .find((p) => p.id === id)
-                                              .toConfig(editor.camera.windowSize)
+                                            let activeImage = editor.imageItems.find(
+                                              (p) => p.id === id
+                                            )
 
-                                            activeImage.id = newId2
+                                            let imageConfig = activeImage.toConfig(
+                                              editor.camera.windowSize
+                                            )
+                                            let savedImage = activeImage.toConfig(
+                                              editor.camera.windowSize
+                                            )
+
+                                            imageConfig.id = newId2
+                                            savedImage.id = newId2
 
                                             let blob = await getUploadedImageData(activeImage.url)
 
                                             editor.add_image_item(
-                                              activeImage,
+                                              imageConfig,
                                               activeImage.url,
                                               blob,
                                               newId2,
@@ -2367,21 +2383,29 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
                                             await editorState.add_saved_image_item(
                                               current_sequence_id,
-                                              activeImage
+                                              savedImage
                                             )
 
                                             break
 
                                           case ObjectType.TextItem:
                                             let newId3 = uuidv4()
-                                            let activeText = editor.textItems
-                                              .find((p) => p.id === id)
-                                              .toConfig(editor.camera.windowSize)
+                                            let activeText = editor.textItems.find(
+                                              (p) => p.id === id
+                                            )
 
-                                            activeText.id = newId3
+                                            let textConfig = activeText.toConfig(
+                                              editor.camera.windowSize
+                                            )
+                                            let savedText = activeText.toSavedConfig(
+                                              editor.camera.windowSize
+                                            )
+
+                                            textConfig.id = newId3
+                                            savedText.id = newId3
 
                                             editor.add_text_item(
-                                              activeText,
+                                              textConfig,
                                               'Duplicated Polygon',
                                               newId3,
                                               current_sequence_id
@@ -2389,7 +2413,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
                                             await editorState.add_saved_text_item(
                                               current_sequence_id,
-                                              activeText
+                                              savedText
                                             )
 
                                             break
@@ -2397,14 +2421,22 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                                           case ObjectType.VideoItem:
                                             let newId4 = uuidv4()
                                             let video = editor.videoItems.find((p) => p.id === id)
-                                            let activeVideo = editor.videoItems
-                                              .find((p) => p.id === id)
-                                              .toConfig(editor.camera.windowSize)
+                                            let activeVideo = editor.videoItems.find(
+                                              (p) => p.id === id
+                                            )
 
-                                            activeVideo.id = newId4
+                                            let videoConfig = activeVideo.toConfig(
+                                              editor.camera.windowSize
+                                            )
+                                            let savedVideo = activeVideo.toConfig(
+                                              editor.camera.windowSize
+                                            )
+
+                                            videoConfig.id = newId4
+                                            savedVideo.id = newId4
 
                                             editor.add_video_item(
-                                              activeVideo,
+                                              videoConfig,
                                               'Duplicated Polygon',
                                               newId4,
                                               current_sequence_id,
@@ -2414,7 +2446,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
                                             await editorState.add_saved_video_item(
                                               current_sequence_id,
-                                              activeVideo,
+                                              savedVideo,
                                               video.sourceDurationMs
                                             )
 
@@ -2422,63 +2454,73 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
                                           case ObjectType.Cube3D:
                                             let newId5 = uuidv4()
-                                            let activeCube = editor.cubes3D
-                                              .find((p) => p.id === id)
-                                              .toConfig()
+                                            let activeCube = editor.cubes3D.find((p) => p.id === id)
 
-                                            activeCube.id = newId5
+                                            let cubeConfig = activeCube.toConfig()
+                                            let savedCube = activeCube.toSavedConfig()
+
+                                            cubeConfig.id = newId5
+                                            savedCube.id = newId5
 
                                             editor.add_cube3d(
-                                              activeCube,
+                                              cubeConfig,
                                               newId5,
                                               current_sequence_id
                                             )
 
                                             await editorState.add_saved_cube3d(
                                               current_sequence_id,
-                                              activeCube
+                                              savedCube
                                             )
 
                                             break
 
                                           case ObjectType.Sphere3D:
                                             let newId6 = uuidv4()
-                                            let activeSphere = editor.spheres3D
-                                              .find((p) => p.id === id)
-                                              .toConfig()
+                                            let activeSphere = editor.spheres3D.find(
+                                              (p) => p.id === id
+                                            )
 
-                                            activeSphere.id = newId6
+                                            let sphereConfig = activeSphere.toConfig()
+                                            let savedSphere = activeSphere.toSavedConfig()
+
+                                            sphereConfig.id = newId6
+                                            savedSphere.id = newId6
 
                                             editor.add_sphere3d(
-                                              activeSphere,
+                                              sphereConfig,
                                               newId6,
                                               current_sequence_id
                                             )
 
                                             await editorState.add_saved_sphere3d(
                                               current_sequence_id,
-                                              activeSphere
+                                              savedSphere
                                             )
 
                                             break
 
                                           case ObjectType.Mockup3D:
                                             let newId7 = uuidv4()
-                                            let activeMockup = editor.mockups3D
-                                              .find((p) => p.id === id)
-                                              .toConfig()
+                                            let activeMockup = editor.mockups3D.find(
+                                              (p) => p.id === id
+                                            )
 
-                                            activeMockup.id = newId7
+                                            let mockupConfig = activeMockup.toConfig()
+                                            let savedMockup = activeMockup.toSavedConfig()
+
+                                            mockupConfig.id = newId7
+                                            savedMockup.id = newId7
 
                                             editor.add_mockup3d(
-                                              activeMockup,
+                                              mockupConfig,
                                               newId7,
                                               current_sequence_id
                                             )
 
                                             await editorState.add_saved_mockup3d(
                                               current_sequence_id,
-                                              activeMockup
+                                              savedMockup
                                             )
 
                                             break

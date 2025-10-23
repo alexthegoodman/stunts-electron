@@ -296,6 +296,8 @@ export class TextAnimator {
     this.currentTime = currentTime
     const elapsedTime = currentTime - this.animationStartTime
 
+    if (elapsedTime < 0) return
+
     // Check if we have exit animation parameters
     const hasExitAnimation = this.animationConfig.customParams?.hasExitAnimation
     const exitAnimationDuration = this.animationConfig.customParams?.exitAnimationDuration || 0

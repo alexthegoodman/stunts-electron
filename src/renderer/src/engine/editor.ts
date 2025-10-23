@@ -1689,15 +1689,15 @@ export class Editor {
               for (const text of this.textItems) {
                 text.hidden = text.currentSequenceId !== currentSequenceId
 
-                if (!text.hidden && text.hasTextAnimation()) {
-                  const savedItem = this.currentSequenceData?.polygonMotionPaths?.find(
-                    (mp) => mp.polygonId === text.id
-                  )
+                // if (!text.hidden && text.hasTextAnimation()) {
+                //   const savedItem = this.currentSequenceData?.polygonMotionPaths?.find(
+                //     (mp) => mp.polygonId === text.id
+                //   )
 
-                  if (savedItem) {
-                    text.startTextAnimation(startTimeMs + savedItem.startTimeMs)
-                  }
-                }
+                //   if (savedItem) {
+                //     text.startTextAnimation(startTimeMs + savedItem.startTimeMs)
+                //   }
+                // }
               }
               for (const image of this.imageItems) {
                 image.hidden = image.currentSequenceId !== currentSequenceId
@@ -1710,17 +1710,17 @@ export class Editor {
             }
           } else {
             this.currentSequenceData = sequence
-            for (const text of this.textItems) {
-              if (!text.hidden && text.hasTextAnimation()) {
-                const savedItem = this.currentSequenceData?.polygonMotionPaths?.find(
-                  (mp) => mp.polygonId === text.id
-                )
+            // for (const text of this.textItems) {
+            //   if (!text.hidden && text.hasTextAnimation()) {
+            //     const savedItem = this.currentSequenceData?.polygonMotionPaths?.find(
+            //       (mp) => mp.polygonId === text.id
+            //     )
 
-                if (savedItem) {
-                  text.startTextAnimation(savedItem.startTimeMs)
-                }
-              }
-            }
+            //     if (savedItem) {
+            //       text.startTextAnimation(savedItem.startTimeMs)
+            //     }
+            //   }
+            // }
           }
         } else {
           // console.warn("no data");
@@ -2492,6 +2492,7 @@ export class Editor {
     this.updateTextAnimations(totalDt * 1000, gpuResources.queue!)
     this.updateBrushAnimations(totalDt * 1000)
     this.updateCameraAnimation(totalDt * 1000)
+
     this.updateRepeatAnimations(totalDt * 1000)
   }
 
@@ -3011,15 +3012,31 @@ export class Editor {
 
   // Update text animations for all text items
   updateTextAnimations(currentTimeMs: number, queue: PolyfillQueue): void {
-    // console.info("Editor.updateTextAnimations called with", this.textItems.length, "text items");
+    // update animators
+    for (const text of this.textItems) {
+      if (!text.hidden && text.hasTextAnimation()) {
+        const savedItem = this.currentSequenceData?.polygonMotionPaths?.find(
+          (mp) => mp.polygonId === text.id
+        )
 
-    for (const textItem of this.textItems) {
-      // console.info("Checking text item:", textItem.id, "hidden:", textItem.hidden, "hasAnimation:", textItem.hasTextAnimation());
-      if (!textItem.hidden && textItem.hasTextAnimation()) {
-        // console.info("Calling updateTextAnimation for:", textItem.id);
-        textItem.updateTextAnimation(currentTimeMs, queue, this.camera.windowSize)
+        if (savedItem) {
+          if (!text.textAnimator.isAnimationPlaying()) {
+            text.startTextAnimation(savedItem.startTimeMs)
+          }
+
+          text.updateTextAnimation(currentTimeMs, queue, this.camera.windowSize)
+        }
       }
     }
+    // console.info("Editor.updateTextAnimations called with", this.textItems.length, "text items");
+
+    // for (const textItem of this.textItems) {
+    //   // console.info("Checking text item:", textItem.id, "hidden:", textItem.hidden, "hasAnimation:", textItem.hasTextAnimation());
+    //   if (!textItem.hidden && textItem.hasTextAnimation()) {
+    //     // console.info("Calling updateTextAnimation for:", textItem.id);
+    //     textItem.updateTextAnimation(currentTimeMs, queue, this.camera.windowSize)
+    //   }
+    // }
   }
 
   // Update text animations for all brush items

@@ -338,8 +338,8 @@ vec4 daySkyShader(vec2 uv) {
     vec4 color = mix(skyColor, vec4(0.6, 0.8, 1.0, 1.0), uv.y);
 
     // Multiple cloud layers for more movement
-    vec2 cloudUv1 = uv + vec2(currentTime * cloudSpeed * 0.1, 0.0);
-    vec2 cloudUv2 = uv + vec2(currentTime * cloudSpeed * 0.15, currentTime * cloudSpeed * 0.02);
+    vec2 cloudUv1 = uv + vec2(currentTime * cloudSpeed * 0.01, 0.0);
+    vec2 cloudUv2 = uv + vec2(currentTime * cloudSpeed * 0.015, currentTime * cloudSpeed * 0.02);
 
     float clouds1 = starNoise_shader(cloudUv1 * 3.0, 0.0);
     float clouds2 = starNoise_shader(cloudUv2 * 5.0, 1.0);
