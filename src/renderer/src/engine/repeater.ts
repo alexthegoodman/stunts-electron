@@ -278,7 +278,7 @@ export class RepeatObject {
       let scale = vec2.scale(
         vec2.create(),
         baseTransform.scale,
-        this.pattern.scale ? Math.pow(this.pattern.scale, i) : 1
+        this.pattern.scale ? Math.pow(this.pattern.scale, i + 1) : 1
       )
 
       const transform = new Transform(position, rotation, scale, uniformBuffer)
@@ -544,7 +544,7 @@ export class RepeatObject {
         vec3.copy(transform.position, transform.startPosition) // Reset to base if no offset
       }
 
-      let baseRotation = 0
+      let baseRotation = instance.transform.rotation
 
       // Apply rotation offset
       if (animationUpdates.rotationOffset !== undefined) {
@@ -553,7 +553,7 @@ export class RepeatObject {
         transform.rotation = baseRotation // Reset to base if no offset
       }
 
-      let baseScale = vec2.fromValues(1, 1)
+      let baseScale = instance.transform.scale
 
       // Apply scale offset (requires vec2 for addition/multiplication)
       if (animationUpdates.scaleOffset) {
