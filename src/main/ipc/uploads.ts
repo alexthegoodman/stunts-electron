@@ -159,7 +159,9 @@ export function registerUploadHandlers(): void {
         await ensureUploadsDir()
 
         // Read file to validate
-        const buffer = await fs.readFile(data.filePath)
+        const uploadsDir = getUploadsDir()
+        const readPath = path.join(uploadsDir, 'videos', data.filePath)
+        const buffer = await fs.readFile(readPath)
 
         // Validate file size (100MB limit)
         const MAX_SIZE = 100 * 1024 * 1024
@@ -180,9 +182,8 @@ export function registerUploadHandlers(): void {
         const uniqueFileName = `${timestamp}-${sanitizedName}.mp4`
 
         // Save to uploads directory
-        const uploadsDir = getUploadsDir()
         const savePath = path.join(uploadsDir, 'videos', uniqueFileName)
-        await fs.copyFile(data.filePath, savePath)
+        await fs.copyFile(readPath, savePath)
 
         return {
           success: true,
