@@ -15,6 +15,7 @@ import { Editor } from './editor'
 export interface SavedState {
   sequences: Sequence[]
   timeline_state: SavedTimelineStateConfig | null
+  grid_state?: SavedGridStateConfig | null
   settings?: ProjectSettings
 }
 
@@ -50,6 +51,19 @@ export enum TrackType {
 
 export interface SavedTimelineStateConfig {
   timeline_sequences: TimelineSequence[]
+}
+
+// grid of ad canvases
+export interface SavedGridStateConfig {
+  rows: GridRowsColumns[]
+  columns: GridRowsColumns[]
+  adIds: string[] // all ad ids in the grid
+}
+
+export interface GridRowsColumns {
+  id: string
+  name: string
+  adIds: string[] // ad ids assigned to this row/column
 }
 
 // Enums

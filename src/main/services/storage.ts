@@ -21,6 +21,7 @@ export const ProjectSchema = z.object({
   fileData: z.any().optional(),
   docData: z.any().optional(),
   presData: z.any().optional(),
+  adData: z.any().optional(),
   createdAt: z.string(),
   updatedAt: z.string()
 })

@@ -28,7 +28,8 @@ import {
   KeyframeValue,
   EasingType,
   PathType,
-  getSequenceDuration
+  getSequenceDuration,
+  SavedGridStateConfig
 } from '../../engine/animations'
 import { v4 as uuidv4 } from 'uuid'
 import { useRouter } from '../../hooks/useRouter'
@@ -72,7 +73,7 @@ import { getCurrentUser } from '../../hooks/useCurrentUser'
 import { ProjectSelector } from '../ProjectSelector'
 import Container from '@renderer/engine/container'
 
-export const VideoEditor: React.FC<any> = ({ projectId }) => {
+export const AdEditor: React.FC<any> = ({ projectId }) => {
   const { t } = useTranslation('common')
 
   const router = useRouter()
@@ -85,29 +86,13 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
   let [error, set_error] = useState<string | null>(null)
   let [loading, set_loading] = useState(false)
   let [section, set_section] = useState('SequenceList')
-  let [keyframe_count, set_keyframe_count] = useState(0)
-  let [is_curved, set_is_curved] = useState(false)
-  let [auto_choreograph, set_auto_choreograph] = useState(true)
-  let [auto_fade, set_auto_fade] = useState(true)
+  let [grid, set_grid] = useState<SavedGridStateConfig | null>(null)
 
   let [layers, set_layers] = useState<Layer[]>([])
   let [dragger_id, set_dragger_id] = useState(null)
   let [current_sequence_id, set_current_sequence_id] = useState<string | null>(null)
 
   let [toolbarTab, setToolbarTab] = useState('none')
-
-  // Camera orbit state
-  let [orbitX, setOrbitX] = useState(0)
-  let [orbitY, setOrbitY] = useState(0)
-
-  // Camera pan state
-  let [panX, setPanX] = useState(0)
-  let [panY, setPanY] = useState(0)
-
-  let [rotateX, setRotateX] = useState(0)
-  let [rotateY, setRotateY] = useState(0)
-
-  let [zoom, setZoom] = useState(0)
 
   // Text Animation state
   let [selectedTextId, setSelectedTextId] = useState<string | null>(null)
@@ -116,17 +101,6 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
   let [selected_image_id, set_selected_image_id] = useState<string | null>(null)
   let [selected_text_id, set_selected_text_id] = useState<string | null>(null)
   let [selected_video_id, set_selected_video_id] = useState<string | null>(null)
-  let [selected_cube3d_id, set_selected_cube3d_id] = useState<string | null>(null)
-  let [selected_sphere3d_id, set_selected_sphere3d_id] = useState<string | null>(null)
-  let [selected_mockup3d_id, set_selected_mockup3d_id] = useState<string | null>(null)
-  let [selected_model3d_id, set_selected_model3d_id] = useState<string | null>(null)
-  let [selected_keyframes, set_selected_keyframes] = useState<string[] | null>(null)
-
-  let [tSequences, setTSequences] = useState<TimelineSequence[]>([])
-  let [sequenceDurations, setSequenceDurations] = useState<Record<string, number>>({})
-  let [sequenceQuickAccess, setSequenceQuickAccess] = useState<Record<string, string>>({})
-
-  let [refreshTimeline, setRefreshTimeline] = useState(Date.now())
 
   const editorRef = useRef<Container | null>(null)
   const editorStateRef = useRef<EditorState | null>(null)
@@ -136,8 +110,6 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
   const [editorStateSet, setEditorStateSet] = useState(false)
   const [refreshUINow, setRefreshUINow] = useState(Date.now())
   const [project_name, set_project_name] = useState('Loading...')
-  const [isEditingName, setIsEditingName] = useState(false)
-  const [tempProjectName, setTempProjectName] = useState('')
 
   let setupCanvasMouseTracking = (editor: Editor, canvas: HTMLCanvasElement) => {
     // let editor = editorRef.current
@@ -192,10 +164,6 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     set_selected_text_id(null)
     set_selected_image_id(null)
     set_selected_video_id(null)
-    set_selected_cube3d_id(null)
-    set_selected_sphere3d_id(null)
-    set_selected_mockup3d_id(null)
-    set_selected_model3d_id(null)
   }
 
   let select_text = (text_id: string) => {
@@ -203,11 +171,8 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     set_selected_text_id(text_id)
     set_selected_image_id(null)
     set_selected_video_id(null)
-    set_selected_cube3d_id(null)
-    set_selected_sphere3d_id(null)
     // Also set for text animations
     setSelectedTextId(text_id)
-    set_selected_mockup3d_id(null)
   }
 
   let select_image = (image_id: string) => {
@@ -215,10 +180,6 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
     set_selected_text_id(null)
     set_selected_image_id(image_id)
     set_selected_video_id(null)
-    set_selected_cube3d_id(null)
-    set_selected_sphere3d_id(null)
-    set_selected_mockup3d_id(null)
-    set_selected_model3d_id(null)
   }
 
   let handle_polygon_click = (polygon_id: string) => {
@@ -276,6 +237,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
       let cloned_sequences = fileData?.sequences
       let cloned_settings = fileData?.settings
+      let cloned_grid = fileData?.grid_state
 
       if (!cloned_settings) {
         cloned_settings = {
@@ -333,6 +295,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
       set_settings(cloned_settings)
       set_sequences(cloned_sequences)
+      set_grid(cloned_grid)
       set_project_name(fileName)
 
       console.info('Restoring objects...')
@@ -694,25 +657,35 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
           </div>
 
           <section className="flex flex-row flex-wrap gap-2 justify-center items-center">
-            {sequences.map((sequence, i) => {
+            {grid.columns.map((column, i) => {
               return (
-                <section key={i} className="flex flex-col gap-2 items-center">
-                  <span className="font-medium">{sequence.name}</span>
-                  <div
-                    id={`ad-canvas-wrapper-${i}`}
-                    style={{
-                      aspectRatio:
-                        (settings?.dimensions.width || 500) / (settings?.dimensions.height || 500),
-                      maxWidth: settings?.dimensions.width || 500
-                    }}
-                  >
-                    <canvas
-                      id={`ad-canvas-${i}`}
-                      className={`w-[${settings?.dimensions.width || 500}px] h-[${settings?.dimensions.height || 500}px] border border-black rounded-[15px] shadow-[0_0_15px_4px_rgba(0,0,0,0.16)]`}
-                      width={settings?.dimensions.width || 500}
-                      height={settings?.dimensions.height || 500}
-                    />
-                  </div>
+                <section key={column.id} className="flex flex-col gap-2 items-center">
+                  <span className="font-medium">{column.name}</span>
+                  {column.adIds.map((adId) => {
+                    let adData = sequences.find((seq) => seq.id === adId)
+
+                    return (
+                      <div className="flex flex-col gap-1 items-center">
+                        <span>{adData.name}</span>
+                        <div
+                          id={`ad-canvas-wrapper-${i}`}
+                          style={{
+                            aspectRatio:
+                              (settings?.dimensions.width || 500) /
+                              (settings?.dimensions.height || 500),
+                            maxWidth: settings?.dimensions.width || 500
+                          }}
+                        >
+                          <canvas
+                            id={`ad-canvas-${i}`}
+                            className={`w-[${settings?.dimensions.width || 500}px] h-[${settings?.dimensions.height || 500}px] border border-black rounded-[15px] shadow-[0_0_15px_4px_rgba(0,0,0,0.16)]`}
+                            width={settings?.dimensions.width || 500}
+                            height={settings?.dimensions.height || 500}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
                 </section>
               )
             })}

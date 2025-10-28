@@ -2,6 +2,7 @@ import { ClientOnly } from '../../../../components/ClientOnly'
 import ErrorBoundary from '../../../../components/stunts-app/ErrorBoundary'
 import React from 'react'
 import { useParams } from '../../../../hooks/useRouter'
+import { AdEditor } from '@renderer/components/stunts-app/AdEditor'
 
 export default function Ads() {
   const { projectId } = useParams('/project/:projectId/ads')
@@ -12,9 +13,7 @@ export default function Ads() {
       <ErrorBoundary>
         {/* Error Boundary */}
         <ClientOnly>
-          <div className="mx-auto">
-            <h1>Ads</h1>
-          </div>
+          <AdEditor projectId={projectId} />
         </ClientOnly>
       </ErrorBoundary>
     </React.Suspense>

@@ -1,4 +1,6 @@
 import {
+  BackgroundFill,
+  GridRowsColumns,
   ProjectSettings,
   SavedState,
   SavedTimelineStateConfig,
@@ -161,7 +163,56 @@ export const getOrCreateDefaultProject = async (authToken: AuthToken | null): Pr
     timeline_state: null
   }
 
-  const newProject = await createProject('', 'My First Project', videoState, emptyState, emptyState)
+  let emptyAdSequences = new Array(25).fill(null).map((_, i) => {
+    const adId = uuidv4()
+
+    return {
+      id: adId,
+      name: 'Ad #' + (i + 1),
+      backgroundFill: { type: 'Color', value: [200, 200, 200, 255] } as BackgroundFill,
+      activePolygons: [],
+      polygonMotionPaths: [],
+      activeTextItems: [],
+      activeImageItems: [],
+      activeVideoItems: []
+    }
+  })
+
+  // Extract all ad IDs
+  const allAdIds = emptyAdSequences.map((seq) => seq.id)
+
+  // Create 5 rows, each with 5 ads
+  const rows: GridRowsColumns[] = new Array(5).fill(null).map((_, rowIndex) => ({
+    id: uuidv4(),
+    name: `Row #${rowIndex}`,
+    adIds: allAdIds.slice(rowIndex * 5, (rowIndex + 1) * 5)
+  }))
+
+  // Create 5 columns, each with 5 ads
+  const columns: GridRowsColumns[] = new Array(5).fill(null).map((_, colIndex) => ({
+    id: uuidv4(),
+    name: `Column #${colIndex}`,
+    adIds: allAdIds.filter((_, adIndex) => adIndex % 5 === colIndex)
+  }))
+
+  const emptyAdState: SavedState = {
+    sequences: emptyAdSequences,
+    timeline_state: null,
+    grid_state: {
+      rows,
+      columns,
+      adIds: allAdIds
+    }
+  }
+
+  const newProject = await createProject(
+    '',
+    'My First Project',
+    videoState,
+    emptyState,
+    emptyState,
+    emptyAdState
+  )
   return newProject.newProject.id
 }
 
@@ -170,7 +221,8 @@ export const createProject = async (
   name: string,
   emptyVideoData: SavedState,
   emptyDocData: SavedState,
-  emptyPresData: SavedState
+  emptyPresData: SavedState,
+  emptyAdData: SavedState
 ): Promise<CreateProjectResponse> => {
   const userId = await getCurrentUserId()
 
@@ -179,7 +231,8 @@ export const createProject = async (
     name,
     emptyVideoData,
     emptyDocData,
-    emptyPresData
+    emptyPresData,
+    emptyAdData
   })
 
   if (!result.success) {

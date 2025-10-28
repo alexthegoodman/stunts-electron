@@ -41,6 +41,7 @@ export function registerProjectHandlers(): void {
         emptyVideoData?: any
         emptyDocData?: any
         emptyPresData?: any
+        emptyAdData?: any
       }
     ) => {
       try {
@@ -48,7 +49,8 @@ export function registerProjectHandlers(): void {
           name: data.name,
           fileData: data.emptyVideoData,
           docData: data.emptyDocData,
-          presData: data.emptyPresData
+          presData: data.emptyPresData,
+          adData: data.emptyAdData
         })
         return { success: true, data: project }
       } catch (error) {
@@ -164,7 +166,8 @@ export function registerProjectHandlers(): void {
         name: 'Demo Project',
         fileData: {},
         docData: {},
-        presData: {}
+        presData: {},
+        adData: {}
       })
       return { success: true, data: project }
     } catch (error) {
