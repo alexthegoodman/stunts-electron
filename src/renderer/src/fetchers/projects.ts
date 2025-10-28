@@ -21,6 +21,7 @@ export interface SingleProjectResponse {
     fileData: SavedState
     docData: SavedState
     presData: SavedState
+    adData?: SavedState
     updatedAt: DateTime
     createdAt: DateTime
   } | null
@@ -113,7 +114,9 @@ export const getProjects = async (authToken: AuthToken | null): Promise<ProjectI
   return projects.sort((a, b) => b.modified.diff(a.modified).milliseconds)
 }
 
-export const getMostRecentProject = async (authToken: AuthToken | null): Promise<ProjectInfo | null> => {
+export const getMostRecentProject = async (
+  authToken: AuthToken | null
+): Promise<ProjectInfo | null> => {
   const projects = await getProjects(authToken)
   return projects.length > 0 ? projects[0] : null
 }
