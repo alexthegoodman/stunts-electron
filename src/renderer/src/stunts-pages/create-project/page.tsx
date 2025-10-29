@@ -1,7 +1,7 @@
 import { ClientOnly } from '../../components/ClientOnly'
 import ErrorBoundary from '../../components/stunts-app/ErrorBoundary'
 import { SavedState, Sequence, TrackType } from '../../engine/animations'
-import { AuthToken, createProject } from '../../fetchers/projects'
+import { AuthToken, createProject, getEmptyAdData } from '../../fetchers/projects'
 import { useLocalStorage } from '@uidotdev/usehooks'
 import { t } from 'i18next'
 import { useRouter } from '../../hooks/useRouter'
@@ -64,7 +64,16 @@ const ProjectForm = () => {
         timeline_state: null
       }
 
-      const info = await createProject('', data.project_name, videoState, docState, presState)
+      const emptyAdState = getEmptyAdData()
+
+      const info = await createProject(
+        '',
+        data.project_name,
+        videoState,
+        docState,
+        presState,
+        emptyAdState
+      )
       // router.push("/projects");
       // go directly to project videos page
       const projectId = info.newProject.id

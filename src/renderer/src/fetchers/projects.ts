@@ -84,17 +84,7 @@ export const getSingleProject = async (
   }
 
   return {
-    project: result.data
-      ? {
-          id: result.data.id,
-          name: result.data.name,
-          fileData: result.data.fileData,
-          docData: result.data.docData,
-          presData: result.data.presData,
-          updatedAt: result.data.updatedAt,
-          createdAt: result.data.createdAt
-        }
-      : null
+    project: result.data ? result.data : null
   }
 }
 
@@ -123,6 +113,8 @@ export const getMostRecentProject = async (
   return projects.length > 0 ? projects[0] : null
 }
 
+const { v4: uuidv4 } = await import('uuid')
+
 export const getOrCreateDefaultProject = async (authToken: AuthToken | null): Promise<string> => {
   const mostRecent = await getMostRecentProject(authToken)
 
@@ -131,7 +123,6 @@ export const getOrCreateDefaultProject = async (authToken: AuthToken | null): Pr
   }
 
   // Create a new empty project for new profiles
-  const { v4: uuidv4 } = await import('uuid')
   const newId = uuidv4()
 
   const defaultVideoSequence: Sequence = {
@@ -163,7 +154,24 @@ export const getOrCreateDefaultProject = async (authToken: AuthToken | null): Pr
     timeline_state: null
   }
 
-  let emptyAdSequences = new Array(25).fill(null).map((_, i) => {
+  const emptyAdState = getEmptyAdData()
+
+  const newProject = await createProject(
+    '',
+    'My First Project',
+    videoState,
+    emptyState,
+    emptyState,
+    emptyAdState
+  )
+  return newProject.newProject.id
+}
+
+export const getEmptyAdData = () => {
+  let totalCount = 9 // 16 hits the hard limit exactly
+  let splitSize = Math.sqrt(totalCount) // 3, 4
+
+  let emptyAdSequences = new Array(totalCount).fill(null).map((_, i) => {
     const adId = uuidv4()
 
     return {
@@ -182,17 +190,17 @@ export const getOrCreateDefaultProject = async (authToken: AuthToken | null): Pr
   const allAdIds = emptyAdSequences.map((seq) => seq.id)
 
   // Create 5 rows, each with 5 ads
-  const rows: GridRowsColumns[] = new Array(5).fill(null).map((_, rowIndex) => ({
+  const rows: GridRowsColumns[] = new Array(splitSize).fill(null).map((_, rowIndex) => ({
     id: uuidv4(),
     name: `Row #${rowIndex}`,
-    adIds: allAdIds.slice(rowIndex * 5, (rowIndex + 1) * 5)
+    adIds: allAdIds.slice(rowIndex * splitSize, (rowIndex + 1) * splitSize)
   }))
 
   // Create 5 columns, each with 5 ads
-  const columns: GridRowsColumns[] = new Array(5).fill(null).map((_, colIndex) => ({
+  const columns: GridRowsColumns[] = new Array(splitSize).fill(null).map((_, colIndex) => ({
     id: uuidv4(),
     name: `Column #${colIndex}`,
-    adIds: allAdIds.filter((_, adIndex) => adIndex % 5 === colIndex)
+    adIds: allAdIds.filter((_, adIndex) => adIndex % splitSize === colIndex)
   }))
 
   const emptyAdState: SavedState = {
@@ -205,15 +213,7 @@ export const getOrCreateDefaultProject = async (authToken: AuthToken | null): Pr
     }
   }
 
-  const newProject = await createProject(
-    '',
-    'My First Project',
-    videoState,
-    emptyState,
-    emptyState,
-    emptyAdState
-  )
-  return newProject.newProject.id
+  return emptyAdState
 }
 
 export const createProject = async (

@@ -449,7 +449,7 @@ export class FullExporter {
       // if (s.durationMs) {
       //   totalDurationMs += s.durationMs
       // }
-      totalDurationMs += getSequenceDuration(s).durationMs
+      totalDurationMs += getSequenceDuration(this.editor, s).durationMs
     })
 
     let totalDurationS = totalDurationMs / 1000 // Convert to seconds

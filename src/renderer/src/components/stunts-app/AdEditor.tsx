@@ -73,6 +73,8 @@ import { getCurrentUser } from '../../hooks/useCurrentUser'
 import { ProjectSelector } from '../ProjectSelector'
 import Container from '@renderer/engine/container'
 
+const DEFAULT_AD_SIZE = 200
+
 export const AdEditor: React.FC<any> = ({ projectId }) => {
   const { t } = useTranslation('common')
 
@@ -242,8 +244,8 @@ export const AdEditor: React.FC<any> = ({ projectId }) => {
       if (!cloned_settings) {
         cloned_settings = {
           dimensions: {
-            width: 900,
-            height: 550
+            width: DEFAULT_AD_SIZE,
+            height: DEFAULT_AD_SIZE
           }
         }
       }
@@ -252,69 +254,12 @@ export const AdEditor: React.FC<any> = ({ projectId }) => {
         return
       }
 
-      let viewport = new Viewport(
-        cloned_settings.dimensions.width,
-        cloned_settings.dimensions.height
-      )
-
-      let initializers = await cloned_sequences.map(async (sequence, i) => {
-        let editor = new Editor(viewport)
-
-        editor.currentSequenceData = sequence
-        editor.settings = cloned_settings
-
-        let pipeline = new CanvasPipeline()
-
-        await pipeline.new(
-          editor,
-          true,
-          `ad-canvas-${i}`,
-          // {
-          //   width: 900,
-          //   height: 550,
-          // },
-          cloned_settings.dimensions,
-          false // NOTE: important so that ads aren't re rendered on every frame, since there are many canvases, will want to only render when changes occur
-        )
-
-        await pipeline.beginRendering(editor)
-
-        return [editor, pipeline] as [Editor, CanvasPipeline]
-      })
-
-      let editors = await Promise.all(initializers)
-
-      editorRef.current = new Container(
-        editors.map((e) => e[0]),
-        editors.map((e) => e[1])
-      )
-
-      editorStateRef.current = new EditorState(fileData)
-
       console.info('cloned_settings', cloned_settings)
 
       set_settings(cloned_settings)
       set_sequences(cloned_sequences)
       set_grid(cloned_grid)
       set_project_name(fileName)
-
-      console.info('Restoring objects...')
-
-      let i = 0
-      for (let pair of editors) {
-        await pair[0].restore_sequence_objects(pair[0].currentSequenceData, false, cloned_settings)
-
-        // // set handlers
-        const canvas = document.getElementById(`ad-canvas-${i}`) as HTMLCanvasElement
-        setupCanvasMouseTracking(pair[0], canvas)
-
-        on_open_sequence(pair[0], pair[0].currentSequenceData.id)
-
-        set_loading(false)
-        setEditorStateSet(true)
-
-        i++
-      }
     } catch (error: any) {
       console.error('Error fetching data:', error)
       toast.error('Failed to fetch project data')
@@ -332,22 +277,83 @@ export const AdEditor: React.FC<any> = ({ projectId }) => {
     }
   }, [editorIsSet])
 
-  useEffect(() => {
-    if (editorIsSet) {
-      if (!editorRef.current) {
-        return
-      }
+  let set_data = async () => {
+    let viewport = new Viewport(settings.dimensions.width, settings.dimensions.height)
 
-      console.info('Setting event handlers!')
+    let initializers = await sequences.map(async (sequence, i) => {
+      let editor = new Editor(viewport)
 
-      // set handlers that rely on state
-      editorRef.current.editors.forEach((editor) => {
-        editor.handlePolygonClick = handle_polygon_click
-        editor.handleTextClick = handle_text_click
-        editor.handleImageClick = handle_image_click
-      })
+      editor.currentSequenceData = sequence
+      editor.settings = settings
+
+      let pipeline = new CanvasPipeline()
+
+      await pipeline.new(
+        editor,
+        true,
+        `ad-canvas-${sequence.id}`,
+        // {
+        //   width: 900,
+        //   height: 550,
+        // },
+        settings.dimensions,
+        false // NOTE: important so that ads aren't re rendered on every frame, since there are many canvases, will want to only render when changes occur
+      )
+
+      await pipeline.beginRendering(editor)
+
+      return [editor, pipeline] as [Editor, CanvasPipeline]
+    })
+
+    let editors = await Promise.all(initializers)
+    editorRef.current = new Container(editors)
+
+    let effectiveFileData = {
+      sequences: sequences,
+      settings: settings,
+      timeline_state: null,
+      grid_state: grid
     }
-  }, [editorIsSet, current_sequence_id])
+
+    editorStateRef.current = new EditorState(effectiveFileData)
+
+    console.info('Restoring objects...')
+
+    let i = 0
+    for (let pair of editors) {
+      await pair[0].restore_sequence_objects(pair[0].currentSequenceData, false, settings)
+
+      // // set handlers
+      const canvas = document.getElementById(
+        `ad-canvas-${pair[0].currentSequenceData.id}`
+      ) as HTMLCanvasElement
+      setupCanvasMouseTracking(pair[0], canvas)
+
+      on_open_sequence(pair[0], pair[0].currentSequenceData.id)
+
+      i++
+    }
+
+    console.info('Setting event handlers!')
+
+    // set handlers that rely on state
+    editorRef.current.editors.forEach(([editor, pipeline]) => {
+      editor.handlePolygonClick = handle_polygon_click
+      editor.handleTextClick = handle_text_click
+      editor.handleImageClick = handle_image_click
+    })
+
+    set_loading(false)
+    setEditorStateSet(true)
+  }
+
+  useEffect(() => {
+    if (!project_name) {
+      return
+    }
+
+    set_data()
+  }, [project_name])
 
   let on_open_sequence = (editor: Editor, sequence_id: string) => {
     try {
@@ -584,11 +590,7 @@ export const AdEditor: React.FC<any> = ({ projectId }) => {
       <div className="flex flex-col w-full">
         <div className="flex md:flex-row flex-col justify-between items-top w-full gap-2 md:h-full">
           <div className="md:h-full">
-            <div
-              className={`w-full md:w-[${
-                (settings?.dimensions.width || 0) + 100
-              }px] md:mx-auto overflow-hidden`}
-            >
+            <div className={`w-full md:mx-auto overflow-hidden`}>
               <div className="flex flex-row gap-2 p-3">
                 <MiniSquareButton
                   onClick={() => {
@@ -656,31 +658,34 @@ export const AdEditor: React.FC<any> = ({ projectId }) => {
             </div>
           </div>
 
-          <section className="flex flex-row flex-wrap gap-2 justify-center items-center">
-            {grid.columns.map((column, i) => {
+          <section className="flex flex-row flex-wrap gap-4 justify-center items-center w-[75vw]">
+            {grid?.columns?.map((column, i) => {
               return (
-                <section key={column.id} className="flex flex-col gap-2 items-center">
+                <section key={column.id} className="flex flex-col gap-4 items-center">
                   <span className="font-medium">{column.name}</span>
                   {column.adIds.map((adId) => {
                     let adData = sequences.find((seq) => seq.id === adId)
 
                     return (
-                      <div className="flex flex-col gap-1 items-center">
+                      <div
+                        key={`ad-canvas-wrap-${adId}`}
+                        className="flex flex-col gap-4 items-center"
+                      >
                         <span>{adData.name}</span>
                         <div
-                          id={`ad-canvas-wrapper-${i}`}
+                          id={`ad-canvas-wrapper-${adId}`}
                           style={{
                             aspectRatio:
-                              (settings?.dimensions.width || 500) /
-                              (settings?.dimensions.height || 500),
-                            maxWidth: settings?.dimensions.width || 500
+                              (settings?.dimensions.width || DEFAULT_AD_SIZE) /
+                              (settings?.dimensions.height || DEFAULT_AD_SIZE),
+                            maxWidth: settings?.dimensions.width || DEFAULT_AD_SIZE
                           }}
                         >
                           <canvas
-                            id={`ad-canvas-${i}`}
-                            className={`w-[${settings?.dimensions.width || 500}px] h-[${settings?.dimensions.height || 500}px] border border-black rounded-[15px] shadow-[0_0_15px_4px_rgba(0,0,0,0.16)]`}
-                            width={settings?.dimensions.width || 500}
-                            height={settings?.dimensions.height || 500}
+                            id={`ad-canvas-${adId}`}
+                            className={`w-[${settings?.dimensions.width || DEFAULT_AD_SIZE}px] h-[${settings?.dimensions.height || DEFAULT_AD_SIZE}px] border border-black rounded-[15px] shadow-[0_0_15px_4px_rgba(0,0,0,0.16)]`}
+                            width={settings?.dimensions.width || DEFAULT_AD_SIZE}
+                            height={settings?.dimensions.height || DEFAULT_AD_SIZE}
                           />
                         </div>
                       </div>

@@ -13,7 +13,9 @@ export default function Ads() {
       <ErrorBoundary>
         {/* Error Boundary */}
         <ClientOnly>
-          <AdEditor projectId={projectId} />
+          <div className="mx-auto w-full">
+            <AdEditor projectId={projectId} />
+          </div>
         </ClientOnly>
       </ErrorBoundary>
     </React.Suspense>
