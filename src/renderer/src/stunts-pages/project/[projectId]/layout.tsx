@@ -41,9 +41,11 @@ export default function ProjectLayout({ children = null }: { children: any }) {
 
           <NavButton label={t('Video')} icon="video" destination={`/project/${projectId}/videos`} />
 
-          <NavButton label={t('Ads')} icon="stack-plus" destination={`/project/${projectId}/ads`} />
+          <NavButton label={t('Games')} icon="games" destination={`/project/${projectId}/games`} />
 
-          <NavButton label={t('Copy')} icon="text" destination={`/project/${projectId}/copy`} />
+          {/* <NavButton label={t('Ads')} icon="stack-plus" destination={`/project/${projectId}/ads`} />
+
+          <NavButton label={t('Copy')} icon="text" destination={`/project/${projectId}/copy`} /> */}
 
           <NavButton
             label={t('Library')}

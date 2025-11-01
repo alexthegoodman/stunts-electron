@@ -76,11 +76,15 @@ import {
   LightbulbFilamentIcon,
   MouseIcon,
   SelectionIcon,
-  FolderOpenIcon
+  FolderOpenIcon,
+  GameControllerIcon
 } from '@phosphor-icons/react'
 
 export const CreateIcon = ({ icon, size }: { icon: string; size: string }) => {
   switch (icon) {
+    case 'games': {
+      return <GameControllerIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
+    }
     case 'mouse': {
       return <SelectionIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
     }
