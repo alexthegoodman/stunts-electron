@@ -828,7 +828,8 @@ export class Editor {
           dimensions: c.dimensions,
           position: {
             x: c.position.x * this.scaleMultiplier,
-            y: c.position.y * this.scaleMultiplier
+            y: c.position.y * this.scaleMultiplier,
+            z: c.position.z || 0
           },
           rotation: c.rotation,
           backgroundFill: c.backgroundFill,
@@ -857,6 +858,8 @@ export class Editor {
             1 // characterRadiusStanding
           )
           this.characters.set(c.id, dynamicBody)
+
+          console.log('Vrtual Character restored...')
         } else {
           const dynamicBody = this.physics.createDynamicBox(
             new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z || 0),
@@ -864,9 +867,9 @@ export class Editor {
             new this.physics.jolt.Vec3(c.dimensions[0], c.dimensions[1], c.dimensions[2])
           )
           this.bodies.set(c.id, dynamicBody)
-        }
 
-        console.log('Cube3D restored...')
+          console.log('Dynamic Cube3D restored...')
+        }
       }
     }
 

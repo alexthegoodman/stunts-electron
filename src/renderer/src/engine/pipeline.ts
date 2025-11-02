@@ -671,7 +671,7 @@ export class CanvasPipeline {
     // Set physics character velocity
     vec3.set(this._tmpVec3, newVelocity[0], newVelocity[1], newVelocity[2])
 
-    console.info('newVelocity', this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+    // console.info('newVelocity', this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
     character.SetLinearVelocity(
       new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
     )
@@ -1250,6 +1250,8 @@ export class CanvasPipeline {
     // Draw 3D cubes
     for (const cube of editor.cubes3D || []) {
       if (!cube.hidden) {
+        // console.info('cube pos', cube.transform.position)
+
         if (editor.draggingCube3D === cube.id || editor.isPlaying) {
           cube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
         }

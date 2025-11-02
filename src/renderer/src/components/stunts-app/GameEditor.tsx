@@ -448,11 +448,11 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       editorRef.current.target = SaveTarget.Games
       editorStateRef.current.saveTarget = SaveTarget.Games
 
-      await editor.restore_sequence_objects(saved_sequence, false, settings)
-
-      editor.camera.setPosition(25, 250, 25)
+      editor.camera.setPosition(5, 50, 5)
       // quat.fromEuler(editor.camera.rotation, -45, 0, -45)
       editor.cameraBinding.update(editor.gpuResources.queue, editor.camera)
+
+      await editor.restore_sequence_objects(saved_sequence, false, settings)
 
       const canvas = document.getElementById(`game-canvas`) as HTMLCanvasElement
       setupCanvasMouseTracking(editor, canvas)
@@ -487,6 +487,9 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       editor.textItems.forEach((t) => {
         t.hidden = true
       })
+      editor.cubes3D.forEach((t) => {
+        t.hidden = true
+      })
 
       saved_sequence.activePolygons.forEach((ap) => {
         let polygon = editor.polygons.find((p) => p.id == ap.id)
@@ -499,6 +502,10 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       saved_sequence.activeTextItems.forEach((tr) => {
         let text = editor.textItems.find((t) => t.id == tr.id)
         if (text) text.hidden = false
+      })
+      saved_sequence.activeCubes3D.forEach((tr) => {
+        let cube = editor.cubes3D.find((t) => t.id == tr.id)
+        if (cube) cube.hidden = false
       })
 
       if (!editor.camera) {
@@ -545,7 +552,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       const landscapeConfig: Cube3DConfig = {
         id: 'landscape-cube',
         name: 'Landscape',
-        dimensions: [1000, 10, 1000],
+        // dimensions: [1000, 10, 1000],
+        dimensions: [15, 2, 15],
         position: { x: 0, y: -25, z: 0 },
         rotation: [0, 0, 0],
         backgroundFill: {
@@ -604,7 +612,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       // editor.physics = physics
 
       // Create physics bodies
-      console.info('Jolt', Jolt, Jolt.RVec3)
+      // console.info('Jolt', Jolt, Jolt.RVec3)
 
       const landscapeBody = editor.physics.createStaticBox(
         new editor.physics.jolt.RVec3(

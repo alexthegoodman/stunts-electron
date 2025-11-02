@@ -69,7 +69,8 @@ export class Cube3D {
     this.dimensions = config.dimensions
     this.position = {
       x: CANVAS_HORIZ_OFFSET + config.position.x,
-      y: CANVAS_VERT_OFFSET + config.position.y
+      y: CANVAS_VERT_OFFSET + config.position.y,
+      z: config.position.z
     }
     this.rotation = config.rotation
     this.backgroundFill = config.backgroundFill
