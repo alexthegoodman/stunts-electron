@@ -394,6 +394,7 @@ export class CanvasPipeline {
     }
 
     // Animation steps (same as WebGPU)
+    // TODO: need to wrap this up in an LOD manager which loads or unloads physics based on distance
     if (editor.physics && editor.bodies.size > 0) {
       editor.physics.step(1.0 / 60.0) // Step with a fixed time step
 

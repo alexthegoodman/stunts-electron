@@ -32,7 +32,8 @@ export enum SaveTarget {
   Videos = 'Videos',
   Docs = 'Docs',
   Slides = 'Slides',
-  Promos = 'Promos'
+  Promos = 'Promos',
+  Games = 'Games'
 }
 
 export default class EditorState {

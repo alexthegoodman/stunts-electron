@@ -362,6 +362,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       await pipeline.beginRendering(editor)
 
       editorRef.current = editor
+      editorRef.current.target = SaveTarget.Games
+      editorStateRef.current.saveTarget = SaveTarget.Games
 
       await editor.restore_sequence_objects(saved_sequence, false, settings)
 
@@ -565,7 +567,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
     console.info('animation updated', animation, newStartTimeMs)
 
-    saveSequencesData(editor_state.savedState.sequences, SaveTarget.Videos)
+    saveSequencesData(editor_state.savedState.sequences, SaveTarget.Games)
   }
 
   return (

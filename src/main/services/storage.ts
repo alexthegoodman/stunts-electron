@@ -240,14 +240,38 @@ class StorageService {
 
     if (projectIndex === -1) return null
 
-    const updatedProject = {
-      ...data.projects[projectIndex],
-      ...updates,
-      fileData: {
-        ...data.projects[projectIndex].fileData,
-        ...updates.fileData
-      },
-      updatedAt: new Date().toISOString()
+    const saveTarget = data.projects[projectIndex].fileData.saveTarget
+
+    console.info('Update project', saveTarget)
+
+    let updatedProject: any = {}
+
+    switch (saveTarget) {
+      case 'Videos':
+        updatedProject = {
+          ...data.projects[projectIndex],
+          ...updates,
+          fileData: {
+            ...data.projects[projectIndex].fileData,
+            ...updates.fileData
+          },
+          updatedAt: new Date().toISOString()
+        }
+        break
+
+      case 'Games':
+        updatedProject = {
+          ...data.projects[projectIndex],
+          ...updates,
+          gameData: {
+            ...data.projects[projectIndex].gameData,
+            ...updates.fileData
+          },
+          updatedAt: new Date().toISOString()
+        }
+
+        console.info('updatedProject.gameData', updatedProject.gameData)
+        break
     }
 
     ProjectSchema.parse(updatedProject)
