@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { quat, vec2 } from 'gl-matrix'
 import {
   DebouncedInput,
@@ -76,6 +76,22 @@ import Container from '@renderer/engine/container'
 import Jolt from 'jolt-physics/debug-wasm-compat'
 import { Physics } from '../../engine/physics'
 import { CameraAnimation } from '@renderer/engine/3dcamera'
+import GameLogic from './GameLogic'
+import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
+
+const initialNodes = [
+  { id: '1', data: { label: 'PlayerController' }, position: { x: 250, y: 5 } },
+  { id: '2', data: { label: 'Input' }, position: { x: 100, y: 100 } },
+  { id: '3', data: { label: 'Forward', pressed: false }, position: { x: 400, y: 100 } },
+  { id: '4', data: { label: 'Backward', pressed: false }, position: { x: 400, y: 150 } },
+  { id: '5', data: { label: 'Left', pressed: false }, position: { x: 400, y: 200 } },
+  { id: '6', data: { label: 'Right', pressed: false }, position: { x: 400, y: 250 } }
+]
+
+const initialEdges = [
+  { id: 'e2-1', source: '2', target: '1' },
+  { id: 'e3-2', source: '3', target: '2' }
+]
 
 const DEFAULT_GAME_WIDTH = 1200
 const DEFAULT_GAME_HEIGHT = 800
@@ -113,8 +129,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
   let [rotateY, setRotateY] = useState(0)
 
   let [zoom, setZoom] = useState(0)
-  let [zoomMax, setZoomMax] = useState(25)
-  let [zoomMin, setZoomMin] = useState(-25)
+  let [zoomMax, setZoomMax] = useState(250)
+  let [zoomMin, setZoomMin] = useState(-250)
 
   // Text Animation state
   let [selectedTextId, setSelectedTextId] = useState<string | null>(null)
@@ -126,6 +142,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
   const editorRef = useRef<Editor | null>(null)
   const editorStateRef = useRef<EditorState | null>(null)
+  const canvasPipelineRef = useRef<CanvasPipeline | null>(null)
   // const canvasPipelineRef = useRef<CanvasPipeline | null>(null)
   // const webCaptureRef = useRef<WebCapture | null>(null)
   const [editorIsSet, setEditorIsSet] = useState(false)
@@ -133,6 +150,69 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
   const [refreshUINow, setRefreshUINow] = useState(Date.now())
   const [project_name, set_project_name] = useState('Loading...')
   const [physicsReady, setPhysicsReady] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+
+  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges])
+
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.nodes = nodes
+    }
+  }, [nodes])
+
+  useEffect(() => {
+    const canvas = document.getElementById(`game-canvas`) as HTMLCanvasElement
+    if (!canvas) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // console.info('keydown', event)
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.data.label === 'Forward' && event.key === 'w') {
+            node.data = { ...node.data, pressed: true }
+          } else if (node.data.label === 'Backward' && event.key === 's') {
+            node.data = { ...node.data, pressed: true }
+          } else if (node.data.label === 'Left' && event.key === 'a') {
+            node.data = { ...node.data, pressed: true }
+          } else if (node.data.label === 'Right' && event.key === 'd') {
+            node.data = { ...node.data, pressed: true }
+          }
+          return node
+        })
+      )
+    }
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.data.label === 'Forward' && event.key === 'w') {
+            node.data = { ...node.data, pressed: false }
+          } else if (node.data.label === 'Backward' && event.key === 's') {
+            node.data = { ...node.data, pressed: false }
+          } else if (node.data.label === 'Left' && event.key === 'a') {
+            node.data = { ...node.data, pressed: false }
+          } else if (node.data.label === 'Right' && event.key === 'd') {
+            node.data = { ...node.data, pressed: false }
+          }
+          return node
+        })
+      )
+    }
+
+    console.info('attach key listeners in editor')
+
+    canvas.addEventListener('keydown', handleKeyDown)
+    canvas.addEventListener('keyup', handleKeyUp)
+    canvas.setAttribute('tabindex', '0') // Make canvas focusable
+
+    return () => {
+      canvas.removeEventListener('keydown', handleKeyDown)
+      canvas.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [setNodes])
 
   let setupCanvasMouseTracking = (editor: Editor, canvas: HTMLCanvasElement) => {
     // let editor = editorRef.current
@@ -358,6 +438,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
         settings.dimensions,
         true // Set to true for continuous rendering, suitable for a game editor
       )
+
+      canvasPipelineRef.current = pipeline
 
       await pipeline.beginRendering(editor)
 
@@ -637,10 +719,21 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                     icon="camera"
                     label={'Camera'}
                   />
+                  <MiniSquareButton
+                    onClick={() => {
+                      if (toolbarTab === 'logic') {
+                        setToolbarTab('none')
+                      } else {
+                        setToolbarTab('logic')
+                      }
+                    }}
+                    icon="logic"
+                    label={'Logic'}
+                  />
                 </div>
               </div>
 
-              <div className="px-3 max-w-96">
+              <div className="px-3 w-128">
                 {toolbarTab === 'tools' && (
                   <div>
                     <ToolGrid
@@ -677,6 +770,19 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                     saveTarget={SaveTarget.Videos}
                     userLanguage={user?.userLanguage || 'en'}
                   /> */}
+                  </div>
+                )}
+
+                {toolbarTab === 'logic' && (
+                  <div className="text-white">
+                    <h5 className="text-lg font-semibold mb-4">Game Logic</h5>
+                    <GameLogic
+                      nodes={nodes}
+                      edges={edges}
+                      onNodesChange={onNodesChange}
+                      onEdgesChange={onEdgesChange}
+                      onConnect={onConnect}
+                    />
                   </div>
                 )}
 
@@ -903,6 +1009,23 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                     </option>
                   ))}
                 </select>
+                <button
+                  onClick={() => {
+                    const editor = editorRef.current
+                    const pipeline = canvasPipelineRef.current
+                    if (editor && pipeline) {
+                      pipeline.isPlaying = !pipeline.isPlaying
+                      editor.nodes = nodes
+                      editor.edges = edges
+                      setIsPlaying(pipeline.isPlaying)
+                    } else {
+                      toast.error("Couldn't play!")
+                    }
+                  }}
+                  className="p-2 border rounded"
+                >
+                  {isPlaying ? 'Stop' : 'Play'}
+                </button>
               </div>
               <canvas
                 id={`game-canvas`}

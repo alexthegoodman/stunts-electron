@@ -227,6 +227,8 @@ export class Editor {
   repeatManager: RepeatManager
   physics: Physics | null
   bodies: Map<string, Jolt.Body>
+  nodes: any[] = []
+  edges: any[] = []
 
   // multiPageEditor: MultiPageEditor | null = null;
   multiPageEditor: UnifiedRichTextEditor | null = null
@@ -483,6 +485,8 @@ export class Editor {
     hidden: boolean,
     cloned_settings: ProjectSettings
   ) {
+    await this.physics.initialize()
+
     const layerSpacing = cloned_settings ? cloned_settings.layerSpacing : 0.001
     // console.info('layerSpacing restore ', layerSpacing)
     const camera = this.camera! // Non-null assertion, assuming camera is initialized
@@ -843,6 +847,14 @@ export class Editor {
 
         restored_cube.hidden = hidden
         this.cubes3D.push(restored_cube)
+
+        const dynamicBody = this.physics.createDynamicBox(
+          new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z || 0),
+          new this.physics.jolt.Quat(0, 0, 0, 1),
+          new this.physics.jolt.Vec3(c.dimensions[0], c.dimensions[1], c.dimensions[2])
+        )
+        this.bodies.set(c.id, dynamicBody)
+
         console.log('Cube3D restored...')
       }
     }
@@ -1079,8 +1091,6 @@ export class Editor {
         }
       }
     }
-
-    await this.physics.initialize()
   }
 
   reset_sequence_objects() {

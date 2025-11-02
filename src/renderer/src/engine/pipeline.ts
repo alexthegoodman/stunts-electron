@@ -43,6 +43,7 @@ export class CanvasPipeline {
   private animationFrameId: number | null = null
   public stepFrames: boolean = true
   public canvas: HTMLCanvasElement | OffscreenCanvas | null = null
+  public isPlaying: boolean = false
 
   constructor() {}
 
@@ -395,25 +396,113 @@ export class CanvasPipeline {
 
     // Animation steps (same as WebGPU)
     // TODO: need to wrap this up in an LOD manager which loads or unloads physics based on distance
-    if (editor.physics && editor.bodies.size > 0) {
-      editor.physics.step(1.0 / 60.0) // Step with a fixed time step
+    // if (editor.physics && editor.bodies.size > 0) {
+    //   editor.physics.step(1.0 / 60.0) // Step with a fixed time step
 
-      const dynamicCubeBody = editor.bodies.get('dynamic-cube')
-      if (dynamicCubeBody) {
-        const { position, rotation } = editor.physics.getBodyPositionAndRotation(dynamicCubeBody)
-        const dynamicCube = editor.cubes3D.find((c) => c.id === 'dynamic-cube')
-        if (dynamicCube) {
-          dynamicCube.transform.position[0] = position.GetX()
-          dynamicCube.transform.position[1] = position.GetY()
-          dynamicCube.transform.position[2] = position.GetZ()
+    //   const dynamicCubeBody = editor.bodies.get('dynamic-cube')
+    //   if (dynamicCubeBody) {
+    //     const { position, rotation } = editor.physics.getBodyPositionAndRotation(dynamicCubeBody)
+    //     const dynamicCube = editor.cubes3D.find((c) => c.id === 'dynamic-cube')
+    //     if (dynamicCube) {
+    //       dynamicCube.transform.position[0] = position.GetX()
+    //       dynamicCube.transform.position[1] = position.GetY()
+    //       dynamicCube.transform.position[2] = position.GetZ()
 
-          const euler = vec3.create()
+    //       const euler = vec3.create()
 
-          dynamicCube.transform.rotationX = rotation.GetEulerAngles().GetX()
-          dynamicCube.transform.rotationY = rotation.GetEulerAngles().GetY()
-          dynamicCube.transform.rotation = rotation.GetEulerAngles().GetZ()
+    //       dynamicCube.transform.rotationX = rotation.GetEulerAngles().GetX()
+    //       dynamicCube.transform.rotationY = rotation.GetEulerAngles().GetY()
+    //       dynamicCube.transform.rotation = rotation.GetEulerAngles().GetZ()
 
-          dynamicCube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+    //       dynamicCube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+    //     }
+    //   }
+    // }
+
+    if (this.isPlaying) {
+      const player = editor.cubes3D.find((c) => c.name === 'PlayerCharacter') // TODO: change to c.type so name can be changed
+
+      if (player) {
+        const playerBody = editor.bodies.get(player.id)
+        // console.info('is playing', player, playerBody)
+        if (playerBody) {
+          // animate physics of player
+          if (editor.physics && editor.bodies.size > 0) {
+            editor.physics.step(1.0 / 60.0) // TODO: get actual deltaTime between frames
+
+            const dynamicCubeBody = playerBody
+            if (dynamicCubeBody) {
+              const { position, rotation } =
+                editor.physics.getBodyPositionAndRotation(dynamicCubeBody)
+              const dynamicCube = player
+              if (dynamicCube) {
+                dynamicCube.transform.position[0] = position.GetX()
+                dynamicCube.transform.position[1] = position.GetY()
+                dynamicCube.transform.position[2] = position.GetZ()
+
+                dynamicCube.transform.rotationX = rotation.GetEulerAngles().GetX()
+                dynamicCube.transform.rotationY = rotation.GetEulerAngles().GetY()
+                dynamicCube.transform.rotation = rotation.GetEulerAngles().GetZ()
+
+                dynamicCube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+              }
+            }
+          }
+
+          const nodes = editor.nodes
+          const edges = editor.edges
+          const inputNode = nodes.find((n) => n.data.label === 'Input')
+          // console.info('pressed player', playerBody, inputNode)
+          if (inputNode) {
+            const connectedEdges = edges.filter((e) => e.target === inputNode.id)
+            // console.info('connectedEdges on press', connectedEdges)
+
+            for (const edge of connectedEdges) {
+              const connectedNode = nodes.find((n) => n.id === edge.source)
+              if (connectedNode) {
+                // console.info('connectednodes on press', connectedNode)
+                switch (connectedNode.data.label) {
+                  case 'Forward':
+                    if (connectedNode.data.pressed) {
+                      console.info('forward force')
+                      editor.physics.bodyInterface.AddForce(
+                        playerBody.GetID(),
+                        new editor.physics.jolt.Vec3(0, 0, -1000),
+                        editor.physics.jolt.EActivation_Activate
+                      )
+                    }
+                    break
+                  case 'Backward':
+                    if (connectedNode.data.pressed) {
+                      editor.physics.bodyInterface.AddForce(
+                        playerBody.GetID(),
+                        new editor.physics.jolt.Vec3(0, 0, 1000),
+                        editor.physics.jolt.EActivation_Activate
+                      )
+                    }
+                    break
+                  case 'Left':
+                    if (connectedNode.data.pressed) {
+                      editor.physics.bodyInterface.AddForce(
+                        playerBody.GetID(),
+                        new editor.physics.jolt.Vec3(-1000, 0, 0),
+                        editor.physics.jolt.EActivation_Activate
+                      )
+                    }
+                    break
+                  case 'Right':
+                    if (connectedNode.data.pressed) {
+                      editor.physics.bodyInterface.AddForce(
+                        playerBody.GetID(),
+                        new editor.physics.jolt.Vec3(1000, 0, 0),
+                        editor.physics.jolt.EActivation_Activate
+                      )
+                    }
+                    break
+                }
+              }
+            }
+          }
         }
       }
     }

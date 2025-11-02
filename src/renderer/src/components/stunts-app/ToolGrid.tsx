@@ -1215,6 +1215,86 @@ export const ToolGrid = ({
     [authToken, setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
   )
 
+  const on_add_player_character = useCallback(
+    async (sequence_id: string) => {
+      let editor = editorRef.current
+      let editor_state = editorStateRef.current
+
+      if (!editor || !editor_state) {
+        return
+      }
+
+      if (!editor.settings) {
+        console.error('Editor settings are not defined.')
+        return
+      }
+
+      try {
+        const new_id = uuidv4()
+
+        const playerConfig: Cube3DConfig = {
+          id: new_id,
+          name: 'PlayerCharacter',
+          dimensions: [25, 25, 25],
+          position: { x: 0, y: 100, z: 0 },
+          rotation: [0, 0, 0],
+          backgroundFill: {
+            type: 'Color',
+            value: [0.8, 0.2, 0.2, 1.0]
+          },
+          layer: layers.length
+        }
+
+        editor.add_cube3d(playerConfig, new_id, sequence_id)
+
+        editor_state.add_saved_cube3d(sequence_id, playerConfig)
+
+        const dynamicBody = editor.physics.createDynamicBox(
+          new editor.physics.jolt.RVec3(0, 100, 0),
+          new editor.physics.jolt.Quat(0, 0, 0, 1),
+          new editor.physics.jolt.Vec3(12.5, 12.5, 12.5)
+        )
+        editor.bodies.set(new_id, dynamicBody)
+
+        let saved_state = editor_state.savedState
+
+        let updated_sequence = saved_state.sequences.find((s) => s.id == currentSequenceId)
+
+        let sequence_cloned = updated_sequence
+
+        if (!sequence_cloned) {
+          throw Error('Sequence does not exist')
+        }
+
+        if (set_sequences) {
+          set_sequences(saved_state.sequences)
+        }
+
+        editor.currentSequenceData = sequence_cloned
+
+        editor.updateMotionPaths(sequence_cloned)
+
+        editor.cubes3D.forEach((cube) => {
+          if (!cube.hidden && cube.id === playerConfig.id) {
+            let cube_config: Cube3DConfig = cube.toConfig()
+            let new_layer: Layer = LayerFromConfig.fromCube3DConfig(cube_config)
+            layers.push(new_layer)
+          }
+        })
+
+        setLayers(layers)
+
+        update()
+
+        toast.success('Player Character added!')
+      } catch (error: any) {
+        console.error('add player character error', error)
+        toast.error(error.message || 'An error occurred')
+      }
+    },
+    [set_sequences, setLayers, layers]
+  )
+
   const brushClick = async (brushType: BrushType) => {
     let editor = editorRef.current
     let editor_state = editorStateRef.current
@@ -1705,18 +1785,32 @@ export const ToolGrid = ({
             />
           )}
           {options.includes('model3d') && (
-            <OptionButton
-              style={{}}
-              label={t('Import 3D Model')}
-              icon="cube"
-              aria-label="Import a 3D model (GLB/GLTF)"
-              callback={() => {
-                if (!currentSequenceId) {
-                  return
-                }
-                on_add_model3d(currentSequenceId)
-              }}
-            />
+            <>
+              <OptionButton
+                style={{}}
+                label={t('Import 3D Model')}
+                icon="cube"
+                aria-label="Import a 3D model (GLB/GLTF)"
+                callback={() => {
+                  if (!currentSequenceId) {
+                    return
+                  }
+                  on_add_model3d(currentSequenceId)
+                }}
+              />
+              <OptionButton
+                style={{}}
+                label={t('Add Player Character')}
+                icon="user"
+                aria-label="Add a player character to the scene"
+                callback={() => {
+                  if (!currentSequenceId) {
+                    return
+                  }
+                  on_add_player_character(currentSequenceId)
+                }}
+              />
+            </>
           )}
         </div>
         {options.includes('brush') && (
