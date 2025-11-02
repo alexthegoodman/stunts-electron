@@ -1300,6 +1300,91 @@ export const ToolGrid = ({
     [set_sequences, setLayers, layers]
   )
 
+  const on_add_enemy_character = useCallback(
+    async (sequence_id: string) => {
+      let editor = editorRef.current
+      let editor_state = editorStateRef.current
+
+      if (!editor || !editor_state) {
+        return
+      }
+
+      if (!editor.settings) {
+        console.error('Editor settings are not defined.')
+        return
+      }
+
+      try {
+        const new_id = uuidv4()
+
+        const enemyConfig: Cube3DConfig = {
+          id: new_id,
+          name: 'EnemyCharacter',
+          dimensions: [1, 2, 1], // appropriate for radius?
+          position: { x: 10, y: 25, z: 0 }, // Slightly different position
+          rotation: [0, 0, 0],
+          backgroundFill: {
+            type: 'Color',
+            value: [0.2, 0.8, 0.2, 1.0] // Green color for enemy
+          },
+          layer: layers.length
+        }
+
+        editor.add_cube3d(enemyConfig, new_id, sequence_id)
+
+        await editor_state.add_saved_cube3d(sequence_id, enemyConfig)
+
+        const dynamicBody = editor.physics.createVirtualCharacter(
+          new editor.physics.jolt.RVec3(
+            enemyConfig.position.x,
+            enemyConfig.position.y,
+            enemyConfig.position.z
+          ),
+          new editor.physics.jolt.Quat(0, 0, 0, 1),
+          2, // height
+          1 // radius
+        )
+        editor.characters.set(new_id, dynamicBody)
+
+        let saved_state = editor_state.savedState
+
+        let updated_sequence = saved_state.sequences.find((s) => s.id == currentSequenceId)
+
+        let sequence_cloned = updated_sequence
+
+        if (!sequence_cloned) {
+          throw Error('Sequence does not exist')
+        }
+
+        if (set_sequences) {
+          set_sequences(saved_state.sequences)
+        }
+
+        editor.currentSequenceData = sequence_cloned
+
+        editor.updateMotionPaths(sequence_cloned)
+
+        editor.cubes3D.forEach((cube) => {
+          if (!cube.hidden && cube.id === enemyConfig.id) {
+            let cube_config: Cube3DConfig = cube.toConfig()
+            let new_layer: Layer = LayerFromConfig.fromCube3DConfig(cube_config)
+            layers.push(new_layer)
+          }
+        })
+
+        setLayers(layers)
+
+        update()
+
+        toast.success('Enemy Character added!')
+      } catch (error: any) {
+        console.error('add enemy character error', error)
+        toast.error(error.message || 'An error occurred')
+      }
+    },
+    [set_sequences, setLayers, layers]
+  )
+
   const brushClick = async (brushType: BrushType) => {
     let editor = editorRef.current
     let editor_state = editorStateRef.current
@@ -1813,6 +1898,18 @@ export const ToolGrid = ({
                     return
                   }
                   on_add_player_character(currentSequenceId)
+                }}
+              />
+              <OptionButton
+                style={{}}
+                label={t('Add Enemy Character')}
+                icon="user-x"
+                aria-label="Add an enemy character to the scene"
+                callback={() => {
+                  if (!currentSequenceId) {
+                    return
+                  }
+                  on_add_enemy_character(currentSequenceId)
                 }}
               />
             </>
