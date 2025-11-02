@@ -400,17 +400,19 @@ export class CanvasPipeline {
       const dynamicCubeBody = editor.bodies.get('dynamic-cube')
       if (dynamicCubeBody) {
         const { position, rotation } = editor.physics.getBodyPositionAndRotation(dynamicCubeBody)
-        const dynamicCube = editor.cubes3D.find(c => c.id === 'dynamic-cube')
+        const dynamicCube = editor.cubes3D.find((c) => c.id === 'dynamic-cube')
         if (dynamicCube) {
-          dynamicCube.transform.position[0] = position.x
-          dynamicCube.transform.position[1] = position.y
-          dynamicCube.transform.position[2] = position.z
+          dynamicCube.transform.position[0] = position.GetX()
+          dynamicCube.transform.position[1] = position.GetY()
+          dynamicCube.transform.position[2] = position.GetZ()
 
           const euler = vec3.create()
-          quatToEuler(euler, [rotation.x, rotation.y, rotation.z, rotation.w])
-          dynamicCube.transform.rotationX = euler[0]
-          dynamicCube.transform.rotationY = euler[1]
-          dynamicCube.transform.rotation = euler[2]
+
+          dynamicCube.transform.rotationX = rotation.GetEulerAngles().GetX()
+          dynamicCube.transform.rotationY = rotation.GetEulerAngles().GetY()
+          dynamicCube.transform.rotation = rotation.GetEulerAngles().GetZ()
+
+          dynamicCube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
         }
       }
     }
