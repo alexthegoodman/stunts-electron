@@ -8,9 +8,11 @@ export class GameLogic {
   public enemyHealth: number = 100
   private lastShotTime: number = 0
   private fireRate: number = 1000 // 1 shot per second
+  public onHealthChange: (health: number) => void
 
-  constructor(editor: Editor) {
+  constructor(editor: Editor, onHealthChange: (health: number) => void) {
     this.editor = editor
+    this.onHealthChange = onHealthChange
     this.editor.physics.contactAddListeners.push(this.OnContactAdded.bind(this))
   }
 
@@ -28,8 +30,17 @@ export class GameLogic {
       return enemy && enemy.name === 'EnemyCharacter'
     }
 
+    // TODO: need to setup Health on PlayerCharacter similar to as was done with EnemyCharacter (we also need to check whether a friendly or an enemy shot the projectile, not just who it hits)
+    const isPlayer = (body) => {
+      const enemy = this.editor.cubes3D.find((c) => this.editor.bodies.get(c.id) === body)
+      return enemy && enemy.name === 'PlayerCharacter'
+    }
+
+    // console.info('OnContactAdded',isProjectile(b1), isEnemy(b1), isProjectile(b2), isEnemy(b2))
+
     if ((isProjectile(b1) && isEnemy(b2)) || (isProjectile(b2) && isEnemy(b1))) {
       this.enemyHealth -= 10
+      this.onHealthChange(this.enemyHealth)
       // Update the node in the editor's nodes array
       this.editor.nodes = this.editor.nodes.map((n) => {
         if (n.id === '10' && typeof n.data.value === 'number') {
@@ -37,6 +48,22 @@ export class GameLogic {
         }
         return n
       })
+    }
+
+    if (isProjectile(b1)) {
+      this.editor.spheres3D = this.editor.spheres3D.filter(
+        (s) => this.editor.bodies.get(s.id) !== b1
+      )
+      this.editor.bodies.delete(
+        this.editor.spheres3D.find((s) => this.editor.bodies.get(s.id) === b1)?.id
+      )
+    } else if (isProjectile(b2)) {
+      this.editor.spheres3D = this.editor.spheres3D.filter(
+        (s) => this.editor.bodies.get(s.id) !== b2
+      )
+      this.editor.bodies.delete(
+        this.editor.spheres3D.find((s) => this.editor.bodies.get(s.id) === b2)?.id
+      )
     }
   }
 
@@ -111,7 +138,7 @@ export class GameLogic {
                 )
               )
               direction.Normalized()
-              let velocity = direction.Mul(20)
+              let velocity = direction.Mul(50)
               projectileBody.SetLinearVelocity(
                 new editor.physics.jolt.Vec3(velocity.GetX(), velocity.GetY(), velocity.GetZ())
               )

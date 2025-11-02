@@ -81,6 +81,7 @@ import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
 import { degreesToRadians } from '@renderer/engine/transform'
 import { GameLogic } from '../../engine/GameLogic'
 import { Sphere3DConfig } from '@renderer/engine/sphere3d'
+import HealthBar from './HealthBar'
 
 export interface GameNode {
   id: string
@@ -180,6 +181,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+  const [enemyHealth, setEnemyHealth] = useState(100)
 
   const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges])
 
@@ -464,7 +466,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       await pipeline.beginRendering(editor)
 
       editorRef.current = editor
-      editor.gameLogic = new GameLogic(editor)
+      editor.gameLogic = new GameLogic(editor, setEnemyHealth)
       editorRef.current.target = SaveTarget.Games
       editorStateRef.current.saveTarget = SaveTarget.Games
 
@@ -697,6 +699,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     saveSequencesData(editor_state.savedState.sequences, SaveTarget.Games)
   }
 
+
+
   return (
     <>
       {error ? (
@@ -717,6 +721,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       )}
 
       <section className="flex flex-col">
+        <HealthBar health={enemyHealth} />
         <div className="flex flex-row mb-2 gap-4 justify-between w-full">
           <div className="flex flex-row gap-4 items-center">
             <ProjectSelector currentProjectId={projectId} currentProjectName={project_name} />

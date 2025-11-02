@@ -205,6 +205,7 @@ export class Physics {
       contactNormal,
       settings
     ) => {
+      // console.info('characterContactListener.OnContactAdded')
       this.runContactAddedListeners(
         character,
         bodyID2,
