@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from 'uuid'
 export class GameLogic {
   private editor: Editor
   public enemyHealth: number = 100
+  private lastShotTime: number = 0
+  private fireRate: number = 1000 // 1 shot per second
 
   constructor(editor: Editor) {
     this.editor = editor
@@ -68,55 +70,59 @@ export class GameLogic {
     // Shoot projectile
     const shootNode = nodes.find((n) => n.data.label === 'ShootProjectile')
     if (shootNode) {
-      const projectileId = uuidv4()
-      const projectileConfig: Sphere3DConfig = {
-        id: projectileId,
-        name: 'Projectile',
-        radius: 0.2,
-        position: {
-          x: enemyCharacter.GetPosition().GetX(),
-          y: enemyCharacter.GetPosition().GetY(),
-          z: enemyCharacter.GetPosition().GetZ()
-        },
-        rotation: [0, 0, 0],
-        backgroundFill: {
-          type: 'Color',
-          value: [1.0, 0.0, 0.0, 1.0]
-        },
-        layer: 0
-      }
-      editor.add_sphere3d(projectileConfig, projectileConfig.id, editor.currentSequenceData.id)
-      const projectileBody = editor.physics.createDynamicSphere(
-        new editor.physics.jolt.RVec3(
-          projectileConfig.position.x,
-          projectileConfig.position.y,
-          projectileConfig.position.z
-        ),
-        new editor.physics.jolt.Quat(0, 0, 0, 1),
-        projectileConfig.radius
-      )
-      editor.bodies.set(projectileId, projectileBody)
-      editor.projectiles.push({ id: projectileId, creationTime: Date.now() })
-      const playerNode = nodes.find((n) => n.data.label === 'PlayerController')
-      if (playerNode) {
-        const playerCharacter = editor.characters.get(
-          editor.cubes3D.find((c) => c.name === 'PlayerCharacter')?.id
+      const now = Date.now()
+      if (now - this.lastShotTime > this.fireRate) {
+        this.lastShotTime = now
+        const projectileId = uuidv4()
+        const projectileConfig: Sphere3DConfig = {
+          id: projectileId,
+          name: 'Projectile',
+          radius: 0.2,
+          position: {
+            x: enemyCharacter.GetPosition().GetX(),
+            y: enemyCharacter.GetPosition().GetY(),
+            z: enemyCharacter.GetPosition().GetZ()
+          },
+          rotation: [0, 0, 0],
+          backgroundFill: {
+            type: 'Color',
+            value: [1.0, 0.0, 0.0, 1.0]
+          },
+          layer: 0
+        }
+        editor.add_sphere3d(projectileConfig, projectileConfig.id, editor.currentSequenceData.id)
+        const projectileBody = editor.physics.createDynamicSphere(
+          new editor.physics.jolt.RVec3(
+            projectileConfig.position.x,
+            projectileConfig.position.y,
+            projectileConfig.position.z
+          ),
+          new editor.physics.jolt.Quat(0, 0, 0, 1),
+          projectileConfig.radius
         )
-        if (playerCharacter) {
-          const playerPosition = playerCharacter.GetPosition()
-          const enemyPosition = enemyCharacter.GetPosition()
-          const direction = playerPosition.Sub(
-            new editor.physics.jolt.Vec3(
-              enemyPosition.GetX(),
-              enemyPosition.GetY(),
-              enemyPosition.GetZ()
+        editor.bodies.set(projectileId, projectileBody)
+        editor.projectiles.push({ id: projectileId, creationTime: Date.now() })
+        const playerNode = nodes.find((n) => n.data.label === 'PlayerController')
+        if (playerNode) {
+          const playerCharacter = editor.characters.get(
+            editor.cubes3D.find((c) => c.name === 'PlayerCharacter')?.id
+          )
+          if (playerCharacter) {
+            const playerPosition = playerCharacter.GetPosition()
+            const enemyPosition = enemyCharacter.GetPosition()
+            const direction = playerPosition.Sub(
+              new editor.physics.jolt.Vec3(
+                enemyPosition.GetX(),
+                enemyPosition.GetY(),
+                enemyPosition.GetZ()
+              )
             )
-          )
-          direction.Normalized()
-          let velocity = direction.Mul(20)
-          projectileBody.SetLinearVelocity(
-            new editor.physics.jolt.Vec3(velocity.GetX(), velocity.GetY(), velocity.GetZ())
-          )
+            direction.Normalized()
+            let velocity = direction.Mul(20)
+            projectileBody.SetLinearVelocity(
+              new editor.physics.jolt.Vec3(velocity.GetX(), velocity.GetY(), velocity.GetZ())
+            )
+          }
         }
       }
     }
