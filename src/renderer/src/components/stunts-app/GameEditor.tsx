@@ -76,9 +76,10 @@ import Container from '@renderer/engine/container'
 import Jolt from 'jolt-physics/debug-wasm-compat'
 import { Physics } from '../../engine/physics'
 import { CameraAnimation } from '@renderer/engine/3dcamera'
-import GameLogic from './GameLogic'
+import GameLogicEditor from './GameLogic'
 import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
 import { degreesToRadians } from '@renderer/engine/transform'
+import { GameLogic } from '../../engine/GameLogic'
 import { Sphere3DConfig } from '@renderer/engine/sphere3d'
 
 export interface GameNode {
@@ -179,135 +180,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
-  const [enemyHealth, setEnemyHealth] = useState(100)
 
   const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges])
-
-  useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.nodes = nodes
-    }
-  }, [nodes])
-
-  const handleEnemyLogic = () => {
-    if (!editorRef.current) return
-
-    const editor = editorRef.current
-    const enemyNode = nodes.find((n) => n.data.label === 'EnemyController')
-    if (!enemyNode) return
-
-    const enemyId = editor.cubes3D.find((c) => c.name === 'EnemyCharacter')?.id
-    if (!enemyId) return
-
-    const enemyCharacter = editor.characters.get(enemyId)
-    if (enemyCharacter) {
-      // Random walk
-      const randomX = Math.random() * 2 - 1
-      const randomZ = Math.random() * 2 - 1
-      const moveDirection = new editor.physics.jolt.Vec3(randomX, 0, randomZ)
-      enemyCharacter.SetLinearVelocity(moveDirection.Mul(5))
-    }
-
-    // Shoot projectile
-    const shootNode = nodes.find((n) => n.data.label === 'ShootProjectile')
-    if (shootNode) {
-      const projectileId = uuidv4()
-      const projectileConfig: Sphere3DConfig = {
-        id: projectileId,
-        name: 'Projectile',
-        radius: 0.2,
-        position: {
-          x: enemyCharacter.GetPosition().GetX(),
-          y: enemyCharacter.GetPosition().GetY(),
-          z: enemyCharacter.GetPosition().GetZ()
-        },
-        rotation: [0, 0, 0],
-        backgroundFill: {
-          type: 'Color',
-          value: [1.0, 0.0, 0.0, 1.0]
-        },
-        layer: 0
-      }
-      editor.add_sphere3d(projectileConfig, projectileConfig.id, current_sequence_id)
-      const projectileBody = editor.physics.createDynamicSphere(
-        new editor.physics.jolt.RVec3(
-          projectileConfig.position.x,
-          projectileConfig.position.y,
-          projectileConfig.position.z
-        ),
-        new editor.physics.jolt.Quat(0, 0, 0, 1),
-        projectileConfig.radius
-      )
-      editor.bodies.set(projectileId, projectileBody)
-      editor.projectiles.push({ id: projectileId, creationTime: Date.now() })
-      const playerNode = nodes.find((n) => n.data.label === 'PlayerController')
-      if (playerNode) {
-        const playerCharacter = editor.characters.get(
-          editor.cubes3D.find((c) => c.name === 'PlayerCharacter')?.id
-        )
-        if (playerCharacter) {
-          const playerPosition = playerCharacter.GetPosition()
-          const enemyPosition = enemyCharacter.GetPosition()
-          const direction = playerPosition.Sub(
-            new editor.physics.jolt.Vec3(
-              enemyPosition.GetX(),
-              enemyPosition.GetY(),
-              enemyPosition.GetZ()
-            )
-          )
-          direction.Normalized()
-          let velocity = direction.Mul(20)
-          projectileBody.SetLinearVelocity(
-            new editor.physics.jolt.Vec3(velocity.GetX(), velocity.GetY(), velocity.GetZ())
-          )
-        }
-      }
-    }
-
-    // Health logic
-    const healthNode = nodes.find((n) => n.data.label === 'Health')
-    if (healthNode) {
-      if (typeof healthNode.data.value === 'number' && healthNode.data.value <= 0) {
-        // Enemy is dead
-        const enemy = editor.cubes3D.find((c) => c.name === 'EnemyCharacter')
-        if (enemy) {
-          // editor.remove_cube3d(enemy.id)
-          editor.cubes3D = editor.cubes3D.filter((c) => c.id !== enemy.id)
-          editor.characters.delete(enemy.id)
-          setNodes((nds) =>
-            nds.filter((n) => n.id !== '7' && n.id !== '8' && n.id !== '9' && n.id !== '10')
-          )
-        }
-      }
-    }
-  }
-
-  useEffect(() => {
-    if (isPlaying) {
-      const interval = setInterval(() => {
-        handleEnemyLogic()
-
-        if (editorRef.current) {
-          const editor = editorRef.current
-          const now = Date.now()
-          const expiredProjectiles = editor.projectiles.filter(
-            (p) => now - p.creationTime > editor.projectileLifetime
-          )
-
-          expiredProjectiles.forEach((p) => {
-            // editor.remove_sphere3d(p.id)
-            editor.spheres3D = editor.spheres3D.filter((s) => s.id !== p.id)
-            editor.bodies.delete(p.id)
-          })
-
-          editor.projectiles = editor.projectiles.filter(
-            (p) => now - p.creationTime <= editor.projectileLifetime
-          )
-        }
-      }, 1000)
-      return () => clearInterval(interval)
-    }
-  }, [isPlaying])
 
   useEffect(() => {
     const canvas = document.getElementById(`game-canvas`) as HTMLCanvasElement
@@ -590,6 +464,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       await pipeline.beginRendering(editor)
 
       editorRef.current = editor
+      editor.gameLogic = new GameLogic(editor)
       editorRef.current.target = SaveTarget.Games
       editorStateRef.current.saveTarget = SaveTarget.Games
 
@@ -781,42 +656,6 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       )
       editor.bodies.set('landscape-cube', landscapeBody)
 
-      const OnContactAdded = (
-        character,
-        bodyID2,
-        subShapeID2,
-        contactPosition,
-        contactNormal,
-        settings
-      ) => {
-        const b1 = character
-        const b2 = bodyID2
-
-        const isProjectile = (body) => {
-          const projectile = editor.spheres3D.find((s) => editor.bodies.get(s.id) === body)
-          return projectile && projectile.name === 'Projectile'
-        }
-
-        const isEnemy = (body) => {
-          const enemy = editor.cubes3D.find((c) => editor.bodies.get(c.id) === body)
-          return enemy && enemy.name === 'EnemyCharacter'
-        }
-
-        if ((isProjectile(b1) && isEnemy(b2)) || (isProjectile(b2) && isEnemy(b1))) {
-          setEnemyHealth((h) => h - 10)
-          setNodes((nds) =>
-            nds.map((n) => {
-              if (n.id === '10' && typeof n.data.value === 'number') {
-                n.data = { ...n.data, value: n.data.value - 10 }
-              }
-              return n
-            })
-          )
-        }
-      }
-
-      editor.physics.contactAddListeners.push(OnContactAdded)
-
       // const dynamicBody = editor.physics.createDynamicBox(
       //   new editor.physics.jolt.RVec3(0, 200, 0),
       //   new editor.physics.jolt.Quat(0, 0, 0, 1),
@@ -993,7 +832,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                 {toolbarTab === 'logic' && (
                   <div className="text-white">
                     <h5 className="text-lg font-semibold mb-4">Game Logic</h5>
-                    <GameLogic
+                    <GameLogicEditor
                       nodes={nodes}
                       edges={edges}
                       onNodesChange={onNodesChange}

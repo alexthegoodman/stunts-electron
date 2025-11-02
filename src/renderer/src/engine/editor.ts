@@ -76,6 +76,7 @@ import {
 } from './editor/helpers'
 import { fromNDC, toNDC, toSystemScale } from './vertex'
 import { radiansToDegrees } from './transform'
+import { GameLogic } from './GameLogic'
 
 export const TEXT_BACKGROUNDS_DEFAULT_HIDDEN = true
 
@@ -222,6 +223,7 @@ export class Editor {
   models3D: Model3D[] = []
   projectiles: { id: string; creationTime: number }[] = []
   projectileLifetime: number = 5000 // 5 seconds
+  gameLogic: GameLogic | null = null
 
   draggingCube3D: string | null
   draggingSphere3D: string | null

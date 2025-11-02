@@ -3,7 +3,13 @@ import { ReactFlow, Node, Edge, addEdge, Background, Controls, MiniMap } from '@
 
 import '@xyflow/react/dist/base.css'
 
-const GameLogic: React.FC<any> = ({ nodes, edges, onNodesChange, onEdgesChange, onConnect }) => {
+const GameLogicEditor: React.FC<any> = ({
+  nodes,
+  edges,
+  onNodesChange,
+  onEdgesChange,
+  onConnect
+}) => {
   return (
     <div style={{ height: '500px' }}>
       <ReactFlow
@@ -21,4 +27,4 @@ const GameLogic: React.FC<any> = ({ nodes, edges, onNodesChange, onEdgesChange, 
   )
 }
 
-export default GameLogic
+export default GameLogicEditor

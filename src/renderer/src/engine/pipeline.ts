@@ -849,6 +849,10 @@ export class CanvasPipeline {
           }
         }
       }
+
+      if (editor.gameLogic) {
+        editor.gameLogic.update()
+      }
     }
 
     editor.stepVideoAnimations(editor.camera, currentTimeS)
