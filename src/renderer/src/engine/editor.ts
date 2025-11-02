@@ -864,7 +864,17 @@ export class Editor {
           )
           this.characters.set(c.id, dynamicBody)
 
-          console.log('Vrtual Character restored...')
+          console.log('Player Character restored...')
+        } else if (c.name === 'EnemyCharacter') {
+          const dynamicBody = this.physics.createVirtualCharacter(
+            new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z),
+            new this.physics.jolt.Quat(0, 0, 0, 1),
+            2, // characterHeightStanding
+            1 // characterRadiusStanding
+          )
+          this.characters.set(c.id, dynamicBody)
+
+          console.log('Enemy Character restored...')
         } else {
           const dynamicBody = this.physics.createDynamicBox(
             new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z || 0),

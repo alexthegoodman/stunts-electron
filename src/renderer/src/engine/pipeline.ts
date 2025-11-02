@@ -699,7 +699,7 @@ export class CanvasPipeline {
     }
 
     // Animation steps (same as WebGPU)
-    // TODO: need to wrap this up in an LOD manager which loads or unloads physics based on distance
+    // TODO: need to loop through all the bodies to update? Just the dynamic ones?
     // if (editor.physics && editor.bodies.size > 0) {
     //   editor.physics.step(1.0 / 60.0) // Step with a fixed time step
 
@@ -825,6 +825,22 @@ export class CanvasPipeline {
             this.prePhysicsUpdate(editor, playerBody, deltaTime)
 
             editor.physics.step(deltaTime) // TODO: get actual deltaTime between frames
+
+            for (const [id, body] of editor.bodies.entries()) {
+              const { position, rotation } = editor.physics.getBodyPositionAndRotation(body)
+              const sphere = editor.spheres3D.find((s) => s.id === id)
+              if (sphere) {
+                sphere.transform.position[0] = position.GetX()
+                sphere.transform.position[1] = position.GetY()
+                sphere.transform.position[2] = position.GetZ()
+
+                sphere.transform.rotationX = rotation.GetEulerAngles().GetX()
+                sphere.transform.rotationY = rotation.GetEulerAngles().GetY()
+                sphere.transform.rotation = rotation.GetEulerAngles().GetZ()
+
+                sphere.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+              }
+            }
 
             const dynamicCubeBody = playerBody
             if (dynamicCubeBody) {

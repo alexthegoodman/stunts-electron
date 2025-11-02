@@ -14,14 +14,7 @@ export class GameLogic {
     this.editor.physics.contactAddListeners.push(this.OnContactAdded.bind(this))
   }
 
-  OnContactAdded = (
-    character,
-    bodyID2,
-    subShapeID2,
-    contactPosition,
-    contactNormal,
-    settings
-  ) => {
+  OnContactAdded = (character, bodyID2, subShapeID2, contactPosition, contactNormal, settings) => {
     const b1 = character
     const b2 = bodyID2
 
@@ -65,63 +58,64 @@ export class GameLogic {
       const randomZ = Math.random() * 2 - 1
       const moveDirection = new editor.physics.jolt.Vec3(randomX, 0, randomZ)
       enemyCharacter.SetLinearVelocity(moveDirection.Mul(5))
-    }
 
-    // Shoot projectile
-    const shootNode = nodes.find((n) => n.data.label === 'ShootProjectile')
-    if (shootNode) {
-      const now = Date.now()
-      if (now - this.lastShotTime > this.fireRate) {
-        this.lastShotTime = now
-        const projectileId = uuidv4()
-        const projectileConfig: Sphere3DConfig = {
-          id: projectileId,
-          name: 'Projectile',
-          radius: 0.2,
-          position: {
-            x: enemyCharacter.GetPosition().GetX(),
-            y: enemyCharacter.GetPosition().GetY(),
-            z: enemyCharacter.GetPosition().GetZ()
-          },
-          rotation: [0, 0, 0],
-          backgroundFill: {
-            type: 'Color',
-            value: [1.0, 0.0, 0.0, 1.0]
-          },
-          layer: 0
-        }
-        editor.add_sphere3d(projectileConfig, projectileConfig.id, editor.currentSequenceData.id)
-        const projectileBody = editor.physics.createDynamicSphere(
-          new editor.physics.jolt.RVec3(
-            projectileConfig.position.x,
-            projectileConfig.position.y,
-            projectileConfig.position.z
-          ),
-          new editor.physics.jolt.Quat(0, 0, 0, 1),
-          projectileConfig.radius
-        )
-        editor.bodies.set(projectileId, projectileBody)
-        editor.projectiles.push({ id: projectileId, creationTime: Date.now() })
-        const playerNode = nodes.find((n) => n.data.label === 'PlayerController')
-        if (playerNode) {
-          const playerCharacter = editor.characters.get(
-            editor.cubes3D.find((c) => c.name === 'PlayerCharacter')?.id
+      // Shoot projectile
+      const shootNode = nodes.find((n) => n.data.label === 'ShootProjectile')
+      if (shootNode) {
+        const now = Date.now()
+        // TODO: maybe add a gap timer for update checks here in gamelogic
+        if (now - this.lastShotTime > this.fireRate) {
+          this.lastShotTime = now
+          const projectileId = uuidv4()
+          const projectileConfig: Sphere3DConfig = {
+            id: projectileId,
+            name: 'Projectile',
+            radius: 0.2,
+            position: {
+              x: enemyCharacter.GetPosition().GetX(),
+              y: enemyCharacter.GetPosition().GetY(),
+              z: enemyCharacter.GetPosition().GetZ()
+            },
+            rotation: [0, 0, 0],
+            backgroundFill: {
+              type: 'Color',
+              value: [1.0, 0.0, 0.0, 1.0]
+            },
+            layer: 0
+          }
+          editor.add_sphere3d(projectileConfig, projectileConfig.id, editor.currentSequenceData.id)
+          const projectileBody = editor.physics.createDynamicSphere(
+            new editor.physics.jolt.RVec3(
+              projectileConfig.position.x,
+              projectileConfig.position.y,
+              projectileConfig.position.z
+            ),
+            new editor.physics.jolt.Quat(0, 0, 0, 1),
+            projectileConfig.radius
           )
-          if (playerCharacter) {
-            const playerPosition = playerCharacter.GetPosition()
-            const enemyPosition = enemyCharacter.GetPosition()
-            const direction = playerPosition.Sub(
-              new editor.physics.jolt.Vec3(
-                enemyPosition.GetX(),
-                enemyPosition.GetY(),
-                enemyPosition.GetZ()
+          editor.bodies.set(projectileId, projectileBody)
+          editor.projectiles.push({ id: projectileId, creationTime: Date.now() })
+          const playerNode = nodes.find((n) => n.data.label === 'PlayerController')
+          if (playerNode) {
+            const playerCharacter = editor.characters.get(
+              editor.cubes3D.find((c) => c.name === 'PlayerCharacter')?.id
+            )
+            if (playerCharacter) {
+              const playerPosition = playerCharacter.GetPosition()
+              const enemyPosition = enemyCharacter.GetPosition()
+              const direction = playerPosition.Sub(
+                new editor.physics.jolt.Vec3(
+                  enemyPosition.GetX(),
+                  enemyPosition.GetY(),
+                  enemyPosition.GetZ()
+                )
               )
-            )
-            direction.Normalized()
-            let velocity = direction.Mul(20)
-            projectileBody.SetLinearVelocity(
-              new editor.physics.jolt.Vec3(velocity.GetX(), velocity.GetY(), velocity.GetZ())
-            )
+              direction.Normalized()
+              let velocity = direction.Mul(20)
+              projectileBody.SetLinearVelocity(
+                new editor.physics.jolt.Vec3(velocity.GetX(), velocity.GetY(), velocity.GetZ())
+              )
+            }
           }
         }
       }
@@ -137,7 +131,9 @@ export class GameLogic {
           // editor.remove_cube3d(enemy.id)
           editor.cubes3D = editor.cubes3D.filter((c) => c.id !== enemy.id)
           editor.characters.delete(enemy.id)
-          editor.nodes = editor.nodes.filter((n) => n.id !== '7' && n.id !== '8' && n.id !== '9' && n.id !== '10')
+          editor.nodes = editor.nodes.filter(
+            (n) => n.id !== '7' && n.id !== '8' && n.id !== '9' && n.id !== '10'
+          )
         }
       }
     }
