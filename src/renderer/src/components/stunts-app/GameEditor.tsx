@@ -553,8 +553,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
         id: 'landscape-cube',
         name: 'Landscape',
         // dimensions: [1000, 10, 1000],
-        dimensions: [15, 2, 15],
-        position: { x: 0, y: -25, z: 0 },
+        dimensions: [100, 2, 100],
+        position: { x: 0, y: -5, z: 0 },
         rotation: [0, 0, 0],
         backgroundFill: {
           type: 'Color',

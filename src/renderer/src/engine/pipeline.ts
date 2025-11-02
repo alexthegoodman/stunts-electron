@@ -869,7 +869,14 @@ export class CanvasPipeline {
 
     // Enable depth testing and culling (similar to WebGPU setup)
     gl.enable(gl.DEPTH_TEST)
-    gl.disable(gl.CULL_FACE) // disabling this fixed a annoying bug with culling
+
+    if (editor.target === SaveTarget.Games) {
+      gl.enable(gl.CULL_FACE) // disabling this fixed a annoying bug with culling
+    } else {
+      gl.disable(gl.CULL_FACE) // disabling this fixed a annoying bug with culling
+      gl.depthMask(false)
+    }
+
     // gl.cullFace(gl.BACK);
     // gl.frontFace(gl.CCW);
 
@@ -877,7 +884,7 @@ export class CanvasPipeline {
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-    gl.depthMask(false)
+    // gl.depthMask(false)
 
     // Bind camera uniform buffer (bind group 0)
     if (editor.cameraBinding) {
