@@ -270,7 +270,7 @@ class StorageService {
           updatedAt: new Date().toISOString()
         }
 
-        console.info('updatedProject.gameData', updatedProject.gameData)
+        // console.info('updatedProject.gameData', updatedProject.gameData)
         break
     }
 

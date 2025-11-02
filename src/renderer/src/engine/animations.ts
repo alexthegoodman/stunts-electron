@@ -107,6 +107,7 @@ export interface CameraSettings {
   animation: CameraAnimation | null
 }
 
+// Doubles as Levels in Games
 export interface Sequence {
   id: string
   name?: string
