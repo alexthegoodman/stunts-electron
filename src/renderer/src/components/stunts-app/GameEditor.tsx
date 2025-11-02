@@ -113,6 +113,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
   let [rotateY, setRotateY] = useState(0)
 
   let [zoom, setZoom] = useState(0)
+  let [zoomMax, setZoomMax] = useState(25)
+  let [zoomMin, setZoomMin] = useState(-25)
 
   // Text Animation state
   let [selectedTextId, setSelectedTextId] = useState<string | null>(null)
@@ -362,6 +364,9 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       editorRef.current = editor
 
       await editor.restore_sequence_objects(saved_sequence, false, settings)
+
+      editor.camera.setPosition(0, 0, 250)
+      editor.cameraBinding.update(editor.gpuResources.queue, editor.camera)
 
       const canvas = document.getElementById(`game-canvas`) as HTMLCanvasElement
       setupCanvasMouseTracking(editor, canvas)
@@ -678,11 +683,43 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                     <h5 className="text-lg font-semibold mb-4">Camera Controls</h5>
 
                     <div className="">
+                      <label className="block text-sm font-medium">Zoom Range</label>
+                      <input
+                        type="number"
+                        min="-1000"
+                        max="1000"
+                        step="0.1"
+                        value={zoomMin}
+                        className="w-full"
+                        onChange={(e) => {
+                          const editor = editorRef.current
+                          if (editor && editor.camera) {
+                            const newValue = parseFloat(e.target.value)
+
+                            setZoomMin(newValue)
+                          }
+                        }}
+                      />
+                      <input
+                        type="number"
+                        min="-1000"
+                        max="1000"
+                        step="0.1"
+                        value={zoomMax}
+                        className="w-full"
+                        onChange={(e) => {
+                          const editor = editorRef.current
+                          if (editor && editor.camera) {
+                            const newValue = parseFloat(e.target.value)
+                            setZoomMax(newValue)
+                          }
+                        }}
+                      />
                       <label className="block text-sm font-medium">Zoom</label>
                       <input
                         type="range"
-                        min="-25"
-                        max="25"
+                        min={zoomMin}
+                        max={zoomMax}
                         step="0.1"
                         value={zoom}
                         className="w-full"
@@ -840,49 +877,6 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         }}
                       >
                         Reset Camera
-                      </button>
-
-                      <hr className="invisible py-2" />
-
-                      <h5 className="block text-sm font-medium mb-2 text-white">
-                        Camera Animations
-                      </h5>
-
-                      <button
-                        className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
-                        onClick={() => {
-                          const editor = editorRef.current
-                          const editorState = editorStateRef.current
-
-                          if (editor && editorState && editor.camera) {
-                            editor.camera.animation = CameraAnimation.PanDownReveal
-                            editorState.updateCameraAnimation(
-                              current_sequence_id,
-                              CameraAnimation.PanDownReveal
-                            )
-                            toast.success('Applied camera animation')
-                          }
-                        }}
-                      >
-                        Pan Down Reveal
-                      </button>
-                      <button
-                        className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
-                        onClick={() => {
-                          const editor = editorRef.current
-                          const editorState = editorStateRef.current
-
-                          if (editor && editorState && editor.camera) {
-                            editor.camera.animation = CameraAnimation.ZoomRotateIn
-                            editorState.updateCameraAnimation(
-                              current_sequence_id,
-                              CameraAnimation.ZoomRotateIn
-                            )
-                            toast.success('Applied camera animation')
-                          }
-                        }}
-                      >
-                        Zoom Rotate In
                       </button>
                     </div>
                   </div>
