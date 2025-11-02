@@ -14,6 +14,15 @@ export class Physics {
   bodyFilter: Jolt.BodyFilter
   shapeFilter: Jolt.ShapeFilter
 
+  contactAddListeners: ((
+    character,
+    bodyID2,
+    subShapeID2,
+    contactPosition,
+    contactNormal,
+    settings
+  ) => void)[]
+
   constructor() {}
 
   public async initialize(): Promise<void> {
@@ -93,6 +102,34 @@ export class Physics {
     return body
   }
 
+  public createDynamicSphere(position: Jolt.RVec3, rotation: Jolt.Quat, size: number): Jolt.Body {
+    const shape = new this.jolt.SphereShape(size, null)
+    const creationSettings = new this.jolt.BodyCreationSettings(
+      shape,
+      position,
+      rotation,
+      this.jolt.EMotionType_Dynamic,
+      this.ObjectLayer_Moving.GetValue()
+    )
+    const body = this.bodyInterface.CreateBody(creationSettings)
+    this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_Activate)
+    return body
+  }
+
+  public runContactAddedListeners(
+    character,
+    bodyID2,
+    subShapeID2,
+    contactPosition,
+    contactNormal,
+    settings
+  ) {
+    for (let index = 0; index < this.contactAddListeners.length; index++) {
+      const listener = this.contactAddListeners[index]
+      listener(character, bodyID2, subShapeID2, contactPosition, contactNormal, settings)
+    }
+  }
+
   public createVirtualCharacter(
     position: Jolt.RVec3,
     rotation: Jolt.Quat,
@@ -167,7 +204,16 @@ export class Physics {
       contactPosition,
       contactNormal,
       settings
-    ) => {}
+    ) => {
+      this.runContactAddedListeners(
+        character,
+        bodyID2,
+        subShapeID2,
+        contactPosition,
+        contactNormal,
+        settings
+      )
+    }
     characterContactListener.OnContactPersisted = (
       character,
       bodyID2,

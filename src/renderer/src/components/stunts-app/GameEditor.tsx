@@ -79,14 +79,32 @@ import { CameraAnimation } from '@renderer/engine/3dcamera'
 import GameLogic from './GameLogic'
 import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
 import { degreesToRadians } from '@renderer/engine/transform'
+import { Sphere3DConfig } from '@renderer/engine/sphere3d'
 
-const initialNodes = [
+export interface GameNode {
+  id: string
+  data: {
+    label: string
+    pressed?: boolean
+    value?: number | string
+  }
+  position: {
+    x: number
+    y: number
+  }
+}
+
+const initialNodes: GameNode[] = [
   { id: '1', data: { label: 'PlayerController' }, position: { x: 250, y: 5 } },
   { id: '2', data: { label: 'Input' }, position: { x: 100, y: 100 } },
   { id: '3', data: { label: 'Forward', pressed: false }, position: { x: 400, y: 100 } },
   { id: '4', data: { label: 'Backward', pressed: false }, position: { x: 400, y: 150 } },
   { id: '5', data: { label: 'Left', pressed: false }, position: { x: 400, y: 200 } },
-  { id: '6', data: { label: 'Right', pressed: false }, position: { x: 400, y: 250 } }
+  { id: '6', data: { label: 'Right', pressed: false }, position: { x: 400, y: 250 } },
+  { id: '7', data: { label: 'EnemyController' }, position: { x: 850, y: 5 } },
+  { id: '8', data: { label: 'RandomWalk' }, position: { x: 700, y: 100 } },
+  { id: '9', data: { label: 'ShootProjectile' }, position: { x: 1000, y: 100 } },
+  { id: '10', data: { label: 'Health', value: 100 }, position: { x: 850, y: 200 } }
 ]
 
 const initialEdges = [
@@ -94,7 +112,10 @@ const initialEdges = [
   { id: 'e3-2', source: '3', target: '2' },
   { id: 'e3-2', source: '4', target: '2' },
   { id: 'e3-2', source: '5', target: '2' },
-  { id: 'e3-2', source: '6', target: '2' }
+  { id: 'e3-2', source: '6', target: '2' },
+  { id: 'e8-7', source: '8', target: '7' },
+  { id: 'e9-7', source: '9', target: '7' },
+  { id: 'e10-7', source: '10', target: '7' }
 ]
 
 const DEFAULT_GAME_WIDTH = 1200
@@ -158,6 +179,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+  const [enemyHealth, setEnemyHealth] = useState(100)
 
   const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges])
 
@@ -166,6 +188,126 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       editorRef.current.nodes = nodes
     }
   }, [nodes])
+
+  const handleEnemyLogic = () => {
+    if (!editorRef.current) return
+
+    const editor = editorRef.current
+    const enemyNode = nodes.find((n) => n.data.label === 'EnemyController')
+    if (!enemyNode) return
+
+    const enemyId = editor.cubes3D.find((c) => c.name === 'EnemyCharacter')?.id
+    if (!enemyId) return
+
+    const enemyCharacter = editor.characters.get(enemyId)
+    if (enemyCharacter) {
+      // Random walk
+      const randomX = Math.random() * 2 - 1
+      const randomZ = Math.random() * 2 - 1
+      const moveDirection = new editor.physics.jolt.Vec3(randomX, 0, randomZ)
+      enemyCharacter.SetLinearVelocity(moveDirection.Mul(5))
+    }
+
+    // Shoot projectile
+    const shootNode = nodes.find((n) => n.data.label === 'ShootProjectile')
+    if (shootNode) {
+      const projectileId = uuidv4()
+      const projectileConfig: Sphere3DConfig = {
+        id: projectileId,
+        name: 'Projectile',
+        radius: 0.2,
+        position: {
+          x: enemyCharacter.GetPosition().GetX(),
+          y: enemyCharacter.GetPosition().GetY(),
+          z: enemyCharacter.GetPosition().GetZ()
+        },
+        rotation: [0, 0, 0],
+        backgroundFill: {
+          type: 'Color',
+          value: [1.0, 0.0, 0.0, 1.0]
+        },
+        layer: 0
+      }
+      editor.add_sphere3d(projectileConfig, projectileConfig.id, current_sequence_id)
+      const projectileBody = editor.physics.createDynamicSphere(
+        new editor.physics.jolt.RVec3(
+          projectileConfig.position.x,
+          projectileConfig.position.y,
+          projectileConfig.position.z
+        ),
+        new editor.physics.jolt.Quat(0, 0, 0, 1),
+        projectileConfig.radius
+      )
+      editor.bodies.set(projectileId, projectileBody)
+      editor.projectiles.push({ id: projectileId, creationTime: Date.now() })
+      const playerNode = nodes.find((n) => n.data.label === 'PlayerController')
+      if (playerNode) {
+        const playerCharacter = editor.characters.get(
+          editor.cubes3D.find((c) => c.name === 'PlayerCharacter')?.id
+        )
+        if (playerCharacter) {
+          const playerPosition = playerCharacter.GetPosition()
+          const enemyPosition = enemyCharacter.GetPosition()
+          const direction = playerPosition.Sub(
+            new editor.physics.jolt.Vec3(
+              enemyPosition.GetX(),
+              enemyPosition.GetY(),
+              enemyPosition.GetZ()
+            )
+          )
+          direction.Normalized()
+          let velocity = direction.Mul(20)
+          projectileBody.SetLinearVelocity(
+            new editor.physics.jolt.Vec3(velocity.GetX(), velocity.GetY(), velocity.GetZ())
+          )
+        }
+      }
+    }
+
+    // Health logic
+    const healthNode = nodes.find((n) => n.data.label === 'Health')
+    if (healthNode) {
+      if (typeof healthNode.data.value === 'number' && healthNode.data.value <= 0) {
+        // Enemy is dead
+        const enemy = editor.cubes3D.find((c) => c.name === 'EnemyCharacter')
+        if (enemy) {
+          // editor.remove_cube3d(enemy.id)
+          editor.cubes3D = editor.cubes3D.filter((c) => c.id !== enemy.id)
+          editor.characters.delete(enemy.id)
+          setNodes((nds) =>
+            nds.filter((n) => n.id !== '7' && n.id !== '8' && n.id !== '9' && n.id !== '10')
+          )
+        }
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (isPlaying) {
+      const interval = setInterval(() => {
+        handleEnemyLogic()
+
+        if (editorRef.current) {
+          const editor = editorRef.current
+          const now = Date.now()
+          const expiredProjectiles = editor.projectiles.filter(
+            (p) => now - p.creationTime > editor.projectileLifetime
+          )
+
+          expiredProjectiles.forEach((p) => {
+            // editor.remove_sphere3d(p.id)
+            editor.spheres3D = editor.spheres3D.filter((s) => s.id !== p.id)
+            editor.bodies.delete(p.id)
+          })
+
+          editor.projectiles = editor.projectiles.filter(
+            (p) => now - p.creationTime <= editor.projectileLifetime
+          )
+        }
+      }, 1000)
+      return () => clearInterval(interval)
+    }
+  }, [isPlaying])
 
   useEffect(() => {
     const canvas = document.getElementById(`game-canvas`) as HTMLCanvasElement
@@ -631,6 +773,42 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
         )
       )
       editor.bodies.set('landscape-cube', landscapeBody)
+
+      const OnContactAdded = (
+        character,
+        bodyID2,
+        subShapeID2,
+        contactPosition,
+        contactNormal,
+        settings
+      ) => {
+        const b1 = character
+        const b2 = bodyID2
+
+        const isProjectile = (body) => {
+          const projectile = editor.spheres3D.find((s) => editor.bodies.get(s.id) === body)
+          return projectile && projectile.name === 'Projectile'
+        }
+
+        const isEnemy = (body) => {
+          const enemy = editor.cubes3D.find((c) => editor.bodies.get(c.id) === body)
+          return enemy && enemy.name === 'EnemyCharacter'
+        }
+
+        if ((isProjectile(b1) && isEnemy(b2)) || (isProjectile(b2) && isEnemy(b1))) {
+          setEnemyHealth((h) => h - 10)
+          setNodes((nds) =>
+            nds.map((n) => {
+              if (n.id === '10' && typeof n.data.value === 'number') {
+                n.data = { ...n.data, value: n.data.value - 10 }
+              }
+              return n
+            })
+          )
+        }
+      }
+
+      editor.physics.contactAddListeners.push(OnContactAdded)
 
       // const dynamicBody = editor.physics.createDynamicBox(
       //   new editor.physics.jolt.RVec3(0, 200, 0),

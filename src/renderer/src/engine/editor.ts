@@ -216,10 +216,13 @@ export class Editor {
   brushes: ProceduralBrush[]
   brushDrawingMode: boolean
   currentBrush: ProceduralBrush | null
-  cubes3D: Cube3D[]
-  spheres3D: Sphere3D[]
-  mockups3D: Mockup3D[]
-  models3D: Model3D[]
+  cubes3D: Cube3D[] = []
+  spheres3D: Sphere3D[] = []
+  mockups3D: Mockup3D[] = []
+  models3D: Model3D[] = []
+  projectiles: { id: string; creationTime: number }[] = []
+  projectileLifetime: number = 5000 // 5 seconds
+
   draggingCube3D: string | null
   draggingSphere3D: string | null
   draggingMockup3D: string | null
