@@ -75,6 +75,7 @@ import { ProjectSelector } from '../ProjectSelector'
 import Container from '@renderer/engine/container'
 import Jolt from 'jolt-physics/debug-wasm-compat'
 import { Physics } from '../../engine/physics'
+import { CameraAnimation } from '@renderer/engine/3dcamera'
 
 const DEFAULT_GAME_WIDTH = 1200
 const DEFAULT_GAME_HEIGHT = 800
@@ -99,6 +100,19 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
   let [current_sequence_id, set_current_sequence_id] = useState<string | null>(null)
 
   let [toolbarTab, setToolbarTab] = useState('none')
+
+  // Camera orbit state
+  let [orbitX, setOrbitX] = useState(0)
+  let [orbitY, setOrbitY] = useState(0)
+
+  // Camera pan state
+  let [panX, setPanX] = useState(0)
+  let [panY, setPanY] = useState(0)
+
+  let [rotateX, setRotateX] = useState(0)
+  let [rotateY, setRotateY] = useState(0)
+
+  let [zoom, setZoom] = useState(0)
 
   // Text Animation state
   let [selectedTextId, setSelectedTextId] = useState<string | null>(null)
@@ -499,17 +513,19 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       // editor.physics = physics
 
       // Create physics bodies
+      console.info('Jolt', Jolt, Jolt.RVec3)
+
       const landscapeBody = editor.physics.createStaticBox(
-        new Jolt.RVec3(0, -50, 0),
-        new Jolt.Quat(0, 0, 0, 1),
-        new Jolt.Vec3(500, 5, 500)
+        new editor.physics.jolt.RVec3(0, -50, 0),
+        new editor.physics.jolt.Quat(0, 0, 0, 1),
+        new editor.physics.jolt.Vec3(500, 5, 500)
       )
       editor.bodies.set('landscape-cube', landscapeBody)
 
       const dynamicBody = editor.physics.createDynamicBox(
-        new Jolt.RVec3(0, 200, 0),
-        new Jolt.Quat(0, 0, 0, 1),
-        new Jolt.Vec3(25, 25, 25)
+        new editor.physics.jolt.RVec3(0, 200, 0),
+        new editor.physics.jolt.Quat(0, 0, 0, 1),
+        new editor.physics.jolt.Vec3(25, 25, 25)
       )
       editor.bodies.set('dynamic-cube', dynamicBody)
 
@@ -603,6 +619,17 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                     icon={'palette'}
                     label={'Themes'}
                   />
+                  <MiniSquareButton
+                    onClick={() => {
+                      if (toolbarTab === 'camera') {
+                        setToolbarTab('none')
+                      } else {
+                        setToolbarTab('camera')
+                      }
+                    }}
+                    icon="camera"
+                    label={'Camera'}
+                  />
                 </div>
               </div>
 
@@ -643,6 +670,221 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                     saveTarget={SaveTarget.Videos}
                     userLanguage={user?.userLanguage || 'en'}
                   /> */}
+                  </div>
+                )}
+
+                {toolbarTab === 'camera' && (
+                  <div className="text-white">
+                    <h5 className="text-lg font-semibold mb-4">Camera Controls</h5>
+
+                    <div className="">
+                      <label className="block text-sm font-medium">Zoom</label>
+                      <input
+                        type="range"
+                        min="-25"
+                        max="25"
+                        step="0.1"
+                        value={zoom}
+                        className="w-full"
+                        onChange={(e) => {
+                          const editor = editorRef.current
+                          if (editor && editor.camera) {
+                            const newValue = parseFloat(e.target.value)
+                            const delta = newValue - zoom
+                            editor.camera.update_zoom(delta)
+                            editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
+                            setZoom(newValue)
+                          }
+                        }}
+                      />
+
+                      {/* <h6 className="text-sm font-medium mb-3">Pan Camera</h6> */}
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Pan Horizontal (X)</label>
+                        <input
+                          type="range"
+                          min="-10"
+                          max="10"
+                          step="0.1"
+                          value={panX}
+                          className="w-full"
+                          onChange={(e) => {
+                            const editor = editorRef.current
+                            if (editor && editor.camera) {
+                              const newValue = parseFloat(e.target.value)
+                              const deltaX = newValue - panX
+                              editor.camera.pan(vec2.fromValues(deltaX, 0))
+                              editor.cameraBinding?.update(
+                                editor.gpuResources?.queue!,
+                                editor.camera
+                              )
+                              setPanX(newValue)
+                            }
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Pan Vertical (Y)</label>
+                        <input
+                          type="range"
+                          min="-10"
+                          max="10"
+                          step="0.1"
+                          value={panY}
+                          className="w-full"
+                          onChange={(e) => {
+                            const editor = editorRef.current
+                            if (editor && editor.camera) {
+                              const newValue = parseFloat(e.target.value)
+                              const deltaY = newValue - panY
+                              editor.camera.pan(vec2.fromValues(0, deltaY))
+                              editor.cameraBinding?.update(
+                                editor.gpuResources?.queue!,
+                                editor.camera
+                              )
+                              setPanY(newValue)
+                            }
+                          }}
+                        />
+                      </div>
+
+                      <hr className="invisible py-2" />
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Rotate (X)</label>
+                        <input
+                          type="range"
+                          min="-360"
+                          max="360"
+                          step="5"
+                          value={rotateX}
+                          className="w-full"
+                          onChange={(e) => {
+                            const editor = editorRef.current
+                            if (editor && editor.camera) {
+                              const newValue = parseFloat(e.target.value)
+                              const deltaX = newValue - rotateX
+                              editor.camera.rotate('x', deltaX)
+                              editor.cameraBinding?.update(
+                                editor.gpuResources?.queue!,
+                                editor.camera
+                              )
+                              setRotateX(newValue)
+                            }
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Rotate (Y)</label>
+                        <input
+                          type="range"
+                          min="-360"
+                          max="360"
+                          step="5"
+                          value={rotateY}
+                          className="w-full"
+                          onChange={(e) => {
+                            const editor = editorRef.current
+                            if (editor && editor.camera) {
+                              const newValue = parseFloat(e.target.value)
+                              const deltaY = newValue - rotateY
+                              editor.camera.rotate('y', deltaY)
+                              editor.cameraBinding?.update(
+                                editor.gpuResources?.queue!,
+                                editor.camera
+                              )
+                              setRotateY(newValue)
+                            }
+                          }}
+                        />
+                      </div>
+
+                      <hr className="invisible py-2" />
+
+                      <button
+                        className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
+                        onClick={() => {
+                          const editor = editorRef.current
+                          if (editor && editor.camera) {
+                            // Reset zoom
+                            editor.camera.reset_zoom()
+
+                            editor.camera.rotation = quat.create()
+
+                            // Reset orbit
+                            const orbitDeltaX = -orbitX
+                            const orbitDeltaY = -orbitY
+                            editor.camera.orbit(orbitDeltaX, orbitDeltaY)
+
+                            // Reset pan
+                            const panDeltaX = -panX
+                            const panDeltaY = -panY
+                            editor.camera.pan(vec2.fromValues(panDeltaX, panDeltaY))
+
+                            editor.camera.setPosition(0, 0, editor.camera.resetZ)
+
+                            editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
+
+                            // Reset state
+                            setOrbitX(0)
+                            setOrbitY(0)
+                            setPanX(0)
+                            setPanY(0)
+                            setRotateX(0)
+                            setRotateY(0)
+                            setZoom(0)
+                          }
+                        }}
+                      >
+                        Reset Camera
+                      </button>
+
+                      <hr className="invisible py-2" />
+
+                      <h5 className="block text-sm font-medium mb-2 text-white">
+                        Camera Animations
+                      </h5>
+
+                      <button
+                        className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
+                        onClick={() => {
+                          const editor = editorRef.current
+                          const editorState = editorStateRef.current
+
+                          if (editor && editorState && editor.camera) {
+                            editor.camera.animation = CameraAnimation.PanDownReveal
+                            editorState.updateCameraAnimation(
+                              current_sequence_id,
+                              CameraAnimation.PanDownReveal
+                            )
+                            toast.success('Applied camera animation')
+                          }
+                        }}
+                      >
+                        Pan Down Reveal
+                      </button>
+                      <button
+                        className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
+                        onClick={() => {
+                          const editor = editorRef.current
+                          const editorState = editorStateRef.current
+
+                          if (editor && editorState && editor.camera) {
+                            editor.camera.animation = CameraAnimation.ZoomRotateIn
+                            editorState.updateCameraAnimation(
+                              current_sequence_id,
+                              CameraAnimation.ZoomRotateIn
+                            )
+                            toast.success('Applied camera animation')
+                          }
+                        }}
+                      >
+                        Zoom Rotate In
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

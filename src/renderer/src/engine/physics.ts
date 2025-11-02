@@ -1,30 +1,45 @@
 import Jolt from 'jolt-physics/debug-wasm-compat'
 
 export class Physics {
-  private jolt: typeof Jolt
-  settings: Jolt.JoltSettings
-  interface: Jolt.JoltInterface
-  ObjectLayer_NonMoving: number = 0
-  ObjectLayer_Moving: number = 1
-  private physicsSystem: Jolt.PhysicsSystem
-  private bodyInterface: Jolt.BodyInterface
+  jolt: typeof Jolt
+  physicsSystem: Jolt.PhysicsSystem
+  bodyInterface: Jolt.BodyInterface
+  joltInterface: Jolt.JoltInterface
+  ObjectLayer_NonMoving: Jolt.BroadPhaseLayer
+  ObjectLayer_Moving: Jolt.BroadPhaseLayer
 
   constructor() {}
 
   public async initialize(): Promise<void> {
     this.jolt = await Jolt()
-    this.settings = new this.jolt.JoltSettings()
-    this.interface = new this.jolt.JoltInterface(this.settings)
-
     const jolt = this.jolt
 
     // Initialize Jolt
+    const settings = new jolt.JoltSettings()
 
-    const physicsSystem = new jolt.PhysicsSystem()
-    // physicsSystem.Init(settings);
+    // Configure object layers
+    const objectLayerPairFilter = new jolt.ObjectLayerPairFilterTable(2)
+    objectLayerPairFilter.EnableCollision(0, 1)
+    objectLayerPairFilter.EnableCollision(1, 1)
 
-    this.physicsSystem = physicsSystem
-    this.bodyInterface = physicsSystem.GetBodyInterface()
+    const broadPhaseLayerInterface = new jolt.BroadPhaseLayerInterfaceTable(2, 2)
+    this.ObjectLayer_NonMoving = new jolt.BroadPhaseLayer(0)
+    this.ObjectLayer_Moving = new jolt.BroadPhaseLayer(1)
+    broadPhaseLayerInterface.MapObjectToBroadPhaseLayer(0, this.ObjectLayer_NonMoving)
+    broadPhaseLayerInterface.MapObjectToBroadPhaseLayer(1, this.ObjectLayer_Moving)
+
+    settings.mObjectLayerPairFilter = objectLayerPairFilter
+    settings.mBroadPhaseLayerInterface = broadPhaseLayerInterface
+    settings.mObjectVsBroadPhaseLayerFilter = new jolt.ObjectVsBroadPhaseLayerFilterTable(
+      settings.mBroadPhaseLayerInterface,
+      2,
+      settings.mObjectLayerPairFilter,
+      2
+    )
+
+    this.joltInterface = new jolt.JoltInterface(settings)
+    this.physicsSystem = this.joltInterface.GetPhysicsSystem()
+    this.bodyInterface = this.physicsSystem.GetBodyInterface()
   }
 
   public createStaticBox(position: Jolt.RVec3, rotation: Jolt.Quat, size: Jolt.Vec3): Jolt.Body {
@@ -34,7 +49,7 @@ export class Physics {
       position,
       rotation,
       this.jolt.EMotionType_Static,
-      this.ObjectLayer_NonMoving
+      this.ObjectLayer_NonMoving.GetValue()
     )
     const body = this.bodyInterface.CreateBody(creationSettings)
     this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_DontActivate)
@@ -48,7 +63,7 @@ export class Physics {
       position,
       rotation,
       this.jolt.EMotionType_Dynamic,
-      this.ObjectLayer_Moving
+      this.ObjectLayer_Moving.GetValue()
     )
     const body = this.bodyInterface.CreateBody(creationSettings)
     this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_Activate)
@@ -56,7 +71,7 @@ export class Physics {
   }
 
   public step(deltaTime: number): void {
-    this.interface.Step(deltaTime, 1)
+    this.joltInterface.Step(deltaTime, 1)
   }
 
   public getBodyPositionAndRotation(body: Jolt.Body): {
