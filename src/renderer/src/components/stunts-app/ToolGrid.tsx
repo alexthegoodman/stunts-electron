@@ -1156,7 +1156,7 @@ export const ToolGrid = ({
             path: url,
             position: modelPosition,
             rotation: [0, 0, 0],
-            scale: [1, 1, 1],
+            scale: [10, 10, 10],
             backgroundFill: {
               type: 'Color',
               value: [0.7, 0.7, 0.75, 1.0] // Silver gray
