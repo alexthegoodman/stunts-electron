@@ -770,6 +770,7 @@ export class CanvasPipeline {
                       //   new editor.physics.jolt.Vec3(0, 0, 1000),
                       //   editor.physics.jolt.EActivation_Activate
                       // )
+                      console.info('back press')
                       this.handleInput(
                         editor,
                         playerBody,

@@ -91,7 +91,10 @@ const initialNodes = [
 
 const initialEdges = [
   { id: 'e2-1', source: '2', target: '1' },
-  { id: 'e3-2', source: '3', target: '2' }
+  { id: 'e3-2', source: '3', target: '2' },
+  { id: 'e3-2', source: '4', target: '2' },
+  { id: 'e3-2', source: '5', target: '2' },
+  { id: 'e3-2', source: '6', target: '2' }
 ]
 
 const DEFAULT_GAME_WIDTH = 1200
