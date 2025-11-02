@@ -38,7 +38,7 @@ export default function ProfilesPage() {
       localStorage.setItem('stored-project', JSON.stringify({ project_id: projectId }))
       console.info('projectId', projectId)
       setTimeout(() => {
-        router.push(`/redirect?to=/project/${projectId}/videos`)
+        router.push(`/redirect?to=/project/${projectId}/flow`)
       }, 500)
     } catch (error) {
       console.error('Error getting/creating default project:', error)

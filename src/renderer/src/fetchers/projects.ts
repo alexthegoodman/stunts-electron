@@ -24,6 +24,7 @@ export interface SingleProjectResponse {
     docData: SavedState
     presData: SavedState
     adData?: SavedState
+    gameData?: SavedState
     updatedAt: DateTime
     createdAt: DateTime
   } | null
@@ -156,13 +157,31 @@ export const getOrCreateDefaultProject = async (authToken: AuthToken | null): Pr
 
   const emptyAdState = getEmptyAdData()
 
+  const defaultGameLevel: Sequence = {
+    id: newId,
+    name: 'Level #1',
+    backgroundFill: { type: 'Color', value: [200, 200, 200, 255] },
+    // durationMs: 20000,
+    activePolygons: [],
+    polygonMotionPaths: [],
+    activeTextItems: [],
+    activeImageItems: [],
+    activeVideoItems: []
+  }
+
+  const emptyGameState: SavedState = {
+    sequences: [defaultGameLevel],
+    game_state: null
+  }
+
   const newProject = await createProject(
     '',
     'My First Project',
     videoState,
     emptyState,
     emptyState,
-    emptyAdState
+    emptyAdState,
+    emptyGameState
   )
   return newProject.newProject.id
 }
@@ -222,7 +241,8 @@ export const createProject = async (
   emptyVideoData: SavedState,
   emptyDocData: SavedState,
   emptyPresData: SavedState,
-  emptyAdData: SavedState
+  emptyAdData: SavedState,
+  emptyGameData: SavedState
 ): Promise<CreateProjectResponse> => {
   const userId = await getCurrentUserId()
 
@@ -232,7 +252,8 @@ export const createProject = async (
     emptyVideoData,
     emptyDocData,
     emptyPresData,
-    emptyAdData
+    emptyAdData,
+    emptyGameData
   })
 
   if (!result.success) {

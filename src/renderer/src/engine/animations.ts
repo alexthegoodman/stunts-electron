@@ -14,8 +14,9 @@ import { Editor } from './editor'
 
 export interface SavedState {
   sequences: Sequence[]
-  timeline_state: SavedTimelineStateConfig | null
+  timeline_state?: SavedTimelineStateConfig | null
   grid_state?: SavedGridStateConfig | null
+  game_state?: null
   settings?: ProjectSettings
 }
 

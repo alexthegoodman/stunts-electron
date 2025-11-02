@@ -22,6 +22,7 @@ export const ProjectSchema = z.object({
   docData: z.any().optional(),
   presData: z.any().optional(),
   adData: z.any().optional(),
+  gameData: z.any().optional(),
   createdAt: z.string(),
   updatedAt: z.string()
 })

@@ -14,6 +14,7 @@ declare global {
           emptyDocData?: any
           emptyPresData?: any
           emptyAdData?: any
+          emptyGameData?: any
         }) => Promise<any>
         update: (data: { projectId: string; fileData: any }) => Promise<any>
         updateTimeline: (data: { projectId: string; fileData: any }) => Promise<any>

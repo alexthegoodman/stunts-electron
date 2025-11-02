@@ -66,13 +66,31 @@ const ProjectForm = () => {
 
       const emptyAdState = getEmptyAdData()
 
+      const defaultGameLevel: Sequence = {
+        id: newId,
+        name: 'Level #1',
+        backgroundFill: { type: 'Color', value: [200, 200, 200, 255] },
+        // durationMs: 20000,
+        activePolygons: [],
+        polygonMotionPaths: [],
+        activeTextItems: [],
+        activeImageItems: [],
+        activeVideoItems: []
+      }
+
+      const gameData: SavedState = {
+        sequences: [defaultGameLevel],
+        game_state: null
+      }
+
       const info = await createProject(
         '',
         data.project_name,
         videoState,
         docState,
         presState,
-        emptyAdState
+        emptyAdState,
+        gameData
       )
       // router.push("/projects");
       // go directly to project videos page

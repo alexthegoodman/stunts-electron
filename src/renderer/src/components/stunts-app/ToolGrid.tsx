@@ -1287,7 +1287,9 @@ export const ToolGrid = ({
       )}
 
       <div className="flex flex-col ">
-        <span className="block mb-2 text-white text-xs">2D Elements</span>
+        {options.includes('square') && (
+          <span className="block mb-2 text-white text-xs">2D Elements</span>
+        )}
         <div className="flex flex-row flex-wrap gap-2 mb-4">
           {options.includes('page') && (
             <OptionButton
@@ -1364,7 +1366,7 @@ export const ToolGrid = ({
             />
           )}
         </div>
-        <span className="block mb-2 text-white text-xs">Media</span>
+        {options.includes('image') && <span className="block mb-2 text-white text-xs">Media</span>}
         <div className="flex flex-row flex-wrap gap-2 mb-4">
           {options.includes('image') && (
             <>
@@ -1717,96 +1719,102 @@ export const ToolGrid = ({
             />
           )}
         </div>
-        <span className="block mb-2 text-white text-xs">Brushes</span>
-        <div className="flex flex-row flex-wrap gap-2 mb-4">
-          {options.includes('brush') && (
-            <>
-              {/* <option value={BrushType.Noise}>Noise</option>
+        {options.includes('brush') && (
+          <>
+            <span className="block mb-2 text-white text-xs">Brushes</span>
+            <div className="flex flex-row flex-wrap gap-2 mb-4">
+              <>
+                {/* <option value={BrushType.Noise}>Noise</option>
                         <option value={BrushType.Dots}>Dots</option>
                         <option value={BrushType.Lines}>Lines</option>
                         <option value={BrushType.Voronoi}>Voronoi</option>
                         <option value={BrushType.Fractal}>Fractal</option>
                         <option value={BrushType.Gradient}>Gradient</option>
                         <option value={BrushType.Splatter}>Splatter</option> */}
+                <OptionButton
+                  style={{}}
+                  label={t('Noise Brush')}
+                  icon="brush"
+                  aria-label="Enable procedural brush drawing mode"
+                  callback={() => brushClick(BrushType.Noise)}
+                />
+                <OptionButton
+                  style={{}}
+                  label={t('Dots Brush')}
+                  icon="brush"
+                  aria-label="Enable procedural brush drawing mode"
+                  callback={() => brushClick(BrushType.Dots)}
+                />
+                <OptionButton
+                  style={{}}
+                  label={t('Lines Brush')}
+                  icon="brush"
+                  aria-label="Enable procedural brush drawing mode"
+                  callback={() => brushClick(BrushType.Lines)}
+                />
+                <OptionButton
+                  style={{}}
+                  label={t('Voronoi Brush')}
+                  icon="brush"
+                  aria-label="Enable procedural brush drawing mode"
+                  callback={() => brushClick(BrushType.Voronoi)}
+                />
+                <OptionButton
+                  style={{}}
+                  label={t('Fractal Brush')}
+                  icon="brush"
+                  aria-label="Enable procedural brush drawing mode"
+                  callback={() => brushClick(BrushType.Fractal)}
+                />
+                <OptionButton
+                  style={{}}
+                  label={t('Gradient Brush')}
+                  icon="brush"
+                  aria-label="Enable procedural brush drawing mode"
+                  callback={() => brushClick(BrushType.Gradient)}
+                />
+                <OptionButton
+                  style={{}}
+                  label={t('Splatter Brush')}
+                  icon="brush"
+                  aria-label="Enable procedural brush drawing mode"
+                  callback={() => brushClick(BrushType.Splatter)}
+                />
+              </>
+            </div>
+          </>
+        )}
+        {options.includes('repeat') && (
+          <>
+            <span className="block mb-2 text-white text-xs">Repeat FX</span>
+            <div className="flex flex-row flex-wrap gap-2 mb-4">
               <OptionButton
                 style={{}}
-                label={t('Noise Brush')}
-                icon="brush"
-                aria-label="Enable procedural brush drawing mode"
-                callback={() => brushClick(BrushType.Noise)}
+                label={t('Matrix Polygons')}
+                icon="cube"
+                aria-label="Create Matrix-style animated Polygons"
+                callback={() => {
+                  if (!currentSequenceId) {
+                    return
+                  }
+                  // on_add_model3d(currentSequenceId)
+                }}
               />
               <OptionButton
                 style={{}}
-                label={t('Dots Brush')}
-                icon="brush"
-                aria-label="Enable procedural brush drawing mode"
-                callback={() => brushClick(BrushType.Dots)}
+                label={t('Floating Speheres')}
+                icon="sphere"
+                aria-label="Create animated floating spheres"
+                callback={() => {
+                  if (!currentSequenceId) {
+                    return
+                  }
+                  // on_add_model3d(currentSequenceId)
+                }}
               />
-              <OptionButton
-                style={{}}
-                label={t('Lines Brush')}
-                icon="brush"
-                aria-label="Enable procedural brush drawing mode"
-                callback={() => brushClick(BrushType.Lines)}
-              />
-              <OptionButton
-                style={{}}
-                label={t('Voronoi Brush')}
-                icon="brush"
-                aria-label="Enable procedural brush drawing mode"
-                callback={() => brushClick(BrushType.Voronoi)}
-              />
-              <OptionButton
-                style={{}}
-                label={t('Fractal Brush')}
-                icon="brush"
-                aria-label="Enable procedural brush drawing mode"
-                callback={() => brushClick(BrushType.Fractal)}
-              />
-              <OptionButton
-                style={{}}
-                label={t('Gradient Brush')}
-                icon="brush"
-                aria-label="Enable procedural brush drawing mode"
-                callback={() => brushClick(BrushType.Gradient)}
-              />
-              <OptionButton
-                style={{}}
-                label={t('Splatter Brush')}
-                icon="brush"
-                aria-label="Enable procedural brush drawing mode"
-                callback={() => brushClick(BrushType.Splatter)}
-              />
-            </>
-          )}
-        </div>
-        <span className="block mb-2 text-white text-xs">Repeat FX</span>
-        <div className="flex flex-row flex-wrap gap-2 mb-4">
-          <OptionButton
-            style={{}}
-            label={t('Matrix Polygons')}
-            icon="cube"
-            aria-label="Create Matrix-style animated Polygons"
-            callback={() => {
-              if (!currentSequenceId) {
-                return
-              }
-              // on_add_model3d(currentSequenceId)
-            }}
-          />
-          <OptionButton
-            style={{}}
-            label={t('Floating Speheres')}
-            icon="sphere"
-            aria-label="Create animated floating spheres"
-            callback={() => {
-              if (!currentSequenceId) {
-                return
-              }
-              // on_add_model3d(currentSequenceId)
-            }}
-          />
-        </div>
+            </div>
+          </>
+        )}
       </div>
 
       <SourceSelectionModal

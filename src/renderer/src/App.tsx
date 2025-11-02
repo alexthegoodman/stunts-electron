@@ -24,6 +24,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import Ads from './stunts-pages/project/[projectId]/ads/page'
 import Copy from './stunts-pages/project/[projectId]/copy/page'
 import Library from './stunts-pages/project/[projectId]/library/page'
+import Games from './stunts-pages/project/[projectId]/games/page'
 
 function App(): React.JSX.Element {
   return (
@@ -41,13 +42,13 @@ function App(): React.JSX.Element {
 
             // Project routes (with layout)
             {
-              path: '/project/:projectId',
+              path: '/project/:projectId/flow',
               component: (
                 <ProjectLayout>
                   <Project />
                 </ProjectLayout>
-              ),
-              exact: true
+              )
+              // exact: true
             },
             {
               path: '/project/:projectId/choose-path',
@@ -62,6 +63,14 @@ function App(): React.JSX.Element {
               component: (
                 <ProjectLayout>
                   <Videos />
+                </ProjectLayout>
+              )
+            },
+            {
+              path: '/project/:projectId/games',
+              component: (
+                <ProjectLayout>
+                  <Games />
                 </ProjectLayout>
               )
             },
