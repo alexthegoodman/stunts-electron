@@ -58,6 +58,7 @@ import { getRandomNumber, InputValue, rgbToWgpu, wgpuToHuman } from '../../engin
 import { fileToBlob, StImageConfig } from '../../engine/image'
 import { TextRendererConfig } from '../../engine/text'
 import { PolygonConfig } from '../../engine/polygon'
+import { Cube3D, Cube3DConfig } from '../../engine/cube3d'
 import EditorState, { SaveTarget } from '../../engine/editor_state'
 import LayerPanel, { Layer, LayerFromConfig } from './layers'
 import { CanvasPipeline } from '../../engine/pipeline'
@@ -72,6 +73,8 @@ import useSWR from 'swr'
 import { getCurrentUser } from '../../hooks/useCurrentUser'
 import { ProjectSelector } from '../ProjectSelector'
 import Container from '@renderer/engine/container'
+import Jolt from 'jolt-physics/debug-wasm-compat'
+import { Physics } from '../../engine/physics'
 
 const DEFAULT_GAME_WIDTH = 1200
 const DEFAULT_GAME_HEIGHT = 800
@@ -113,6 +116,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
   const [editorStateSet, setEditorStateSet] = useState(false)
   const [refreshUINow, setRefreshUINow] = useState(Date.now())
   const [project_name, set_project_name] = useState('Loading...')
+  const [physicsReady, setPhysicsReady] = useState(false)
 
   let setupCanvasMouseTracking = (editor: Editor, canvas: HTMLCanvasElement) => {
     // let editor = editorRef.current
@@ -431,6 +435,85 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
       new_layers.sort((a, b) => b.initial_layer_index - a.initial_layer_index)
       set_layers(new_layers)
+
+      // Add a default landscape cube
+      const landscapeConfig: Cube3DConfig = {
+        id: 'landscape-cube',
+        name: 'Landscape',
+        dimensions: [1000, 10, 1000],
+        position: { x: 0, y: -50, z: 0 },
+        rotation: [0, 0, 0],
+        backgroundFill: {
+          type: 'Color',
+          value: [0.5, 0.35, 0.25, 1.0]
+        },
+        layer: 0
+      }
+
+      const landscapeCube = new Cube3D(
+        editor.camera.windowSize,
+        editor.gpuResources.device,
+        editor.gpuResources.queue,
+        editor.modelBindGroupLayout,
+        editor.groupBindGroupLayout,
+        editor.camera,
+        landscapeConfig,
+        sequence_id
+      )
+
+      if (!editor.cubes3D) {
+        editor.cubes3D = []
+      }
+      editor.cubes3D.push(landscapeCube)
+
+      // Create a dynamic cube
+      const dynamicCubeConfig: Cube3DConfig = {
+        id: 'dynamic-cube',
+        name: 'Dynamic Cube',
+        dimensions: [50, 50, 50],
+        position: { x: 0, y: 200, z: 0 },
+        rotation: [0, 0, 0],
+        backgroundFill: {
+          type: 'Color',
+          value: [0.2, 0.4, 0.8, 1.0]
+        },
+        layer: 1
+      }
+
+      const dynamicCube = new Cube3D(
+        editor.camera.windowSize,
+        editor.gpuResources.device,
+        editor.gpuResources.queue,
+        editor.modelBindGroupLayout,
+        editor.groupBindGroupLayout,
+        editor.camera,
+        dynamicCubeConfig,
+        sequence_id
+      )
+
+      editor.cubes3D.push(dynamicCube)
+
+      // Initialize physics
+      // const physics = new Physics()
+      // await physics.initialize()
+      // editor.physics = physics
+
+      // Create physics bodies
+      const landscapeBody = editor.physics.createStaticBox(
+        new Jolt.RVec3(0, -50, 0),
+        new Jolt.Quat(0, 0, 0, 1),
+        new Jolt.Vec3(500, 5, 500)
+      )
+      editor.bodies.set('landscape-cube', landscapeBody)
+
+      const dynamicBody = editor.physics.createDynamicBox(
+        new Jolt.RVec3(0, 200, 0),
+        new Jolt.Quat(0, 0, 0, 1),
+        new Jolt.Vec3(25, 25, 25)
+      )
+      editor.bodies.set('dynamic-cube', dynamicBody)
+
+      setPhysicsReady(true)
 
       toast.success(`Opened level ${saved_sequence.name}`)
     } catch (error: any) {

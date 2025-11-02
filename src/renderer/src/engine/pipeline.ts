@@ -13,6 +13,7 @@ import { RepeatableObject } from './repeater'
 
 import { makeShaderDataDefinitions, makeStructuredView } from 'webgpu-utils'
 import { SaveTarget } from './editor_state'
+import { quatToEuler } from './editor/helpers'
 import { Camera3D } from './3dcamera'
 import {
   GPUPolyfill,
@@ -393,6 +394,27 @@ export class CanvasPipeline {
     }
 
     // Animation steps (same as WebGPU)
+    if (editor.physics && editor.bodies.size > 0) {
+      editor.physics.step(1.0 / 60.0) // Step with a fixed time step
+
+      const dynamicCubeBody = editor.bodies.get('dynamic-cube')
+      if (dynamicCubeBody) {
+        const { position, rotation } = editor.physics.getBodyPositionAndRotation(dynamicCubeBody)
+        const dynamicCube = editor.cubes3D.find(c => c.id === 'dynamic-cube')
+        if (dynamicCube) {
+          dynamicCube.transform.position[0] = position.x
+          dynamicCube.transform.position[1] = position.y
+          dynamicCube.transform.position[2] = position.z
+
+          const euler = vec3.create()
+          quatToEuler(euler, [rotation.x, rotation.y, rotation.z, rotation.w])
+          dynamicCube.transform.rotationX = euler[0]
+          dynamicCube.transform.rotationY = euler[1]
+          dynamicCube.transform.rotation = euler[2]
+        }
+      }
+    }
+
     editor.stepVideoAnimations(editor.camera, currentTimeS)
     await editor.stepMotionPathAnimations(editor.camera, currentTimeS)
 

@@ -108,7 +108,35 @@ export function interpolatePosition(
   }
 }
 
-import { vec3 } from 'gl-matrix'
+import { vec3, quat } from 'gl-matrix'
+
+export function quatToEuler(out: vec3, q: quat): vec3 {
+  const x = q[0]
+  const y = q[1]
+  const z = q[2]
+  const w = q[3]
+
+  const sinr_cosp = 2 * (w * x + y * z)
+  const cosr_cosp = 1 - 2 * (x * x + y * y)
+  out[0] = Math.atan2(sinr_cosp, cosr_cosp)
+
+  const sinp = 2 * (w * y - z * x)
+  if (Math.abs(sinp) >= 1) {
+    out[1] = copySign(Math.PI / 2, sinp)
+  } else {
+    out[1] = Math.asin(sinp)
+  }
+
+  const siny_cosp = 2 * (w * z + x * y)
+  const cosy_cosp = 1 - 2 * (y * y + z * z)
+  out[2] = Math.atan2(siny_cosp, cosy_cosp)
+
+  return out
+}
+
+function copySign(x, y) {
+  return Math.abs(x) * Math.sign(y)
+}
 
 // Helper for Ray-Sphere Intersection
 export function checkRaySphereIntersection(ray: Ray, center: vec3, radius: number): boolean {

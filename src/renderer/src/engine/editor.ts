@@ -28,6 +28,8 @@ import { Sphere3D, Sphere3DConfig } from './sphere3d'
 import { Mockup3D, Mockup3DConfig } from './mockup3d'
 import { processVideoZoom } from './state/animations/zoom'
 import { Model3D, Model3DConfig } from './model3d'
+import { Physics } from './physics'
+import Jolt from 'jolt-physics/debug-wasm-compat'
 // import * as fontkit from "fontkit";
 import { v4 as uuidv4 } from 'uuid'
 import { Polygon, PolygonConfig } from './polygon'
@@ -223,6 +225,9 @@ export class Editor {
   draggingMockup3D: string | null
   motionPaths: MotionPath[]
   repeatManager: RepeatManager
+  physics: Physics | null
+  bodies: Map<string, Jolt.Body>
+
   // multiPageEditor: MultiPageEditor | null = null;
   multiPageEditor: UnifiedRichTextEditor | null = null
   textArea: TextRenderer | null = null
@@ -315,6 +320,9 @@ export class Editor {
     this.fontManager = new FontManager()
     this.repeatManager = new RepeatManager()
 
+    const physics = new Physics()
+    this.physics = physics
+
     this.selectedPolygonId = null // nil UUID
     this.polygons = []
     this.draggingPolygon = null
@@ -384,6 +392,7 @@ export class Editor {
     this.draggingSphere3D = null
     this.draggingMockup3D = null
     this.motionPaths = []
+    this.bodies = new Map()
     this.generationCount = 4
     this.generationCurved = false
     this.generationChoreographed = true
@@ -1070,6 +1079,8 @@ export class Editor {
         }
       }
     }
+
+    await this.physics.initialize()
   }
 
   reset_sequence_objects() {
