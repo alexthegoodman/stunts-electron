@@ -1,4 +1,4 @@
-import { mat4, vec3 } from 'gl-matrix'
+import { mat4, vec3, vec4 } from 'gl-matrix'
 import { createVertexBufferLayout } from './vertex'
 import { Camera, CameraBinding } from './camera'
 import { ControlMode, Editor } from './editor'
@@ -24,6 +24,8 @@ import {
   PolyfillTexture,
   WebGpuResources
 } from './polyfill'
+import { degreesToRadians } from './transform'
+import Jolt from 'jolt-physics/debug-wasm-compat'
 
 interface WindowSize {
   width: number
@@ -35,6 +37,10 @@ interface WindowSizeShader {
   height: number
 }
 
+const wrapVec3 = (joltVec3: Jolt.Vec3) => {
+  return vec3.fromValues(joltVec3.GetX(), joltVec3.GetY(), joltVec3.GetZ())
+}
+
 export class CanvasPipeline {
   // gpuResources: WebGpuResources | null = null;
   gpuResources: GPUPolyfill | null = null
@@ -44,6 +50,41 @@ export class CanvasPipeline {
   public stepFrames: boolean = true
   public canvas: HTMLCanvasElement | OffscreenCanvas | null = null
   public isPlaying: boolean = false
+
+  desiredVelocity: vec3 = vec3.fromValues(0, 0, 0)
+  _tmpVec3: vec3 = vec3.fromValues(0, 0, 0)
+
+  characterHeightStanding = 2
+  characterRadiusStanding = 1
+  characterHeightCrouching = 1
+  characterRadiusCrouching = 0.8
+
+  // Character movement properties
+  controlMovementDuringJump = true ///< If false the character cannot change movement direction in mid air
+  characterSpeed = 6.0
+  jumpSpeed = 15.0
+
+  enableCharacterInertia = false
+
+  upRotationX = 0
+  upRotationZ = 0
+  maxSlopeAngle = degreesToRadians(45.0)
+  maxStrength = 100.0
+  characterPadding = 0.02
+  penetrationRecoverySpeed = 1.0
+  predictiveContactDistance = 0.1
+  enableWalkStairs = true
+  enableStickToFloor = false
+
+  shapeType = 'Capsule'
+  standingShape
+  crouchingShape
+  threeStandingGeometry
+  threeCrouchingGeometry
+
+  character
+  isCrouched = false
+  allowSliding = false
 
   constructor() {}
 
@@ -373,6 +414,268 @@ export class CanvasPipeline {
 
   recreateDepthView(window_width: number, window_height: number) {}
 
+  // handleInput(
+  //   editor: Editor,
+  //   character: Jolt.CharacterVirtual,
+  //   movementDirection: vec3, // gl-matrix
+  //   jump: boolean,
+  //   switchStance,
+  //   deltaTime: number
+  // ) {
+  //   const playerControlsHorizontalVelocity =
+  //     this.controlMovementDuringJump || character.IsSupported()
+  //   if (playerControlsHorizontalVelocity) {
+  //     // True if the player intended to move
+  //     //  this.allowSliding = !(movementDirection.length() < 1.0e-12)
+  //     // Smooth the player input
+  //     if (this.enableCharacterInertia) {
+  //       vec3.scale(movementDirection, movementDirection, 0.25 * this.characterSpeed)
+  //       vec3.scaleAndAdd(this.desiredVelocity, this.desiredVelocity, movementDirection, 0.75)
+  //       // this.desiredVelocity
+  //       //   .multiplyScalar(0.75)
+  //       //   .add(movementDirection.multiplyScalar(0.25 * this.characterSpeed))
+  //     } else {
+  //       // this.desiredVelocity.copy(movementDirection).multiplyScalar(this.characterSpeed)
+  //       vec3.scale(this.desiredVelocity, this.desiredVelocity, this.characterSpeed)
+  //     }
+  //   } else {
+  //     // While in air we allow sliding
+  //     this.allowSliding = true
+  //   }
+  //   // this._tmpVec3.Set(this.upRotationX, 0, this.upRotationZ)
+  //   vec3.set(this._tmpVec3, this.upRotationX, 0, this.upRotationZ)
+  //   const characterUpRotation = editor.physics.jolt.Quat.prototype.sEulerAngles(
+  //     new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+  //   )
+  //   character.SetUp(characterUpRotation.RotateAxisY())
+  //   character.SetRotation(characterUpRotation)
+  //   const upRotation = wrapQuat(characterUpRotation)
+
+  //   character.UpdateGroundVelocity()
+  //   const characterUp = wrapVec3(character.GetUp())
+  //   const linearVelocity = wrapVec3(character.GetLinearVelocity())
+  //   const currentVerticalVelocity = characterUp
+  //     .clone()
+  //     .multiplyScalar(linearVelocity.dot(characterUp))
+  //   const groundVelocity = wrapVec3(character.GetGroundVelocity())
+  //   const gravity = wrapVec3(editor.physics.physicsSystem.GetGravity())
+
+  //   let newVelocity
+  //   const movingTowardsGround = currentVerticalVelocity.y - groundVelocity.y < 0.1
+  //   if (
+  //     character.GetGroundState() == editor.physics.jolt.EGroundState_OnGround && // If on ground
+  //     (this.enableCharacterInertia
+  //       ? movingTowardsGround // Inertia enabled: And not moving away from ground
+  //       : !character.IsSlopeTooSteep(character.GetGroundNormal()))
+  //   ) {
+  //     // Inertia disabled: And not on a slope that is too steep
+  //     // Assume velocity of ground when on ground
+  //     newVelocity = groundVelocity
+
+  //     // Jump
+  //     if (jump && movingTowardsGround) {
+  //       vec3.scaleAndAdd(newVelocity, newVelocity, characterUp, this.jumpSpeed)
+  //       // newVelocity.add(characterUp.multiplyScalar(jumpSpeed))
+  //     }
+  //   } else newVelocity = currentVerticalVelocity.clone()
+
+  //   // Gravity
+  //   newVelocity.add(gravity.multiplyScalar(deltaTime).applyQuaternion(upRotation))
+
+  //   if (playerControlsHorizontalVelocity) {
+  //     // Player input
+  //     newVelocity.add(this.desiredVelocity.clone().applyQuaternion(upRotation))
+  //   } else {
+  //     // Preserve horizontal velocity
+  //     const currentHorizontalVelocity = linearVelocity.sub(currentVerticalVelocity)
+  //     newVelocity.add(currentHorizontalVelocity)
+  //   }
+
+  //   // this._tmpVec3.Set(newVelocity.x, newVelocity.y, newVelocity.z)
+  //   vec3.set(this._tmpVec3, newVelocity.x, newVelocity.y, newVelocity.z)
+  //   character.SetLinearVelocity(
+  //     new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+  //   )
+  // }
+
+  // prePhysicsUpdate(editor: Editor, character: Jolt.CharacterVirtual, deltaTime: number) {
+  //   // if (isInLava) {
+  //   //   // Teleport the user back to the origin if they fall off the platform
+  //   //   _tmpRVec3.Set(0, 10, 0)
+  //   //   character.SetPosition(_tmpRVec3)
+  //   //   isInLava = false
+  //   // }
+  //   const characterUp = wrapVec3(character.GetUp()) // returns gl-matrix vec3
+  //   if (!this.enableStickToFloor) {
+  //     editor.physics.updateSettings.mStickToFloorStepDown = Jolt.Vec3.prototype.sZero()
+  //   } else {
+  //     const vec = characterUp
+  //       .clone()
+  //       .multiplyScalar(-editor.physics.updateSettings.mStickToFloorStepDown.Length())
+  //     editor.physics.updateSettings.mStickToFloorStepDown.Set(vec.x, vec.y, vec.z)
+  //   }
+
+  //   if (!this.enableWalkStairs) {
+  //     editor.physics.updateSettings.mWalkStairsStepUp = Jolt.Vec3.prototype.sZero()
+  //   } else {
+  //     const vec = characterUp
+  //       .clone()
+  //       .multiplyScalar(editor.physics.updateSettings.mWalkStairsStepUp.Length())
+  //     editor.physics.updateSettings.mWalkStairsStepUp.Set(vec.x, vec.y, vec.z)
+  //   }
+  //   characterUp.multiplyScalar(-editor.physics.physicsSystem.GetGravity().Length())
+  //   character.ExtendedUpdate(
+  //     deltaTime,
+  //     character.GetUp(),
+  //     editor.physics.updateSettings,
+  //     editor.physics.movingBPFilter,
+  //     editor.physics.movingLayerFilter,
+  //     editor.physics.bodyFilter,
+  //     editor.physics.shapeFilter,
+  //     editor.physics.joltInterface.GetTempAllocator()
+  //   )
+  // }
+
+  prePhysicsUpdate(editor: Editor, character: Jolt.CharacterVirtual, deltaTime: number) {
+    // Get character up as a gl-matrix vec3
+    const characterUp = wrapVec3(character.GetUp())
+
+    // mStickToFloorStepDown: zero or aligned with character up (negated)
+    if (!this.enableStickToFloor) {
+      // set to zero vector
+      editor.physics.updateSettings.mStickToFloorStepDown.Set(0, 0, 0)
+    } else {
+      const stepDownLen = editor.physics.updateSettings.mStickToFloorStepDown.Length()
+      const tmp = vec3.create()
+      vec3.scale(tmp, characterUp, -stepDownLen)
+      editor.physics.updateSettings.mStickToFloorStepDown.Set(tmp[0], tmp[1], tmp[2])
+    }
+
+    // mWalkStairsStepUp: zero or aligned with character up
+    if (!this.enableWalkStairs) {
+      editor.physics.updateSettings.mWalkStairsStepUp.Set(0, 0, 0)
+    } else {
+      const stepUpLen = editor.physics.updateSettings.mWalkStairsStepUp.Length()
+      const tmp2 = vec3.create()
+      vec3.scale(tmp2, characterUp, stepUpLen)
+      editor.physics.updateSettings.mWalkStairsStepUp.Set(tmp2[0], tmp2[1], tmp2[2])
+    }
+
+    // Call extended character update with Jolt's native up vector
+    character.ExtendedUpdate(
+      deltaTime,
+      character.GetUp(),
+      editor.physics.updateSettings,
+      editor.physics.movingBPFilter,
+      editor.physics.movingLayerFilter,
+      editor.physics.bodyFilter,
+      editor.physics.shapeFilter,
+      editor.physics.joltInterface.GetTempAllocator()
+    )
+  }
+
+  handleInput(
+    editor: Editor,
+    character: Jolt.CharacterVirtual,
+    movementDirection: vec3, // gl-matrix
+    jump: boolean,
+    switchStance,
+    deltaTime: number
+  ) {
+    const playerControlsHorizontalVelocity =
+      this.controlMovementDuringJump || character.IsSupported()
+
+    // Temporary vectors
+    const tmpA = vec3.create()
+    const tmpB = vec3.create()
+
+    if (playerControlsHorizontalVelocity) {
+      // Smooth the player input
+      if (this.enableCharacterInertia) {
+        // movementDirection *= 0.25 * speed
+        vec3.scale(tmpA, movementDirection, 0.25 * this.characterSpeed)
+        // desiredVelocity = desiredVelocity + tmpA * 0.75
+        vec3.scaleAndAdd(this.desiredVelocity, this.desiredVelocity, tmpA, 0.75)
+      } else {
+        // desiredVelocity = movementDirection * characterSpeed
+        vec3.scale(this.desiredVelocity, movementDirection, this.characterSpeed)
+      }
+    } else {
+      // While in air we allow sliding
+      this.allowSliding = true
+    }
+
+    vec3.set(this._tmpVec3, this.upRotationX, 0, this.upRotationZ)
+    const characterUpRotation = editor.physics.jolt.Quat.prototype.sEulerAngles(
+      new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+    )
+    character.SetUp(characterUpRotation.RotateAxisY())
+    character.SetRotation(characterUpRotation)
+    const upRotation = vec4.fromValues(
+      characterUpRotation.GetX(),
+      characterUpRotation.GetY(),
+      characterUpRotation.GetZ(),
+      characterUpRotation.GetW()
+    )
+
+    character.UpdateGroundVelocity()
+
+    const characterUp = wrapVec3(character.GetUp()) // gl-matrix vec3
+    const linearVelocity = wrapVec3(character.GetLinearVelocity()) // gl-matrix vec3
+
+    // project linearVelocity onto characterUp: currentVerticalVelocity = characterUp * (linearVelocity · characterUp)
+    const dot = vec3.dot(linearVelocity, characterUp)
+    const currentVerticalVelocity = vec3.create()
+    vec3.scale(currentVerticalVelocity, characterUp, dot)
+
+    const groundVelocity = wrapVec3(character.GetGroundVelocity())
+    const gravity = wrapVec3(editor.physics.physicsSystem.GetGravity())
+
+    const newVelocity = vec3.create()
+    const movingTowardsGround = currentVerticalVelocity[1] - groundVelocity[1] < 0.1
+
+    if (
+      character.GetGroundState() == editor.physics.jolt.EGroundState_OnGround &&
+      (this.enableCharacterInertia
+        ? movingTowardsGround
+        : !character.IsSlopeTooSteep(character.GetGroundNormal()))
+    ) {
+      // On ground -> start from ground velocity
+      vec3.copy(newVelocity, groundVelocity)
+
+      // Jump
+      if (jump && movingTowardsGround) {
+        vec3.scaleAndAdd(newVelocity, newVelocity, characterUp, this.jumpSpeed)
+      }
+    } else {
+      // In air -> preserve vertical component
+      vec3.copy(newVelocity, currentVerticalVelocity)
+    }
+
+    // Gravity: apply gravity * deltaTime rotated by upRotation
+    vec3.scale(tmpA, gravity, deltaTime) // tmpA = gravity * deltaTime
+    vec3.transformQuat(tmpB, tmpA, upRotation) // tmpB = tmpA rotated by upRotation
+    vec3.add(newVelocity, newVelocity, tmpB)
+
+    if (playerControlsHorizontalVelocity) {
+      // Player input: apply desiredVelocity rotated by upRotation
+      vec3.transformQuat(tmpA, this.desiredVelocity, upRotation)
+      vec3.add(newVelocity, newVelocity, tmpA)
+    } else {
+      // Preserve horizontal velocity: linearVelocity - currentVerticalVelocity
+      vec3.subtract(tmpA, linearVelocity, currentVerticalVelocity)
+      vec3.add(newVelocity, newVelocity, tmpA)
+    }
+
+    // Set physics character velocity
+    vec3.set(this._tmpVec3, newVelocity[0], newVelocity[1], newVelocity[2])
+
+    console.info('newVelocity', this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+    character.SetLinearVelocity(
+      new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+    )
+  }
+
   async renderWebglFrame(
     editor: Editor,
     frameEncoder?: (renderTexture: PolyfillTexture) => Promise<void>,
@@ -420,35 +723,13 @@ export class CanvasPipeline {
     // }
 
     if (this.isPlaying) {
+      let deltaTime = 1.0 / 60.0 // TODO: make real
       const player = editor.cubes3D.find((c) => c.name === 'PlayerCharacter') // TODO: change to c.type so name can be changed
 
       if (player) {
-        const playerBody = editor.bodies.get(player.id)
+        const playerBody = editor.characters.get(player.id)
         // console.info('is playing', player, playerBody)
         if (playerBody) {
-          // animate physics of player
-          if (editor.physics && editor.bodies.size > 0) {
-            editor.physics.step(1.0 / 60.0) // TODO: get actual deltaTime between frames
-
-            const dynamicCubeBody = playerBody
-            if (dynamicCubeBody) {
-              const { position, rotation } =
-                editor.physics.getBodyPositionAndRotation(dynamicCubeBody)
-              const dynamicCube = player
-              if (dynamicCube) {
-                dynamicCube.transform.position[0] = position.GetX()
-                dynamicCube.transform.position[1] = position.GetY()
-                dynamicCube.transform.position[2] = position.GetZ()
-
-                dynamicCube.transform.rotationX = rotation.GetEulerAngles().GetX()
-                dynamicCube.transform.rotationY = rotation.GetEulerAngles().GetY()
-                dynamicCube.transform.rotation = rotation.GetEulerAngles().GetZ()
-
-                dynamicCube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-              }
-            }
-          }
-
           const nodes = editor.nodes
           const edges = editor.edges
           const inputNode = nodes.find((n) => n.data.label === 'Input')
@@ -464,42 +745,103 @@ export class CanvasPipeline {
                 switch (connectedNode.data.label) {
                   case 'Forward':
                     if (connectedNode.data.pressed) {
-                      console.info('forward force')
-                      editor.physics.bodyInterface.AddForce(
-                        playerBody.GetID(),
-                        new editor.physics.jolt.Vec3(0, 0, -1000),
-                        editor.physics.jolt.EActivation_Activate
+                      // TODO: integrate handle_input here (will need to calculate delta time)
+                      // console.info('forward force')
+                      // editor.physics.bodyInterface.AddForce(
+                      //   playerBody.GetID(),
+                      //   new editor.physics.jolt.Vec3(0, 0, -1000),
+                      //   editor.physics.jolt.EActivation_Activate
+                      // )
+                      this.handleInput(
+                        editor,
+                        playerBody,
+                        vec3.fromValues(0, 0, -1),
+                        false,
+                        null,
+                        deltaTime
                       )
                     }
                     break
                   case 'Backward':
                     if (connectedNode.data.pressed) {
-                      editor.physics.bodyInterface.AddForce(
-                        playerBody.GetID(),
-                        new editor.physics.jolt.Vec3(0, 0, 1000),
-                        editor.physics.jolt.EActivation_Activate
+                      // editor.physics.bodyInterface.AddForce(
+                      //   playerBody.GetID(),
+                      //   new editor.physics.jolt.Vec3(0, 0, 1000),
+                      //   editor.physics.jolt.EActivation_Activate
+                      // )
+                      this.handleInput(
+                        editor,
+                        playerBody,
+                        vec3.fromValues(0, 0, 1),
+                        false,
+                        null,
+                        deltaTime
                       )
                     }
                     break
                   case 'Left':
                     if (connectedNode.data.pressed) {
-                      editor.physics.bodyInterface.AddForce(
-                        playerBody.GetID(),
-                        new editor.physics.jolt.Vec3(-1000, 0, 0),
-                        editor.physics.jolt.EActivation_Activate
+                      // editor.physics.bodyInterface.AddForce(
+                      //   playerBody.GetID(),
+                      //   new editor.physics.jolt.Vec3(-1000, 0, 0),
+                      //   editor.physics.jolt.EActivation_Activate
+                      // )
+                      this.handleInput(
+                        editor,
+                        playerBody,
+                        vec3.fromValues(-1, 0, 0),
+                        false,
+                        null,
+                        deltaTime
                       )
                     }
                     break
                   case 'Right':
                     if (connectedNode.data.pressed) {
-                      editor.physics.bodyInterface.AddForce(
-                        playerBody.GetID(),
-                        new editor.physics.jolt.Vec3(1000, 0, 0),
-                        editor.physics.jolt.EActivation_Activate
+                      // editor.physics.bodyInterface.AddForce(
+                      //   playerBody.GetID(),
+                      //   new editor.physics.jolt.Vec3(1000, 0, 0),
+                      //   editor.physics.jolt.EActivation_Activate
+                      // )
+                      this.handleInput(
+                        editor,
+                        playerBody,
+                        vec3.fromValues(1, 0, 0),
+                        false,
+                        null,
+                        deltaTime
                       )
                     }
                     break
                 }
+              }
+            }
+          }
+
+          // animate physics of player
+          if (editor.physics && editor.bodies.size > 0) {
+            this.prePhysicsUpdate(editor, playerBody, deltaTime)
+
+            editor.physics.step(deltaTime) // TODO: get actual deltaTime between frames
+
+            const dynamicCubeBody = playerBody
+            if (dynamicCubeBody) {
+              const { position, rotation } =
+                editor.physics.getCharacterPositionAndRotation(dynamicCubeBody)
+              const dynamicCube = player
+
+              if (dynamicCube) {
+                dynamicCube.transform.position[0] = position.GetX()
+                dynamicCube.transform.position[1] = position.GetY()
+                dynamicCube.transform.position[2] = position.GetZ()
+
+                dynamicCube.transform.rotationX = rotation.GetEulerAngles().GetX()
+                dynamicCube.transform.rotationY = rotation.GetEulerAngles().GetY()
+                dynamicCube.transform.rotation = rotation.GetEulerAngles().GetZ()
+
+                // console.info('ipdate postiong', dynamicCube.transform.position)
+
+                dynamicCube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
               }
             }
           }

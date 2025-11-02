@@ -1249,12 +1249,13 @@ export const ToolGrid = ({
 
         editor_state.add_saved_cube3d(sequence_id, playerConfig)
 
-        const dynamicBody = editor.physics.createDynamicBox(
+        const dynamicBody = editor.physics.createVirtualCharacter(
           new editor.physics.jolt.RVec3(0, 100, 0),
           new editor.physics.jolt.Quat(0, 0, 0, 1),
-          new editor.physics.jolt.Vec3(12.5, 12.5, 12.5)
+          2,
+          1
         )
-        editor.bodies.set(new_id, dynamicBody)
+        editor.characters.set(new_id, dynamicBody)
 
         let saved_state = editor_state.savedState
 

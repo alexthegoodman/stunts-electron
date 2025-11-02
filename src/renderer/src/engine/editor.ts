@@ -227,6 +227,7 @@ export class Editor {
   repeatManager: RepeatManager
   physics: Physics | null
   bodies: Map<string, Jolt.Body>
+  characters: Map<string, Jolt.CharacterVirtual> = new Map()
   nodes: any[] = []
   edges: any[] = []
 
@@ -848,12 +849,22 @@ export class Editor {
         restored_cube.hidden = hidden
         this.cubes3D.push(restored_cube)
 
-        const dynamicBody = this.physics.createDynamicBox(
-          new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z || 0),
-          new this.physics.jolt.Quat(0, 0, 0, 1),
-          new this.physics.jolt.Vec3(c.dimensions[0], c.dimensions[1], c.dimensions[2])
-        )
-        this.bodies.set(c.id, dynamicBody)
+        if (c.name === 'PlayerCharacter') {
+          const dynamicBody = this.physics.createVirtualCharacter(
+            new this.physics.jolt.RVec3(0, 100, 0),
+            new this.physics.jolt.Quat(0, 0, 0, 1),
+            2,
+            1
+          )
+          this.characters.set(c.id, dynamicBody)
+        } else {
+          const dynamicBody = this.physics.createDynamicBox(
+            new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z || 0),
+            new this.physics.jolt.Quat(0, 0, 0, 1),
+            new this.physics.jolt.Vec3(c.dimensions[0], c.dimensions[1], c.dimensions[2])
+          )
+          this.bodies.set(c.id, dynamicBody)
+        }
 
         console.log('Cube3D restored...')
       }
