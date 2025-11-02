@@ -75,7 +75,7 @@ export class Physics {
       this.ObjectLayer_NonMoving.GetValue()
     )
     const body = this.bodyInterface.CreateBody(creationSettings)
-    this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_DontActivate)
+    this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_Activate)
     return body
   }
 
@@ -132,7 +132,111 @@ export class Physics {
     )
 
     // You might want to set a listener for character contacts here, similar to the example
-    // character.SetListener(characterContactListener);
+
+    const characterContactListener = new jolt.CharacterContactListenerJS()
+    characterContactListener.OnAdjustBodyVelocity = (
+      character,
+      body2,
+      linearVelocity,
+      angularVelocity
+    ) => {
+      // body2 = Jolt.wrapPointer(body2, Jolt.Body)
+      // linearVelocity = Jolt.wrapPointer(linearVelocity, Jolt.Vec3)
+      // // Apply artificial velocity to the character when standing on the conveyor belt
+      // if (body2.GetID().GetIndexAndSequenceNumber() == conveyorBeltObjectId) {
+      //   linearVelocity.SetX(linearVelocity.GetX() + 5)
+      // }
+    }
+    characterContactListener.OnContactValidate = (character, bodyID2, subShapeID2) => {
+      // bodyID2 = Jolt.wrapPointer(bodyID2, Jolt.BodyID)
+      // character = Jolt.wrapPointer(character, Jolt.CharacterVirtual)
+      // if (bodyID2.GetIndexAndSequenceNumber() == lavaObjectId) isInLava = true // Can't modify velocity or position at this point, marking that we want to teleport
+      return true
+    }
+    characterContactListener.OnCharacterContactValidate = (
+      character,
+      otherCharacter,
+      subShapeID2
+    ) => {
+      return true
+    }
+    characterContactListener.OnContactAdded = (
+      character,
+      bodyID2,
+      subShapeID2,
+      contactPosition,
+      contactNormal,
+      settings
+    ) => {}
+    characterContactListener.OnContactPersisted = (
+      character,
+      bodyID2,
+      subShapeID2,
+      contactPosition,
+      contactNormal,
+      settings
+    ) => {}
+    characterContactListener.OnContactRemoved = (character, bodyID2, subShapeID2) => {}
+    characterContactListener.OnCharacterContactAdded = (
+      character,
+      otherCharacter,
+      subShapeID2,
+      contactPosition,
+      contactNormal,
+      settings
+    ) => {}
+    characterContactListener.OnCharacterContactPersisted = (
+      character,
+      otherCharacter,
+      subShapeID2,
+      contactPosition,
+      contactNormal,
+      settings
+    ) => {}
+    characterContactListener.OnCharacterContactRemoved = (
+      character,
+      otherCharacterID,
+      subShapeID2
+    ) => {}
+    characterContactListener.OnContactSolve = (
+      character,
+      bodyID2,
+      subShapeID2,
+      contactPosition,
+      contactNormal,
+      contactVelocity,
+      contactMaterial,
+      characterVelocity,
+      newCharacterVelocity
+    ) => {
+      // // Don't allow the player to slide down static not-too-steep surfaces when not actively moving and when not on a moving platform
+      // character = Jolt.wrapPointer(character, Jolt.CharacterVirtual)
+      // contactVelocity = Jolt.wrapPointer(contactVelocity, Jolt.Vec3)
+      // newCharacterVelocity = Jolt.wrapPointer(newCharacterVelocity, Jolt.Vec3)
+      // contactNormal = Jolt.wrapPointer(contactNormal, Jolt.Vec3)
+      // if (
+      //   !allowSliding &&
+      //   contactVelocity.IsNearZero() &&
+      //   !character.IsSlopeTooSteep(contactNormal)
+      // ) {
+      //   newCharacterVelocity.SetX(0)
+      //   newCharacterVelocity.SetY(0)
+      //   newCharacterVelocity.SetZ(0)
+      // }
+    }
+    characterContactListener.OnCharacterContactSolve = (
+      character,
+      otherCharacter,
+      subShapeID2,
+      contactPosition,
+      contactNormal,
+      contactVelocity,
+      contactMaterial,
+      characterVelocity,
+      newCharacterVelocity
+    ) => {}
+
+    character.SetListener(characterContactListener)
 
     return character
   }

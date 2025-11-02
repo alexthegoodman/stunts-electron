@@ -570,31 +570,31 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       editor.cubes3D.push(landscapeCube)
 
       // Create a dynamic cube
-      const dynamicCubeConfig: Cube3DConfig = {
-        id: 'dynamic-cube',
-        name: 'Dynamic Cube',
-        dimensions: [50, 50, 50],
-        position: { x: 0, y: 200, z: 0 },
-        rotation: [0, 0, 0],
-        backgroundFill: {
-          type: 'Color',
-          value: [0.2, 0.4, 0.8, 1.0]
-        },
-        layer: 1
-      }
+      // const dynamicCubeConfig: Cube3DConfig = {
+      //   id: 'dynamic-cube',
+      //   name: 'Dynamic Cube',
+      //   dimensions: [50, 50, 50],
+      //   position: { x: 0, y: 200, z: 0 },
+      //   rotation: [0, 0, 0],
+      //   backgroundFill: {
+      //     type: 'Color',
+      //     value: [0.2, 0.4, 0.8, 1.0]
+      //   },
+      //   layer: 1
+      // }
 
-      const dynamicCube = new Cube3D(
-        editor.camera.windowSize,
-        editor.gpuResources.device,
-        editor.gpuResources.queue,
-        editor.modelBindGroupLayout,
-        editor.groupBindGroupLayout,
-        editor.camera,
-        dynamicCubeConfig,
-        sequence_id
-      )
+      // const dynamicCube = new Cube3D(
+      //   editor.camera.windowSize,
+      //   editor.gpuResources.device,
+      //   editor.gpuResources.queue,
+      //   editor.modelBindGroupLayout,
+      //   editor.groupBindGroupLayout,
+      //   editor.camera,
+      //   dynamicCubeConfig,
+      //   sequence_id
+      // )
 
-      editor.cubes3D.push(dynamicCube)
+      // editor.cubes3D.push(dynamicCube)
 
       // Initialize physics
       // const physics = new Physics()
@@ -611,12 +611,12 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       )
       editor.bodies.set('landscape-cube', landscapeBody)
 
-      const dynamicBody = editor.physics.createDynamicBox(
-        new editor.physics.jolt.RVec3(0, 200, 0),
-        new editor.physics.jolt.Quat(0, 0, 0, 1),
-        new editor.physics.jolt.Vec3(25, 25, 25)
-      )
-      editor.bodies.set('dynamic-cube', dynamicBody)
+      // const dynamicBody = editor.physics.createDynamicBox(
+      //   new editor.physics.jolt.RVec3(0, 200, 0),
+      //   new editor.physics.jolt.Quat(0, 0, 0, 1),
+      //   new editor.physics.jolt.Vec3(25, 25, 25)
+      // )
+      // editor.bodies.set('dynamic-cube', dynamicBody)
 
       setPhysicsReady(true)
 
@@ -849,9 +849,9 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         <label className="block text-sm font-medium mb-2">Pan Horizontal (X)</label>
                         <input
                           type="range"
-                          min="-10"
-                          max="10"
-                          step="0.1"
+                          min="-1000"
+                          max="1000"
+                          step="10"
                           value={panX}
                           className="w-full"
                           onChange={(e) => {
@@ -874,9 +874,9 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         <label className="block text-sm font-medium mb-2">Pan Vertical (Y)</label>
                         <input
                           type="range"
-                          min="-10"
-                          max="10"
-                          step="0.1"
+                          min="-1000"
+                          max="1000"
+                          step="10"
                           value={panY}
                           className="w-full"
                           onChange={(e) => {

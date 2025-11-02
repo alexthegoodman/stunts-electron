@@ -54,6 +54,7 @@ export class CanvasPipeline {
   desiredVelocity: vec3 = vec3.fromValues(0, 0, 0)
   _tmpVec3: vec3 = vec3.fromValues(0, 0, 0)
 
+  // TODO: move character state elsewhere besides pipeline, perhaps editor.ts
   characterHeightStanding = 2
   characterRadiusStanding = 1
   characterHeightCrouching = 1
@@ -74,7 +75,7 @@ export class CanvasPipeline {
   penetrationRecoverySpeed = 1.0
   predictiveContactDistance = 0.1
   enableWalkStairs = true
-  enableStickToFloor = false
+  enableStickToFloor = true
 
   shapeType = 'Capsule'
   standingShape
