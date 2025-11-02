@@ -110,9 +110,9 @@ const initialNodes: GameNode[] = [
 const initialEdges = [
   { id: 'e2-1', source: '2', target: '1' },
   { id: 'e3-2', source: '3', target: '2' },
-  { id: 'e3-2', source: '4', target: '2' },
-  { id: 'e3-2', source: '5', target: '2' },
-  { id: 'e3-2', source: '6', target: '2' },
+  { id: 'e3-3', source: '4', target: '2' },
+  { id: 'e3-4', source: '5', target: '2' },
+  { id: 'e3-5', source: '6', target: '2' },
   { id: 'e8-7', source: '8', target: '7' },
   { id: 'e9-7', source: '9', target: '7' },
   { id: 'e10-7', source: '10', target: '7' }
@@ -689,6 +689,13 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
           new_layers.push(new_layer)
         }
       })
+      editor.cubes3D.forEach((cube) => {
+        if (!cube.hidden) {
+          let cube_config: Cube3DConfig = cube.toConfig()
+          let new_layer: Layer = LayerFromConfig.fromCube3DConfig(cube_config)
+          new_layers.push(new_layer)
+        }
+      })
 
       new_layers.sort((a, b) => b.initial_layer_index - a.initial_layer_index)
       set_layers(new_layers)
@@ -926,8 +933,19 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         setToolbarTab('logic')
                       }
                     }}
-                    icon="logic"
+                    icon="grid"
                     label={'Logic'}
+                  />
+                  <MiniSquareButton
+                    onClick={() => {
+                      if (toolbarTab === 'layers') {
+                        setToolbarTab('none')
+                      } else {
+                        setToolbarTab('layers')
+                      }
+                    }}
+                    icon={'stack'}
+                    label={'Scene'}
                   />
                 </div>
               </div>
@@ -981,6 +999,18 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                       onNodesChange={onNodesChange}
                       onEdgesChange={onEdgesChange}
                       onConnect={onConnect}
+                    />
+                  </div>
+                )}
+
+                {toolbarTab === 'layers' && current_sequence_id && (
+                  <div>
+                    <LayerPanel
+                      editorRef={editorRef}
+                      editorStateRef={editorStateRef}
+                      currentSequenceId={current_sequence_id}
+                      layers={layers}
+                      setLayers={set_layers}
                     />
                   </div>
                 )}

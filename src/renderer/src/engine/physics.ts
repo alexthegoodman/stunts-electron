@@ -21,7 +21,7 @@ export class Physics {
     contactPosition,
     contactNormal,
     settings
-  ) => void)[]
+  ) => void)[] = []
 
   constructor() {}
 
