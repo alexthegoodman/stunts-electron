@@ -1235,8 +1235,8 @@ export const ToolGrid = ({
         const playerConfig: Cube3DConfig = {
           id: new_id,
           name: 'PlayerCharacter',
-          dimensions: [25, 25, 25],
-          position: { x: 0, y: 100, z: 0 },
+          dimensions: [1, 2, 1], // appropriate for radius?
+          position: { x: 0, y: 25, z: 0 },
           rotation: [0, 0, 0],
           backgroundFill: {
             type: 'Color',
@@ -1247,13 +1247,17 @@ export const ToolGrid = ({
 
         editor.add_cube3d(playerConfig, new_id, sequence_id)
 
-        editor_state.add_saved_cube3d(sequence_id, playerConfig)
+        await editor_state.add_saved_cube3d(sequence_id, playerConfig)
 
         const dynamicBody = editor.physics.createVirtualCharacter(
-          new editor.physics.jolt.RVec3(0, 100, 0),
+          new editor.physics.jolt.RVec3(
+            playerConfig.position.x,
+            playerConfig.position.y,
+            playerConfig.position.z
+          ),
           new editor.physics.jolt.Quat(0, 0, 0, 1),
-          2,
-          1
+          2, // height
+          1 // radius
         )
         editor.characters.set(new_id, dynamicBody)
 

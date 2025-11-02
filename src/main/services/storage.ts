@@ -240,9 +240,7 @@ class StorageService {
 
     if (projectIndex === -1) return null
 
-    const saveTarget = data.projects[projectIndex].fileData.saveTarget
-
-    console.info('Update project', saveTarget)
+    const saveTarget = updates.fileData.saveTarget
 
     let updatedProject: any = {}
 

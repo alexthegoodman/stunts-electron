@@ -851,10 +851,10 @@ export class Editor {
 
         if (c.name === 'PlayerCharacter') {
           const dynamicBody = this.physics.createVirtualCharacter(
-            new this.physics.jolt.RVec3(0, 100, 0),
+            new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z),
             new this.physics.jolt.Quat(0, 0, 0, 1),
-            2,
-            1
+            2, // characterHeightStanding
+            1 // characterRadiusStanding
           )
           this.characters.set(c.id, dynamicBody)
         } else {

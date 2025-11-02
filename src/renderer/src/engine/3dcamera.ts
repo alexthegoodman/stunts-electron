@@ -97,7 +97,7 @@ export class Camera3D extends Camera {
 
     // Default target - point in front of camera (negative Z direction)
     // This allows orbiting around the content which is in front of the camera
-    this.target = vec3.fromValues(0, 0, -25)
+    this.target = vec3.fromValues(0, 0, -1)
 
     // Store default state
     this.defaultPosition3D = vec3.clone(this.position3D)
@@ -124,17 +124,23 @@ export class Camera3D extends Camera {
   }
 
   // Override the view matrix to handle 3D camera positioning and rotation
+  // getView(): mat4 {
+  //   const view = mat4.create()
+
+  //   // Create lookAt matrix
+  //   mat4.lookAt(view, this.position3D, this.target, this.up)
+
+  //   // Apply rotation if needed
+  //   const rotationMatrix = mat4.create()
+  //   mat4.fromQuat(rotationMatrix, this.rotation)
+  //   mat4.multiply(view, view, rotationMatrix)
+
+  //   return view
+  // }
+
   getView(): mat4 {
     const view = mat4.create()
-
-    // Create lookAt matrix
     mat4.lookAt(view, this.position3D, this.target, this.up)
-
-    // Apply rotation if needed
-    const rotationMatrix = mat4.create()
-    mat4.fromQuat(rotationMatrix, this.rotation)
-    mat4.multiply(view, view, rotationMatrix)
-
     return view
   }
 
@@ -215,12 +221,39 @@ export class Camera3D extends Camera {
   }
 
   // Override zoom to affect field of view instead
+  // update_zoom(delta: number): void {
+  //   this.position3D[2] += delta
+  // }
+
+  // reset_zoom() {
+  //   this.position3D[2] = this.resetZ
+  // }
+
   update_zoom(delta: number): void {
-    this.position3D[2] += delta
+    // Calculate the direction from camera to target
+    const direction = vec3.create()
+    vec3.subtract(direction, this.target, this.position3D)
+    vec3.normalize(direction, direction)
+
+    // Scale by delta
+    vec3.scale(direction, direction, delta)
+
+    // Move both position and target by the same amount
+    vec3.add(this.position3D, this.position3D, direction)
+    vec3.add(this.target, this.target, direction)
+
+    // Update 2D position for compatibility
+    this.position[0] = this.position3D[0]
+    this.position[1] = this.position3D[1]
   }
 
   reset_zoom() {
     this.position3D[2] = this.resetZ
+    this.position[0] = this.position3D[0]
+    this.position[1] = this.position3D[1]
+
+    // Reset target to default
+    vec3.copy(this.target, this.defaultTarget)
   }
 
   // Method to orbit camera around target point

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { quat, vec2 } from 'gl-matrix'
+import { quat, vec2, vec3 } from 'gl-matrix'
 import {
   DebouncedInput,
   ExportVideoButton,
@@ -78,6 +78,7 @@ import { Physics } from '../../engine/physics'
 import { CameraAnimation } from '@renderer/engine/3dcamera'
 import GameLogic from './GameLogic'
 import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
+import { degreesToRadians } from '@renderer/engine/transform'
 
 const initialNodes = [
   { id: '1', data: { label: 'PlayerController' }, position: { x: 250, y: 5 } },
@@ -449,7 +450,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
       await editor.restore_sequence_objects(saved_sequence, false, settings)
 
-      editor.camera.setPosition(0, 0, 250)
+      editor.camera.setPosition(25, 250, 25)
+      // quat.fromEuler(editor.camera.rotation, -45, 0, -45)
       editor.cameraBinding.update(editor.gpuResources.queue, editor.camera)
 
       const canvas = document.getElementById(`game-canvas`) as HTMLCanvasElement
@@ -544,7 +546,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
         id: 'landscape-cube',
         name: 'Landscape',
         dimensions: [1000, 10, 1000],
-        position: { x: 0, y: -50, z: 0 },
+        position: { x: 0, y: -25, z: 0 },
         rotation: [0, 0, 0],
         backgroundFill: {
           type: 'Color',
@@ -605,9 +607,17 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       console.info('Jolt', Jolt, Jolt.RVec3)
 
       const landscapeBody = editor.physics.createStaticBox(
-        new editor.physics.jolt.RVec3(0, -50, 0),
+        new editor.physics.jolt.RVec3(
+          landscapeConfig.position.x,
+          landscapeConfig.position.y,
+          landscapeConfig.position.z
+        ),
         new editor.physics.jolt.Quat(0, 0, 0, 1),
-        new editor.physics.jolt.Vec3(500, 5, 500)
+        new editor.physics.jolt.Vec3(
+          landscapeConfig.dimensions[0] / 2,
+          landscapeConfig.dimensions[1] / 2,
+          landscapeConfig.dimensions[2] / 2
+        )
       )
       editor.bodies.set('landscape-cube', landscapeBody)
 
