@@ -235,7 +235,7 @@ export class Cube3D {
     const hd = d / 2 // half depth
 
     // Define a distinct color for each face (RGBA)
-    const faceColors: [number, number, number, number][] = [
+    let faceColors: [number, number, number, number][] = [
       [1, 0, 0, 1], // Front - Red
       [0, 1, 0, 1], // Back - Green
       [0, 0, 1, 1], // Top - Blue
@@ -243,6 +243,55 @@ export class Cube3D {
       [1, 0, 1, 1], // Right - Magenta
       [0, 1, 1, 1] // Left - Cyan
     ]
+
+    if (this.backgroundFill) {
+      switch (this.backgroundFill.type) {
+        case 'Color':
+          faceColors = [
+            [
+              this.backgroundFill.value[0],
+              this.backgroundFill.value[1],
+              this.backgroundFill.value[2],
+              this.backgroundFill.value[3]
+            ], // Front - Red
+            [
+              this.backgroundFill.value[0],
+              this.backgroundFill.value[1],
+              this.backgroundFill.value[2],
+              this.backgroundFill.value[3]
+            ], // Back - Green
+            [
+              this.backgroundFill.value[0],
+              this.backgroundFill.value[1],
+              this.backgroundFill.value[2],
+              this.backgroundFill.value[3]
+            ], // Top - Blue
+            [
+              this.backgroundFill.value[0],
+              this.backgroundFill.value[1],
+              this.backgroundFill.value[2],
+              this.backgroundFill.value[3]
+            ], // Bottom - Yellow
+            [
+              this.backgroundFill.value[0],
+              this.backgroundFill.value[1],
+              this.backgroundFill.value[2],
+              this.backgroundFill.value[3]
+            ], // Right - Magenta
+            [
+              this.backgroundFill.value[0],
+              this.backgroundFill.value[1],
+              this.backgroundFill.value[2],
+              this.backgroundFill.value[3]
+            ] // Left - Cyan
+          ]
+
+          break
+
+        default:
+          break
+      }
+    }
 
     // Define the 8 cube corners
     const positions: [number, number, number][] = [

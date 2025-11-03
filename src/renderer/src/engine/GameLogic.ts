@@ -3,15 +3,27 @@ import { Node } from '@xyflow/react'
 import { Sphere3DConfig } from './sphere3d'
 import { v4 as uuidv4 } from 'uuid'
 import { GameNode } from '@renderer/components/stunts-app/GameEditor'
+import Jolt from 'jolt-physics/debug-wasm-compat'
+import { CanvasPipeline } from './pipeline'
+import { vec3 } from 'gl-matrix'
 
 export class GameLogic {
   private setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
   private editor: Editor
+  private pipeline: CanvasPipeline
   private lastShotTime: number = 0
+  private enemyMoveDirections: Map<string, Jolt.Vec3> = new Map()
+  private enemyLastMoveTime: Map<string, number> = new Map()
+  private readonly MOVE_INTERVAL = 2000 // 2 seconds
 
-  constructor(editor: Editor, setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>) {
+  constructor(
+    editor: Editor,
+    pipeline: CanvasPipeline,
+    setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
+  ) {
     this.setNodes = setNodes
     this.editor = editor
+    this.pipeline = pipeline
     this.editor.physics.contactAddListeners.push(this.OnContactAdded.bind(this))
   }
 
@@ -67,7 +79,7 @@ export class GameLogic {
 
     let gameCharacterId: string | undefined
     for (const [id, char] of this.editor.characters.entries()) {
-      console.info('char.GetID().GetValue()', char.GetID())
+      // console.info('char.GetID().GetValue()', char.GetID())
       if (char.GetID().GetValue() === characterWrap.GetID().GetValue()) {
         gameCharacterId = id
         break
@@ -82,7 +94,7 @@ export class GameLogic {
       }
     }
 
-    // console.info('Mapped IDs:', 'gameCharacterId:', gameCharacterId, 'gameBodyId2:', gameBodyId2)
+    console.info('Mapped IDs:', 'gameCharacterId:', gameCharacterId, 'gameBodyId2:', gameBodyId2)
 
     const isProjectile = (bodyId: string) => {
       const projectile = this.editor.spheres3D.find((s) => s.id === bodyId)
@@ -136,16 +148,16 @@ export class GameLogic {
       }
     }
 
-    if (isProjectile(b1Id)) {
-      this.editor.spheres3D = this.editor.spheres3D.filter((s) => s.id !== b1Id)
-      this.editor.bodies.delete(b1Id)
-    } else if (isProjectile(b2Id)) {
-      this.editor.spheres3D = this.editor.spheres3D.filter((s) => s.id !== b2Id)
-      this.editor.bodies.delete(b2Id)
-    }
+    // if (isProjectile(b1Id)) {
+    //   this.editor.spheres3D = this.editor.spheres3D.filter((s) => s.id !== b1Id)
+    //   this.editor.bodies.delete(b1Id)
+    // } else if (isProjectile(b2Id)) {
+    //   this.editor.spheres3D = this.editor.spheres3D.filter((s) => s.id !== b2Id)
+    //   this.editor.bodies.delete(b2Id)
+    // }
   }
 
-  update() {
+  update(deltaTime: number) {
     if (!this.editor) return
 
     const editor = this.editor
@@ -162,14 +174,58 @@ export class GameLogic {
       if (!enemyId) continue
 
       const enemyCharacter = editor.characters.get(enemyId)
+
+      const playerCharacter = editor.characters.get(
+        editor.cubes3D.find((c) => c.name === 'PlayerCharacter')?.id
+      )
+
+      const playerPosition = vec3.fromValues(
+        playerCharacter.GetPosition().GetX(),
+        playerCharacter.GetPosition().GetY(),
+        playerCharacter.GetPosition().GetZ()
+      )
+      const enemyPosition = vec3.fromValues(
+        enemyCharacter.GetPosition().GetX(),
+        enemyCharacter.GetPosition().GetY(),
+        enemyCharacter.GetPosition().GetZ()
+      )
+
+      const playerNode = nodes.find((n) => n.data.label === 'PlayerController')
+
+      let direction = vec3.create()
+      vec3.subtract(direction, playerPosition, enemyPosition)
+
+      // console.log('Direction:', direction[0], direction[1], direction[2])
+
+      const length = Math.sqrt(direction[0] ** 2 + direction[1] ** 2 + direction[2] ** 2)
+
+      // console.log('Direction length:', length)
+
+      let velocity = null
+
+      if (length > 0.001) {
+        const speed = 2
+        velocity = new editor.physics.jolt.Vec3(
+          (direction[0] / length) * speed,
+          (direction[1] / length) * speed,
+          (direction[2] / length) * speed
+        )
+
+        // console.info('projectile', velocity.GetX(), velocity.GetY(), velocity.GetZ())
+      }
+      // else {
+      //               console.error('Cannot shoot: direction length is zero or invalid')
+      //             }
+
+      // this.pipeline.prePhysicsUpdate(this.editor, enemyCharacter, deltaTime)
+
       // console.info('enemyCharacter', enemyCharacter)
+      // console.info('enemy x', playerPosition, enemyPosition)
       if (enemyCharacter) {
         // Random walk
-        // TODO: doesnt work because chooses a different random spot on every frame rather than a consistent spot every interval
-        const randomX = Math.random() * 2 - 1
-        const randomZ = Math.random() * 2 - 1
-        const moveDirection = new editor.physics.jolt.Vec3(randomX, 0, randomZ)
-        enemyCharacter.SetLinearVelocity(moveDirection.Mul(5))
+        const now = Date.now()
+        let moveDirection = this.enemyMoveDirections.get(enemyId)
+        const lastMoveTime = this.enemyLastMoveTime.get(enemyId)
 
         // Shoot projectile
         // const shootNode = nodes.find((n) => n.id === `${enemyId}-9`)
@@ -185,9 +241,9 @@ export class GameLogic {
               name: 'Projectile',
               radius: 0.2,
               position: {
-                x: enemyCharacter.GetPosition().GetX(),
-                y: enemyCharacter.GetPosition().GetY(),
-                z: enemyCharacter.GetPosition().GetZ()
+                x: enemyPosition[0],
+                y: enemyPosition[1],
+                z: enemyPosition[2]
               },
               rotation: [0, 0, 0],
               backgroundFill: {
@@ -210,31 +266,51 @@ export class GameLogic {
               new editor.physics.jolt.Quat(0, 0, 0, 1),
               projectileConfig.radius
             )
+
             editor.bodies.set(projectileId, projectileBody)
             editor.projectiles.push({ id: projectileId, creationTime: Date.now() })
-            const playerNode = nodes.find((n) => n.data.label === 'PlayerController')
-            if (playerNode) {
-              const playerCharacter = editor.characters.get(
-                editor.cubes3D.find((c) => c.name === 'PlayerCharacter')?.id
-              )
-              if (playerCharacter) {
-                const playerPosition = playerCharacter.GetPosition()
-                const enemyPosition = enemyCharacter.GetPosition()
-                const direction = playerPosition.Sub(
-                  new editor.physics.jolt.Vec3(
-                    enemyPosition.GetX(),
-                    enemyPosition.GetY(),
-                    enemyPosition.GetZ()
-                  )
-                )
-                direction.Normalized()
-                let velocity = direction.Mul(20)
-                projectileBody.SetLinearVelocity(
-                  new editor.physics.jolt.Vec3(velocity.GetX(), velocity.GetY(), velocity.GetZ())
-                )
-              }
+
+            if (length > 0.001 && velocity) {
+              console.info('projectile', velocity.GetX(), velocity.GetY(), velocity.GetZ())
+              // projectileBody.SetLinearVelocity(velocity)
+              editor.physics.bodyInterface.SetLinearVelocity(projectileBody.GetID(), velocity)
+            } else {
+              console.error('Cannot shoot: direction length is zero or invalid')
             }
           }
+        }
+
+        if (!moveDirection || !lastMoveTime || now - lastMoveTime > this.MOVE_INTERVAL) {
+          const randomX = (Math.random() * 2 - 1) * 0.1
+          const randomZ = (Math.random() * 2 - 1) * 0.1
+          moveDirection = new editor.physics.jolt.Vec3(randomX, 0, randomZ)
+          console.info(
+            'moveDirection',
+            moveDirection.GetX(),
+            moveDirection.GetY(),
+            moveDirection.GetZ()
+          )
+          this.enemyMoveDirections.set(enemyId, moveDirection)
+          this.enemyLastMoveTime.set(enemyId, now)
+        }
+
+        if (
+          moveDirection.GetX() !== Infinity &&
+          moveDirection.GetY() !== Infinity &&
+          moveDirection.GetZ() !== Infinity
+        ) {
+          // enemyCharacter.SetLinearVelocity(moveDirection)
+
+          // console.info('not updating for some reason')
+
+          this.pipeline.handleInput(
+            editor,
+            enemyCharacter,
+            vec3.fromValues(moveDirection.GetX(), moveDirection.GetY(), moveDirection.GetZ()),
+            false,
+            null,
+            deltaTime
+          )
         }
       }
 

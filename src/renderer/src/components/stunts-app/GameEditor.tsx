@@ -474,7 +474,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       await pipeline.beginRendering(editor)
 
       editorRef.current = editor
-      editor.gameLogic = new GameLogic(editor, setNodes)
+      editor.gameLogic = new GameLogic(editor, pipeline, setNodes)
       editorRef.current.target = SaveTarget.Games
       editorStateRef.current.saveTarget = SaveTarget.Games
 

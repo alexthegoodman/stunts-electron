@@ -822,10 +822,6 @@ export class CanvasPipeline {
 
           // animate physics of player
           if (editor.physics && editor.bodies.size > 0) {
-            this.prePhysicsUpdate(editor, playerBody, deltaTime)
-
-            editor.physics.step(deltaTime) // TODO: get actual deltaTime between frames
-
             for (const [id, body] of editor.bodies.entries()) {
               const { position, rotation } = editor.physics.getBodyPositionAndRotation(body)
               const sphere = editor.spheres3D.find((s) => s.id === id)
@@ -864,9 +860,18 @@ export class CanvasPipeline {
             // }
 
             for (const [id, chaacter] of editor.characters.entries()) {
+              this.prePhysicsUpdate(editor, chaacter, deltaTime)
+
               const { position, rotation } =
                 editor.physics.getCharacterPositionAndRotation(chaacter)
               const cube = editor.cubes3D.find((s) => s.id === id)
+              // console.info(
+              //   'cube postition',
+              //   cube.name,
+              //   position.GetX(),
+              //   position.GetY(),
+              //   position.GetZ()
+              // )
               if (cube) {
                 cube.transform.position[0] = position.GetX()
                 cube.transform.position[1] = position.GetY()
@@ -876,15 +881,19 @@ export class CanvasPipeline {
                 cube.transform.rotationY = rotation.GetEulerAngles().GetY()
                 cube.transform.rotation = rotation.GetEulerAngles().GetZ()
 
+                // console.info('cube postition', cube.name, cube.transform.position) // stays same?
+
                 cube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
               }
             }
+
+            editor.physics.step(deltaTime) // TODO: get actual deltaTime between frames
           }
         }
       }
 
       if (editor.gameLogic) {
-        editor.gameLogic.update()
+        editor.gameLogic.update(deltaTime)
       }
     }
 
