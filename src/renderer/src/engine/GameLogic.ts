@@ -165,6 +165,7 @@ export class GameLogic {
       // console.info('enemyCharacter', enemyCharacter)
       if (enemyCharacter) {
         // Random walk
+        // TODO: doesnt work because chooses a different random spot on every frame rather than a consistent spot every interval
         const randomX = Math.random() * 2 - 1
         const randomZ = Math.random() * 2 - 1
         const moveDirection = new editor.physics.jolt.Vec3(randomX, 0, randomZ)

@@ -842,24 +842,41 @@ export class CanvasPipeline {
               }
             }
 
-            const dynamicCubeBody = playerBody
-            if (dynamicCubeBody) {
+            // const dynamicCubeBody = playerBody
+            // if (dynamicCubeBody) {
+            //   const { position, rotation } =
+            //     editor.physics.getCharacterPositionAndRotation(dynamicCubeBody)
+            //   const dynamicCube = player
+
+            //   if (dynamicCube) {
+            //     dynamicCube.transform.position[0] = position.GetX()
+            //     dynamicCube.transform.position[1] = position.GetY()
+            //     dynamicCube.transform.position[2] = position.GetZ()
+
+            //     dynamicCube.transform.rotationX = rotation.GetEulerAngles().GetX()
+            //     dynamicCube.transform.rotationY = rotation.GetEulerAngles().GetY()
+            //     dynamicCube.transform.rotation = rotation.GetEulerAngles().GetZ()
+
+            //     // console.info('ipdate postiong', dynamicCube.transform.position)
+
+            //     dynamicCube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+            //   }
+            // }
+
+            for (const [id, chaacter] of editor.characters.entries()) {
               const { position, rotation } =
-                editor.physics.getCharacterPositionAndRotation(dynamicCubeBody)
-              const dynamicCube = player
+                editor.physics.getCharacterPositionAndRotation(chaacter)
+              const cube = editor.cubes3D.find((s) => s.id === id)
+              if (cube) {
+                cube.transform.position[0] = position.GetX()
+                cube.transform.position[1] = position.GetY()
+                cube.transform.position[2] = position.GetZ()
 
-              if (dynamicCube) {
-                dynamicCube.transform.position[0] = position.GetX()
-                dynamicCube.transform.position[1] = position.GetY()
-                dynamicCube.transform.position[2] = position.GetZ()
+                cube.transform.rotationX = rotation.GetEulerAngles().GetX()
+                cube.transform.rotationY = rotation.GetEulerAngles().GetY()
+                cube.transform.rotation = rotation.GetEulerAngles().GetZ()
 
-                dynamicCube.transform.rotationX = rotation.GetEulerAngles().GetX()
-                dynamicCube.transform.rotationY = rotation.GetEulerAngles().GetY()
-                dynamicCube.transform.rotation = rotation.GetEulerAngles().GetZ()
-
-                // console.info('ipdate postiong', dynamicCube.transform.position)
-
-                dynamicCube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+                cube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
               }
             }
           }
