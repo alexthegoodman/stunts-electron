@@ -4420,31 +4420,20 @@ export class Editor {
           for (let i = 0; i < this.gizmo.bodies.length; i++) {
             const gizmoBody = this.gizmo.bodies[i]
             if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
-              const axis = i === 0 ? 'x' : i === 1 ? 'y' : 'z'
-              this.draggingGizmoAxis = axis
-              console.info(`Dragging Gizmo ${axis}-axis`)
-              found = true
-              return // Interacted with gizmo, stop further processing
-            }
-          }
+              const axisIndex = i % 3
+              const axis = axisIndex === 0 ? 'x' : axisIndex === 1 ? 'y' : 'z'
 
-          for (let i = 3; i < this.gizmo.bodies.length; i++) {
-            const gizmoBody = this.gizmo.bodies[i]
-            if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
-              const axis = i === 3 ? 'x' : i === 4 ? 'y' : 'z'
-              this.draggingGizmoRotation = axis
-              console.info(`Rotating Gizmo ${axis}-axis`)
-              found = true
-              return // Interacted with gizmo, stop further processing
-            }
-          }
+              if (i < 3) {
+                this.draggingGizmoAxis = axis
+                console.info(`Dragging Gizmo translation ${axis}-axis`)
+              } else if (i < 6) {
+                this.draggingGizmoRotation = axis
+                console.info(`Rotating Gizmo rotation ${axis}-axis`)
+              } else {
+                this.draggingGizmoScale = axis
+                console.info(`Scaling Gizmo scale ${axis}-axis`)
+              }
 
-          for (let i = 6; i < this.gizmo.bodies.length; i++) {
-            const gizmoBody = this.gizmo.bodies[i]
-            if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
-              const axis = i === 6 ? 'x' : i === 7 ? 'y' : 'z'
-              this.draggingGizmoScale = axis
-              console.info(`Scaling Gizmo ${axis}-axis`)
               found = true
               return // Interacted with gizmo, stop further processing
             }
@@ -4538,8 +4527,8 @@ export class Editor {
     if (this.draggingGizmoAxis && this.selectedCube3DId) {
       const selectedCube = this.cubes3D.find((c) => c.id === this.selectedCube3DId)
       if (selectedCube) {
-        const dx = (x - this.lastScreen.x) * 0.01 // Adjust sensitivity
-        const dy = (y - this.lastScreen.y) * 0.01 // Adjust sensitivity
+        const dx = (x - this.previousTopLeft.x) * 0.0001 // Adjust sensitivity
+        const dy = (y - this.previousTopLeft.y) * 0.0001 // Adjust sensitivity
 
         switch (this.draggingGizmoAxis) {
           case 'x':
@@ -4552,6 +4541,14 @@ export class Editor {
             selectedCube.transform.position[2] += dx // Or some other combination for Z
             break
         }
+        console.info(
+          'dragging gizmo axis',
+          this.draggingGizmoAxis,
+          this.selectedCube3DId,
+          selectedCube.transform.position,
+          dx,
+          dy
+        )
         selectedCube.transform.updateUniformBuffer(queue, windowSize)
         this.gizmo?.update(queue, camera)
       }
@@ -4562,8 +4559,8 @@ export class Editor {
     if (this.draggingGizmoRotation && this.selectedCube3DId) {
       const selectedCube = this.cubes3D.find((c) => c.id === this.selectedCube3DId)
       if (selectedCube) {
-        const dx = (x - this.lastScreen.x) * 0.5 // Adjust sensitivity
-        const dy = (y - this.lastScreen.y) * 0.5 // Adjust sensitivity
+        const dx = (x - this.previousTopLeft.x) * 0.5 // Adjust sensitivity
+        const dy = (y - this.previousTopLeft.y) * 0.5 // Adjust sensitivity
 
         switch (this.draggingGizmoRotation) {
           case 'x':
@@ -4586,7 +4583,7 @@ export class Editor {
     if (this.draggingGizmoScale && this.selectedCube3DId) {
       const selectedCube = this.cubes3D.find((c) => c.id === this.selectedCube3DId)
       if (selectedCube) {
-        const dx = (x - this.lastScreen.x) * 0.01 // Adjust sensitivity
+        const dx = (x - this.previousTopLeft.x) * 0.01 // Adjust sensitivity
 
         switch (this.draggingGizmoScale) {
           case 'x':
