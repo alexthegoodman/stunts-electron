@@ -111,6 +111,17 @@ export class Physics {
       this.jolt.EMotionType_Dynamic,
       this.ObjectLayer_Moving.GetValue()
     )
+
+    // TODO: later maybe set these depending on things
+    // Enable continuous collision detection for fast-moving projectiles
+    creationSettings.mMotionQuality = this.jolt.EMotionQuality_LinearCast
+
+    // Reduce friction so it doesn't stick to surfaces
+    creationSettings.mFriction = 0.0
+
+    // Reduce bounciness (restitution) if you don't want it to bounce much
+    creationSettings.mRestitution = 0.3
+
     const body = this.bodyInterface.CreateBody(creationSettings)
     this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_Activate)
     return body

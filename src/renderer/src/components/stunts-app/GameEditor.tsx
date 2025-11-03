@@ -839,6 +839,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         // 'imageGeneration',
                         // 'stickers',
                         // 'brush'
+                        'cube3d',
                         'model3d'
                       ]}
                       layers={layers}

@@ -825,39 +825,20 @@ export class CanvasPipeline {
             for (const [id, body] of editor.bodies.entries()) {
               const { position, rotation } = editor.physics.getBodyPositionAndRotation(body)
               const sphere = editor.spheres3D.find((s) => s.id === id)
-              if (sphere) {
-                sphere.transform.position[0] = position.GetX()
-                sphere.transform.position[1] = position.GetY()
-                sphere.transform.position[2] = position.GetZ()
+              const cube = editor.cubes3D.find((s) => s.id === id)
+              const object = sphere ? sphere : cube
+              if (object) {
+                object.transform.position[0] = position.GetX()
+                object.transform.position[1] = position.GetY()
+                object.transform.position[2] = position.GetZ()
 
-                sphere.transform.rotationX = rotation.GetEulerAngles().GetX()
-                sphere.transform.rotationY = rotation.GetEulerAngles().GetY()
-                sphere.transform.rotation = rotation.GetEulerAngles().GetZ()
+                object.transform.rotationX = rotation.GetEulerAngles().GetX()
+                object.transform.rotationY = rotation.GetEulerAngles().GetY()
+                object.transform.rotation = rotation.GetEulerAngles().GetZ()
 
-                sphere.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+                object.transform.updateUniformBuffer(queue, editor.camera.windowSize)
               }
             }
-
-            // const dynamicCubeBody = playerBody
-            // if (dynamicCubeBody) {
-            //   const { position, rotation } =
-            //     editor.physics.getCharacterPositionAndRotation(dynamicCubeBody)
-            //   const dynamicCube = player
-
-            //   if (dynamicCube) {
-            //     dynamicCube.transform.position[0] = position.GetX()
-            //     dynamicCube.transform.position[1] = position.GetY()
-            //     dynamicCube.transform.position[2] = position.GetZ()
-
-            //     dynamicCube.transform.rotationX = rotation.GetEulerAngles().GetX()
-            //     dynamicCube.transform.rotationY = rotation.GetEulerAngles().GetY()
-            //     dynamicCube.transform.rotation = rotation.GetEulerAngles().GetZ()
-
-            //     // console.info('ipdate postiong', dynamicCube.transform.position)
-
-            //     dynamicCube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-            //   }
-            // }
 
             for (const [id, chaacter] of editor.characters.entries()) {
               this.prePhysicsUpdate(editor, chaacter, deltaTime)
