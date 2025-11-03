@@ -222,7 +222,7 @@ export class Editor {
   mockups3D: Mockup3D[] = []
   models3D: Model3D[] = []
   projectiles: { id: string; creationTime: number }[] = []
-  projectileLifetime: number = 5000 // 5 second
+  projectileLifetime: number = 15000 // 15 second
   gameLogic: GameLogic | null = null
 
   draggingCube3D: string | null

@@ -117,10 +117,16 @@ export class Physics {
     creationSettings.mMotionQuality = this.jolt.EMotionQuality_LinearCast
 
     // Reduce friction so it doesn't stick to surfaces
-    creationSettings.mFriction = 0.0
+    creationSettings.mFriction = 0.1
 
     // Reduce bounciness (restitution) if you don't want it to bounce much
     creationSettings.mRestitution = 0.3
+
+    // set custom mass
+    const massProperties = new this.jolt.MassProperties()
+    massProperties.mMass = 0.1 // Light projectile (in kg)
+    creationSettings.mOverrideMassProperties = this.jolt.EOverrideMassProperties_CalculateInertia
+    creationSettings.mMassPropertiesOverride = massProperties
 
     const body = this.bodyInterface.CreateBody(creationSettings)
     this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_Activate)

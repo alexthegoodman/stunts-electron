@@ -157,6 +157,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
   // Camera pan state
   let [panX, setPanX] = useState(0)
   let [panY, setPanY] = useState(0)
+  let [tpanX, setTPanX] = useState(0)
+  let [tpanY, setTPanY] = useState(0)
 
   let [rotateX, setRotateX] = useState(0)
   let [rotateY, setRotateY] = useState(0)
@@ -478,7 +480,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       editorRef.current.target = SaveTarget.Games
       editorStateRef.current.saveTarget = SaveTarget.Games
 
-      editor.camera.setPosition(5, 50, 5)
+      editor.camera.setPosition(15, 15, 15)
       // quat.fromEuler(editor.camera.rotation, -45, 0, -45)
       editor.cameraBinding.update(editor.gpuResources.queue, editor.camera)
 
@@ -997,6 +999,62 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                           }}
                         />
                       </div>
+
+                      {/* <hr className="invisible py-2" />
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Pan Target Horizontal (X)
+                        </label>
+                        <input
+                          type="range"
+                          min="-100"
+                          max="100"
+                          step="5"
+                          value={tpanX}
+                          className="w-full"
+                          onChange={(e) => {
+                            const editor = editorRef.current
+                            if (editor && editor.camera) {
+                              const newValue = parseFloat(e.target.value)
+                              // const deltaX = newValue - panX
+                              editor.camera.panTarget(vec2.fromValues(newValue, 0))
+                              editor.cameraBinding?.update(
+                                editor.gpuResources?.queue!,
+                                editor.camera
+                              )
+                              setTPanX(newValue)
+                            }
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Pan Target Vertical (Y)
+                        </label>
+                        <input
+                          type="range"
+                          min="-100"
+                          max="100"
+                          step="5"
+                          value={tpanY}
+                          className="w-full"
+                          onChange={(e) => {
+                            const editor = editorRef.current
+                            if (editor && editor.camera) {
+                              const newValue = parseFloat(e.target.value)
+                              // const deltaY = newValue - panY
+                              editor.camera.panTarget(vec2.fromValues(0, newValue))
+                              editor.cameraBinding?.update(
+                                editor.gpuResources?.queue!,
+                                editor.camera
+                              )
+                              setTPanY(newValue)
+                            }
+                          }}
+                        />
+                      </div> */}
 
                       <hr className="invisible py-2" />
 

@@ -74,7 +74,7 @@ export class CanvasPipeline {
   characterPadding = 0.02
   penetrationRecoverySpeed = 1.0
   predictiveContactDistance = 0.1
-  enableWalkStairs = true
+  enableWalkStairs = false // true will take away small projectile hit when on ground
   enableStickToFloor = true
 
   shapeType = 'Capsule'

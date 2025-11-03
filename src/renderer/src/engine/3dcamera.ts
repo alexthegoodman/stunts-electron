@@ -200,6 +200,19 @@ export class Camera3D extends Camera {
     console.log('target:', this.target, 'pos:', this.position3D)
   }
 
+  panTarget(delta: vec2) {
+    console.log('target:', this.target, 'pos:', this.position3D)
+    // this.position3D[0] = this.position3D[0] + delta[0]
+    // this.position3D[1] = this.position3D[1] + delta[1]
+    // this.position[0] = this.position3D[0]
+    // this.position[1] = this.position3D[1]
+    const panVector = vec3.create()
+    panVector[0] = delta[0]
+    panVector[1] = delta[1]
+    vec3.add(this.target, this.target, panVector)
+    console.log('target:', this.target, 'pos:', this.position3D)
+  }
+
   // Move camera along its view direction
   moveForward(distance: number): void {
     const direction = vec3.create()
