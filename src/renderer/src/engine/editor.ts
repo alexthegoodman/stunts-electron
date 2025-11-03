@@ -77,6 +77,7 @@ import {
 import { fromNDC, toNDC, toSystemScale } from './vertex'
 import { radiansToDegrees } from './transform'
 import { GameLogic } from './GameLogic'
+import { Gizmo } from './gizmo'
 
 export const TEXT_BACKGROUNDS_DEFAULT_HIDDEN = true
 
@@ -221,6 +222,8 @@ export class Editor {
   spheres3D: Sphere3D[] = []
   mockups3D: Mockup3D[] = []
   models3D: Model3D[] = []
+  selectedCube3DId: string | null
+  gizmo: Gizmo | null = null
   projectiles: { id: string; creationTime: number }[] = []
   projectileLifetime: number = 15000 // 15 second
   gameLogic: GameLogic | null = null
@@ -399,6 +402,8 @@ export class Editor {
     this.draggingCube3D = null
     this.draggingSphere3D = null
     this.draggingMockup3D = null
+    this.selectedCube3DId = null
+    this.gizmo = null
     this.motionPaths = []
     this.bodies = new Map()
     this.generationCount = 4
@@ -492,6 +497,13 @@ export class Editor {
     cloned_settings: ProjectSettings
   ) {
     await this.physics.initialize()
+
+    this.gizmo = new Gizmo(
+      this.gpuResources!,
+      this.camera!,
+      this.modelBindGroupLayout!,
+      this.groupBindGroupLayout!
+    )
 
     const layerSpacing = cloned_settings ? cloned_settings.layerSpacing : 0.001
     // console.info('layerSpacing restore ', layerSpacing)
@@ -4715,6 +4727,42 @@ export class Editor {
     //     .map(((_, target)) => target);
 
     if (intersecting_objects.length <= 0) {
+      const ray = this.lastRay
+      if (ray && this.physics) {
+        const direction = new this.physics.jolt.Vec3(
+          ray.direction[0],
+          ray.direction[1],
+          ray.direction[2]
+        )
+        direction.Mul(1000)
+        const hit = this.physics.raycast(
+          new this.physics.jolt.RVec3(ray.origin[0], ray.origin[1], ray.origin[2]),
+          direction
+        )
+
+        if (hit) {
+          const bodyId = hit.GetIndexAndSequenceNumber()
+          let found = false
+          for (const cube of this.cubes3D) {
+            const body = this.bodies.get(cube.id)
+            if (body && body.GetID().GetIndexAndSequenceNumber() === bodyId) {
+              this.selectedCube3DId = cube.id
+              this.gizmo?.attach(cube.transform)
+              console.info('Selected cube:', cube.id)
+              found = true
+              return
+            }
+          }
+          if (!found) {
+            this.selectedCube3DId = null
+            this.gizmo?.detach()
+          }
+        } else {
+          this.selectedCube3DId = null
+          this.gizmo?.detach()
+        }
+      }
+
       console.warn('No selection to be made')
       return
     }

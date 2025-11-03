@@ -124,7 +124,7 @@ export class Physics {
 
     // set custom mass
     const massProperties = new this.jolt.MassProperties()
-    massProperties.mMass = 0.1 // Light projectile (in kg)
+    massProperties.mMass = 0.3 // Light projectile (in kg)
     creationSettings.mOverrideMassProperties = this.jolt.EOverrideMassProperties_CalculateInertia
     creationSettings.mMassPropertiesOverride = massProperties
 
@@ -325,5 +325,34 @@ export class Physics {
     const position = body.GetPosition()
     const rotation = body.GetRotation()
     return { position, rotation }
+  }
+
+  public raycast(origin: Jolt.RVec3, direction: Jolt.Vec3): Jolt.BodyID | null {
+    const jolt = this.jolt
+    const physicsSystem = this.physicsSystem
+
+    const query = physicsSystem.GetNarrowPhaseQuery()
+
+    const ray = new jolt.RRayCast()
+    ray.mOrigin = origin
+    ray.mDirection = direction
+
+    const collector = new jolt.CastRayClosestHitCollisionCollector()
+
+    query.CastRay(
+      ray,
+      new jolt.RayCastSettings(),
+      collector,
+      this.movingBPFilter,
+      this.movingLayerFilter,
+      this.bodyFilter,
+      this.shapeFilter
+    )
+
+    if (collector.HadHit()) {
+      return collector.mHit.mBodyID
+    }
+
+    return null
   }
 }

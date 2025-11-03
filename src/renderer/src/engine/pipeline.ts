@@ -1302,6 +1302,22 @@ export class CanvasPipeline {
       }
     }
 
+    if (editor.gizmo) {
+      editor.gizmo.update(queue, editor.camera)
+      for (const axis of [editor.gizmo.xAxis, editor.gizmo.yAxis, editor.gizmo.zAxis]) {
+        if (!axis.hidden) {
+          axis.bindGroup.bindWebGLBindGroup(gl)
+          axis.groupBindGroup?.bindWebGLBindGroup(gl)
+
+          drawIndexedGeometry(
+            axis.vertexBuffer as PolyfillBuffer,
+            axis.indexBuffer as PolyfillBuffer,
+            axis.indices.length
+          )
+        }
+      }
+    }
+
     // Draw 3D spheres
     for (const sphere of editor.spheres3D || []) {
       if (!sphere.hidden) {
