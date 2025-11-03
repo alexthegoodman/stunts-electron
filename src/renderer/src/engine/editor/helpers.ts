@@ -291,62 +291,91 @@ import { Camera3D } from '../3dcamera'
 // NOTE: This implementation assumes you have the gl-matrix library available.
 // NOTE: Your Camera3D.getProjection() uses a fixed aspect ratio of 500/500,
 // which may need adjustment if your windowSize is not square.
+// export function visualize_ray_intersection(
+//   windowSize: WindowSize,
+//   screen_x: number,
+//   screen_y: number,
+//   camera: Camera3D
+// ): Ray {
+//   // 1. Convert screen coordinates (pixel space) to Normalized Device Coordinates (NDC)
+//   // NDC: x from -1 (left) to 1 (right), y from 1 (top) to -1 (bottom)
+//   const ndc_x = (screen_x / windowSize.width) * 2 - 1
+//   const ndc_y = 1 - (screen_y / windowSize.height) * 2 // Invert Y-axis
+
+//   // 2. Define the ray's start (near plane) and end (far plane) points in Clip Space.
+//   // We use z = -1 (near) and z = 1 (far). w = 1 for a 3D point.
+//   const ray_clip_near = vec4.fromValues(ndc_x, ndc_y, -1.0, 1.0)
+//   const ray_clip_far = vec4.fromValues(ndc_x, ndc_y, 1.0, 1.0)
+
+//   // 3. Compute the Inverse Projection-View Matrix
+//   const inv_proj_view = mat4.create()
+//   const projectionMatrix = camera.getProjection()
+//   const viewMatrix = camera.getView()
+
+//   const view_projection = mat4.create()
+//   mat4.multiply(view_projection, projectionMatrix, viewMatrix) // P * V
+//   mat4.invert(inv_proj_view, view_projection) // (P * V)^-1
+
+//   // 4. Transform points from Clip Space to World Space
+//   const ray_world_near = vec4.create()
+//   const ray_world_far = vec4.create()
+
+//   vec4.transformMat4(ray_world_near, ray_clip_near, inv_proj_view)
+//   vec4.transformMat4(ray_world_far, ray_clip_far, inv_proj_view)
+
+//   // 5. Perform Perspective Divide (divide X, Y, Z by W)
+//   // This converts from Homogeneous Coordinates (vec4) to World Coordinates (vec3)
+//   const near_point = vec3.fromValues(
+//     ray_world_near[0] / ray_world_near[3],
+//     ray_world_near[1] / ray_world_near[3],
+//     ray_world_near[2] / ray_world_near[3]
+//   )
+
+//   const far_point = vec3.fromValues(
+//     ray_world_far[0] / ray_world_far[3],
+//     ray_world_far[1] / ray_world_far[3],
+//     ray_world_far[2] / ray_world_far[3]
+//   )
+
+//   // 6. Define the 3D Ray
+//   const ray_origin = vec3.clone(camera.position3D) // Ray origin is the camera's world position
+
+//   // The direction vector is from the origin to the unprojected point on the far plane.
+//   const ray_direction = vec3.create()
+//   vec3.subtract(ray_direction, far_point, ray_origin)
+//   vec3.normalize(ray_direction, ray_direction) // Direction must be normalized
+
+//   // Return the new 3D Ray
+//   return Ray.new(ray_origin, ray_direction)
+// }
+
 export function visualize_ray_intersection(
   windowSize: WindowSize,
-  screen_x: number,
-  screen_y: number,
+  mouseX: number,
+  mouseY: number,
   camera: Camera3D
 ): Ray {
-  // 1. Convert screen coordinates (pixel space) to Normalized Device Coordinates (NDC)
-  // NDC: x from -1 (left) to 1 (right), y from 1 (top) to -1 (bottom)
-  const ndc_x = (screen_x / windowSize.width) * 2 - 1
-  const ndc_y = 1 - (screen_y / windowSize.height) * 2 // Invert Y-axis
+  const ndcX = (mouseX / windowSize.width) * 2 - 1
+  const ndcY = -((mouseY / windowSize.height) * 2 - 1)
 
-  // 2. Define the ray's start (near plane) and end (far plane) points in Clip Space.
-  // We use z = -1 (near) and z = 1 (far). w = 1 for a 3D point.
-  const ray_clip_near = vec4.fromValues(ndc_x, ndc_y, -1.0, 1.0)
-  const ray_clip_far = vec4.fromValues(ndc_x, ndc_y, 1.0, 1.0)
+  const clipCoords = vec4.fromValues(ndcX, ndcY, -1.0, 1.0)
 
-  // 3. Compute the Inverse Projection-View Matrix
-  const inv_proj_view = mat4.create()
-  const projectionMatrix = camera.getProjection()
-  const viewMatrix = camera.getView()
+  const invProjection = mat4.invert(mat4.create(), camera.getProjection())
+  const eyeCoords = vec4.transformMat4(vec4.create(), clipCoords, invProjection)
+  vec4.set(eyeCoords, eyeCoords[0], eyeCoords[1], -1.0, 0.0)
 
-  const view_projection = mat4.create()
-  mat4.multiply(view_projection, projectionMatrix, viewMatrix) // P * V
-  mat4.invert(inv_proj_view, view_projection) // (P * V)^-1
+  const invView = mat4.invert(mat4.create(), camera.getView())
+  const worldCoords = vec4.transformMat4(vec4.create(), eyeCoords, invView)
 
-  // 4. Transform points from Clip Space to World Space
-  const ray_world_near = vec4.create()
-  const ray_world_far = vec4.create()
+  const direction = vec3.normalize(vec3.create(), [worldCoords[0], worldCoords[1], worldCoords[2]])
+  const origin = camera.position3D
 
-  vec4.transformMat4(ray_world_near, ray_clip_near, inv_proj_view)
-  vec4.transformMat4(ray_world_far, ray_clip_far, inv_proj_view)
-
-  // 5. Perform Perspective Divide (divide X, Y, Z by W)
-  // This converts from Homogeneous Coordinates (vec4) to World Coordinates (vec3)
-  const near_point = vec3.fromValues(
-    ray_world_near[0] / ray_world_near[3],
-    ray_world_near[1] / ray_world_near[3],
-    ray_world_near[2] / ray_world_near[3]
-  )
-
-  const far_point = vec3.fromValues(
-    ray_world_far[0] / ray_world_far[3],
-    ray_world_far[1] / ray_world_far[3],
-    ray_world_far[2] / ray_world_far[3]
-  )
-
-  // 6. Define the 3D Ray
-  const ray_origin = vec3.clone(camera.position3D) // Ray origin is the camera's world position
-
-  // The direction vector is from the origin to the unprojected point on the far plane.
-  const ray_direction = vec3.create()
-  vec3.subtract(ray_direction, far_point, ray_origin)
-  vec3.normalize(ray_direction, ray_direction) // Direction must be normalized
-
-  // Return the new 3D Ray
-  return Ray.new(ray_origin, ray_direction)
+  // return {
+  //   origin: [origin[0], origin[1], origin[2]],
+  //   direction: [direction[0], direction[1], direction[2]],
+  //   top_left: [origin[0] - direction[0], origin[1] - direction[1], origin[2] - direction[2]]
+  // }
+  return Ray.new(origin, direction)
 }
 
 export enum InteractionTarget {

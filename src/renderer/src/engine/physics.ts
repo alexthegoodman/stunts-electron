@@ -11,6 +11,8 @@ export class Physics {
   ObjectLayer_Moving: Jolt.BroadPhaseLayer
   movingBPFilter: Jolt.BroadPhaseLayerFilter
   movingLayerFilter: Jolt.ObjectLayerFilter
+  nonmovingBPFilter: Jolt.BroadPhaseLayerFilter
+  nonmovingLayerFilter: Jolt.ObjectLayerFilter
   bodyFilter: Jolt.BodyFilter
   shapeFilter: Jolt.ShapeFilter
 
@@ -61,6 +63,16 @@ export class Physics {
       objectLayerPairFilter,
       this.ObjectLayer_Moving.GetValue()
     )
+
+    const nonmovingBPFilter = new jolt.DefaultBroadPhaseLayerFilter(
+      settings.mObjectVsBroadPhaseLayerFilter,
+      this.ObjectLayer_NonMoving.GetValue()
+    )
+    const nonmovingLayerFilter = new jolt.DefaultObjectLayerFilter(
+      objectLayerPairFilter,
+      this.ObjectLayer_NonMoving.GetValue()
+    )
+
     const bodyFilter = new jolt.BodyFilter()
     const shapeFilter = new jolt.ShapeFilter()
 
@@ -70,6 +82,8 @@ export class Physics {
     this.updateSettings = updateSettings
     this.movingBPFilter = movingBPFilter
     this.movingLayerFilter = movingLayerFilter
+    this.nonmovingBPFilter = nonmovingBPFilter
+    this.nonmovingLayerFilter = nonmovingLayerFilter
     this.bodyFilter = bodyFilter
     this.shapeFilter = shapeFilter
   }
@@ -356,30 +370,102 @@ export class Physics {
     return { position, rotation }
   }
 
-  public raycast(origin: Jolt.RVec3, direction: Jolt.Vec3): Jolt.BodyID | null {
+  // public raycast(origin: Jolt.RVec3, direction: Jolt.Vec3): Jolt.BodyID | null {
+  //   const jolt = this.jolt
+  //   const physicsSystem = this.physicsSystem
+
+  //   const query = physicsSystem.GetNarrowPhaseQuery()
+
+  //   const ray = new jolt.RRayCast()
+  //   ray.mOrigin = origin
+  //   ray.mDirection = direction
+
+  //   const collector = new jolt.CastRayClosestHitCollisionCollector()
+
+  //   query.CastRay(
+  //     ray,
+  //     new jolt.RayCastSettings(),
+  //     collector,
+  //     this.movingBPFilter,
+  //     this.movingLayerFilter,
+  //     this.bodyFilter,
+  //     this.shapeFilter
+  //   )
+
+  //   if (collector.HadHit()) {
+  //     return collector.mHit.mBodyID
+  //   }
+
+  //   return null
+  // }
+
+  public raycast(
+    origin: Jolt.RVec3,
+    direction: Jolt.Vec3
+  ): { bodyId: Jolt.BodyID; fraction: number; position: Jolt.RVec3 } | null {
     const jolt = this.jolt
     const physicsSystem = this.physicsSystem
-
     const query = physicsSystem.GetNarrowPhaseQuery()
 
     const ray = new jolt.RRayCast()
     ray.mOrigin = origin
     ray.mDirection = direction
 
-    const collector = new jolt.CastRayClosestHitCollisionCollector()
-
+    // Raycast against moving objects
+    const movingCollector = new jolt.CastRayClosestHitCollisionCollector()
     query.CastRay(
       ray,
       new jolt.RayCastSettings(),
-      collector,
+      movingCollector,
       this.movingBPFilter,
       this.movingLayerFilter,
       this.bodyFilter,
       this.shapeFilter
     )
 
-    if (collector.HadHit()) {
-      return collector.mHit.mBodyID
+    const nonMovingCollector = new jolt.CastRayClosestHitCollisionCollector()
+    query.CastRay(
+      ray,
+      new jolt.RayCastSettings(),
+      nonMovingCollector,
+      this.nonmovingBPFilter,
+      this.nonmovingLayerFilter,
+      this.bodyFilter,
+      this.shapeFilter
+    )
+
+    // Find the closest hit
+    let closestHit = null
+    let closestFraction = Infinity
+
+    if (movingCollector.HadHit()) {
+      const fraction = movingCollector.mHit.mFraction
+      if (fraction < closestFraction) {
+        closestFraction = fraction
+        closestHit = movingCollector.mHit
+      }
+    }
+
+    if (nonMovingCollector.HadHit()) {
+      const fraction = nonMovingCollector.mHit.mFraction
+      if (fraction < closestFraction) {
+        closestFraction = fraction
+        closestHit = nonMovingCollector.mHit
+      }
+    }
+
+    if (closestHit) {
+      const hitPosition = new jolt.RVec3(
+        origin.GetX() + direction.GetX() * closestHit.mFraction,
+        origin.GetY() + direction.GetY() * closestHit.mFraction,
+        origin.GetZ() + direction.GetZ() * closestHit.mFraction
+      )
+
+      return {
+        bodyId: closestHit.mBodyID,
+        fraction: closestHit.mFraction,
+        position: hitPosition
+      }
     }
 
     return null

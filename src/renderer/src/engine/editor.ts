@@ -4187,153 +4187,6 @@ export class Editor {
     return 0.0
   }
 
-  // get_fill_red(selected_id: string): number {
-  //   let polygon_index = this.textItems.findIndex((p) => p.id == selected_id);
-
-  //   if (polygon_index) {
-  //     if (this.textItems[polygon_index]) {
-  //       let selected_polygon = this.textItems[polygon_index];
-  //       return selected_polygon.backgroundPolygon.fill[0];
-  //     } else {
-  //       return 0.0;
-  //     }
-  //   }
-
-  //   return 0.0;
-  // }
-
-  // get_fill_green(selected_id: string): number {
-  //   let polygon_index = this.textItems.findIndex((p) => p.id == selected_id);
-
-  //   if (polygon_index) {
-  //     if (this.textItems[polygon_index]) {
-  //       let selected_polygon = this.textItems[polygon_index];
-  //       return selected_polygon.backgroundPolygon.fill[1];
-  //     } else {
-  //       return 0.0;
-  //     }
-  //   }
-
-  //   return 0.0;
-  // }
-
-  // get_fill_blue(selected_id: string): number {
-  //   let polygon_index = this.textItems.findIndex((p) => p.id == selected_id);
-
-  //   if (polygon_index) {
-  //     if (this.textItems[polygon_index]) {
-  //       let selected_polygon = this.textItems[polygon_index];
-  //       return selected_polygon.backgroundPolygon.fill[2];
-  //     } else {
-  //       return 0.0;
-  //     }
-  //   }
-
-  //   return 0.0;
-  // }
-
-  // get_background_red(selected_id: string): number {
-  //   let polygon_index = this.staticPolygons.findIndex(
-  //     (p) => p.id == selected_id
-  //   );
-
-  //   if (polygon_index) {
-  //     if (this.staticPolygons[polygon_index]) {
-  //       let selected_polygon = this.staticPolygons[polygon_index];
-
-  //       return selected_polygon.fill[0];
-  //     } else {
-  //       return 0.0;
-  //     }
-  //   }
-
-  //   return 0.0;
-  // }
-
-  // get_background_green(selected_id: string): number {
-  //   let polygon_index = this.staticPolygons.findIndex(
-  //     (p) => p.id == selected_id
-  //   );
-
-  //   if (polygon_index) {
-  //     if (this.staticPolygons[polygon_index]) {
-  //       let selected_polygon = this.staticPolygons[polygon_index];
-
-  //       return selected_polygon.fill[1];
-  //     } else {
-  //       return 0.0;
-  //     }
-  //   }
-
-  //   return 0.0;
-  // }
-
-  // get_background_blue(selected_id: string): number {
-  //   let polygon_index = this.staticPolygons.findIndex(
-  //     (p) => p.id == selected_id
-  //   );
-
-  //   if (polygon_index) {
-  //     if (this.staticPolygons[polygon_index]) {
-  //       let selected_polygon = this.staticPolygons[polygon_index];
-
-  //       return selected_polygon.fill[2];
-  //     } else {
-  //       return 0.0;
-  //     }
-  //   }
-
-  //   return 0.0;
-  // }
-
-  // get_polygon_red(selected_id: string): number {
-  //   let polygon_index = this.polygons.findIndex((p) => p.id == selected_id);
-
-  //   if (polygon_index) {
-  //     if (this.polygons[polygon_index]) {
-  //       let selected_polygon = this.polygons[polygon_index];
-
-  //       return selected_polygon.fill[0];
-  //     } else {
-  //       return 0.0;
-  //     }
-  //   }
-
-  //   return 0.0;
-  // }
-
-  // get_polygon_green(selected_id: string): number {
-  //   let polygon_index = this.polygons.findIndex((p) => p.id == selected_id);
-
-  //   if (polygon_index) {
-  //     if (this.polygons[polygon_index]) {
-  //       let selected_polygon = this.polygons[polygon_index];
-
-  //       return selected_polygon.fill[1];
-  //     } else {
-  //       return 0.0;
-  //     }
-  //   }
-
-  //   return 0.0;
-  // }
-
-  // get_polygon_blue(selected_id: string): number {
-  //   let polygon_index = this.polygons.findIndex((p) => p.id == selected_id);
-
-  //   if (polygon_index) {
-  //     if (this.polygons[polygon_index]) {
-  //       let selected_polygon = this.polygons[polygon_index];
-
-  //       return selected_polygon.fill[2];
-  //     } else {
-  //       return 0.0;
-  //     }
-  //   }
-
-  //   return 0.0;
-  // }
-
   get_polygon_borderRadius(selected_id: string): number {
     let polygon_index = this.polygons.findIndex((p) => p.id == selected_id)
 
@@ -4475,7 +4328,10 @@ export class Editor {
 
   /** Mouse Handlers */
 
-  handle_mouse_down(positionX: number, positionY: number) {
+  handle_mouse_down(
+    positionX: number, // mouse x
+    positionY: number // mouse y
+  ) {
     let camera = this.camera
 
     if (!camera) {
@@ -4489,620 +4345,91 @@ export class Editor {
 
     let ndc = toNDC(positionX, positionY, camera.windowSize.width, camera.windowSize.height)
 
-    // if (
-    //   this.lastScreen.x < this.interactiveBounds.min.x ||
-    //   this.lastScreen.x > this.interactiveBounds.max.x ||
-    //   this.lastScreen.y < this.interactiveBounds.min.y ||
-    //   this.lastScreen.y > this.interactiveBounds.max.y
-    // ) {
-    //   return;
-    // }
+    // if (intersecting_objects.length <= 0) {
+    // const ray = this.lastRay
+    if (ray && this.physics) {
+      const direction = new this.physics.jolt.Vec3(
+        ray.direction[0],
+        ray.direction[1],
+        ray.direction[2]
+      )
+      direction.Mul(1000)
 
-    // First, check if brush drawing mode
-    if (this.brushDrawingMode && this.currentBrush) {
-      const brushPoint = {
-        x: positionX,
-        y: positionY,
-        pressure: 1.0, // Could be read from pointer event if supported
-        timestamp: Date.now()
-      }
-
-      // Create a new ProceduralBrush instance for this stroke
-      const gpuResources = this.gpuResources
-      const camera = this.camera
-      if (!gpuResources || !camera) {
-        return
-      }
-
-      const windowSize = camera.windowSize
-      const config = this.currentBrush.toSavedConfig(windowSize)
-      config.id = `brush_stroke_${Date.now()}_${Math.random()}`
-      config.strokes = []
-      config.position = {
-        x: positionX,
-        y: positionY
-      }
-
-      const newBrush = new ProceduralBrush(
-        windowSize,
-        gpuResources.device!,
-        gpuResources.queue!,
-        this.modelBindGroupLayout!,
-        this.groupBindGroupLayout!,
-        camera,
-        config,
-        this.currentBrush.currentSequenceId,
-        1.0
+      const hit = this.physics.raycast(
+        new this.physics.jolt.RVec3(ray.origin[0], ray.origin[1], ray.origin[2]),
+        direction
       )
 
-      // newBrush.transform.updatePosition([ndc.x, ndc.y], windowSize)
-      // newBrush.transform.updateUniformBuffer(this.gpuResources.queue, windowSize)
+      console.info('checking hit', direction.GetX(), direction.GetY(), direction.GetZ())
 
-      this.brushes.push(newBrush)
-      this.currentBrush = newBrush
-      this.currentBrush.startStroke(brushPoint, config, camera.windowSize)
-      return
-    }
+      if (hit) {
+        const bodyId = hit.bodyId.GetIndexAndSequenceNumber()
+        console.info('hit!', bodyId)
+        let found = false
+        for (const cube of this.cubes3D) {
+          let blacklist = ['landscape-cube']
 
-    // Next, check if panning
-    if (this.controlMode == ControlMode.Pan) {
-      this.isPanning = true
-      this.dragStart = this.lastTopLeft
-
-      return
-    }
-
-    // Next, check if we're clicking on a motion path handle to drag
-    // for (poly_index, polygon) of this.staticPolygons {
-    //     if polygon.name != "motion_path_handle" {
-    //         continue;
-    //     }
-
-    //     if polygon.containsPoint(this.lastTopLeft, camera) {
-    //         this.draggingPathHandle = (polygon.id);
-    //         this.draggingPathObject = polygon.sourcePolygonId;
-    //         this.draggingPathKeyframe = polygon.sourceKeyframeId;
-    //         this.dragStart = (this.lastTopLeft);
-
-    //         return; // nothing to add to undo stack
-    //     }
-    // }
-
-    // for (let path of this.motionPaths) {
-    //   for (let polygon of path.staticPolygons) {
-    //     // check if we're clicking on a motion path handle to drag
-    //     if (polygon.name == 'motion_path_handle') {
-    //       if (polygon.containsPoint(this.lastTopLeft, camera)) {
-    //         this.draggingPathHandle = polygon.id
-    //         this.draggingPathAssocPath = polygon.sourcePathId
-    //         this.draggingPathObject = polygon.sourcePolygonId
-    //         this.draggingPathKeyframe = polygon.sourceKeyframeId
-    //         this.dragStart = this.lastTopLeft
-
-    //         return // nothing to add to undo stack
-    //       }
-    //     }
-    //     if (polygon.name == 'motion_path_segment') {
-    //       if (polygon.containsPoint(this.lastTopLeft, camera)) {
-    //         this.draggingPath = path.id
-    //         this.draggingPathObject = polygon.sourcePolygonId
-    //         this.dragStart = this.lastTopLeft
-
-    //         return // nothing to add to undo stack
-    //       }
-    //     }
-    //   }
-    // }
-
-    // Finally, check for object interation
-    let intersecting_objects: [number, InteractionTarget, number][] = []
-
-    // Collect intersecting polygons
-    for (let [i, polygon] of this.polygons.entries()) {
-      if (polygon.hidden) {
-        continue
-      }
-
-      if (polygon.containsPoint(ray, camera.windowSize)) {
-        console.info('polygon contains pointer')
-        intersecting_objects.push([polygon.layer, InteractionTarget.Polygon, i])
-      }
-    }
-
-    // Collect intersecting text items
-    for (let [i, text_item] of this.textItems.entries()) {
-      if (text_item.hidden) {
-        continue
-      }
-
-      if (text_item.containsPoint(ray, camera.windowSize)) {
-        intersecting_objects.push([text_item.layer, InteractionTarget.Text, i])
-      }
-    }
-
-    // Collect intersecting image items
-    for (let [i, image_item] of this.imageItems.entries()) {
-      if (image_item.hidden) {
-        continue
-      }
-
-      if (image_item.containsPoint(ray, camera.windowSize)) {
-        intersecting_objects.push([image_item.layer, InteractionTarget.Image, i])
-      }
-    }
-
-    // Collect intersecting image items
-    for (let [i, video_item] of this.videoItems.entries()) {
-      if (video_item.hidden) {
-        continue
-      }
-
-      // console.info("Checking video point");
-
-      if (video_item.containsPoint(ray, camera.windowSize)) {
-        console.info('Video contains point')
-        intersecting_objects.push([video_item.layer, InteractionTarget.Video, i])
-      }
-
-      if (video_item.mousePath) {
-        for (let polygon of video_item.mousePath.staticPolygons) {
-          // check if we're clicking on a motion path handle to drag
-
-          let adjustedPoint: Point = {
-            x: this.lastTopLeft.x - video_item.groupTransform.position[0],
-            y: this.lastTopLeft.y - video_item.groupTransform.position[1]
+          if (blacklist.includes(cube.id)) {
+            continue
           }
 
-          // if (polygon.name == 'motion_path_handle') {
-          //   if (polygon.containsPoint(adjustedPoint, camera)) {
-          //     // console.info("triggering handle!", polygon.id);
+          const body = this.bodies.get(cube.id)
+          if (body && body.GetID().GetIndexAndSequenceNumber() === bodyId) {
+            this.selectedCube3DId = cube.id
+            this.gizmo?.attach(cube.transform)
+            this.gizmo?.update(this.gpuResources?.queue!, this.camera!)
+            console.info('Selected cube:', cube.id)
 
-          //     this.draggingPathHandle = polygon.id
-          //     this.draggingPathAssocPath = polygon.sourcePathId // video_item.mousePath.id
-          //     this.draggingPathObject = polygon.sourcePolygonId
-          //     this.draggingPathKeyframe = polygon.sourceKeyframeId
-          //     this.dragStart = this.lastTopLeft
-
-          //     return // nothing to add to undo stack
-          //   }
-          // }
-          // if (polygon.name == 'motion_path_segment') {
-          //   if (polygon.containsPoint(adjustedPoint, camera)) {
-          //     this.draggingPath = video_item.mousePath.id
-          //     this.draggingPathObject = polygon.sourcePolygonId
-          //     this.dragStart = this.lastTopLeft
-
-          //     return // nothing to add to undo stack
-          //   }
-          // }
+            found = true
+            return
+          }
         }
-      }
-    }
 
-    // Collect intersecting cubes
-    // Convert mouse position to NDC for 3D objects
-    // const ndcPoint = {
-    //   x: (this.lastTopLeft.x / camera.windowSize.width) * 2.0 - 1.0,
-    //   y: -((this.lastTopLeft.y / camera.windowSize.height) * 2.0 - 1.0)
-    // }
-
-    // for (let [i, cube] of this.cubes3D.entries()) {
-    //   if (cube.hidden) {
-    //     continue
-    //   }
-
-    //   if (cube.containsPoint(ray)) {
-    //     intersecting_objects.push([cube.layer, InteractionTarget.Cube3D, i])
-    //   }
-    // }
-
-    // // Collect intersecting spheres
-    // for (let [i, sphere] of this.spheres3D.entries()) {
-    //   if (sphere.hidden) {
-    //     continue
-    //   }
-
-    //   if (sphere.containsPoint(ray)) {
-    //     intersecting_objects.push([sphere.layer, InteractionTarget.Sphere3D, i])
-    //   }
-    // }
-
-    // // Collect intersecting mockups
-    // for (let [i, mockup] of this.mockups3D.entries()) {
-    //   if (mockup.hidden) {
-    //     continue
-    //   }
-
-    //   if (mockup.containsPoint(ray, this.camera?.windowSize!)) {
-    //     intersecting_objects.push([mockup.layer, InteractionTarget.Mockup3D, i])
-    //   }
-    // }
-
-    // Sort intersecting objects by layer of descending order (highest layer first)
-    // intersecting_objects.sort_by(|a, b| b.0.cmp(a.0));
-
-    // sort by lowest layer first, for this system
-    // intersecting_objects.sort_by((a, b) a.0.cmp(b.0));
-    intersecting_objects.sort((a, b) => a[0] - b[0])
-
-    // Return the topmost intersecting object, if any
-    // let target = intersecting_objects
-    //     .into_iter()
-    //     .next()
-    //     .map(((_, target)) => target);
-
-    if (intersecting_objects.length <= 0) {
-      const ray = this.lastRay
-      if (ray && this.physics) {
-        const direction = new this.physics.jolt.Vec3(
-          ray.direction[0],
-          ray.direction[1],
-          ray.direction[2]
-        )
-        direction.Mul(1000)
-        const hit = this.physics.raycast(
-          new this.physics.jolt.RVec3(ray.origin[0], ray.origin[1], ray.origin[2]),
-          direction
-        )
-
-        if (hit) {
-          const bodyId = hit.GetIndexAndSequenceNumber()
-          let found = false
-          for (const cube of this.cubes3D) {
-            const body = this.bodies.get(cube.id)
-            if (body && body.GetID().GetIndexAndSequenceNumber() === bodyId) {
-              this.selectedCube3DId = cube.id
-              this.gizmo?.attach(cube.transform)
-              this.gizmo?.update(this.gpuResources?.queue!, this.camera!)
-              console.info('Selected cube:', cube.id)
-
+        // Check for Gizmo axis interaction
+        if (this.gizmo) {
+          for (let i = 0; i < this.gizmo.bodies.length; i++) {
+            const gizmoBody = this.gizmo.bodies[i]
+            if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
+              const axis = i === 0 ? 'x' : i === 1 ? 'y' : 'z'
+              this.draggingGizmoAxis = axis
+              console.info(`Dragging Gizmo ${axis}-axis`)
               found = true
-              return
+              return // Interacted with gizmo, stop further processing
             }
           }
 
-          // Check for Gizmo axis interaction
-          if (this.gizmo) {
-            for (let i = 0; i < this.gizmo.bodies.length; i++) {
-              const gizmoBody = this.gizmo.bodies[i]
-              if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
-                const axis = i === 0 ? 'x' : i === 1 ? 'y' : 'z'
-                this.draggingGizmoAxis = axis
-                console.info(`Dragging Gizmo ${axis}-axis`)
-                found = true
-                return // Interacted with gizmo, stop further processing
-              }
-            }
-
-            for (let i = 3; i < this.gizmo.bodies.length; i++) {
-              const gizmoBody = this.gizmo.bodies[i]
-              if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
-                const axis = i === 3 ? 'x' : i === 4 ? 'y' : 'z'
-                this.draggingGizmoRotation = axis
-                console.info(`Rotating Gizmo ${axis}-axis`)
-                found = true
-                return // Interacted with gizmo, stop further processing
-              }
-            }
-
-            for (let i = 6; i < this.gizmo.bodies.length; i++) {
-              const gizmoBody = this.gizmo.bodies[i]
-              if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
-                const axis = i === 6 ? 'x' : i === 7 ? 'y' : 'z'
-                this.draggingGizmoScale = axis
-                console.info(`Scaling Gizmo ${axis}-axis`)
-                found = true
-                return // Interacted with gizmo, stop further processing
-              }
+          for (let i = 3; i < this.gizmo.bodies.length; i++) {
+            const gizmoBody = this.gizmo.bodies[i]
+            if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
+              const axis = i === 3 ? 'x' : i === 4 ? 'y' : 'z'
+              this.draggingGizmoRotation = axis
+              console.info(`Rotating Gizmo ${axis}-axis`)
+              found = true
+              return // Interacted with gizmo, stop further processing
             }
           }
 
-          if (!found) {
-            this.selectedCube3DId = null
-            this.gizmo?.detach()
+          for (let i = 6; i < this.gizmo.bodies.length; i++) {
+            const gizmoBody = this.gizmo.bodies[i]
+            if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
+              const axis = i === 6 ? 'x' : i === 7 ? 'y' : 'z'
+              this.draggingGizmoScale = axis
+              console.info(`Scaling Gizmo ${axis}-axis`)
+              found = true
+              return // Interacted with gizmo, stop further processing
+            }
           }
-        } else {
+        }
+
+        if (!found) {
           this.selectedCube3DId = null
           this.gizmo?.detach()
         }
+      } else {
+        this.selectedCube3DId = null
+        this.gizmo?.detach()
       }
-
-      // // Check for Gizmo axis interaction
-      // TODO: this is naive, we dont want to use our own containsPoint, we want the gizmo to use nonmoving static physics so we can use Jolt's raycast for that as well
-      // if (this.gizmo && this.selectedCube3DId) {
-      //   const gizmoAxes = [
-      //     { axis: 'x', cube: this.gizmo.xAxis },
-      //     { axis: 'y', cube: this.gizmo.yAxis },
-      //     { axis: 'z', cube: this.gizmo.zAxis }
-      //   ]
-
-      //   for (const { axis, cube } of gizmoAxes) {
-      //     if (cube.containsPoint(ray.top_left)) { // TODO: We built a whole
-      //       this.draggingGizmoAxis = axis as 'x' | 'y' | 'z'
-      //       console.info(`Dragging Gizmo ${axis}-axis`)
-      //       return // Interacted with gizmo, stop further processing
-      //     }
-      //   }
-      // }
-
-      console.warn('No selection to be made')
-      return
     }
-
-    let target: InteractionTarget = intersecting_objects[intersecting_objects.length - 1][1]
-    let index = intersecting_objects[intersecting_objects.length - 1][2]
-
-    // if (target) {
-    switch (target) {
-      case InteractionTarget.Polygon: {
-        let polygon = this.polygons[index]
-
-        this.draggingPolygon = polygon.id
-        this.dragStart = this.lastTopLeft
-
-        polygon.transform.startPosition = vec2.fromValues(this.dragStart.x, this.dragStart.y)
-
-        // TODO: make DRY with below
-        if (this.handlePolygonClick) {
-          // let handler_creator = this.handlePolygonClick;
-          // let handle_click = handler_creator();
-
-          // if (!handle_click) {
-          //   return;
-          // }
-
-          this.handlePolygonClick(polygon.id, {
-            id: polygon.id,
-            name: polygon.name,
-            points: polygon.points,
-            dimensions: polygon.dimensions,
-            rotation: polygon.rotation,
-            position: {
-              x: polygon.transform.position[0],
-              y: polygon.transform.position[1]
-            },
-            borderRadius: polygon.borderRadius,
-            backgroundFill: polygon.backgroundFill,
-            stroke: polygon.stroke,
-            layer: polygon.layer,
-            isCircle: polygon.isCircle
-          })
-          this.selectedPolygonId = polygon.id
-          // polygon.old_points = polygon.points;
-        }
-
-        break // nothing to add to undo stack
-      }
-      case InteractionTarget.Text: {
-        let text_item = this.textItems[index]
-
-        this.draggingText = text_item.id
-        this.dragStart = this.lastTopLeft
-
-        text_item.transform.startPosition = vec2.fromValues(this.dragStart.x, this.dragStart.y)
-
-        // TODO: make DRY with below
-        if (this.handleTextClick) {
-          // let handler_creator = this.handleTextClick;
-          // let handle_click = handler_creator();
-
-          // if (!handle_click) {
-          //   return;
-          // }
-
-          this.handleTextClick(
-            text_item.id
-            //    {
-            //   id: text_item.id,
-            //   name: text_item.name,
-            //   text: text_item.text,
-            //   fontFamily: text_item.fontFamily,
-            //   // points: polygon.points,
-            //   dimensions: text_item.dimensions,
-            //   position: {
-            //     x: text_item.transform.position[0],
-            //     y: text_item.transform.position[1],
-            //   },
-            //   layer: text_item.layer,
-            //   color: text_item.color,
-            //   fontSize: text_item.fontSize,
-            //   backgroundFill: [
-            //     wgpuToHuman(text_item.backgroundPolygon.fill[0]) as number,
-            //     wgpuToHuman(text_item.backgroundPolygon.fill[1]) as number,
-            //     wgpuToHuman(text_item.backgroundPolygon.fill[2]) as number,
-            //     wgpuToHuman(text_item.backgroundPolygon.fill[3]) as number,
-            //   ],
-            //   // borderRadius: polygon.borderRadius,
-            //   // fill: polygon.fill,
-            //   // stroke: polygon.stroke,
-            // }
-          )
-          this.selectedPolygonId = text_item.id // TODO: separate property for each object type?
-          // polygon.old_points = (polygon.points);
-        }
-
-        break // nothing to add to undo stack
-      }
-      case InteractionTarget.Image: {
-        let image_item = this.imageItems[index]
-
-        this.draggingImage = image_item.id
-        this.dragStart = this.lastTopLeft
-
-        image_item.transform.startPosition = vec2.fromValues(this.dragStart.x, this.dragStart.y)
-
-        // TODO: make DRY with below
-        if (this.handleImageClick) {
-          // let handler_creator = this.handleImageClick;
-          // let handle_click = handler_creator();
-
-          // if (!handle_click) {
-          //   return;
-          // }
-
-          let uuid = image_item.id
-          this.handleImageClick(
-            uuid
-            //   {
-            //   id: image_item.id,
-            //   name: image_item.name,
-            //   url: image_item.url,
-            //   // points: polygon.points,
-            //   dimensions: image_item.dimensions,
-            //   position: {
-            //     x: image_item.transform.position[0],
-            //     y: image_item.transform.position[1],
-            //   },
-            //   layer: image_item.layer, // borderRadius: polygon.borderRadius,
-            //   // fill: polygon.fill,
-            //   // stroke: polygon.stroke,
-            // }
-          )
-          this.selectedPolygonId = uuid // TODO: separate property for each object type?
-          // polygon.old_points = (polygon.points);
-        }
-
-        break // nothing to add to undo stack
-      }
-      case InteractionTarget.Video: {
-        let video_item = this.videoItems[index]
-
-        this.draggingVideo = video_item.id
-        this.dragStart = this.lastTopLeft
-
-        video_item.transform.startPosition = vec2.fromValues(this.dragStart.x, this.dragStart.y)
-        if (video_item.mousePath) {
-          video_item.mousePath.transform.startPosition = vec2.fromValues(
-            this.dragStart.x,
-            this.dragStart.y
-          )
-        }
-
-        console.info('Video interaction')
-
-        // TODO: make DRY with below
-        if (this.handleVideoClick) {
-          console.info('Video click')
-
-          let handler_creator = this.handleVideoClick
-          // let handle_click = handler_creator();
-
-          // if (!handle_click) {
-          //   return;
-          // }
-
-          let uuid = video_item.id
-          this.handleVideoClick(
-            uuid
-            //   {
-            //   id: video_item.id,
-            //   name: video_item.name,
-            //   path: video_item.path,
-            //   // points: polygon.points,
-            //   dimensions: video_item.dimensions,
-            //   position: {
-            //     x: video_item.transform.position[0],
-            //     y: video_item.transform.position[1],
-            //   },
-            //   layer: video_item.layer,
-            //   mousePath: video_item.mousePath as string, // borderRadius: polygon.borderRadius,
-            //   // fill: polygon.fill,
-            //   // stroke: polygon.stroke,
-            // }
-          )
-          this.selectedPolygonId = uuid // TODO: separate property for each object type?
-          // polygon.old_points = (polygon.points);
-        }
-
-        break // nothing to add to undo stack
-      }
-      case InteractionTarget.Cube3D: {
-        let cube = this.cubes3D[index]
-
-        this.draggingCube3D = cube.id
-        this.dragStart = this.lastTopLeft
-
-        cube.transform.startPosition = vec2.fromValues(this.dragStart.x, this.dragStart.y)
-
-        if (this.handleCube3DClick) {
-          this.handleCube3DClick(cube.id, {
-            id: cube.id,
-            name: cube.name,
-            dimensions: cube.dimensions,
-            position: {
-              x: cube.transform.position[0] - CANVAS_HORIZ_OFFSET,
-              y: cube.transform.position[1] - CANVAS_VERT_OFFSET
-            },
-            rotation: cube.rotation,
-            backgroundFill: cube.backgroundFill,
-            layer: cube.layer
-          })
-        }
-
-        break
-      }
-      case InteractionTarget.Sphere3D: {
-        let sphere = this.spheres3D[index]
-
-        this.draggingSphere3D = sphere.id
-        this.dragStart = this.lastTopLeft
-
-        sphere.transform.startPosition = vec2.fromValues(this.dragStart.x, this.dragStart.y)
-
-        if (this.handleSphere3DClick) {
-          this.handleSphere3DClick(sphere.id, {
-            id: sphere.id,
-            name: sphere.name,
-            radius: sphere.radius,
-            position: {
-              x: sphere.transform.position[0] - CANVAS_HORIZ_OFFSET,
-              y: sphere.transform.position[1] - CANVAS_VERT_OFFSET
-            },
-            rotation: sphere.rotation,
-            backgroundFill: sphere.backgroundFill,
-            layer: sphere.layer,
-            segments: sphere.segments
-          })
-        }
-
-        break
-      }
-      case InteractionTarget.Mockup3D: {
-        let mockup = this.mockups3D[index]
-
-        this.draggingMockup3D = mockup.id
-        this.dragStart = this.lastTopLeft
-
-        mockup.groupTransform.startPosition = vec2.fromValues(this.dragStart.x, this.dragStart.y)
-
-        if (this.handleMockup3DClick) {
-          this.handleMockup3DClick(mockup.id, {
-            id: mockup.id,
-            name: mockup.name,
-            dimensions: mockup.dimensions,
-            position: {
-              x: mockup.groupTransform.position[0] - CANVAS_HORIZ_OFFSET,
-              y: mockup.groupTransform.position[1] - CANVAS_VERT_OFFSET
-            },
-            rotation: [
-              mockup.groupTransform.rotationX,
-              mockup.groupTransform.rotationY,
-              mockup.groupTransform.rotation
-            ],
-            backgroundFill: mockup.backgroundFill,
-            layer: mockup.layer,
-            videoChild: mockup.videoChildConfig,
-            tiltAngle: mockup.tiltAngle
-          })
-        }
-
-        break
-      }
-      default:
-        const _exhaustiveCheck: never = target
-        console.error('Unhandled InteractionTarget:', target)
-    }
-    // }
 
     return
   }
