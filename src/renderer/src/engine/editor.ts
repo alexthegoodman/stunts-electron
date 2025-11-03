@@ -224,6 +224,7 @@ export class Editor {
   models3D: Model3D[] = []
   selectedCube3DId: string | null
   gizmo: Gizmo | null = null
+  draggingGizmoAxis: 'x' | 'y' | 'z' | null = null
   projectiles: { id: string; creationTime: number }[] = []
   projectileLifetime: number = 15000 // 15 second
   gameLogic: GameLogic | null = null
@@ -404,6 +405,7 @@ export class Editor {
     this.draggingMockup3D = null
     this.selectedCube3DId = null
     this.gizmo = null
+    this.draggingGizmoAxis = null
     this.motionPaths = []
     this.bodies = new Map()
     this.generationCount = 4
@@ -502,7 +504,8 @@ export class Editor {
       this.gpuResources!,
       this.camera!,
       this.modelBindGroupLayout!,
-      this.groupBindGroupLayout!
+      this.groupBindGroupLayout!,
+      this.physics!
     )
 
     const layerSpacing = cloned_settings ? cloned_settings.layerSpacing : 0.001
@@ -4748,11 +4751,28 @@ export class Editor {
             if (body && body.GetID().GetIndexAndSequenceNumber() === bodyId) {
               this.selectedCube3DId = cube.id
               this.gizmo?.attach(cube.transform)
+              this.gizmo?.update(this.gpuResources?.queue!, this.camera!)
               console.info('Selected cube:', cube.id)
+
               found = true
               return
             }
           }
+
+          // Check for Gizmo axis interaction
+          if (this.gizmo) {
+            for (let i = 0; i < this.gizmo.bodies.length; i++) {
+              const gizmoBody = this.gizmo.bodies[i]
+              if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
+                const axis = i === 0 ? 'x' : i === 1 ? 'y' : 'z'
+                this.draggingGizmoAxis = axis
+                console.info(`Dragging Gizmo ${axis}-axis`)
+                found = true
+                return // Interacted with gizmo, stop further processing
+              }
+            }
+          }
+
           if (!found) {
             this.selectedCube3DId = null
             this.gizmo?.detach()
@@ -4762,6 +4782,24 @@ export class Editor {
           this.gizmo?.detach()
         }
       }
+
+      // // Check for Gizmo axis interaction
+      // TODO: this is naive, we dont want to use our own containsPoint, we want the gizmo to use nonmoving static physics so we can use Jolt's raycast for that as well
+      // if (this.gizmo && this.selectedCube3DId) {
+      //   const gizmoAxes = [
+      //     { axis: 'x', cube: this.gizmo.xAxis },
+      //     { axis: 'y', cube: this.gizmo.yAxis },
+      //     { axis: 'z', cube: this.gizmo.zAxis }
+      //   ]
+
+      //   for (const { axis, cube } of gizmoAxes) {
+      //     if (cube.containsPoint(ray.top_left)) { // TODO: We built a whole
+      //       this.draggingGizmoAxis = axis as 'x' | 'y' | 'z'
+      //       console.info(`Dragging Gizmo ${axis}-axis`)
+      //       return // Interacted with gizmo, stop further processing
+      //     }
+      //   }
+      // }
 
       console.warn('No selection to be made')
       return
@@ -5113,6 +5151,30 @@ export class Editor {
       this.currentBrush.createGeometry(camera, windowSize)
       this.currentBrush.updateBuffers(device, queue, camera, windowSize)
 
+      return
+    }
+
+    if (this.draggingGizmoAxis && this.selectedCube3DId) {
+      const selectedCube = this.cubes3D.find((c) => c.id === this.selectedCube3DId)
+      if (selectedCube) {
+        const dx = (x - this.lastScreen.x) * 0.01 // Adjust sensitivity
+        const dy = (y - this.lastScreen.y) * 0.01 // Adjust sensitivity
+
+        switch (this.draggingGizmoAxis) {
+          case 'x':
+            selectedCube.transform.position[0] += dx
+            break
+          case 'y':
+            selectedCube.transform.position[1] -= dy // Invert Y for screen to world
+            break
+          case 'z':
+            selectedCube.transform.position[2] += dx // Or some other combination for Z
+            break
+        }
+        selectedCube.transform.updateUniformBuffer(queue, windowSize)
+        this.gizmo?.update(queue, camera)
+      }
+      this.previousTopLeft = this.lastTopLeft
       return
     }
 
@@ -5515,6 +5577,7 @@ export class Editor {
     this.draggingPathObject = null
     this.draggingPathKeyframe = null
     this.isPanning = false
+    this.draggingGizmoAxis = null
     // this.lastTopLeft = { x: -1000, y: -1000 }; // resets for mobile?
 
     // this.dragging_edge = None;

@@ -1302,8 +1302,8 @@ export class CanvasPipeline {
       }
     }
 
+    // Draw Gizmo
     if (editor.gizmo) {
-      editor.gizmo.update(queue, editor.camera)
       for (const axis of [editor.gizmo.xAxis, editor.gizmo.yAxis, editor.gizmo.zAxis]) {
         if (!axis.hidden) {
           axis.bindGroup.bindWebGLBindGroup(gl)

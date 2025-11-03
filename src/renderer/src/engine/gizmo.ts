@@ -2,19 +2,25 @@ import { Cube3D, Cube3DConfig } from './cube3d'
 import { Camera3D } from './3dcamera'
 import { GPUPolyfill, PolyfillQueue } from './polyfill'
 import { Transform } from './transform'
+import { Physics } from './physics'
+import Jolt from 'jolt-physics/debug-wasm-compat'
 
 export class Gizmo {
   xAxis: Cube3D
   yAxis: Cube3D
   zAxis: Cube3D
   target: Transform | null = null
+  physics: Physics
+  bodies: Jolt.Body[] = []
 
   constructor(
     gpuResources: GPUPolyfill,
     camera: Camera3D,
     modelBindGroupLayout: any,
-    groupBindGroupLayout: any
+    groupBindGroupLayout: any,
+    physics: Physics
   ) {
+    this.physics = physics
     const axisLength = 2
     const axisRadius = 0.05
 
@@ -89,6 +95,40 @@ export class Gizmo {
       zAxisConfig,
       'gizmo-sequence'
     )
+
+    // Create physics bodies for the axes
+    const xAxisBody = this.physics.createStaticBox(
+      new this.physics.jolt.RVec3(
+        this.xAxis.transform.position[0],
+        this.xAxis.transform.position[1],
+        this.xAxis.transform.position[2]
+      ),
+      new this.physics.jolt.Quat(0, 0, 0, 1),
+      new this.physics.jolt.Vec3(axisLength, axisRadius, axisRadius)
+    )
+    this.bodies.push(xAxisBody)
+
+    const yAxisBody = this.physics.createStaticBox(
+      new this.physics.jolt.RVec3(
+        this.yAxis.transform.position[0],
+        this.yAxis.transform.position[1],
+        this.yAxis.transform.position[2]
+      ),
+      new this.physics.jolt.Quat(0, 0, 0, 1),
+      new this.physics.jolt.Vec3(axisRadius, axisLength, axisRadius)
+    )
+    this.bodies.push(yAxisBody)
+
+    const zAxisBody = this.physics.createStaticBox(
+      new this.physics.jolt.RVec3(
+        this.zAxis.transform.position[0],
+        this.zAxis.transform.position[1],
+        this.zAxis.transform.position[2]
+      ),
+      new this.physics.jolt.Quat(0, 0, 0, 1),
+      new this.physics.jolt.Vec3(axisRadius, axisRadius, axisLength)
+    )
+    this.bodies.push(zAxisBody)
   }
 
   attach(target: Transform) {
@@ -116,6 +156,32 @@ export class Gizmo {
       this.xAxis.transform.updateUniformBuffer(queue, camera.windowSize)
       this.yAxis.transform.updateUniformBuffer(queue, camera.windowSize)
       this.zAxis.transform.updateUniformBuffer(queue, camera.windowSize)
+
+      // Update physics bodies
+      const position = new this.physics.jolt.RVec3(
+        this.target.position[0],
+        this.target.position[1],
+        this.target.position[2]
+      )
+      const rotation = new this.physics.jolt.Quat(0, 0, 0, 1) // Assuming no rotation for gizmo bodies
+      this.physics.bodyInterface.SetPositionAndRotation(
+        this.bodies[0].GetID(),
+        position,
+        rotation,
+        this.physics.jolt.EActivation_Activate
+      )
+      this.physics.bodyInterface.SetPositionAndRotation(
+        this.bodies[1].GetID(),
+        position,
+        rotation,
+        this.physics.jolt.EActivation_Activate
+      )
+      this.physics.bodyInterface.SetPositionAndRotation(
+        this.bodies[2].GetID(),
+        position,
+        rotation,
+        this.physics.jolt.EActivation_Activate
+      )
     } else {
       this.xAxis.hidden = true
       this.yAxis.hidden = true
