@@ -188,7 +188,6 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
-
   const [playerHealths, setPlayerHealths] = useState<number[]>([])
   const [enemyHealths, setEnemyHealths] = useState<number[]>([])
 
@@ -717,7 +716,10 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
         editorRef.current.nodes.forEach((node) => {
           if (node.data.label === 'PlayerController' && typeof node.data.health === 'number') {
             currentPlayerHealths.push(node.data.health)
-          } else if (node.data.label === 'EnemyController' && typeof node.data.health === 'number') {
+          } else if (
+            node.data.label === 'EnemyController' &&
+            typeof node.data.health === 'number'
+          ) {
             currentEnemyHealths.push(node.data.health)
           }
         })
@@ -748,12 +750,6 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       )}
 
       <section className="flex flex-col">
-        {playerHealths.map((health, index) => (
-          <HealthBar key={`player-health-${index}`} health={health} position={{ top: 10 + index * 30, left: 10 }} />
-        ))}
-        {enemyHealths.map((health, index) => (
-          <HealthBar key={`enemy-health-${index}`} health={health} position={{ top: 10 + index * 30, right: 10 }} />
-        ))}
         <div className="flex flex-row mb-2 gap-4 justify-between w-full">
           <div className="flex flex-row gap-4 items-center">
             <ProjectSelector currentProjectId={projectId} currentProjectName={project_name} />
@@ -1133,16 +1129,33 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                   {isPlaying ? 'Stop' : 'Play'}
                 </button>
               </div>
-              <canvas
-                id={`game-canvas`}
-                className={`border border-black rounded-[15px] shadow-[0_0_15px_4px_rgba(0,0,0,0.16)]`}
-                style={{
-                  width: settings?.dimensions.width || DEFAULT_GAME_WIDTH,
-                  height: settings?.dimensions.height || DEFAULT_GAME_HEIGHT
-                }}
-                width={settings?.dimensions.width || DEFAULT_GAME_WIDTH}
-                height={settings?.dimensions.height || DEFAULT_GAME_HEIGHT}
-              />
+              <div className="relative">
+                {playerHealths.map((health, index) => (
+                  <HealthBar
+                    key={`player-health-${index}`}
+                    health={health}
+                    position={{ top: 10 + index * 30, left: 10 }}
+                  />
+                ))}
+                {enemyHealths.map((health, index) => (
+                  <HealthBar
+                    key={`enemy-health-${index}`}
+                    health={health}
+                    position={{ top: 10 + index * 30, right: 10 }}
+                  />
+                ))}
+
+                <canvas
+                  id={`game-canvas`}
+                  className={`border border-black rounded-[15px] shadow-[0_0_15px_4px_rgba(0,0,0,0.16)]`}
+                  style={{
+                    width: settings?.dimensions.width || DEFAULT_GAME_WIDTH,
+                    height: settings?.dimensions.height || DEFAULT_GAME_HEIGHT
+                  }}
+                  width={settings?.dimensions.width || DEFAULT_GAME_WIDTH}
+                  height={settings?.dimensions.height || DEFAULT_GAME_HEIGHT}
+                />
+              </div>
             </section>
           </div>
         </div>
