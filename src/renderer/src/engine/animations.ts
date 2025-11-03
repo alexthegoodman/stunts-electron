@@ -77,7 +77,8 @@ export enum ObjectType {
   Cube3D = 'Cube3D',
   Sphere3D = 'Sphere3D',
   Mockup3D = 'Mockup3D',
-  Model3D = 'Model3D'
+  Model3D = 'Model3D',
+  Torus3D = 'Torus3D'
 }
 
 export enum EasingType {

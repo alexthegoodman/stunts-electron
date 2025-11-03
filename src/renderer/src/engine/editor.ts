@@ -225,6 +225,8 @@ export class Editor {
   selectedCube3DId: string | null
   gizmo: Gizmo | null = null
   draggingGizmoAxis: 'x' | 'y' | 'z' | null = null
+  draggingGizmoRotation: 'x' | 'y' | 'z' | null = null
+  draggingGizmoScale: 'x' | 'y' | 'z' | null = null
   projectiles: { id: string; creationTime: number }[] = []
   projectileLifetime: number = 15000 // 15 second
   gameLogic: GameLogic | null = null
@@ -4771,6 +4773,28 @@ export class Editor {
                 return // Interacted with gizmo, stop further processing
               }
             }
+
+            for (let i = 3; i < this.gizmo.bodies.length; i++) {
+              const gizmoBody = this.gizmo.bodies[i]
+              if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
+                const axis = i === 3 ? 'x' : i === 4 ? 'y' : 'z'
+                this.draggingGizmoRotation = axis
+                console.info(`Rotating Gizmo ${axis}-axis`)
+                found = true
+                return // Interacted with gizmo, stop further processing
+              }
+            }
+
+            for (let i = 6; i < this.gizmo.bodies.length; i++) {
+              const gizmoBody = this.gizmo.bodies[i]
+              if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
+                const axis = i === 6 ? 'x' : i === 7 ? 'y' : 'z'
+                this.draggingGizmoScale = axis
+                console.info(`Scaling Gizmo ${axis}-axis`)
+                found = true
+                return // Interacted with gizmo, stop further processing
+              }
+            }
           }
 
           if (!found) {
@@ -5169,6 +5193,55 @@ export class Editor {
             break
           case 'z':
             selectedCube.transform.position[2] += dx // Or some other combination for Z
+            break
+        }
+        selectedCube.transform.updateUniformBuffer(queue, windowSize)
+        this.gizmo?.update(queue, camera)
+      }
+      this.previousTopLeft = this.lastTopLeft
+      return
+    }
+
+    if (this.draggingGizmoRotation && this.selectedCube3DId) {
+      const selectedCube = this.cubes3D.find((c) => c.id === this.selectedCube3DId)
+      if (selectedCube) {
+        const dx = (x - this.lastScreen.x) * 0.5 // Adjust sensitivity
+        const dy = (y - this.lastScreen.y) * 0.5 // Adjust sensitivity
+
+        switch (this.draggingGizmoRotation) {
+          case 'x':
+            selectedCube.transform.updateRotationXDegrees(dx)
+            break
+          case 'y':
+            selectedCube.transform.updateRotationYDegrees(dy)
+            break
+          case 'z':
+            selectedCube.transform.updateRotationDegrees(dx)
+            break
+        }
+        selectedCube.transform.updateUniformBuffer(queue, windowSize)
+        this.gizmo?.update(queue, camera)
+      }
+      this.previousTopLeft = this.lastTopLeft
+      return
+    }
+
+    if (this.draggingGizmoScale && this.selectedCube3DId) {
+      const selectedCube = this.cubes3D.find((c) => c.id === this.selectedCube3DId)
+      if (selectedCube) {
+        const dx = (x - this.lastScreen.x) * 0.01 // Adjust sensitivity
+
+        switch (this.draggingGizmoScale) {
+          case 'x':
+            selectedCube.transform.updateScaleX(dx)
+            break
+          case 'y':
+            selectedCube.transform.updateScaleY(dx)
+            break
+          case 'z':
+            // Assuming uniform scaling for z for now
+            selectedCube.transform.updateScaleX(dx)
+            selectedCube.transform.updateScaleY(dx)
             break
         }
         selectedCube.transform.updateUniformBuffer(queue, windowSize)
@@ -5578,6 +5651,8 @@ export class Editor {
     this.draggingPathKeyframe = null
     this.isPanning = false
     this.draggingGizmoAxis = null
+    this.draggingGizmoRotation = null
+    this.draggingGizmoScale = null
     // this.lastTopLeft = { x: -1000, y: -1000 }; // resets for mobile?
 
     // this.dragging_edge = None;

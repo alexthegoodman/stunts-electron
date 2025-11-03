@@ -133,6 +133,35 @@ export class Physics {
     return body
   }
 
+  public createStaticTorus(
+    position: Jolt.RVec3,
+    rotation: Jolt.Quat,
+    radius: number,
+    tubeRadius: number,
+    plane: string = 'x'
+  ): Jolt.Body {
+    // const shape = new this.jolt.TorusShape(radius, tubeRadius, null)
+    const shape = new this.jolt.BoxShape(
+      new this.jolt.Vec3(
+        plane === 'z' ? 1 : radius,
+        plane === 'x' ? 1 : radius,
+        plane === 'y' ? 1 : radius
+      ),
+      0.05,
+      null
+    )
+    const creationSettings = new this.jolt.BodyCreationSettings(
+      shape,
+      position,
+      rotation,
+      this.jolt.EMotionType_Static,
+      this.ObjectLayer_NonMoving.GetValue()
+    )
+    const body = this.bodyInterface.CreateBody(creationSettings)
+    this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_Activate)
+    return body
+  }
+
   public runContactAddedListeners(
     character,
     bodyID2,
