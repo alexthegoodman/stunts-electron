@@ -38,6 +38,9 @@ import { TextRollModal, TextRollConfig } from './TextRollModal'
 import { TextAnimationConfig, createTextAnimationPreset } from '../../engine/textAnimator'
 import { BrushConfig, BrushType, SavedBrushConfig } from '@renderer/engine/brush'
 
+import { createEnemyNodes } from '../../gamelogic/nodes';
+import { GameNode } from './GameEditor';
+
 export const ToolGrid = ({
   editorRef,
   editorStateRef,
@@ -48,7 +51,8 @@ export const ToolGrid = ({
   on_create_sequence,
   layers,
   setLayers,
-  update
+  update,
+  setNodes
 }: {
   editorRef: React.RefObject<Editor | null>
   editorStateRef: React.RefObject<EditorState | null>
@@ -60,6 +64,7 @@ export const ToolGrid = ({
   layers: Layer[]
   setLayers: React.Dispatch<React.SetStateAction<Layer[]>>
   update: () => void
+  setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
 }) => {
   const { t } = useTranslation('common')
 
@@ -1333,6 +1338,9 @@ export const ToolGrid = ({
         editor.add_cube3d(enemyConfig, new_id, sequence_id)
 
         await editor_state.add_saved_cube3d(sequence_id, enemyConfig)
+
+        const newNodes = createEnemyNodes(new_id);
+        setNodes(nds => [...nds, ...newNodes]);
 
         const dynamicBody = editor.physics.createVirtualCharacter(
           new editor.physics.jolt.RVec3(

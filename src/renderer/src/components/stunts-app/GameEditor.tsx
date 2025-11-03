@@ -89,6 +89,8 @@ export interface GameNode {
     label: string
     pressed?: boolean
     value?: number | string
+    health?: number
+    fireRate?: number
   }
   position: {
     x: number
@@ -97,13 +99,17 @@ export interface GameNode {
 }
 
 const initialNodes: GameNode[] = [
-  { id: '1', data: { label: 'PlayerController' }, position: { x: 250, y: 5 } },
+  { id: '1', data: { label: 'PlayerController', health: 100 }, position: { x: 250, y: 5 } },
   { id: '2', data: { label: 'Input' }, position: { x: 100, y: 100 } },
   { id: '3', data: { label: 'Forward', pressed: false }, position: { x: 400, y: 100 } },
   { id: '4', data: { label: 'Backward', pressed: false }, position: { x: 400, y: 150 } },
   { id: '5', data: { label: 'Left', pressed: false }, position: { x: 400, y: 200 } },
   { id: '6', data: { label: 'Right', pressed: false }, position: { x: 400, y: 250 } },
-  { id: '7', data: { label: 'EnemyController' }, position: { x: 850, y: 5 } },
+  {
+    id: '7',
+    data: { label: 'EnemyController', health: 100, fireRate: 1000 },
+    position: { x: 850, y: 5 }
+  },
   { id: '8', data: { label: 'RandomWalk' }, position: { x: 700, y: 100 } },
   { id: '9', data: { label: 'ShootProjectile' }, position: { x: 1000, y: 100 } },
   { id: '10', data: { label: 'Health', value: 100 }, position: { x: 850, y: 200 } }
@@ -181,7 +187,10 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
-  const [enemyHealth, setEnemyHealth] = useState(100)
+
+
+  const [playerHealths, setPlayerHealths] = useState<number[]>([])
+  const [enemyHealths, setEnemyHealths] = useState<number[]>([])
 
   const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges])
 
@@ -466,7 +475,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       await pipeline.beginRendering(editor)
 
       editorRef.current = editor
-      editor.gameLogic = new GameLogic(editor, setEnemyHealth)
+      editor.gameLogic = new GameLogic(editor, setNodes)
       editorRef.current.target = SaveTarget.Games
       editorStateRef.current.saveTarget = SaveTarget.Games
 
@@ -699,7 +708,25 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     saveSequencesData(editor_state.savedState.sequences, SaveTarget.Games)
   }
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (editorRef.current) {
+        const currentPlayerHealths: number[] = []
+        const currentEnemyHealths: number[] = []
 
+        editorRef.current.nodes.forEach((node) => {
+          if (node.data.label === 'PlayerController' && typeof node.data.health === 'number') {
+            currentPlayerHealths.push(node.data.health)
+          } else if (node.data.label === 'EnemyController' && typeof node.data.health === 'number') {
+            currentEnemyHealths.push(node.data.health)
+          }
+        })
+        setPlayerHealths(currentPlayerHealths)
+        setEnemyHealths(currentEnemyHealths)
+      }
+    }, 500)
+    return () => clearInterval(interval)
+  }, [nodes])
 
   return (
     <>
@@ -721,7 +748,12 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       )}
 
       <section className="flex flex-col">
-        <HealthBar health={enemyHealth} />
+        {playerHealths.map((health, index) => (
+          <HealthBar key={`player-health-${index}`} health={health} position={{ top: 10 + index * 30, left: 10 }} />
+        ))}
+        {enemyHealths.map((health, index) => (
+          <HealthBar key={`enemy-health-${index}`} health={health} position={{ top: 10 + index * 30, right: 10 }} />
+        ))}
         <div className="flex flex-row mb-2 gap-4 justify-between w-full">
           <div className="flex flex-row gap-4 items-center">
             <ProjectSelector currentProjectId={projectId} currentProjectName={project_name} />
@@ -818,6 +850,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                       update={() => {
                         setRefreshUINow(Date.now())
                       }}
+                      setNodes={setNodes}
                     />
                   </div>
                 )}

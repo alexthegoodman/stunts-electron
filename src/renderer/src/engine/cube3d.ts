@@ -21,6 +21,7 @@ export interface Cube3DConfig {
   rotation: [number, number, number] // Euler angles [x, y, z]
   backgroundFill: BackgroundFill
   layer: number
+  health?: number
 }
 
 export interface SavedCube3DConfig {
@@ -31,6 +32,7 @@ export interface SavedCube3DConfig {
   rotation: [number, number, number]
   backgroundFill: BackgroundFill
   layer: number
+  health?: number
 }
 
 export class Cube3D {
@@ -44,6 +46,7 @@ export class Cube3D {
   layerSpacing: number
   hidden: boolean
   objectType: ObjectType
+  health: number
 
   vertices: Vertex[]
   indices: number[]
@@ -79,6 +82,7 @@ export class Cube3D {
     this.hidden = false
     this.objectType = ObjectType.Cube3D
     this.currentSequenceId = currentSequenceId
+    this.health = config.health ?? 100
 
     // Generate cube geometry
     const [vertices, indices] = this.generateCubeGeometry()
