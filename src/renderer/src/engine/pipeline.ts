@@ -581,7 +581,8 @@ export class CanvasPipeline {
     movementDirection: vec3, // gl-matrix
     jump: boolean,
     switchStance,
-    deltaTime: number
+    deltaTime: number,
+    optionalBody?: Jolt.Body
   ) {
     const playerControlsHorizontalVelocity =
       this.controlMovementDuringJump || character.IsSupported()
@@ -675,6 +676,11 @@ export class CanvasPipeline {
     character.SetLinearVelocity(
       new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
     )
+    if (optionalBody) {
+      optionalBody.SetLinearVelocity(
+        new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+      )
+    }
   }
 
   async renderWebglFrame(
@@ -729,6 +735,7 @@ export class CanvasPipeline {
 
       if (player) {
         const playerBody = editor.characters.get(player.id)
+        const associtedBody = editor.bodies.get(player.id)
         // console.info('is playing', player, playerBody)
         if (playerBody) {
           const nodes = editor.nodes
@@ -759,7 +766,8 @@ export class CanvasPipeline {
                         vec3.fromValues(0, 0, -1),
                         false,
                         null,
-                        deltaTime
+                        deltaTime,
+                        associtedBody
                       )
                     }
                     break
@@ -770,14 +778,15 @@ export class CanvasPipeline {
                       //   new editor.physics.jolt.Vec3(0, 0, 1000),
                       //   editor.physics.jolt.EActivation_Activate
                       // )
-                      console.info('back press')
+                      // console.info('back press')
                       this.handleInput(
                         editor,
                         playerBody,
                         vec3.fromValues(0, 0, 1),
                         false,
                         null,
-                        deltaTime
+                        deltaTime,
+                        associtedBody
                       )
                     }
                     break
@@ -794,7 +803,8 @@ export class CanvasPipeline {
                         vec3.fromValues(-1, 0, 0),
                         false,
                         null,
-                        deltaTime
+                        deltaTime,
+                        associtedBody
                       )
                     }
                     break
@@ -811,7 +821,8 @@ export class CanvasPipeline {
                         vec3.fromValues(1, 0, 0),
                         false,
                         null,
-                        deltaTime
+                        deltaTime,
+                        associtedBody
                       )
                     }
                     break

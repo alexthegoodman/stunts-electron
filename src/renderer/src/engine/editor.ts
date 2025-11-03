@@ -881,6 +881,13 @@ export class Editor {
           )
           this.characters.set(c.id, dynamicBody)
 
+          const staticBody = this.physics.createStaticBox(
+            new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z),
+            new this.physics.jolt.Quat(0, 0, 0, 1),
+            new this.physics.jolt.Vec3(1, 1, 1)
+          )
+          this.bodies.set(c.id, staticBody)
+
           console.log('Player Character restored...')
         } else if (c.name === 'EnemyCharacter') {
           const dynamicBody = this.physics.createVirtualCharacter(
@@ -890,6 +897,13 @@ export class Editor {
             1 // characterRadiusStanding
           )
           this.characters.set(c.id, dynamicBody)
+
+          const staticBody = this.physics.createStaticBox(
+            new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z),
+            new this.physics.jolt.Quat(0, 0, 0, 1),
+            new this.physics.jolt.Vec3(1, 1, 1)
+          )
+          this.bodies.set(c.id, staticBody)
 
           console.log('Enemy Character restored...')
         } else {
@@ -4359,6 +4373,22 @@ export class Editor {
         new this.physics.jolt.RVec3(ray.origin[0], ray.origin[1], ray.origin[2]),
         direction
       )
+
+      // NOTE: this debug cube confirms hits are accurately placed but only interacting the the landscape cube, going through other cubes (oh cause its for characters!)
+      // const hitCube: Cube3DConfig = {
+      //   id: uuidv4(),
+      //   name: 'PlayerCharacter',
+      //   dimensions: [1, 1, 1], // appropriate for radius?
+      //   position: { x: hit.position.GetX(), y: hit.position.GetY(), z: hit.position.GetZ() },
+      //   rotation: [0, 0, 0],
+      //   backgroundFill: {
+      //     type: 'Color',
+      //     value: [0.2, 0.2, 0.2, 1.0]
+      //   },
+      //   layer: 0
+      // }
+
+      // this.add_cube3d(hitCube, hitCube.id, this.currentSequenceData.id)
 
       console.info('checking hit', direction.GetX(), direction.GetY(), direction.GetZ())
 

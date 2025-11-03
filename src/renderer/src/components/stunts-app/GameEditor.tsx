@@ -954,9 +954,9 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         <label className="block text-sm font-medium mb-2">Pan Horizontal (X)</label>
                         <input
                           type="range"
-                          min="-1000"
-                          max="1000"
-                          step="10"
+                          min="-500"
+                          max="500"
+                          step="5"
                           value={panX}
                           className="w-full"
                           onChange={(e) => {
@@ -979,9 +979,9 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         <label className="block text-sm font-medium mb-2">Pan Vertical (Y)</label>
                         <input
                           type="range"
-                          min="-1000"
-                          max="1000"
-                          step="10"
+                          min="-500"
+                          max="500"
+                          step="5"
                           value={panY}
                           className="w-full"
                           onChange={(e) => {

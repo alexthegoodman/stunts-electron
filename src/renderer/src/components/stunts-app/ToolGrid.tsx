@@ -38,8 +38,8 @@ import { TextRollModal, TextRollConfig } from './TextRollModal'
 import { TextAnimationConfig, createTextAnimationPreset } from '../../engine/textAnimator'
 import { BrushConfig, BrushType, SavedBrushConfig } from '@renderer/engine/brush'
 
-import { createEnemyNodes } from '../../gamelogic/nodes';
-import { GameNode } from './GameEditor';
+import { createEnemyNodes } from '../../gamelogic/nodes'
+import { GameNode } from './GameEditor'
 
 export const ToolGrid = ({
   editorRef,
@@ -1266,6 +1266,17 @@ export const ToolGrid = ({
         )
         editor.characters.set(new_id, dynamicBody)
 
+        const staticBody = editor.physics.createStaticBox(
+          new editor.physics.jolt.RVec3(
+            playerConfig.position.x,
+            playerConfig.position.y,
+            playerConfig.position.z
+          ),
+          new editor.physics.jolt.Quat(0, 0, 0, 1),
+          new editor.physics.jolt.Vec3(1, 1, 1)
+        )
+        editor.bodies.set(new_id, staticBody)
+
         let saved_state = editor_state.savedState
 
         let updated_sequence = saved_state.sequences.find((s) => s.id == currentSequenceId)
@@ -1339,8 +1350,8 @@ export const ToolGrid = ({
 
         await editor_state.add_saved_cube3d(sequence_id, enemyConfig)
 
-        const newNodes = createEnemyNodes(new_id);
-        setNodes(nds => [...nds, ...newNodes]);
+        const newNodes = createEnemyNodes(new_id)
+        setNodes((nds) => [...nds, ...newNodes])
 
         const dynamicBody = editor.physics.createVirtualCharacter(
           new editor.physics.jolt.RVec3(
@@ -1353,6 +1364,17 @@ export const ToolGrid = ({
           1 // radius
         )
         editor.characters.set(new_id, dynamicBody)
+
+        const staticBody = editor.physics.createStaticBox(
+          new editor.physics.jolt.RVec3(
+            enemyConfig.position.x,
+            enemyConfig.position.y,
+            enemyConfig.position.z
+          ),
+          new editor.physics.jolt.Quat(0, 0, 0, 1),
+          new editor.physics.jolt.Vec3(1, 1, 1)
+        )
+        editor.bodies.set(new_id, staticBody)
 
         let saved_state = editor_state.savedState
 

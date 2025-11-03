@@ -174,10 +174,11 @@ export class GameLogic {
       if (!enemyId) continue
 
       const enemyCharacter = editor.characters.get(enemyId)
+      const enemyStaticBody = editor.bodies.get(enemyId)
 
-      const playerCharacter = editor.characters.get(
-        editor.cubes3D.find((c) => c.name === 'PlayerCharacter')?.id
-      )
+      const playerId = editor.cubes3D.find((c) => c.name === 'PlayerCharacter')?.id
+      const playerCharacter = editor.characters.get(playerId)
+      const playerStaticBody = editor.bodies.get(playerId)
 
       const playerPosition = vec3.fromValues(
         playerCharacter.GetPosition().GetX(),
@@ -309,7 +310,8 @@ export class GameLogic {
             vec3.fromValues(moveDirection.GetX(), moveDirection.GetY(), moveDirection.GetZ()),
             false,
             null,
-            deltaTime
+            deltaTime,
+            enemyStaticBody
           )
         }
       }
