@@ -24,6 +24,10 @@ export class Gizmo {
   axisLength = 3.5
   axisRadius = 0.075
 
+  ringRadius = 1.5
+  ringTubeRadius = 0.05
+  scaleHandleSize = 0.2
+
   constructor(
     gpuResources: GPUPolyfill,
     camera: Camera3D,
@@ -105,48 +109,11 @@ export class Gizmo {
       'gizmo-sequence'
     )
 
-    // Create physics bodies for the axes
-    const xAxisBody = this.physics.createStaticBox(
-      new this.physics.jolt.RVec3(
-        this.xAxis.transform.position[0],
-        this.xAxis.transform.position[1],
-        this.xAxis.transform.position[2]
-      ),
-      new this.physics.jolt.Quat(0, 0, 0, 1),
-      new this.physics.jolt.Vec3(this.axisLength, this.axisRadius, this.axisRadius)
-    )
-    this.bodies.push(xAxisBody)
-
-    const yAxisBody = this.physics.createStaticBox(
-      new this.physics.jolt.RVec3(
-        this.yAxis.transform.position[0],
-        this.yAxis.transform.position[1],
-        this.yAxis.transform.position[2]
-      ),
-      new this.physics.jolt.Quat(0, 0, 0, 1),
-      new this.physics.jolt.Vec3(this.axisRadius, this.axisLength, this.axisRadius)
-    )
-    this.bodies.push(yAxisBody)
-
-    const zAxisBody = this.physics.createStaticBox(
-      new this.physics.jolt.RVec3(
-        this.zAxis.transform.position[0],
-        this.zAxis.transform.position[1],
-        this.zAxis.transform.position[2]
-      ),
-      new this.physics.jolt.Quat(0, 0, 0, 1),
-      new this.physics.jolt.Vec3(this.axisRadius, this.axisRadius, this.axisLength)
-    )
-    this.bodies.push(zAxisBody)
-
-    const ringRadius = 1.5
-    const ringTubeRadius = 0.05
-
     const xRingConfig: Torus3DConfig = {
       id: 'gizmo-x-ring',
       name: 'Gizmo X-Ring',
-      radius: ringRadius,
-      tubeRadius: ringTubeRadius,
+      radius: this.ringRadius,
+      tubeRadius: this.ringTubeRadius,
       position: { x: 0, y: 0, z: 0 },
       rotation: [0, 90, 0],
       backgroundFill: {
@@ -159,8 +126,8 @@ export class Gizmo {
     const yRingConfig: Torus3DConfig = {
       id: 'gizmo-y-ring',
       name: 'Gizmo Y-Ring',
-      radius: ringRadius,
-      tubeRadius: ringTubeRadius,
+      radius: this.ringRadius,
+      tubeRadius: this.ringTubeRadius,
       position: { x: 0, y: 0, z: 0 },
       rotation: [90, 0, 0],
       backgroundFill: {
@@ -173,8 +140,8 @@ export class Gizmo {
     const zRingConfig: Torus3DConfig = {
       id: 'gizmo-z-ring',
       name: 'Gizmo Z-Ring',
-      radius: ringRadius,
-      tubeRadius: ringTubeRadius,
+      radius: this.ringRadius,
+      tubeRadius: this.ringTubeRadius,
       position: { x: 0, y: 0, z: 0 },
       rotation: [0, 0, 0],
       backgroundFill: {
@@ -217,40 +184,12 @@ export class Gizmo {
       'gizmo-sequence'
     )
 
-    const xRingBody = this.physics.createStaticTorus(
-      new this.physics.jolt.RVec3(0, 0, 0),
-      new this.physics.jolt.Quat(0, 0, 0, 1),
-      ringRadius,
-      ringTubeRadius,
-      'x'
-    )
-    this.bodies.push(xRingBody)
-
-    const yRingBody = this.physics.createStaticTorus(
-      new this.physics.jolt.RVec3(0, 0, 0),
-      new this.physics.jolt.Quat(0, 0, 0, 1),
-      ringRadius,
-      ringTubeRadius,
-      'y'
-    )
-    this.bodies.push(yRingBody)
-
-    const zRingBody = this.physics.createStaticTorus(
-      new this.physics.jolt.RVec3(0, 0, 0),
-      new this.physics.jolt.Quat(0, 0, 0, 1),
-      ringRadius,
-      ringTubeRadius,
-      'z'
-    )
-    this.bodies.push(zRingBody)
-
-    const scaleHandleSize = 0.2
     // const this.axisLength = 2
 
     const xScaleConfig: Cube3DConfig = {
       id: 'gizmo-x-scale',
       name: 'Gizmo X-Scale',
-      dimensions: [scaleHandleSize, scaleHandleSize, scaleHandleSize],
+      dimensions: [this.scaleHandleSize, this.scaleHandleSize, this.scaleHandleSize],
       position: { x: this.axisLength, y: 0, z: 0 },
       rotation: [0, 0, 0],
       backgroundFill: {
@@ -263,7 +202,7 @@ export class Gizmo {
     const yScaleConfig: Cube3DConfig = {
       id: 'gizmo-y-scale',
       name: 'Gizmo Y-Scale',
-      dimensions: [scaleHandleSize, scaleHandleSize, scaleHandleSize],
+      dimensions: [this.scaleHandleSize, this.scaleHandleSize, this.scaleHandleSize],
       position: { x: 0, y: this.axisLength, z: 0 },
       rotation: [0, 0, 0],
       backgroundFill: {
@@ -276,7 +215,7 @@ export class Gizmo {
     const zScaleConfig: Cube3DConfig = {
       id: 'gizmo-z-scale',
       name: 'Gizmo Z-Scale',
-      dimensions: [scaleHandleSize, scaleHandleSize, scaleHandleSize],
+      dimensions: [this.scaleHandleSize, this.scaleHandleSize, this.scaleHandleSize],
       position: { x: 0, y: 0, z: this.axisLength },
       rotation: [0, 0, 0],
       backgroundFill: {
@@ -318,35 +257,105 @@ export class Gizmo {
       zScaleConfig,
       'gizmo-sequence'
     )
+  }
 
+  attachBodies() {
+    // Create physics bodies for the axes
+    const xAxisBody = this.physics.createStaticBox(
+      new this.physics.jolt.RVec3(
+        this.xAxis.transform.position[0],
+        this.xAxis.transform.position[1],
+        this.xAxis.transform.position[2]
+      ),
+      new this.physics.jolt.Quat(0, 0, 0, 1),
+      new this.physics.jolt.Vec3(this.axisLength, this.axisRadius, this.axisRadius)
+    )
+    this.bodies.push(xAxisBody)
+
+    const yAxisBody = this.physics.createStaticBox(
+      new this.physics.jolt.RVec3(
+        this.yAxis.transform.position[0],
+        this.yAxis.transform.position[1],
+        this.yAxis.transform.position[2]
+      ),
+      new this.physics.jolt.Quat(0, 0, 0, 1),
+      new this.physics.jolt.Vec3(this.axisRadius, this.axisLength, this.axisRadius)
+    )
+    this.bodies.push(yAxisBody)
+
+    const zAxisBody = this.physics.createStaticBox(
+      new this.physics.jolt.RVec3(
+        this.zAxis.transform.position[0],
+        this.zAxis.transform.position[1],
+        this.zAxis.transform.position[2]
+      ),
+      new this.physics.jolt.Quat(0, 0, 0, 1),
+      new this.physics.jolt.Vec3(this.axisRadius, this.axisRadius, this.axisLength)
+    )
+    this.bodies.push(zAxisBody)
+    const xRingBody = this.physics.createStaticTorus(
+      new this.physics.jolt.RVec3(0, 0, 0),
+      new this.physics.jolt.Quat(0, 0, 0, 1),
+      this.ringRadius,
+      this.ringTubeRadius,
+      'x'
+    )
+    this.bodies.push(xRingBody)
+
+    const yRingBody = this.physics.createStaticTorus(
+      new this.physics.jolt.RVec3(0, 0, 0),
+      new this.physics.jolt.Quat(0, 0, 0, 1),
+      this.ringRadius,
+      this.ringTubeRadius,
+      'y'
+    )
+    this.bodies.push(yRingBody)
+
+    const zRingBody = this.physics.createStaticTorus(
+      new this.physics.jolt.RVec3(0, 0, 0),
+      new this.physics.jolt.Quat(0, 0, 0, 1),
+      this.ringRadius,
+      this.ringTubeRadius,
+      'z'
+    )
+    this.bodies.push(zRingBody)
     const xScaleBody = this.physics.createStaticBox(
       new this.physics.jolt.RVec3(this.axisLength, 0, 0),
       new this.physics.jolt.Quat(0, 0, 0, 1),
-      new this.physics.jolt.Vec3(scaleHandleSize, scaleHandleSize, scaleHandleSize)
+      new this.physics.jolt.Vec3(this.scaleHandleSize, this.scaleHandleSize, this.scaleHandleSize)
     )
     this.bodies.push(xScaleBody)
 
     const yScaleBody = this.physics.createStaticBox(
       new this.physics.jolt.RVec3(0, this.axisLength, 0),
       new this.physics.jolt.Quat(0, 0, 0, 1),
-      new this.physics.jolt.Vec3(scaleHandleSize, scaleHandleSize, scaleHandleSize)
+      new this.physics.jolt.Vec3(this.scaleHandleSize, this.scaleHandleSize, this.scaleHandleSize)
     )
     this.bodies.push(yScaleBody)
 
     const zScaleBody = this.physics.createStaticBox(
       new this.physics.jolt.RVec3(0, 0, this.axisLength),
       new this.physics.jolt.Quat(0, 0, 0, 1),
-      new this.physics.jolt.Vec3(scaleHandleSize, scaleHandleSize, scaleHandleSize)
+      new this.physics.jolt.Vec3(this.scaleHandleSize, this.scaleHandleSize, this.scaleHandleSize)
     )
     this.bodies.push(zScaleBody)
   }
 
   attach(target: Transform) {
     this.target = target
+    this.attachBodies()
   }
 
   detach() {
     this.target = null
+
+    // Remove all physics bodies from the physics world
+    for (const body of this.bodies) {
+      this.physics.bodyInterface.RemoveBody(body.GetID())
+      this.physics.bodyInterface.DestroyBody(body.GetID())
+    }
+
+    this.bodies = []
   }
 
   update(queue: PolyfillQueue, camera: Camera3D, latestTarget: Transform | null) {

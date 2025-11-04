@@ -1179,6 +1179,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                       editor.nodes = nodes
                       editor.edges = edges
                       editor.gizmo.detach()
+                      editor.gizmo.update(editor.gpuResources.queue, editor.camera, null)
                       setIsPlaying(pipeline.isPlaying)
                     } else {
                       toast.error("Couldn't play!")

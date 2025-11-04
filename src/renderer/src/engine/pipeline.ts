@@ -677,8 +677,14 @@ export class CanvasPipeline {
       new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
     )
     if (optionalBody) {
-      optionalBody.SetLinearVelocity(
-        new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+      // optionalBody.SetLinearVelocity(
+      //   new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+      // )
+      editor.physics.bodyInterface.SetPositionAndRotation(
+        optionalBody.GetID(),
+        new editor.physics.jolt.RVec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2]),
+        new editor.physics.jolt.Quat(0, 0, 0, 1), // Assuming no rotation for gizmo bodies
+        editor.physics.jolt.EActivation_Activate
       )
     }
   }
@@ -754,7 +760,7 @@ export class CanvasPipeline {
                   case 'Forward':
                     if (connectedNode.data.pressed) {
                       // TODO: integrate handle_input here (will need to calculate delta time)
-                      // console.info('forward force')
+                      console.info('forward force')
                       // editor.physics.bodyInterface.AddForce(
                       //   playerBody.GetID(),
                       //   new editor.physics.jolt.Vec3(0, 0, -1000),
@@ -778,7 +784,7 @@ export class CanvasPipeline {
                       //   new editor.physics.jolt.Vec3(0, 0, 1000),
                       //   editor.physics.jolt.EActivation_Activate
                       // )
-                      // console.info('back press')
+                      console.info('back press')
                       this.handleInput(
                         editor,
                         playerBody,

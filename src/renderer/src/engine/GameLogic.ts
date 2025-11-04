@@ -48,6 +48,7 @@ export class GameLogic {
       inContactNormal	World space contact normal
       ioSettings	Settings returned by the contact callback to indicate how the character should behave
    */
+
   OnContactAdded = (
     character: number,
     bodyID2: number,
@@ -58,7 +59,6 @@ export class GameLogic {
   ) => {
     // const b1 = character
     // const b2 = bodyID2
-
     // console.info(
     //   'OnContactAdded raw params:',
     //   character,
@@ -68,92 +68,74 @@ export class GameLogic {
     //   contactNormal,
     //   settings
     // )
-
-    let bodyID2wrap = this.editor.physics.jolt.wrapPointer(bodyID2, this.editor.physics.jolt.BodyID)
-    let characterWrap = this.editor.physics.jolt.wrapPointer(
-      character,
-      this.editor.physics.jolt.CharacterVirtual
-    )
-
-    // console.info('bodyID2wrap characteWrap', bodyID2wrap, characterWrap)
-
-    let gameCharacterId: string | undefined
-    for (const [id, char] of this.editor.characters.entries()) {
-      // console.info('char.GetID().GetValue()', char.GetID())
-      if (char.GetID().GetValue() === characterWrap.GetID().GetValue()) {
-        gameCharacterId = id
-        break
-      }
-    }
-
-    let gameBodyId2: string | undefined
-    for (const [id, body] of this.editor.bodies.entries()) {
-      if (body.GetID().GetIndex() === bodyID2wrap.GetIndex()) {
-        gameBodyId2 = id
-        break
-      }
-    }
-
-    console.info('Mapped IDs:', 'gameCharacterId:', gameCharacterId, 'gameBodyId2:', gameBodyId2)
-
-    const isProjectile = (bodyId: string) => {
-      const projectile = this.editor.spheres3D.find((s) => s.id === bodyId)
-      return projectile && projectile.name === 'Projectile'
-    }
-
-    const isEnemy = (bodyId: string) => {
-      const enemy = this.editor.cubes3D.find((c) => c.id === bodyId)
-      return enemy && enemy.name === 'EnemyCharacter'
-    }
-
-    const isPlayer = (bodyId: string) => {
-      const player = this.editor.cubes3D.find((c) => c.id === bodyId)
-      return player && player.name === 'PlayerCharacter'
-    }
-
-    if (!gameCharacterId || !gameBodyId2) {
-      console.warn('Could not map Jolt Physics IDs to game object IDs.')
-      return
-    }
-
-    const b1Id = gameCharacterId
-    const b2Id = gameBodyId2
-
-    if ((isProjectile(b1Id) && isEnemy(b2Id)) || (isProjectile(b2Id) && isEnemy(b1Id))) {
-      const enemyId = isEnemy(b1Id) ? b1Id : b2Id
-      const enemyNode = this.editor.nodes.find((n) => n.id === `${enemyId}-7`)
-      if (enemyNode && typeof enemyNode.data.health === 'number') {
-        this.setNodes((nds) =>
-          nds.map((n) => {
-            if (n.id === enemyNode.id) {
-              console.warn('MINUS 10 HEALTH on ENEMY')
-              return { ...n, data: { ...n.data, health: n.data.health - 10 } }
-            }
-            return n
-          })
-        )
-      }
-    } else if ((isProjectile(b1Id) && isPlayer(b2Id)) || (isProjectile(b2Id) && isPlayer(b1Id))) {
-      const playerNode = this.editor.nodes.find((n) => n.data.label === 'PlayerController')
-      if (playerNode && typeof playerNode.data.health === 'number') {
-        this.setNodes((nds) =>
-          nds.map((n) => {
-            if (n.id === playerNode.id) {
-              console.warn('MINUS 10 HEALTH on PLAYER')
-              return { ...n, data: { ...n.data, health: n.data.health - 10 } }
-            }
-            return n
-          })
-        )
-      }
-    }
-
-    // if (isProjectile(b1Id)) {
-    //   this.editor.spheres3D = this.editor.spheres3D.filter((s) => s.id !== b1Id)
-    //   this.editor.bodies.delete(b1Id)
-    // } else if (isProjectile(b2Id)) {
-    //   this.editor.spheres3D = this.editor.spheres3D.filter((s) => s.id !== b2Id)
-    //   this.editor.bodies.delete(b2Id)
+    // NEED TO FILTER OUT VirtualCharacter bodies created alongside them, perhaps with a special Filter
+    // let bodyID2wrap = this.editor.physics.jolt.wrapPointer(bodyID2, this.editor.physics.jolt.BodyID)
+    // let characterWrap = this.editor.physics.jolt.wrapPointer(
+    //   character,
+    //   this.editor.physics.jolt.CharacterVirtual
+    // )
+    // // console.info('bodyID2wrap characteWrap', bodyID2wrap, characterWrap)
+    // let gameCharacterId: string | undefined
+    // for (const [id, char] of this.editor.characters.entries()) {
+    //   // console.info('char.GetID().GetValue()', char.GetID())
+    //   if (char.GetID().GetValue() === characterWrap.GetID().GetValue()) {
+    //     gameCharacterId = id
+    //     break
+    //   }
+    // }
+    // let gameBodyId2: string | undefined
+    // for (const [id, body] of this.editor.bodies.entries()) {
+    //   if (body.GetID().GetIndex() === bodyID2wrap.GetIndex()) {
+    //     gameBodyId2 = id
+    //     break
+    //   }
+    // }
+    // console.info('Mapped IDs:', 'gameCharacterId:', gameCharacterId, 'gameBodyId2:', gameBodyId2)
+    // const isProjectile = (bodyId: string) => {
+    //   const projectile = this.editor.spheres3D.find((s) => s.id === bodyId)
+    //   return projectile && projectile.name === 'Projectile'
+    // }
+    // const isEnemy = (bodyId: string) => {
+    //   const enemy = this.editor.cubes3D.find((c) => c.id === bodyId)
+    //   return enemy && enemy.name === 'EnemyCharacter'
+    // }
+    // const isPlayer = (bodyId: string) => {
+    //   const player = this.editor.cubes3D.find((c) => c.id === bodyId)
+    //   return player && player.name === 'PlayerCharacter'
+    // }
+    // if (!gameCharacterId || !gameBodyId2) {
+    //   console.warn('Could not map Jolt Physics IDs to game object IDs.')
+    //   return
+    // }
+    // const b1Id = gameCharacterId
+    // const b2Id = gameBodyId2
+    // if ((isProjectile(b1Id) && isEnemy(b2Id)) || (isProjectile(b2Id) && isEnemy(b1Id))) {
+    //   const enemyId = isEnemy(b1Id) ? b1Id : b2Id
+    //   const enemyNode = this.editor.nodes.find((n) => n.id === `${enemyId}-7`)
+    //   if (enemyNode && typeof enemyNode.data.health === 'number') {
+    //     this.setNodes((nds) =>
+    //       nds.map((n) => {
+    //         if (n.id === enemyNode.id) {
+    //           console.warn('MINUS 10 HEALTH on ENEMY')
+    //           return { ...n, data: { ...n.data, health: n.data.health - 10 } }
+    //         }
+    //         return n
+    //       })
+    //     )
+    //   }
+    // } else if ((isProjectile(b1Id) && isPlayer(b2Id)) || (isProjectile(b2Id) && isPlayer(b1Id))) {
+    //   const playerNode = this.editor.nodes.find((n) => n.data.label === 'PlayerController')
+    //   if (playerNode && typeof playerNode.data.health === 'number') {
+    //     this.setNodes((nds) =>
+    //       nds.map((n) => {
+    //         if (n.id === playerNode.id) {
+    //           console.warn('MINUS 10 HEALTH on PLAYER')
+    //           return { ...n, data: { ...n.data, health: n.data.health - 10 } }
+    //         }
+    //         return n
+    //       })
+    //     )
+    //   }
     // }
   }
 
