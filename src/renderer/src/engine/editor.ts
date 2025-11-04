@@ -35,6 +35,7 @@ import Jolt from 'jolt-physics/debug-wasm-compat'
 import { v4 as uuidv4 } from 'uuid'
 import { Polygon, PolygonConfig } from './polygon'
 import { TextRenderer, TextRendererConfig } from './text'
+import { Voxel, VoxelConfig } from './voxel'
 import {
   AnimationData,
   AnimationProperty,
@@ -177,6 +178,7 @@ export type VideoItemClickHandler = (video_id: string) => void | null
 export type Cube3DClickHandler = (cube_id: string, cube_config: Cube3DConfig) => void | null
 export type Sphere3DClickHandler = (sphere_id: string, sphere_config: Sphere3DConfig) => void | null
 export type Mockup3DClickHandler = (mockup_id: string, mockup_config: Mockup3DConfig) => void | null
+export type VoxelClickHandler = (voxel_id: string, voxel_config: VoxelConfig) => void | null
 export type OnMouseUp = (id: string, point: Point) => [Sequence, string[]] | null
 export type OnHandleMouseUp = (
   objectId: string,
@@ -224,6 +226,8 @@ export class Editor {
   spheres3D: Sphere3D[] = []
   mockups3D: Mockup3D[] = []
   models3D: Model3D[] = []
+  voxels: Voxel[] = []
+  isVoxelPaintingMode: boolean = false
   selectedCube3DId: string | null
   gizmo: Gizmo | null = null
   draggingGizmoAxis: 'x' | 'y' | 'z' | null = null
@@ -365,6 +369,7 @@ export class Editor {
     this.handleCube3DClick = null
     this.handleSphere3DClick = null
     this.handleMockup3DClick = null
+    // this.handleVoxelClick = null
     this.gpuResources = null
     this.renderPipeline = null
     this.window = null
@@ -417,6 +422,7 @@ export class Editor {
     this.cubes3D = []
     this.spheres3D = []
     this.mockups3D = []
+    this.voxels = []
     this.draggingCube3D = null
     this.draggingSphere3D = null
     this.draggingMockup3D = null
@@ -1144,6 +1150,40 @@ export class Editor {
       }
     }
 
+    // Restore Voxels
+    if (saved_sequence.activeVoxels) {
+      for (let v of saved_sequence.activeVoxels) {
+        const voxel_config: VoxelConfig = {
+          id: v.id,
+          name: v.name,
+          dimensions: v.dimensions,
+          position: {
+            x: v.position.x * this.scaleMultiplier,
+            y: v.position.y * this.scaleMultiplier,
+            z: v.position.z || 0
+          },
+          rotation: v.rotation,
+          backgroundFill: v.backgroundFill,
+          layer: v.layer
+        }
+
+        const restored_voxel = new Voxel(
+          windowSize,
+          device!,
+          queue!,
+          this.modelBindGroupLayout!,
+          this.groupBindGroupLayout!,
+          camera,
+          voxel_config,
+          saved_sequence.id
+        )
+
+        restored_voxel.hidden = hidden
+        this.voxels.push(restored_voxel)
+        console.log('Voxel restored...')
+      }
+    }
+
     if (saved_sequence.activeBrushes) {
       for (const brush of saved_sequence.activeBrushes) {
         if (
@@ -1292,6 +1332,7 @@ export class Editor {
   clearCanvas() {
     this.reset_sequence_objects()
     this.hide_all_objects()
+    this.voxels = []
 
     this.currentSequenceData = null
   }
@@ -1946,6 +1987,9 @@ export class Editor {
         case 'Model3D':
           objectIdx = this.models3D.findIndex((s) => s.id === animation.polygonId)
           break
+        case 'Voxel':
+          objectIdx = this.voxels.findIndex((v) => v.id === animation.polygonId)
+          break
       }
 
       if (objectIdx === undefined || objectIdx === -1) {
@@ -2026,6 +2070,9 @@ export class Editor {
             break
           case 'Model3D':
             this.models3D[objectIdx].hidden = false
+            break
+          case 'Voxel':
+            this.voxels[objectIdx].hidden = false
             break
         }
       }
@@ -2250,6 +2297,9 @@ export class Editor {
               case ObjectType.Model3D:
                 this.models3D[objectIdx].transform.updatePosition(positionVec, camera.windowSize)
                 break
+              case ObjectType.Voxel:
+                this.voxels[objectIdx].transform.updatePosition(positionVec, camera.windowSize)
+                break
             }
             break
           }
@@ -2292,6 +2342,9 @@ export class Editor {
                 break
               case ObjectType.Model3D:
                 this.models3D[objectIdx].transform.updateRotationXDegrees(x)
+                break
+              case ObjectType.Voxel:
+                this.voxels[objectIdx].transform.updateRotationXDegrees(x)
                 break
             }
             break
@@ -2336,6 +2389,9 @@ export class Editor {
               case ObjectType.Model3D:
                 this.models3D[objectIdx].transform.updateRotationYDegrees(y)
                 break
+              case ObjectType.Voxel:
+                this.voxels[objectIdx].transform.updateRotationYDegrees(y)
+                break
             }
             break
           }
@@ -2376,6 +2432,9 @@ export class Editor {
                 break
               case ObjectType.Model3D:
                 this.models3D[objectIdx].transform.updateRotation(new_rotation_rad)
+                break
+              case ObjectType.Voxel:
+                this.voxels[objectIdx].transform.updateRotation(new_rotation_rad)
                 break
             }
             break
@@ -2438,6 +2497,9 @@ export class Editor {
               case ObjectType.Model3D:
                 this.models3D[objectIdx].transform.updateScaleX(new_scale)
                 break
+              case ObjectType.Voxel:
+                this.voxels[objectIdx].transform.updateScaleX(new_scale)
+                break
             }
             break
           }
@@ -2499,6 +2561,9 @@ export class Editor {
               case ObjectType.Model3D:
                 this.models3D[objectIdx].transform.updateScaleY(new_scale)
                 break
+              case ObjectType.Voxel:
+                this.voxels[objectIdx].transform.updateScaleY(new_scale)
+                break
             }
             break
           }
@@ -2531,6 +2596,9 @@ export class Editor {
                 // case ObjectType.Sphere3D:
                 //   this.spheres3D[objectIdx].updateOpacity(queue!, opacity);
                 //   break;
+                case ObjectType.Voxel:
+                  this.voxels[objectIdx].updateOpacity(queue!, opacity)
+                  break
               }
             } else {
               console.error('GPU resources not available.')
@@ -2996,6 +3064,35 @@ export class Editor {
     )
 
     this.spheres3D.push(sphere)
+  }
+
+  add_voxel(voxel_config: VoxelConfig, new_id: string, selected_sequence_id: string) {
+    let gpuResources = this.gpuResources
+    let camera = this.camera
+    let windowSize = camera?.windowSize
+
+    if (
+      !camera ||
+      !windowSize ||
+      !gpuResources ||
+      !this.modelBindGroupLayout ||
+      !this.groupBindGroupLayout
+    ) {
+      return
+    }
+
+    let voxel = new Voxel(
+      windowSize,
+      gpuResources.device!,
+      gpuResources.queue!,
+      this.modelBindGroupLayout,
+      this.groupBindGroupLayout,
+      camera,
+      voxel_config,
+      selected_sequence_id
+    )
+
+    this.voxels.push(voxel)
   }
 
   add_mockup3d(mockup_config: Mockup3DConfig, new_id: string, selected_sequence_id: string) {
@@ -4388,6 +4485,77 @@ export class Editor {
     this.lastRay = ray
     this.lastTopLeft = top_left
 
+    // Voxel Painting Logic
+    if (this.isVoxelPaintingMode && this.currentSequenceData) {
+      if (ray && this.physics) {
+        const direction = new this.physics.jolt.Vec3(
+          ray.direction[0],
+          ray.direction[1],
+          ray.direction[2]
+        )
+        direction.Mul(1000)
+
+        const hit = this.physics.raycast(
+          new this.physics.jolt.RVec3(ray.origin[0], ray.origin[1], ray.origin[2]),
+          direction
+        )
+
+        let voxelPosition = { x: 0, y: 0, z: 0 }
+        if (hit) {
+          voxelPosition = {
+            x: hit.position.GetX(),
+            y: hit.position.GetY(),
+            z: hit.position.GetZ()
+          }
+        } else {
+          // If no hit, place it a bit in front of the camera
+          const forward = getCameraForward(camera)
+          const pos = camera.position
+          voxelPosition = {
+            x: pos[0] + forward[0] * 5,
+            y: pos[1] + forward[1] * 5,
+            z: pos[2] + forward[2] * 5
+          }
+        }
+
+        const new_id = uuidv4()
+        const voxelConfig: VoxelConfig = {
+          id: new_id,
+          name: 'Voxel',
+          dimensions: [1, 1, 1], // Default voxel size
+          position: voxelPosition,
+          rotation: [0, 0, 0],
+          backgroundFill: {
+            type: 'Color',
+            value: [0.2, 0.2, 0.8, 1.0] // Default blue color
+          },
+          layer: 0
+        }
+
+        this.add_voxel(voxelConfig, new_id, this.currentSequenceData.id)
+
+        // Add Jolt physics body (static for now)
+        const staticBody = this.physics.createStaticBox(
+          new this.physics.jolt.RVec3(
+            voxelConfig.position.x,
+            voxelConfig.position.y,
+            voxelConfig.position.z
+          ),
+          new this.physics.jolt.Quat(0, 0, 0, 1),
+          new this.physics.jolt.Vec3(
+            voxelConfig.dimensions[0] / 2,
+            voxelConfig.dimensions[1] / 2,
+            voxelConfig.dimensions[2] / 2
+          )
+        )
+        this.bodies.set(new_id, staticBody)
+
+        // TODO: Call editor_state.add_saved_voxel here (after editor_state is updated)
+        console.info('Voxel added at', voxelPosition)
+      }
+      return // Consume the click event for voxel painting
+    }
+
     // Clear any hovered gizmo part on mouse down
     if (this.hoveredGizmoPart) {
       const originalFill = this.hoveredGizmoPart.originalBackgroundFill
@@ -4875,6 +5043,14 @@ export class Editor {
         this.onBrushStrokeUp(this.currentBrush.id)
       }
 
+      return
+    }
+
+    // Handle voxel painting end
+    if (this.isVoxelPaintingMode && this.currentSequenceData) {
+      // TODO: Call a callback to save the voxel state
+      console.info('Voxel painting ended. Saving state...')
+      // For now, just log. The actual saving will be handled by editor_state.
       return
     }
 
@@ -5975,6 +6151,9 @@ export class Editor {
       i.hidden = true
     })
     this.videoItems.forEach((v) => {
+      v.hidden = true
+    })
+    this.voxels.forEach((v) => {
       v.hidden = true
     })
 

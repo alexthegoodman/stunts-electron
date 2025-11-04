@@ -20,6 +20,7 @@ import { SavedCube3DConfig } from './cube3d'
 import { SavedSphere3DConfig } from './sphere3d'
 import { SavedMockup3DConfig } from './mockup3d'
 import { SavedModel3DConfig } from './model3d'
+import { SavedVoxelConfig } from './voxel'
 import { CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Editor } from './editor'
 import { getRandomNumber, InputValue, rgbToWgpu, wgpuToHuman } from '../engine/editor/helpers'
 
@@ -384,6 +385,37 @@ export default class EditorState {
     this.savedState = saved_state
   }
 
+  async add_saved_voxel(selected_sequence_id: string, savable_voxel: SavedVoxelConfig) {
+    let new_motion_path = save_default_keyframes(
+      this,
+      savable_voxel.id,
+      ObjectType.Voxel,
+      savable_voxel.position,
+      20000
+    )
+
+    let saved_state = this.savedState
+
+    saved_state.sequences.forEach((s) => {
+      if (s.id == selected_sequence_id) {
+        if (!s.activeVoxels) {
+          s.activeVoxels = []
+        }
+        s.activeVoxels.push(savable_voxel)
+
+        if (this.supportsMotionPaths && s.polygonMotionPaths) {
+          s.polygonMotionPaths.push(new_motion_path)
+        }
+      }
+    })
+
+    let sequences = saved_state.sequences
+
+    await saveSequencesData(sequences, this.saveTarget)
+
+    this.savedState = saved_state
+  }
+
   async update_saved_image_url(
     selected_sequence_id: string,
     image_id: string,
@@ -645,11 +677,13 @@ export default class EditorState {
     const visibleTexts: SavedTextRendererConfig[] = sequence.activeTextItems
     const visibleImages: SavedStImageConfig[] = sequence.activeImageItems
     const visibleVideos: SavedStVideoConfig[] = sequence.activeVideoItems
+    const visibleVoxels: SavedVoxelConfig[] = sequence.activeVoxels || []
 
     const polygonCount = visiblePolygons.length
     const textCount = visibleTexts.length
     const imageCount = visibleImages.length
     const videoCount = visibleVideos.length
+    const voxelCount = visibleVoxels.length
 
     if (objectIdx < polygonCount) {
       return visiblePolygons[objectIdx].id
@@ -659,6 +693,8 @@ export default class EditorState {
       return visibleImages[objectIdx - (polygonCount + textCount)].id
     } else if (objectIdx < polygonCount + textCount + imageCount + videoCount) {
       return visibleVideos[objectIdx - (polygonCount + textCount + imageCount)].id
+    } else if (objectIdx < polygonCount + textCount + imageCount + videoCount + voxelCount) {
+      return visibleVoxels[objectIdx - (polygonCount + textCount + imageCount + videoCount)].id
     } else {
       return null
     }
@@ -672,6 +708,7 @@ export default class EditorState {
     const textCount = sequence.activeTextItems.length
     const imageCount = sequence.activeImageItems.length
     const videoCount = sequence.activeVideoItems.length
+    const voxelCount = (sequence.activeVoxels || []).length
 
     if (objectIdx < polygonCount) {
       return ObjectType.Polygon
@@ -681,6 +718,8 @@ export default class EditorState {
       return ObjectType.ImageItem
     } else if (objectIdx < polygonCount + textCount + imageCount + videoCount) {
       return ObjectType.VideoItem
+    } else if (objectIdx < polygonCount + textCount + imageCount + videoCount + voxelCount) {
+      return ObjectType.Voxel
     } else {
       return null
     }

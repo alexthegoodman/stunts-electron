@@ -52,7 +52,9 @@ export const ToolGrid = ({
   layers,
   setLayers,
   update,
-  setNodes
+  setNodes,
+  isVoxelPainting,
+  setVoxelPainting
 }: {
   editorRef: React.RefObject<Editor | null>
   editorStateRef: React.RefObject<EditorState | null>
@@ -65,6 +67,8 @@ export const ToolGrid = ({
   setLayers: React.Dispatch<React.SetStateAction<Layer[]>>
   update: () => void
   setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
+  isVoxelPainting: boolean
+  setVoxelPainting: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
   const { t } = useTranslation('common')
 
@@ -1890,6 +1894,15 @@ export const ToolGrid = ({
               }}
             />
           )}
+          <OptionButton
+            style={{}}
+            label={t('Voxel Paint')}
+            icon="cube"
+            aria-label="Enable voxel painting mode"
+            callback={() => {
+              setVoxelPainting(!isVoxelPainting)
+            }}
+          />
           {options.includes('mockup3d') && (
             <OptionButton
               style={{}}

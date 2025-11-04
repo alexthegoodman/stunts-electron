@@ -401,6 +401,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
   const [project_name, set_project_name] = useState('Loading...')
   const [physicsReady, setPhysicsReady] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isVoxelPainting, setVoxelPainting] = useState(false)
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
@@ -1057,7 +1058,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         // 'stickers',
                         // 'brush'
                         'cube3d',
-                        'model3d'
+                        'model3d',
+                        'voxelPaint'
                       ]}
                       layers={layers}
                       setLayers={set_layers}
@@ -1065,6 +1067,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         setRefreshUINow(Date.now())
                       }}
                       setNodes={setNodes}
+                      isVoxelPainting={isVoxelPainting}
+                      setVoxelPainting={setVoxelPainting}
                     />
                   </div>
                 )}

@@ -11,6 +11,7 @@ import { SavedModel3DConfig } from './model3d'
 import { ShaderThemeConfig } from './shader_themes'
 import { CameraAnimation } from './3dcamera'
 import { Editor } from './editor'
+import { SavedVoxelConfig } from './voxel'
 
 export interface SavedState {
   sequences: Sequence[]
@@ -78,6 +79,7 @@ export enum ObjectType {
   Sphere3D = 'Sphere3D',
   Mockup3D = 'Mockup3D',
   Model3D = 'Model3D',
+  Voxel = 'Voxel',
   Torus3D = 'Torus3D'
 }
 
@@ -125,6 +127,7 @@ export interface Sequence {
   activeSpheres3D?: SavedSphere3DConfig[]
   activeMockups3D?: SavedMockup3DConfig[]
   activeModels3D?: SavedModel3DConfig[]
+  activeVoxels?: SavedVoxelConfig[]
 }
 
 export const getSequenceDuration = (editor: Editor, sequence: Sequence) => {
@@ -429,6 +432,11 @@ export function findObjectType(lastSavedState: SavedState, objectId: string): Ob
   // Check active 3D models
   if (lastSavedState.sequences.some((s) => s.activeModels3D?.some((av) => av.id === objectId))) {
     return ObjectType.Model3D
+  }
+
+  // Check active Voxels
+  if (lastSavedState.sequences.some((s) => s.activeVoxels?.some((av) => av.id === objectId))) {
+    return ObjectType.Voxel
   }
 
   return null
