@@ -84,6 +84,220 @@ import { GameLogic } from '../../engine/GameLogic'
 import { Sphere3DConfig } from '@renderer/engine/sphere3d'
 import HealthBar from './HealthBar'
 
+const createLandscape = (editor: Editor, sequence_id: string) => {
+  // Add a default landscape cube
+  const landscapeConfig: Cube3DConfig = {
+    id: 'landscape-cube',
+    name: 'Landscape',
+    // dimensions: [1000, 10, 1000],
+    dimensions: [100, 2, 100],
+    position: { x: 0, y: -5, z: 0 },
+    rotation: [0, 0, 0],
+    backgroundFill: {
+      type: 'Color',
+      value: [0.5, 0.35, 0.25, 1.0]
+    },
+    layer: 0
+  }
+
+  const landscapeCube = new Cube3D(
+    editor.camera.windowSize,
+    editor.gpuResources.device,
+    editor.gpuResources.queue,
+    editor.modelBindGroupLayout,
+    editor.groupBindGroupLayout,
+    editor.camera,
+    landscapeConfig,
+    sequence_id
+  )
+
+  if (!editor.cubes3D) {
+    editor.cubes3D = []
+  }
+  editor.cubes3D.push(landscapeCube)
+
+  // Create short walls around the landscape
+  const wallHeight = 10
+  const wallThickness = 2
+  const landscapeWidth = landscapeConfig.dimensions[0]
+  const landscapeDepth = landscapeConfig.dimensions[2]
+  const landscapeY = landscapeConfig.position.y
+  // Front Wall
+  const frontWallConfig: Cube3DConfig = {
+    id: 'front-wall-cube',
+    name: 'Front Wall',
+    dimensions: [landscapeWidth + 2 * wallThickness, wallHeight, wallThickness],
+    position: {
+      x: 0,
+      y: landscapeY + landscapeConfig.dimensions[1] / 2 + wallHeight / 2,
+      z: landscapeDepth / 2 + wallThickness / 2
+    },
+    rotation: [0, 0, 0],
+    backgroundFill: { type: 'Color', value: [0.6, 0.45, 0.35, 1.0] },
+    layer: 0
+  }
+  const frontWallCube = new Cube3D(
+    editor.camera.windowSize,
+    editor.gpuResources.device,
+    editor.gpuResources.queue,
+    editor.modelBindGroupLayout,
+    editor.groupBindGroupLayout,
+    editor.camera,
+    frontWallConfig,
+    sequence_id
+  )
+  editor.cubes3D.push(frontWallCube)
+  const frontWallBody = editor.physics.createStaticBox(
+    new editor.physics.jolt.RVec3(
+      frontWallConfig.position.x,
+      frontWallConfig.position.y,
+      frontWallConfig.position.z
+    ),
+    new editor.physics.jolt.Quat(0, 0, 0, 1),
+    new editor.physics.jolt.Vec3(
+      frontWallConfig.dimensions[0] / 2,
+      frontWallConfig.dimensions[1] / 2,
+      frontWallConfig.dimensions[2] / 2
+    )
+  )
+  editor.bodies.set('landscape-front-wall-cube', frontWallBody)
+
+  // Back Wall
+  const backWallConfig: Cube3DConfig = {
+    id: 'back-wall-cube',
+    name: 'Back Wall',
+    dimensions: [landscapeWidth + 2 * wallThickness, wallHeight, wallThickness],
+    position: {
+      x: 0,
+      y: landscapeY + landscapeConfig.dimensions[1] / 2 + wallHeight / 2,
+      z: -(landscapeDepth / 2 + wallThickness / 2)
+    },
+    rotation: [0, 0, 0],
+    backgroundFill: { type: 'Color', value: [0.6, 0.45, 0.35, 1.0] },
+    layer: 0
+  }
+  const backWallCube = new Cube3D(
+    editor.camera.windowSize,
+    editor.gpuResources.device,
+    editor.gpuResources.queue,
+    editor.modelBindGroupLayout,
+    editor.groupBindGroupLayout,
+    editor.camera,
+    backWallConfig,
+    sequence_id
+  )
+  editor.cubes3D.push(backWallCube)
+  const backWallBody = editor.physics.createStaticBox(
+    new editor.physics.jolt.RVec3(
+      backWallConfig.position.x,
+      backWallConfig.position.y,
+      backWallConfig.position.z
+    ),
+    new editor.physics.jolt.Quat(0, 0, 0, 1),
+    new editor.physics.jolt.Vec3(
+      backWallConfig.dimensions[0] / 2,
+      backWallConfig.dimensions[1] / 2,
+      backWallConfig.dimensions[2] / 2
+    )
+  )
+  editor.bodies.set('landscape-back-wall-cube', backWallBody)
+
+  // Left Wall
+  const leftWallConfig: Cube3DConfig = {
+    id: 'left-wall-cube',
+    name: 'Left Wall',
+    dimensions: [wallThickness, wallHeight, landscapeDepth],
+    position: {
+      x: -(landscapeWidth / 2 + wallThickness / 2),
+      y: landscapeY + landscapeConfig.dimensions[1] / 2 + wallHeight / 2,
+      z: 0
+    },
+    rotation: [0, 0, 0],
+    backgroundFill: { type: 'Color', value: [0.6, 0.45, 0.35, 1.0] },
+    layer: 0
+  }
+  const leftWallCube = new Cube3D(
+    editor.camera.windowSize,
+    editor.gpuResources.device,
+    editor.gpuResources.queue,
+    editor.modelBindGroupLayout,
+    editor.groupBindGroupLayout,
+    editor.camera,
+    leftWallConfig,
+    sequence_id
+  )
+  editor.cubes3D.push(leftWallCube)
+  const leftWallBody = editor.physics.createStaticBox(
+    new editor.physics.jolt.RVec3(
+      leftWallConfig.position.x,
+      leftWallConfig.position.y,
+      leftWallConfig.position.z
+    ),
+    new editor.physics.jolt.Quat(0, 0, 0, 1),
+    new editor.physics.jolt.Vec3(
+      leftWallConfig.dimensions[0] / 2,
+      leftWallConfig.dimensions[1] / 2,
+      leftWallConfig.dimensions[2] / 2
+    )
+  )
+  editor.bodies.set('landscape-left-wall-cube', leftWallBody)
+
+  // Right Wall
+  const rightWallConfig: Cube3DConfig = {
+    id: 'right-wall-cube',
+    name: 'Right Wall',
+    dimensions: [wallThickness, wallHeight, landscapeDepth],
+    position: {
+      x: landscapeWidth / 2 + wallThickness / 2,
+      y: landscapeY + landscapeConfig.dimensions[1] / 2 + wallHeight / 2,
+      z: 0
+    },
+    rotation: [0, 0, 0],
+    backgroundFill: { type: 'Color', value: [0.6, 0.45, 0.35, 1.0] },
+    layer: 0
+  }
+  const rightWallCube = new Cube3D(
+    editor.camera.windowSize,
+    editor.gpuResources.device,
+    editor.gpuResources.queue,
+    editor.modelBindGroupLayout,
+    editor.groupBindGroupLayout,
+    editor.camera,
+    rightWallConfig,
+    sequence_id
+  )
+  editor.cubes3D.push(rightWallCube)
+  const rightWallBody = editor.physics.createStaticBox(
+    new editor.physics.jolt.RVec3(
+      rightWallConfig.position.x,
+      rightWallConfig.position.y,
+      rightWallConfig.position.z
+    ),
+    new editor.physics.jolt.Quat(0, 0, 0, 1),
+    new editor.physics.jolt.Vec3(
+      rightWallConfig.dimensions[0] / 2,
+      rightWallConfig.dimensions[1] / 2,
+      rightWallConfig.dimensions[2] / 2
+    )
+  )
+  editor.bodies.set('landscape-right-wall-cube', rightWallBody)
+
+  const landscapeBody = editor.physics.createStaticBox(
+    new editor.physics.jolt.RVec3(
+      landscapeConfig.position.x,
+      landscapeConfig.position.y,
+      landscapeConfig.position.z
+    ),
+    new editor.physics.jolt.Quat(0, 0, 0, 1),
+    new editor.physics.jolt.Vec3(
+      landscapeConfig.dimensions[0] / 2,
+      landscapeConfig.dimensions[1] / 2,
+      landscapeConfig.dimensions[2] / 2
+    )
+  )
+  editor.bodies.set('landscape-cube', landscapeBody)
+}
+
 export interface GameNode {
   id: string
   data: {
@@ -240,8 +454,10 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     canvas.addEventListener('keyup', handleKeyUp)
     canvas.setAttribute('tabindex', '0') // Make canvas focusable
 
-    // let isMouseDown = false
+    let isMouseDown = false
 
+    // TODO: move to nodes
+    // also is buggy
     // const handleMouseDown = () => {
     //   if (isPlaying) {
     //     isMouseDown = true
@@ -630,37 +846,6 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       new_layers.sort((a, b) => b.initial_layer_index - a.initial_layer_index)
       set_layers(new_layers)
 
-      // Add a default landscape cube
-      const landscapeConfig: Cube3DConfig = {
-        id: 'landscape-cube',
-        name: 'Landscape',
-        // dimensions: [1000, 10, 1000],
-        dimensions: [100, 2, 100],
-        position: { x: 0, y: -5, z: 0 },
-        rotation: [0, 0, 0],
-        backgroundFill: {
-          type: 'Color',
-          value: [0.5, 0.35, 0.25, 1.0]
-        },
-        layer: 0
-      }
-
-      const landscapeCube = new Cube3D(
-        editor.camera.windowSize,
-        editor.gpuResources.device,
-        editor.gpuResources.queue,
-        editor.modelBindGroupLayout,
-        editor.groupBindGroupLayout,
-        editor.camera,
-        landscapeConfig,
-        sequence_id
-      )
-
-      if (!editor.cubes3D) {
-        editor.cubes3D = []
-      }
-      editor.cubes3D.push(landscapeCube)
-
       // Create a dynamic cube
       // const dynamicCubeConfig: Cube3DConfig = {
       //   id: 'dynamic-cube',
@@ -696,20 +881,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       // Create physics bodies
       // console.info('Jolt', Jolt, Jolt.RVec3)
 
-      const landscapeBody = editor.physics.createStaticBox(
-        new editor.physics.jolt.RVec3(
-          landscapeConfig.position.x,
-          landscapeConfig.position.y,
-          landscapeConfig.position.z
-        ),
-        new editor.physics.jolt.Quat(0, 0, 0, 1),
-        new editor.physics.jolt.Vec3(
-          landscapeConfig.dimensions[0] / 2,
-          landscapeConfig.dimensions[1] / 2,
-          landscapeConfig.dimensions[2] / 2
-        )
-      )
-      editor.bodies.set('landscape-cube', landscapeBody)
+      createLandscape(editor, editor.currentSequenceData.id)
 
       // const dynamicBody = editor.physics.createDynamicBox(
       //   new editor.physics.jolt.RVec3(0, 200, 0),

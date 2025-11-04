@@ -154,10 +154,11 @@ export class GameLogic {
       if (playerCube) {
         // Update position
         this.editor.camera.setPosition(
-          playerCube.transform.position[0],
-          playerCube.transform.position[1],
-          playerCube.transform.position[2]
+          playerCube.transform.position[0] + this.editor.camera.defaultPosition3D[0],
+          playerCube.transform.position[1] + this.editor.camera.defaultPosition3D[1],
+          playerCube.transform.position[2] + this.editor.camera.defaultPosition3D[2]
         )
+        this.editor.camera.updateTarget()
 
         // Update rotation
         // playerCube.transform.rotation = this.editor.camera.rotation[0]

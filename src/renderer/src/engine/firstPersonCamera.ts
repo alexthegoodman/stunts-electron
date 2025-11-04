@@ -11,7 +11,8 @@ export class FirstPersonCamera extends Camera3D {
     super(windowSize)
 
     // Initialize position and rotation for a first-person view
-    this.position3D = vec3.fromValues(0, 1, 0) // Start at origin
+    this.defaultPosition3D = vec3.fromValues(-2, 2, -2) // Start at origin
+    this.position3D = vec3.fromValues(-2, 2, -2) // Start at origin
     this.rotation = quat.create() // No initial rotation
 
     // Update the target based on the initial position and rotation
@@ -19,22 +20,40 @@ export class FirstPersonCamera extends Camera3D {
   }
 
   // Helper to update the target based on current position and rotation
-  private updateTarget(): void {
+  updateTarget(): void {
     const forward = vec3.fromValues(0, 0, -1) // Default forward direction
     vec3.transformQuat(forward, forward, this.rotation) // Rotate forward vector
     vec3.add(this.target, this.position3D, forward) // Target is in front of camera
   }
 
-  // Override moveForward to ensure target is updated
+  // // Override moveForward to ensure target is updated
+  // moveForward(distance: number): void {
+  //   super.moveForward(distance)
+  //   this.updateTarget()
+  // }
+
+  // // Override moveRight to ensure target is updated
+  // moveRight(distance: number): void {
+  //   super.moveRight(distance)
+  //   this.updateTarget()
+  // }
+
+  // Override moveForward to use rotation instead of target
   moveForward(distance: number): void {
-    super.moveForward(distance)
-    this.updateTarget()
+    const forward = vec3.fromValues(0, 0, -1) // Default forward direction
+    vec3.transformQuat(forward, forward, this.rotation) // Get actual forward from rotation
+    vec3.scale(forward, forward, distance)
+    vec3.add(this.position3D, this.position3D, forward)
+    this.updateTarget() // Update target after moving
   }
 
-  // Override moveRight to ensure target is updated
+  // Override moveRight to use rotation instead of target
   moveRight(distance: number): void {
-    super.moveRight(distance)
-    this.updateTarget()
+    const right = vec3.fromValues(1, 0, 0) // Default right direction
+    vec3.transformQuat(right, right, this.rotation) // Get actual right from rotation
+    vec3.scale(right, right, distance)
+    vec3.add(this.position3D, this.position3D, right)
+    this.updateTarget() // Update target after moving
   }
 
   // Pitch (look up/down)
