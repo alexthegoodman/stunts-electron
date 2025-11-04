@@ -56,6 +56,7 @@ export class Cube3D {
   groupBindGroup: PolyfillBindGroup
   transform: Transform
   currentSequenceId: string
+  originalBackgroundFill: BackgroundFill // Store original background fill
 
   constructor(
     windowSize: WindowSize,
@@ -77,6 +78,7 @@ export class Cube3D {
     }
     this.rotation = config.rotation
     this.backgroundFill = config.backgroundFill
+    this.originalBackgroundFill = { ...config.backgroundFill } // Store a copy of the original
     this.layer = config.layer
     this.layerSpacing = 0.001
     this.hidden = false
@@ -378,6 +380,26 @@ export class Cube3D {
         ])
       )
     )
+  }
+
+  updateColor(queue: PolyfillQueue, newColor: [number, number, number, number]) {
+    this.backgroundFill = { type: 'Color', value: newColor };
+    this.vertices.forEach((v) => {
+      v.color = newColor;
+    });
+    queue.writeBuffer(
+      this.vertexBuffer,
+      0,
+      new Float32Array(
+        this.vertices.flatMap((v) => [
+          ...v.position,
+          ...v.tex_coords,
+          ...v.color,
+          ...v.gradient_coords,
+          v.object_type
+        ])
+      )
+    );
   }
 
   updateLayer(layer: number) {

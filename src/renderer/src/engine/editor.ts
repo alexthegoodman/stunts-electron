@@ -78,6 +78,7 @@ import { fromNDC, toNDC, toSystemScale } from './vertex'
 import { radiansToDegrees } from './transform'
 import { GameLogic } from './GameLogic'
 import { Gizmo } from './gizmo'
+import { Torus3D } from './torus3d'
 
 export const TEXT_BACKGROUNDS_DEFAULT_HIDDEN = true
 
@@ -227,6 +228,7 @@ export class Editor {
   draggingGizmoAxis: 'x' | 'y' | 'z' | null = null
   draggingGizmoRotation: 'x' | 'y' | 'z' | null = null
   draggingGizmoScale: 'x' | 'y' | 'z' | null = null
+  hoveredGizmoPart: Cube3D | Torus3D | null = null
   projectiles: { id: string; creationTime: number }[] = []
   projectileLifetime: number = 15000 // 15 second
   gameLogic: GameLogic | null = null
@@ -4369,6 +4371,15 @@ export class Editor {
     this.lastRay = ray
     this.lastTopLeft = top_left
 
+    // Clear any hovered gizmo part on mouse down
+    if (this.hoveredGizmoPart) {
+      const originalFill = this.hoveredGizmoPart.originalBackgroundFill
+      if (originalFill.type === 'Color') {
+        this.hoveredGizmoPart.updateColor(this.gpuResources?.queue!, originalFill.value)
+      }
+      this.hoveredGizmoPart = null
+    }
+
     let ndc = toNDC(positionX, positionY, camera.windowSize.width, camera.windowSize.height)
 
     // if (intersecting_objects.length <= 0) {
@@ -4502,6 +4513,77 @@ export class Editor {
 
     this.lastTopLeft = top_left
     this.lastRay = ray
+
+    // Gizmo hover detection
+    let newHoveredGizmoPart: Cube3D | Torus3D | null = null
+    if (this.gizmo && this.physics) {
+      const direction = new this.physics.jolt.Vec3(
+        ray.direction[0],
+        ray.direction[1],
+        ray.direction[2]
+      )
+      direction.Mul(1000) // Extend ray for intersection testing
+
+      const hit = this.physics.raycast(
+        new this.physics.jolt.RVec3(ray.origin[0], ray.origin[1], ray.origin[2]),
+        direction
+      )
+
+      if (hit) {
+        const bodyId = hit.bodyId.GetIndexAndSequenceNumber()
+        for (let i = 0; i < this.gizmo.bodies.length; i++) {
+          const gizmoBody = this.gizmo.bodies[i]
+          if (gizmoBody.GetID().GetIndexAndSequenceNumber() === bodyId) {
+            // Found a hovered gizmo part
+            if (i < 3) {
+              // X, Y, Z Axes (Cube3D)
+              newHoveredGizmoPart = this.gizmo.xAxis // Assuming order X, Y, Z
+              if (i === 1) newHoveredGizmoPart = this.gizmo.yAxis
+              if (i === 2) newHoveredGizmoPart = this.gizmo.zAxis
+            } else if (i < 6) {
+              // X, Y, Z Rings (Torus3D)
+              newHoveredGizmoPart = this.gizmo.xRing // Assuming order X, Y, Z
+              if (i === 4) newHoveredGizmoPart = this.gizmo.yRing
+              if (i === 5) newHoveredGizmoPart = this.gizmo.zRing
+            } else {
+              // X, Y, Z Scale (Cube3D)
+              newHoveredGizmoPart = this.gizmo.xScale // Assuming order X, Y, Z
+              if (i === 7) newHoveredGizmoPart = this.gizmo.yScale
+              if (i === 8) newHoveredGizmoPart = this.gizmo.zScale
+            }
+            break
+          }
+        }
+      }
+    }
+
+    if (newHoveredGizmoPart !== this.hoveredGizmoPart) {
+      // Revert previous hovered part's color
+      if (this.hoveredGizmoPart) {
+        const originalFill = this.hoveredGizmoPart.originalBackgroundFill
+        if (originalFill.type === 'Color') {
+          this.hoveredGizmoPart.updateColor(queue, originalFill.value)
+        }
+      }
+
+      // Set new hovered part's color
+      if (newHoveredGizmoPart) {
+        console.info('New Hovered Part')
+        const originalFill = newHoveredGizmoPart.originalBackgroundFill
+        if (originalFill.type === 'Color') {
+          const originalColor = originalFill.value
+          // Make it slightly brighter for hover effect
+          const hoverColor: [number, number, number, number] = [
+            Math.min(1, originalColor[0] + 0.4),
+            Math.min(1, originalColor[1] + 0.4),
+            Math.min(1, originalColor[2] + 0.4),
+            originalColor[3]
+          ]
+          newHoveredGizmoPart.updateColor(queue, hoverColor)
+        }
+      }
+      this.hoveredGizmoPart = newHoveredGizmoPart
+    }
 
     const ndcPoint = {
       x: (this.lastTopLeft.x / camera.windowSize.width) * 2.0 - 1.0,
@@ -5043,6 +5125,15 @@ export class Editor {
     this.draggingGizmoAxis = null
     this.draggingGizmoRotation = null
     this.draggingGizmoScale = null
+
+    // Clear any hovered gizmo part on mouse up
+    if (this.hoveredGizmoPart) {
+      const originalFill = this.hoveredGizmoPart.originalBackgroundFill
+      if (originalFill.type === 'Color') {
+        this.hoveredGizmoPart.updateColor(this.gpuResources?.queue!, originalFill.value)
+      }
+      this.hoveredGizmoPart = null
+    }
     // this.lastTopLeft = { x: -1000, y: -1000 }; // resets for mobile?
 
     // this.dragging_edge = None;
