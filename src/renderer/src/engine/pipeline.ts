@@ -1328,6 +1328,26 @@ export class CanvasPipeline {
       }
     }
 
+    // Draw 3D cubes
+    for (const voxel of editor.voxels || []) {
+      if (!voxel.hidden) {
+        // console.info('cube pos', cube.transform.position)
+
+        if (editor.draggingCube3D === voxel.id || editor.isPlaying) {
+          voxel.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+        }
+
+        voxel.bindGroup.bindWebGLBindGroup(gl)
+        voxel.groupBindGroup?.bindWebGLBindGroup(gl)
+
+        drawIndexedGeometry(
+          voxel.vertexBuffer as PolyfillBuffer,
+          voxel.indexBuffer as PolyfillBuffer,
+          voxel.indices.length
+        )
+      }
+    }
+
     // Draw Gizmo
     if (editor.gizmo) {
       for (const axis of [

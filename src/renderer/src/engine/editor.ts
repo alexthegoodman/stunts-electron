@@ -4490,6 +4490,7 @@ export class Editor {
     this.lastTopLeft = top_left
 
     // Voxel Painting Logic
+    // TODO: this belongs in mouse_move, but we don't want to double draw voxels of course, just one per space, and ideally, a ghost voxel on hover
     if (this.isVoxelPaintingMode && this.currentSequenceData) {
       if (ray && this.physics) {
         const direction = new this.physics.jolt.Vec3(
