@@ -809,7 +809,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
         height: editor.camera.windowSize.height - 50
       }
 
-      editor.replace_background(saved_sequence.id, background_fill, backgroundSize)
+      // we want sunlight!!!! not shadow from skybox
+      // editor.replace_background(saved_sequence.id, background_fill, backgroundSize)
 
       editor.updateMotionPaths(saved_sequence)
 

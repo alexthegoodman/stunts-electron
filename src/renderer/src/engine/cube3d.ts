@@ -101,21 +101,24 @@ export class Cube3D {
       ''
     )
 
-    const vertexData = new Float32Array(vertices.length * (3 + 2 + 4 + 2 + 1))
+    const vertexData = new Float32Array(vertices.length * (3 + 2 + 4 + 2 + 1 + 3))
     for (let i = 0; i < vertices.length; i++) {
       const v = vertices[i]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 0] = v.position[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 1] = v.position[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 2] = v.position[2]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 3] = v.tex_coords[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 4] = v.tex_coords[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 5] = v.color[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 6] = v.color[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 7] = v.color[2]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 8] = v.color[3]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 9] = v.gradient_coords[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 10] = v.gradient_coords[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 11] = v.object_type
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 0] = v.position[0]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 1] = v.position[1]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 2] = v.position[2]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 3] = v.tex_coords[0]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 4] = v.tex_coords[1]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 5] = v.color[0]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 6] = v.color[1]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 7] = v.color[2]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 8] = v.color[3]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 9] = v.gradient_coords[0]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 10] = v.gradient_coords[1]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 11] = v.object_type
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 12] = v.normal[0]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 13] = v.normal[1]
+      vertexData[i * (3 + 2 + 4 + 2 + 1 + 3) + 14] = v.normal[2]
     }
 
     queue.writeBuffer(this.vertexBuffer, 0, vertexData.buffer)
@@ -331,7 +334,8 @@ export class Cube3D {
           tex_coords: [0, 0],
           color: color,
           gradient_coords: [(pos[0] + hw) / w, (pos[1] + hh) / h],
-          object_type: 5
+          object_type: 5,
+          normal: face.normal as [number, number, number]
         })
       }
 
@@ -363,10 +367,6 @@ export class Cube3D {
       ]
     }
 
-    this.vertices.forEach((v) => {
-      v.color = new_color
-    })
-
     queue.writeBuffer(
       this.vertexBuffer,
       0,
@@ -376,7 +376,8 @@ export class Cube3D {
           ...v.tex_coords,
           ...v.color,
           ...v.gradient_coords,
-          v.object_type
+          v.object_type,
+          ...v.normal
         ])
       )
     )
@@ -396,7 +397,8 @@ export class Cube3D {
           ...v.tex_coords,
           ...v.color,
           ...v.gradient_coords,
-          v.object_type
+          v.object_type,
+          ...v.normal
         ])
       )
     );

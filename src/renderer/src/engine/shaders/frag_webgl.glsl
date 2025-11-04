@@ -6,11 +6,15 @@ in vec2 v_tex_coords;
 in vec4 v_color;
 in vec2 v_gradient_coords;
 flat in float v_object_type;
+in vec3 v_normal;
 
 out vec4 fragColor;
 
 // Bind group 1: Texture sampler
 uniform sampler2D bindGroup1_1;
+uniform vec3 u_sun_direction;
+uniform vec3 u_sun_color;
+uniform vec3 u_ambient_color;
 
 // Bind group 2: Gradient uniforms
 layout(std140) uniform bindGroup2_0 {
@@ -558,6 +562,13 @@ void main() {
         }
         // (Future effects could go here: e.g. 2.0 = watercolor, 3.0 = pixelation, etc.)
     }
+
+    // Simple sun lighting
+    vec3 normalized_normal = normalize(v_normal);
+    vec3 normalized_sun_direction = normalize(u_sun_direction);
+    float diffuse = max(dot(normalized_normal, normalized_sun_direction), 0.0);
+    vec3 lighting = u_ambient_color + u_sun_color * diffuse;
+    final_color.rgb *= lighting;
 
     fragColor = final_color;
 }

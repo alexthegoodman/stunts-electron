@@ -295,18 +295,140 @@ export class CanvasPipeline {
       ]
     })
 
+    // Create sun direction buffer and bind group
+    const sunDirectionBuffer = gpuResources.device!.createBuffer(
+      {
+        label: 'Sun Direction Buffer',
+        size: 3 * 4, // vec3 of floats
+        usage:
+          process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
+      },
+      'uniform3fv'
+    )
+    sunDirectionBuffer.unmap()
+    const sunDirectionData = new Float32Array([0.5, 1.0, 0.5]) // Default sun direction
+    gpuResources.queue!.writeBuffer(sunDirectionBuffer, 0, sunDirectionData)
+
+    const sunDirectionBindGroupLayout = gpuResources.device!.createBindGroupLayout({
+      entries: [
+        {
+          binding: 0,
+          visibility: GPUShaderStage.FRAGMENT,
+          buffer: {
+            type: 'uniform'
+          }
+        }
+      ]
+    })
+
+    const sunDirectionBindGroup = gpuResources.device!.createBindGroup({
+      layout: sunDirectionBindGroupLayout,
+      entries: [
+        {
+          binding: 0,
+          groupIndex: 5, // Assign a new bind group index
+          resource: {
+            pbuffer: sunDirectionBuffer
+          }
+        }
+      ]
+    })
+
+    // Create sun color buffer and bind group
+    const sunColorBuffer = gpuResources.device!.createBuffer(
+      {
+        label: 'Sun Color Buffer',
+        size: 3 * 4, // vec3 of floats
+        usage:
+          process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
+      },
+      'uniform3fv'
+    )
+    sunColorBuffer.unmap()
+    const sunColorData = new Float32Array([1.0, 1.0, 1.0]) // Default sun color (white)
+    gpuResources.queue!.writeBuffer(sunColorBuffer, 0, sunColorData)
+
+    const sunColorBindGroupLayout = gpuResources.device!.createBindGroupLayout({
+      entries: [
+        {
+          binding: 0,
+          visibility: GPUShaderStage.FRAGMENT,
+          buffer: {
+            type: 'uniform'
+          }
+        }
+      ]
+    })
+
+    const sunColorBindGroup = gpuResources.device!.createBindGroup({
+      layout: sunColorBindGroupLayout,
+      entries: [
+        {
+          binding: 0,
+          groupIndex: 6, // Assign a new bind group index
+          resource: {
+            pbuffer: sunColorBuffer
+          }
+        }
+      ]
+    })
+
+    // Create ambient color buffer and bind group
+    const ambientColorBuffer = gpuResources.device!.createBuffer(
+      {
+        label: 'Ambient Color Buffer',
+        size: 3 * 4, // vec3 of floats
+        usage:
+          process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
+      },
+      'uniform3fv'
+    )
+    ambientColorBuffer.unmap()
+    const ambientColorData = new Float32Array([0.1, 0.1, 0.1]) // Default ambient color (dark gray)
+    gpuResources.queue!.writeBuffer(ambientColorBuffer, 0, ambientColorData)
+
+    const ambientColorBindGroupLayout = gpuResources.device!.createBindGroupLayout({
+      entries: [
+        {
+          binding: 0,
+          visibility: GPUShaderStage.FRAGMENT,
+          buffer: {
+            type: 'uniform'
+          }
+        }
+      ]
+    })
+
+    const ambientColorBindGroup = gpuResources.device!.createBindGroup({
+      layout: ambientColorBindGroupLayout,
+      entries: [
+        {
+          binding: 0,
+          groupIndex: 7, // Assign a new bind group index
+          resource: {
+            pbuffer: ambientColorBuffer
+          }
+        }
+      ]
+    })
+
     // gpuResources.queue!.writeBuffer(windowSizeBuffer, 0, windowSizeData);
 
     // Create pipeline layout
     const pipelineLayout = gpuResources.device!.createPipelineLayout({
       label: 'Pipeline Layout',
       bindGroupLayouts: [
-        // cameraBinding.bindGroupLayout,
+        cameraBinding.bindGroupLayout,
         modelBindGroupLayout,
         windowSizeBindGroupLayout,
         groupBindGroupLayout,
-        sceneShaderBindGroupLayout
-        // gradientBindGroupLayout,
+        sceneShaderBindGroupLayout,
+        sunDirectionBindGroupLayout,
+        sunColorBindGroupLayout,
+        ambientColorBindGroupLayout
       ]
     })
 
@@ -382,6 +504,12 @@ export class CanvasPipeline {
     editor.sceneShaderBuffer = sceneShaderBuffer
     editor.sceneShaderBindGroupLayout = sceneShaderBindGroupLayout
     editor.sceneShaderBindGroup = sceneShaderBindGroup
+    editor.sunDirectionBindGroup = sunDirectionBindGroup
+    editor.sunColorBindGroup = sunColorBindGroup
+    editor.sunDirectionBuffer = sunDirectionBuffer
+    editor.sunColorBuffer = sunColorBuffer
+    editor.ambientColorBindGroup = ambientColorBindGroup
+    editor.ambientColorBuffer = ambientColorBuffer
 
     editor.renderPipeline = renderPipeline
 
@@ -921,18 +1049,13 @@ export class CanvasPipeline {
     // gl.clearStencil(0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-    // Enable depth testing and culling (similar to WebGPU setup)
+    // Enable depth testing and culling
     gl.enable(gl.DEPTH_TEST)
+    gl.depthMask(true) // Always enable depth writes for opaque objects
+    gl.enable(gl.CULL_FACE) // Enable culling by default
+    gl.cullFace(gl.BACK); // Cull back faces
+    gl.frontFace(gl.CCW); // Counter-clockwise winding order
 
-    if (editor.target === SaveTarget.Games) {
-      gl.enable(gl.CULL_FACE) // disabling this fixed a annoying bug with culling
-    } else {
-      gl.disable(gl.CULL_FACE) // disabling this fixed a annoying bug with culling
-      gl.depthMask(false)
-    }
-
-    // gl.cullFace(gl.BACK);
-    // gl.frontFace(gl.CCW);
 
     // Set up blending for transparency
     gl.enable(gl.BLEND)
@@ -961,6 +1084,30 @@ export class CanvasPipeline {
       editor.sceneShaderBindGroup.bindWebGLBindGroup(gl)
     } else {
       console.error("Couldn't get scene shader group")
+      return
+    }
+
+    // Bind sun direction uniform buffer
+    if (editor.sunDirectionBindGroup) {
+      editor.sunDirectionBindGroup.bindWebGLBindGroup(gl)
+    } else {
+      console.error("Couldn't get sun direction group")
+      return
+    }
+
+    // Bind sun color uniform buffer
+    if (editor.sunColorBindGroup) {
+      editor.sunColorBindGroup.bindWebGLBindGroup(gl)
+    } else {
+      console.error("Couldn't get sun color group")
+      return
+    }
+
+    // Bind ambient color uniform buffer
+    if (editor.ambientColorBindGroup) {
+      editor.ambientColorBindGroup.bindWebGLBindGroup(gl)
+    } else {
+      console.error("Couldn't get ambient color group")
       return
     }
 
@@ -994,6 +1141,10 @@ export class CanvasPipeline {
       // object_type: float32
       gl.enableVertexAttribArray(4)
       gl.vertexAttribPointer(4, 1, gl.FLOAT, false, stride, 44)
+
+      // normal: vec3 -> float32 * 3
+      gl.enableVertexAttribArray(5)
+      gl.vertexAttribPointer(5, 3, gl.FLOAT, false, stride, 48)
 
       // Bind index buffer
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer.buffer)

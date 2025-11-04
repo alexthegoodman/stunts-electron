@@ -183,10 +183,6 @@ export class CameraBinding {
       "uniformMatrix4fv"
     );
 
-    // const emptyMatrix = mat4.create();
-    // mat4.identity(emptyMatrix);
-    // const rawMatrix = matrix4ToRawArray(emptyMatrix);
-    // this.buffer.data = rawMatrix.buffer;
     this.update(queue, camera);
 
     // unmap

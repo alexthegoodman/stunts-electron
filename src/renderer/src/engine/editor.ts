@@ -301,6 +301,12 @@ export class Editor {
   sceneShaderBuffer: PolyfillBuffer | null = null
   sceneShaderBindGroupLayout: PolyfillBindGroupLayout | null = null
   sceneShaderBindGroup: PolyfillBindGroup | null = null
+  sunDirectionBindGroup: PolyfillBindGroup | null = null
+  sunColorBindGroup: PolyfillBindGroup | null = null
+  sunDirectionBuffer: PolyfillBuffer | null = null
+  sunColorBuffer: PolyfillBuffer | null = null
+  ambientColorBindGroup: PolyfillBindGroup | null = null
+  ambientColorBuffer: PolyfillBuffer | null = null
 
   // Events
   onMouseUp: OnMouseUp | null

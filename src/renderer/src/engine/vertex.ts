@@ -19,7 +19,7 @@ export type VertexData = [
 ]
 
 // Helper function to calculate byte size
-export const vertexByteSize = (3 + 2 + 4 + 2 + 1) * Float32Array.BYTES_PER_ELEMENT // 3 pos, 2 tex, 4 color
+export const vertexByteSize = (3 + 2 + 4 + 2 + 1 + 3) * Float32Array.BYTES_PER_ELEMENT // 3 pos, 2 tex, 4 color, 2 gradient, 1 object_type, 3 normal
 
 export interface Vertex {
   position: [number, number, number] // x, y, z coordinates
@@ -27,6 +27,7 @@ export interface Vertex {
   color: [number, number, number, number]
   gradient_coords: [number, number]
   object_type: number
+  normal: [number, number, number] // x, y, z normal coordinates
   id?: string // never sent to shader
 }
 
@@ -120,7 +121,8 @@ export function createVertex(
     tex_coords: [0.0, 0.0], // Default UV coordinates
     color,
     gradient_coords: [0, 0],
-    object_type
+    object_type,
+    normal: [0, 0, 0]
   }
 }
 
@@ -156,6 +158,12 @@ export function createVertexBufferLayout(): GPUVertexBufferLayout {
         shaderLocation: 4,
         offset: Float32Array.BYTES_PER_ELEMENT * 11,
         format: 'float32'
+      },
+      {
+        // normal
+        shaderLocation: 5,
+        offset: Float32Array.BYTES_PER_ELEMENT * 12,
+        format: 'float32x3'
       }
     ]
   }
