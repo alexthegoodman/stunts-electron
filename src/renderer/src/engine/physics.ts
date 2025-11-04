@@ -176,6 +176,37 @@ export class Physics {
   //   return body
   // }
 
+  // public createStaticTorus(
+  //   position: Jolt.RVec3,
+  //   rotation: Jolt.Quat,
+  //   radius: number,
+  //   tubeRadius: number,
+  //   plane: string = 'x'
+  // ): Jolt.Body {
+  //   // Create a thin disc/plane shape
+  //   // For a plane perpendicular to an axis, that axis should be thin (tubeRadius)
+  //   // and the other two axes should be wide (radius)
+  //   const shape = new this.jolt.BoxShape( // TODO: I think I need MeshShape tied to my actual torus?
+  //     new this.jolt.Vec3(
+  //       plane === 'x' ? tubeRadius : radius, // X: thin if perpendicular to X
+  //       plane === 'y' ? tubeRadius : radius, // Y: thin if perpendicular to Y
+  //       plane === 'z' ? tubeRadius : radius // Z: thin if perpendicular to Z
+  //     ),
+  //     0.05,
+  //     null
+  //   )
+  //   const creationSettings = new this.jolt.BodyCreationSettings(
+  //     shape,
+  //     position,
+  //     rotation,
+  //     this.jolt.EMotionType_Static,
+  //     this.ObjectLayer_NonMoving.GetValue()
+  //   )
+  //   const body = this.bodyInterface.CreateBody(creationSettings)
+  //   this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_Activate)
+  //   return body
+  // }
+
   public createStaticTorus(
     position: Jolt.RVec3,
     rotation: Jolt.Quat,
@@ -183,28 +214,97 @@ export class Physics {
     tubeRadius: number,
     plane: string = 'x'
   ): Jolt.Body {
-    // Create a thin disc/plane shape
-    // For a plane perpendicular to an axis, that axis should be thin (tubeRadius)
-    // and the other two axes should be wide (radius)
-    const shape = new this.jolt.BoxShape(
-      new this.jolt.Vec3(
-        plane === 'x' ? tubeRadius : radius, // X: thin if perpendicular to X
-        plane === 'y' ? tubeRadius : radius, // Y: thin if perpendicular to Y
-        plane === 'z' ? tubeRadius : radius // Z: thin if perpendicular to Z
-      ),
-      0.05,
-      null
-    )
-    const creationSettings = new this.jolt.BodyCreationSettings(
+    const jolt = this.jolt
+
+    // Generate torus mesh geometry
+    const segments = 32 // Match your Torus3D default
+    const { vertices, indices } = this.generateTorusMesh(radius, tubeRadius, segments, plane)
+
+    // Create triangles directly
+    const triangleList = new jolt.TriangleList()
+
+    for (let i = 0; i < indices.length; i += 3) {
+      const v1 = vertices[indices[i]]
+      const v2 = vertices[indices[i + 1]]
+      const v3 = vertices[indices[i + 2]]
+
+      const triangle = new jolt.Triangle(
+        new jolt.Vec3(v1[0], v1[1], v1[2]),
+        new jolt.Vec3(v2[0], v2[1], v2[2]),
+        new jolt.Vec3(v3[0], v3[1], v3[2])
+      )
+      triangleList.push_back(triangle)
+    }
+
+    // Create mesh shape from triangles
+    const meshSettings = new jolt.MeshShapeSettings(triangleList)
+    const shape = meshSettings.Create().Get()
+
+    const creationSettings = new jolt.BodyCreationSettings(
       shape,
       position,
       rotation,
-      this.jolt.EMotionType_Static,
+      jolt.EMotionType_Static,
       this.ObjectLayer_NonMoving.GetValue()
     )
+
     const body = this.bodyInterface.CreateBody(creationSettings)
-    this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_Activate)
+    this.bodyInterface.AddBody(body.GetID(), jolt.EActivation_Activate)
+
     return body
+  }
+
+  private generateTorusMesh(
+    radius: number,
+    tubeRadius: number,
+    segments: number,
+    plane: string
+  ): { vertices: number[][]; indices: number[] } {
+    const vertices: number[][] = []
+    const indices: number[] = []
+    const majorSegments = segments
+    const minorSegments = segments
+
+    for (let i = 0; i <= majorSegments; i++) {
+      const majorAngle = (i / majorSegments) * 2 * Math.PI
+      const cosMajor = Math.cos(majorAngle)
+      const sinMajor = Math.sin(majorAngle)
+
+      for (let j = 0; j <= minorSegments; j++) {
+        const minorAngle = (j / minorSegments) * 2 * Math.PI
+        const cosMinor = Math.cos(minorAngle)
+        const sinMinor = Math.sin(minorAngle)
+
+        let x = (radius + tubeRadius * cosMinor) * cosMajor
+        let y = tubeRadius * sinMinor
+        let z = (radius + tubeRadius * cosMinor) * sinMajor
+
+        // Rotate torus based on plane
+        if (plane === 'y') {
+          // Rotate 90° around X to make it horizontal (XZ plane)
+          ;[x, y, z] = [x, -z, y]
+        } else if (plane === 'z') {
+          // Rotate 90° around Y to make it vertical (XY plane)
+          ;[x, y, z] = [z, y, x]
+        }
+        // plane === 'x' is default orientation (YZ plane)
+
+        vertices.push([x, y, z])
+      }
+    }
+
+    // Generate indices (same as your Torus3D)
+    for (let i = 0; i < majorSegments; i++) {
+      for (let j = 0; j < minorSegments; j++) {
+        const first = i * (minorSegments + 1) + j
+        const second = first + minorSegments + 1
+
+        indices.push(first, second, first + 1)
+        indices.push(second, second + 1, first + 1)
+      }
+    }
+
+    return { vertices, indices }
   }
 
   public runContactAddedListeners(

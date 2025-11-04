@@ -4530,6 +4530,7 @@ export class Editor {
         const dx = (x - this.previousTopLeft.x) * 0.0001 // Adjust sensitivity
         const dy = (y - this.previousTopLeft.y) * 0.0001 // Adjust sensitivity
 
+        // TODO: doesnt work because depends which direction you are facing relative to object
         switch (this.draggingGizmoAxis) {
           case 'x':
             selectedCube.transform.position[0] += dx
