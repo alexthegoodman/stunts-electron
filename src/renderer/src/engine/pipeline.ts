@@ -13,7 +13,7 @@ import { RepeatableObject } from './repeater'
 
 import { makeShaderDataDefinitions, makeStructuredView } from 'webgpu-utils'
 import { SaveTarget } from './editor_state'
-import { quatToEuler } from './editor/helpers'
+import { getCameraForward, getCameraRight, quatToEuler } from './editor/helpers'
 import { Camera3D } from './3dcamera'
 import {
   GPUPolyfill,
@@ -739,6 +739,15 @@ export class CanvasPipeline {
       let deltaTime = 1.0 / 60.0 // TODO: make real
       const player = editor.cubes3D.find((c) => c.name === 'PlayerCharacter') // TODO: change to c.type so name can be changed
 
+      const cameraForward = getCameraForward(editor.camera)
+      const cameraRight = getCameraRight(editor.camera)
+
+      const cameraBackward = vec3.create()
+      vec3.negate(cameraBackward, cameraForward)
+
+      const cameraLeft = vec3.create()
+      vec3.negate(cameraLeft, cameraRight)
+
       if (player) {
         const playerBody = editor.characters.get(player.id)
         const associtedBody = editor.bodies.get(player.id)
@@ -760,7 +769,7 @@ export class CanvasPipeline {
                   case 'Forward':
                     if (connectedNode.data.pressed) {
                       // TODO: integrate handle_input here (will need to calculate delta time)
-                      console.info('forward force')
+                      // console.info('forward force')
                       // editor.physics.bodyInterface.AddForce(
                       //   playerBody.GetID(),
                       //   new editor.physics.jolt.Vec3(0, 0, -1000),
@@ -769,7 +778,7 @@ export class CanvasPipeline {
                       this.handleInput(
                         editor,
                         playerBody,
-                        vec3.fromValues(0, 0, -1),
+                        cameraForward,
                         false,
                         null,
                         deltaTime,
@@ -784,11 +793,11 @@ export class CanvasPipeline {
                       //   new editor.physics.jolt.Vec3(0, 0, 1000),
                       //   editor.physics.jolt.EActivation_Activate
                       // )
-                      console.info('back press')
+                      // console.info('back press')
                       this.handleInput(
                         editor,
                         playerBody,
-                        vec3.fromValues(0, 0, 1),
+                        cameraBackward,
                         false,
                         null,
                         deltaTime,
@@ -806,7 +815,7 @@ export class CanvasPipeline {
                       this.handleInput(
                         editor,
                         playerBody,
-                        vec3.fromValues(-1, 0, 0),
+                        cameraLeft,
                         false,
                         null,
                         deltaTime,
@@ -824,7 +833,7 @@ export class CanvasPipeline {
                       this.handleInput(
                         editor,
                         playerBody,
-                        vec3.fromValues(1, 0, 0),
+                        cameraRight,
                         false,
                         null,
                         deltaTime,

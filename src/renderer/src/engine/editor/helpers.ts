@@ -216,6 +216,17 @@ export function getCameraForward(camera: Camera3D): vec3 {
   return forward
 }
 
+export function getCameraRight(camera: Camera3D): vec3 {
+  const forward = getCameraForward(camera)
+  const worldUp = vec3.fromValues(0, 1, 0) // Y-up coordinate system
+  const right = vec3.create()
+
+  vec3.cross(right, forward, worldUp)
+  vec3.normalize(right, right)
+
+  return right
+}
+
 // The new, proper 3D Ray interface
 export interface IRay3D {
   origin: vec3
