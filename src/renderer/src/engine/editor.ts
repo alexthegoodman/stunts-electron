@@ -228,6 +228,8 @@ export class Editor {
   models3D: Model3D[] = []
   voxels: Voxel[] = []
   isVoxelPaintingMode: boolean = false
+  currentVoxelSize: number = 0.1
+  currentVoxelColor: [number, number, number, number] = [1.0, 1.0, 1.0, 1.0]
   selectedCube3DId: string | null
   gizmo: Gizmo | null = null
   draggingGizmoAxis: 'x' | 'y' | 'z' | null = null
@@ -436,6 +438,8 @@ export class Editor {
     this.generationChoreographed = true
     this.generationFade = true
     this.models3D = []
+    this.currentVoxelSize = 0.1
+    this.currentVoxelColor = [1.0, 1.0, 1.0, 1.0]
 
     // TODO: update interactive bounds on window resize?
     // this.interactiveBounds = {

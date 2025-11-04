@@ -4,7 +4,7 @@ import { CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Editor } from '../../engine/ed
 import { getRandomNumber, InputValue, rgbToWgpu, wgpuToHuman } from '../../engine/editor/helpers'
 import { OptionButton } from './items'
 import EditorState from '../../engine/editor_state'
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { WebCapture, MousePosition } from '../../engine/capture'
 import { v4 as uuidv4 } from 'uuid'
 import { fileToBlob, StImageConfig } from '../../engine/image'
@@ -52,9 +52,7 @@ export const ToolGrid = ({
   layers,
   setLayers,
   update,
-  setNodes,
-  isVoxelPainting,
-  setVoxelPainting
+  setNodes
 }: {
   editorRef: React.RefObject<Editor | null>
   editorStateRef: React.RefObject<EditorState | null>
@@ -67,10 +65,12 @@ export const ToolGrid = ({
   setLayers: React.Dispatch<React.SetStateAction<Layer[]>>
   update: () => void
   setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
-  isVoxelPainting: boolean
-  setVoxelPainting: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
   const { t } = useTranslation('common')
+
+  const [voxelSize, setVoxelSize] = useState<number>(0.1) // Default voxel size
+  const [voxelColor, setVoxelColor] = useState<string>('#FFFFFF') // Default voxel color (white)
+  const [isVoxelPainting, setVoxelPainting] = useState(false)
 
   const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
 
@@ -1481,6 +1481,23 @@ export const ToolGrid = ({
     }
   }
 
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.currentVoxelSize = voxelSize
+    }
+  }, [voxelSize])
+
+  useEffect(() => {
+    if (editorRef.current) {
+      const hexColor = voxelColor
+      const r = parseInt(hexColor.slice(1, 3), 16) / 255.0
+      const g = parseInt(hexColor.slice(3, 5), 16) / 255.0
+      const b = parseInt(hexColor.slice(5, 7), 16) / 255.0
+      const a = 1.0 // Full opacity
+      editorRef.current.currentVoxelColor = [r, g, b, a]
+    }
+  }, [voxelColor])
+
   return (
     <>
       {userMessage && (
@@ -1900,9 +1917,33 @@ export const ToolGrid = ({
             icon="cube"
             aria-label="Enable voxel painting mode"
             callback={() => {
-              setVoxelPainting(!isVoxelPainting)
+              const newVoxelPaintingState = !isVoxelPainting
+              setVoxelPainting(newVoxelPaintingState)
+              if (editorRef.current) {
+                editorRef.current.isVoxelPaintingMode = newVoxelPaintingState
+              }
             }}
           />
+          {isVoxelPainting && (
+            <div className="flex flex-col gap-2 p-2 border border-gray-700 rounded-md">
+              <label className="text-white text-xs">Voxel Size</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={voxelSize}
+                onChange={(e) => setVoxelSize(parseFloat(e.target.value))}
+                className="w-24 p-1 text-sm bg-gray-800 text-white border border-gray-600 rounded"
+              />
+              <label className="text-white text-xs">Voxel Color</label>
+              <input
+                type="color"
+                value={voxelColor}
+                onChange={(e) => setVoxelColor(e.target.value)}
+                className="w-24 h-8 p-0 border-none rounded overflow-hidden cursor-pointer"
+              />
+            </div>
+          )}
           {options.includes('mockup3d') && (
             <OptionButton
               style={{}}
