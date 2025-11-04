@@ -11,6 +11,7 @@ import { RepeatManager } from './repeater'
 import { DocumentSize, FormattedPage, loadFonts, MultiPageEditor, RenderItem } from './rte'
 import EditorState, { SaveTarget } from './editor_state'
 import { Camera3D, CameraAnimation } from './3dcamera'
+import { FirstPersonCamera } from './firstPersonCamera'
 import {
   GPUPolyfill,
   PolyfillBindGroup,
@@ -265,6 +266,17 @@ export class Editor {
   camera: Camera3D | null
   cameraBinding: CameraBinding | null
 
+  setCamera(camera: Camera3D) {
+    this.camera = camera
+    if (this.gpuResources) {
+      this.cameraBinding = new CameraBinding(
+        this.gpuResources.device,
+        this.gpuResources.queue,
+        camera
+      )
+    }
+  }
+
   // WebGPU resources
   // gpuResources: WebGpuResources | null;
   // modelBindGroupLayout: PolyfillBindGroupLayout | null;
@@ -304,6 +316,7 @@ export class Editor {
   controlMode: ControlMode
   isPanning: boolean
   isExporting: boolean = false
+  gamePlaying: boolean = false
 
   // points
   lastMousePos: Point | null
@@ -355,8 +368,8 @@ export class Editor {
     this.gpuResources = null
     this.renderPipeline = null
     this.window = null
-    this.camera = null
-    this.cameraBinding = null
+    const initialCamera = new Camera3D(windowSize)
+    this.setCamera(initialCamera)
     this.lastMousePos = null
     this.lastScreen = { x: 0.0, y: 0.0 }
     this.lastWorld = { x: 0.0, y: 0.0 }
@@ -4363,6 +4376,10 @@ export class Editor {
     let camera = this.camera
 
     if (!camera) {
+      return
+    }
+
+    if (this.gamePlaying) {
       return
     }
 

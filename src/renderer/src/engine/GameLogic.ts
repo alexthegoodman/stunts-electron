@@ -6,6 +6,8 @@ import { GameNode } from '@renderer/components/stunts-app/GameEditor'
 import Jolt from 'jolt-physics/debug-wasm-compat'
 import { CanvasPipeline } from './pipeline'
 import { vec3 } from 'gl-matrix'
+import { Camera3D } from './3dcamera'
+import { FirstPersonCamera } from './firstPersonCamera'
 
 export class GameLogic {
   private setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
@@ -144,6 +146,55 @@ export class GameLogic {
 
     const editor = this.editor
     const nodes = editor.nodes
+
+    // Update PlayerCharacter based on FirstPersonCamera
+    // TODO: we actually move the PlyerCharacter on keyboard events, so we need to adjust the camera
+    if (this.editor.camera instanceof FirstPersonCamera) {
+      const playerCube = editor.cubes3D.find((c) => c.name === 'PlayerCharacter')
+      if (playerCube) {
+        // Update position
+        this.editor.camera.setPosition(
+          playerCube.transform.position[0],
+          playerCube.transform.position[1],
+          playerCube.transform.position[2]
+        )
+
+        // Update rotation
+        // playerCube.transform.rotation = this.editor.camera.rotation[0]
+
+        // Update uniform buffer for rendering
+        // playerCube.transform.updateUniformBuffer(
+        //   editor.gpuResources?.queue!,
+        //   editor.camera.windowSize
+        // )
+        this.editor.cameraBinding.update(this.editor.gpuResources.queue, this.editor.camera)
+
+        // Update physics body
+        // const playerBody = editor.bodies.get(playerCube.id)
+        // if (playerBody) {
+        //   const jolt = editor.physics.jolt
+        //   const newPosition = new jolt.RVec3(
+        //     playerCube.transform.position[0],
+        //     playerCube.transform.position[1],
+        //     playerCube.transform.position[2]
+        //   )
+        //   const newRotation = new jolt.Quat(
+        //     this.editor.camera.rotation[0],
+        //     this.editor.camera.rotation[1],
+        //     this.editor.camera.rotation[2],
+        //     this.editor.camera.rotation[3]
+        //   )
+        //   editor.physics.bodyInterface.SetPositionAndRotation(
+        //     playerBody.GetID(),
+        //     newPosition,
+        //     newRotation,
+        //     editor.physics.jolt.EActivation_Activate
+        //   )
+        //   jolt.destroy(newPosition)
+        //   jolt.destroy(newRotation)
+        // }
+      }
+    }
     const enemyNodes = nodes.filter((n) => n.data.label === 'EnemyController')
 
     // console.info('enemyNode', enemyNodes)

@@ -75,7 +75,8 @@ import { ProjectSelector } from '../ProjectSelector'
 import Container from '@renderer/engine/container'
 import Jolt from 'jolt-physics/debug-wasm-compat'
 import { Physics } from '../../engine/physics'
-import { CameraAnimation } from '@renderer/engine/3dcamera'
+import { CameraAnimation, Camera3D } from '@renderer/engine/3dcamera'
+import { FirstPersonCamera } from '@renderer/engine/firstPersonCamera'
 import GameLogicEditor from './GameLogic'
 import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
 import { degreesToRadians } from '@renderer/engine/transform'
@@ -200,7 +201,6 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     if (!canvas) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      // console.info('keydown', event)
       setNodes((nds) =>
         nds.map((node) => {
           if (node.data.label === 'Forward' && event.key === 'w') {
@@ -240,11 +240,47 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     canvas.addEventListener('keyup', handleKeyUp)
     canvas.setAttribute('tabindex', '0') // Make canvas focusable
 
+    // let isMouseDown = false
+
+    // const handleMouseDown = () => {
+    //   if (isPlaying) {
+    //     isMouseDown = true
+    //   }
+    // }
+
+    // const handleMouseUp = () => {
+    //   if (isPlaying) {
+    //     isMouseDown = false
+    //   }
+    // }
+
+    // const handleMouseMove = (event: MouseEvent) => {
+    //   if (isPlaying && isMouseDown) {
+    //     const editor = editorRef.current
+    //     if (editor && editor.camera instanceof FirstPersonCamera) {
+    //       const sensitivity = editor.camera.mouseSensitivity
+    //       const deltaX = event.movementX * sensitivity
+    //       const deltaY = event.movementY * sensitivity
+
+    //       editor.camera.yaw(-deltaX) // Yaw around Y-axis
+    //       editor.camera.pitch(-deltaY) // Pitch around X-axis
+    //       editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
+    //     }
+    //   }
+    // }
+
+    // canvas.addEventListener('mousedown', handleMouseDown)
+    // canvas.addEventListener('mouseup', handleMouseUp)
+    // canvas.addEventListener('mousemove', handleMouseMove)
+
     return () => {
       canvas.removeEventListener('keydown', handleKeyDown)
       canvas.removeEventListener('keyup', handleKeyUp)
+      // canvas.removeEventListener('mousedown', handleMouseDown)
+      // canvas.removeEventListener('mouseup', handleMouseUp)
+      // canvas.removeEventListener('mousemove', handleMouseMove)
     }
-  }, [setNodes])
+  }, [setNodes, isPlaying])
 
   let setupCanvasMouseTracking = (editor: Editor, canvas: HTMLCanvasElement) => {
     // let editor = editorRef.current
@@ -480,9 +516,16 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       editorRef.current.target = SaveTarget.Games
       editorStateRef.current.saveTarget = SaveTarget.Games
 
-      editor.camera.setPosition(15, 15, 15)
-      // quat.fromEuler(editor.camera.rotation, -45, 0, -45)
-      editor.cameraBinding.update(editor.gpuResources.queue, editor.camera)
+      if (isPlaying) {
+        const firstPersonCam = new FirstPersonCamera(viewport)
+        editor.setCamera(firstPersonCam)
+      } else {
+        const editorCam = new Camera3D(viewport)
+        editor.setCamera(editorCam)
+        editor.camera?.setPosition(15, 15, 15)
+      }
+
+      editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
 
       await editor.restore_sequence_objects(saved_sequence, false, settings)
 
@@ -891,7 +934,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                   </div>
                 )}
 
-                {toolbarTab === 'camera' && (
+                {toolbarTab === 'camera' && !isPlaying && (
                   <div className="text-white">
                     <h5 className="text-lg font-semibold mb-4">Camera Controls</h5>
 
@@ -1176,10 +1219,23 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                     const pipeline = canvasPipelineRef.current
                     if (editor && pipeline) {
                       pipeline.isPlaying = !pipeline.isPlaying
+                      editor.gamePlaying = pipeline.isPlaying
                       editor.nodes = nodes
                       editor.edges = edges
-                      editor.gizmo.detach()
-                      editor.gizmo.update(editor.gpuResources.queue, editor.camera, null)
+
+                      // hardcoded for now?
+                      if (pipeline.isPlaying) {
+                        editor.gizmo.detach()
+                        editor.gizmo.update(editor.gpuResources.queue, editor.camera, null)
+
+                        const firstPersonCam = new FirstPersonCamera(editor.camera.windowSize)
+                        editor.setCamera(firstPersonCam)
+                      } else {
+                        const editorCam = new Camera3D(editor.camera.windowSize)
+                        editor.setCamera(editorCam)
+                        editor.camera?.setPosition(15, 15, 15)
+                      }
+
                       setIsPlaying(pipeline.isPlaying)
                     } else {
                       toast.error("Couldn't play!")
