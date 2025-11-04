@@ -277,7 +277,7 @@ export class GameLogic {
               radius: 0.2,
               position: {
                 x: enemyPosition[0],
-                y: enemyPosition[1],
+                y: enemyPosition[1] + 1,
                 z: enemyPosition[2]
               },
               rotation: [0, 0, 0],

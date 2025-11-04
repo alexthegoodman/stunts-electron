@@ -352,7 +352,7 @@ export class Sphere3D {
           color: color,
           gradient_coords: [u, v],
           object_type: 6, // Will update ObjectType enum
-          normal: [0, 0, 0]
+          normal: [x, y, z]
         })
       }
     }

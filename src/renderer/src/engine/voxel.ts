@@ -2,7 +2,7 @@ import { mat4, vec2, vec3 } from 'gl-matrix'
 import { Camera, WindowSize } from './camera'
 import { BoundingBox, CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Point } from './editor'
 import { createEmptyGroupTransform, matrix4ToRawArray, Transform } from './transform'
-import { createVertex, getZLayer, Vertex, vertexByteSize } from './vertex'
+import { createVertex, getZLayer, Vertex, vertexByteSize, vertexOffset } from './vertex'
 import { BackgroundFill, ObjectType } from './animations'
 import {
   PolyfillBindGroup,
@@ -97,21 +97,24 @@ export class Voxel {
       ''
     )
 
-    const vertexData = new Float32Array(vertices.length * (3 + 2 + 4 + 2 + 1))
+    const vertexData = new Float32Array(vertices.length * vertexOffset)
     for (let i = 0; i < vertices.length; i++) {
       const v = vertices[i]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 0] = v.position[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 1] = v.position[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 2] = v.position[2]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 3] = v.tex_coords[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 4] = v.tex_coords[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 5] = v.color[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 6] = v.color[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 7] = v.color[2]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 8] = v.color[3]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 9] = v.gradient_coords[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 10] = v.gradient_coords[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 11] = v.object_type
+      vertexData[i * vertexOffset + 0] = v.position[0]
+      vertexData[i * vertexOffset + 1] = v.position[1]
+      vertexData[i * vertexOffset + 2] = v.position[2]
+      vertexData[i * vertexOffset + 3] = v.tex_coords[0]
+      vertexData[i * vertexOffset + 4] = v.tex_coords[1]
+      vertexData[i * vertexOffset + 5] = v.color[0]
+      vertexData[i * vertexOffset + 6] = v.color[1]
+      vertexData[i * vertexOffset + 7] = v.color[2]
+      vertexData[i * vertexOffset + 8] = v.color[3]
+      vertexData[i * vertexOffset + 9] = v.gradient_coords[0]
+      vertexData[i * vertexOffset + 10] = v.gradient_coords[1]
+      vertexData[i * vertexOffset + 11] = v.object_type
+      vertexData[i * vertexOffset + 12] = v.normal[0]
+      vertexData[i * vertexOffset + 13] = v.normal[1]
+      vertexData[i * vertexOffset + 14] = v.normal[2]
     }
 
     queue.writeBuffer(this.vertexBuffer, 0, vertexData.buffer)
@@ -327,7 +330,8 @@ export class Voxel {
           tex_coords: [0, 0],
           color: color,
           gradient_coords: [(pos[0] + hw) / w, (pos[1] + hh) / h],
-          object_type: 5
+          object_type: 5,
+          normal: face.normal as [number, number, number]
         })
       }
 
@@ -372,17 +376,18 @@ export class Voxel {
           ...v.tex_coords,
           ...v.color,
           ...v.gradient_coords,
-          v.object_type
+          v.object_type,
+          ...v.normal
         ])
       )
     )
   }
 
   updateColor(queue: PolyfillQueue, newColor: [number, number, number, number]) {
-    this.backgroundFill = { type: 'Color', value: newColor };
+    this.backgroundFill = { type: 'Color', value: newColor }
     this.vertices.forEach((v) => {
-      v.color = newColor;
-    });
+      v.color = newColor
+    })
     queue.writeBuffer(
       this.vertexBuffer,
       0,
@@ -392,10 +397,11 @@ export class Voxel {
           ...v.tex_coords,
           ...v.color,
           ...v.gradient_coords,
-          v.object_type
+          v.object_type,
+          ...v.normal
         ])
       )
-    );
+    )
   }
 
   updateLayer(layer: number) {

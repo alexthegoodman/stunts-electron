@@ -83,6 +83,7 @@ import { degreesToRadians } from '@renderer/engine/transform'
 import { GameLogic } from '../../engine/GameLogic'
 import { Sphere3DConfig } from '@renderer/engine/sphere3d'
 import HealthBar from './HealthBar'
+import { VoxelConfig } from '@renderer/engine/voxel'
 
 const createLandscape = (editor: Editor, sequence_id: string) => {
   // Add a default landscape cube
@@ -587,6 +588,30 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     select_image(image_id)
   }
 
+  let handle_voxel_added = (voxelId: string, voxelData: VoxelConfig) => {
+    let editor = editorRef.current
+    let editor_state = editorStateRef.current
+
+    if (!editor || !editor_state) {
+      return
+    }
+
+    let activeVoxel = editor.voxels.find((v) => v.id === voxelId)
+
+    editor_state.savedState.sequences.forEach((s) => {
+      if (s.id === current_sequence_id) {
+        if (!s.activeVoxels) {
+          s.activeVoxels = []
+        }
+        s.activeVoxels.push(activeVoxel.toSavedConfig())
+      }
+    })
+
+    console.info('handle_voxel_added', activeVoxel.id)
+
+    saveSequencesData(editor_state.savedState.sequences, SaveTarget.Games)
+  }
+
   useDevEffectOnce(() => {
     if (editorIsSet) {
       return
@@ -751,6 +776,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       editor.handlePolygonClick = handle_polygon_click
       editor.handleTextClick = handle_text_click
       editor.handleImageClick = handle_image_click
+      editor.onVoxelAdded = handle_voxel_added
 
       // The rest of the on_open_sequence logic for setting up the scene
       let background_fill = {

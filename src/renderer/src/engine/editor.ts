@@ -267,6 +267,7 @@ export class Editor {
   handleSphere3DClick: Sphere3DClickHandler | null
   handleMockup3DClick: Mockup3DClickHandler | null
   scaleMultiplier: number = 1.0
+  onVoxelAdded: (voxelId: string, voxelData: VoxelConfig) => void = (voxelId, voxelData) => {}
 
   window: Window | null
   camera: Camera3D | null
@@ -4495,78 +4496,6 @@ export class Editor {
     this.lastRay = ray
     this.lastTopLeft = top_left
 
-    // Voxel Painting Logic
-    // TODO: this belongs in mouse_move, but we don't want to double draw voxels of course, just one per space, and ideally, a ghost voxel on hover
-    if (this.isVoxelPaintingMode && this.currentSequenceData) {
-      if (ray && this.physics) {
-        const direction = new this.physics.jolt.Vec3(
-          ray.direction[0],
-          ray.direction[1],
-          ray.direction[2]
-        )
-        direction.Mul(1000)
-
-        const hit = this.physics.raycast(
-          new this.physics.jolt.RVec3(ray.origin[0], ray.origin[1], ray.origin[2]),
-          direction
-        )
-
-        let voxelPosition = { x: 0, y: 0, z: 0 }
-        if (hit) {
-          voxelPosition = {
-            x: hit.position.GetX(),
-            y: hit.position.GetY(),
-            z: hit.position.GetZ()
-          }
-        } else {
-          // If no hit, place it a bit in front of the camera
-          const forward = getCameraForward(camera)
-          const pos = camera.position
-          voxelPosition = {
-            x: pos[0] + forward[0] * 5,
-            y: pos[1] + forward[1] * 5,
-            z: pos[2] + forward[2] * 5
-          }
-        }
-
-        const new_id = uuidv4()
-        const voxelConfig: VoxelConfig = {
-          id: new_id,
-          name: 'Voxel',
-          dimensions: [1, 1, 1], // Default voxel size
-          position: voxelPosition,
-          rotation: [0, 0, 0],
-          backgroundFill: {
-            type: 'Color',
-            value: [0.2, 0.2, 0.8, 1.0] // Default blue color
-          },
-          layer: 0
-        }
-
-        this.add_voxel(voxelConfig, new_id, this.currentSequenceData.id)
-
-        // Add Jolt physics body (static for now)
-        const staticBody = this.physics.createStaticBox(
-          new this.physics.jolt.RVec3(
-            voxelConfig.position.x,
-            voxelConfig.position.y,
-            voxelConfig.position.z
-          ),
-          new this.physics.jolt.Quat(0, 0, 0, 1),
-          new this.physics.jolt.Vec3(
-            voxelConfig.dimensions[0] / 2,
-            voxelConfig.dimensions[1] / 2,
-            voxelConfig.dimensions[2] / 2
-          )
-        )
-        this.bodies.set(new_id, staticBody)
-
-        // TODO: Call editor_state.add_saved_voxel here (after editor_state is updated)
-        console.info('Voxel added at', voxelPosition)
-      }
-      return // Consume the click event for voxel painting
-    }
-
     // Clear any hovered gizmo part on mouse down
     if (this.hoveredGizmoPart) {
       const originalFill = this.hoveredGizmoPart.originalBackgroundFill
@@ -5058,11 +4987,82 @@ export class Editor {
     }
 
     // Handle voxel painting end
+    // Voxel Painting Logic
+    // this painting logic allows from one at a time painting, which is prefered for voxel work as compared to continuous painting
     if (this.isVoxelPaintingMode && this.currentSequenceData) {
-      // TODO: Call a callback to save the voxel state
-      console.info('Voxel painting ended. Saving state...')
-      // For now, just log. The actual saving will be handled by editor_state.
-      return
+      if (this.lastRay && this.physics) {
+        const direction = new this.physics.jolt.Vec3(
+          this.lastRay.direction[0],
+          this.lastRay.direction[1],
+          this.lastRay.direction[2]
+        )
+        direction.Mul(1000)
+
+        const hit = this.physics.raycast(
+          new this.physics.jolt.RVec3(
+            this.lastRay.origin[0],
+            this.lastRay.origin[1],
+            this.lastRay.origin[2]
+          ),
+          direction
+        )
+
+        let voxelPosition = { x: 0, y: 0, z: 0 }
+        if (hit) {
+          voxelPosition = {
+            x: hit.position.GetX(),
+            y: hit.position.GetY(),
+            z: hit.position.GetZ()
+          }
+        } else {
+          // If no hit, place it a bit in front of the camera
+          const forward = getCameraForward(camera)
+          const pos = camera.position
+          voxelPosition = {
+            x: pos[0] + forward[0] * 5,
+            y: pos[1] + forward[1] * 5,
+            z: pos[2] + forward[2] * 5
+          }
+        }
+
+        const new_id = uuidv4()
+        const voxelConfig: VoxelConfig = {
+          id: new_id,
+          name: 'Voxel',
+          dimensions: [1, 1, 1], // Default voxel size
+          position: voxelPosition,
+          rotation: [0, 0, 0],
+          backgroundFill: {
+            type: 'Color',
+            value: [0.2, 0.2, 0.8, 1.0] // Default blue color
+          },
+          layer: 0
+        }
+
+        this.add_voxel(voxelConfig, new_id, this.currentSequenceData.id)
+
+        // Add Jolt physics body (static for now)
+        const staticBody = this.physics.createStaticBox(
+          new this.physics.jolt.RVec3(
+            voxelConfig.position.x,
+            voxelConfig.position.y,
+            voxelConfig.position.z
+          ),
+          new this.physics.jolt.Quat(0, 0, 0, 1),
+          new this.physics.jolt.Vec3(
+            voxelConfig.dimensions[0] / 2,
+            voxelConfig.dimensions[1] / 2,
+            voxelConfig.dimensions[2] / 2
+          )
+        )
+        this.bodies.set(new_id, staticBody)
+
+        // TODO: Call editor_state.add_saved_voxel here (after editor_state is updated)
+        console.info('Voxel added at', voxelPosition)
+
+        this.onVoxelAdded(new_id, voxelConfig)
+      }
+      return // Consume the click event for voxel painting
     }
 
     // TODO: does another bounds cause this to get stuck?

@@ -573,7 +573,7 @@ void main() {
 
     // Simple sun lighting with ambient
     vec3 normalized_normal = normalize(v_normal);
-    vec3 normalized_sun_direction = normalize(vec3(0.0, 1.0, 0.0));
+    vec3 normalized_sun_direction = normalize(vec3(0.1, 1.0, 0.1));
     float diffuse = max(dot(normalized_normal, normalized_sun_direction), 0.0);
 
     // Add ambient to prevent completely black shadows
