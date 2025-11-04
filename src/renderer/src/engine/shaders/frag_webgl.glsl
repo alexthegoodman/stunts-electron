@@ -563,12 +563,27 @@ void main() {
         // (Future effects could go here: e.g. 2.0 = watercolor, 3.0 = pixelation, etc.)
     }
 
-    // Simple sun lighting
+    // // // Simple sun lighting
+    // vec3 normalized_normal = normalize(v_normal);
+    // vec3 normalized_sun_direction = normalize(vec3(0.0, 1.0, 0.0));  // Sun pointing down
+    // float diffuse = max(dot(normalized_normal, normalized_sun_direction), 0.0);
+    // final_color.rgb *= diffuse;
+
+    // fragColor = final_color;
+
+    // Simple sun lighting with ambient
     vec3 normalized_normal = normalize(v_normal);
-    vec3 normalized_sun_direction = normalize(u_sun_direction);
+    vec3 normalized_sun_direction = normalize(vec3(0.0, 1.0, 0.0));
     float diffuse = max(dot(normalized_normal, normalized_sun_direction), 0.0);
-    vec3 lighting = u_ambient_color + u_sun_color * diffuse;
+
+    // Add ambient to prevent completely black shadows
+    float ambient = 0.3;  // Adjust this value (0.2-0.4 works well)
+    float lighting = ambient + diffuse * 0.7;  // diffuse strength
+
     final_color.rgb *= lighting;
 
     fragColor = final_color;
+
+    // fragColor = vec4(final_color.rgb, 1.0);
+
 }

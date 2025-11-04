@@ -19,7 +19,8 @@ export type VertexData = [
 ]
 
 // Helper function to calculate byte size
-export const vertexByteSize = (3 + 2 + 4 + 2 + 1 + 3) * Float32Array.BYTES_PER_ELEMENT // 3 pos, 2 tex, 4 color, 2 gradient, 1 object_type, 3 normal
+export const vertexOffset = 3 + 2 + 4 + 2 + 1 + 3
+export const vertexByteSize = vertexOffset * Float32Array.BYTES_PER_ELEMENT // 3 pos, 2 tex, 4 color, 2 gradient, 1 object_type, 3 normal
 
 export interface Vertex {
   position: [number, number, number] // x, y, z coordinates

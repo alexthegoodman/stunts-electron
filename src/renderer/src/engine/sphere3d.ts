@@ -2,7 +2,7 @@ import { mat4, vec2, vec3 } from 'gl-matrix'
 import { Camera, WindowSize } from './camera'
 import { BoundingBox, CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Point } from './editor'
 import { createEmptyGroupTransform, matrix4ToRawArray, Transform } from './transform'
-import { createVertex, getZLayer, Vertex, vertexByteSize } from './vertex'
+import { createVertex, getZLayer, Vertex, vertexByteSize, vertexOffset } from './vertex'
 import { BackgroundFill, GradientDefinition, ObjectType } from './animations'
 import {
   PolyfillBindGroup,
@@ -124,21 +124,24 @@ export class Sphere3D {
       ''
     )
 
-    const vertexData = new Float32Array(vertices.length * (3 + 2 + 4 + 2 + 1))
+    const vertexData = new Float32Array(vertices.length * vertexOffset)
     for (let i = 0; i < vertices.length; i++) {
       const v = vertices[i]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 0] = v.position[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 1] = v.position[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 2] = v.position[2]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 3] = v.tex_coords[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 4] = v.tex_coords[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 5] = v.color[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 6] = v.color[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 7] = v.color[2]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 8] = v.color[3]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 9] = v.gradient_coords[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 10] = v.gradient_coords[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 11] = v.object_type
+      vertexData[i * vertexOffset + 0] = v.position[0]
+      vertexData[i * vertexOffset + 1] = v.position[1]
+      vertexData[i * vertexOffset + 2] = v.position[2]
+      vertexData[i * vertexOffset + 3] = v.tex_coords[0]
+      vertexData[i * vertexOffset + 4] = v.tex_coords[1]
+      vertexData[i * vertexOffset + 5] = v.color[0]
+      vertexData[i * vertexOffset + 6] = v.color[1]
+      vertexData[i * vertexOffset + 7] = v.color[2]
+      vertexData[i * vertexOffset + 8] = v.color[3]
+      vertexData[i * vertexOffset + 9] = v.gradient_coords[0]
+      vertexData[i * vertexOffset + 10] = v.gradient_coords[1]
+      vertexData[i * vertexOffset + 11] = v.object_type
+      vertexData[i * vertexOffset + 12] = v.normal[0]
+      vertexData[i * vertexOffset + 13] = v.normal[1]
+      vertexData[i * vertexOffset + 14] = v.normal[2]
     }
 
     queue.writeBuffer(this.vertexBuffer, 0, vertexData.buffer)
@@ -348,7 +351,8 @@ export class Sphere3D {
           tex_coords: [u, v],
           color: color,
           gradient_coords: [u, v],
-          object_type: 6 // Will update ObjectType enum
+          object_type: 6, // Will update ObjectType enum
+          normal: [0, 0, 0]
         })
       }
     }

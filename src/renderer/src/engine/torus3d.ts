@@ -118,23 +118,31 @@ export class Torus3D {
       ''
     )
 
-    const vertexData = new Float32Array(vertices.length * (3 + 2 + 4 + 2 + 1))
+    // Update the stride: was (3 + 2 + 4 + 2 + 1), now add 3 for normals
+    const STRIDE = 3 + 2 + 4 + 2 + 1 + 3 // position(3) + tex(2) + color(4) + gradient(2) + type(1) + normal(3) = 15
+
+    const vertexData = new Float32Array(vertices.length * STRIDE)
+
     for (let i = 0; i < vertices.length; i++) {
       const v = vertices[i]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 0] = v.position[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 1] = v.position[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 2] = v.position[2]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 3] = v.tex_coords[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 4] = v.tex_coords[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 5] = v.color[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 6] = v.color[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 7] = v.color[2]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 8] = v.color[3]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 9] = v.gradient_coords[0]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 10] = v.gradient_coords[1]
-      vertexData[i * (3 + 2 + 4 + 2 + 1) + 11] = v.object_type
-    }
+      const offset = i * STRIDE
 
+      vertexData[offset + 0] = v.position[0]
+      vertexData[offset + 1] = v.position[1]
+      vertexData[offset + 2] = v.position[2]
+      vertexData[offset + 3] = v.tex_coords[0]
+      vertexData[offset + 4] = v.tex_coords[1]
+      vertexData[offset + 5] = v.color[0]
+      vertexData[offset + 6] = v.color[1]
+      vertexData[offset + 7] = v.color[2]
+      vertexData[offset + 8] = v.color[3]
+      vertexData[offset + 9] = v.gradient_coords[0]
+      vertexData[offset + 10] = v.gradient_coords[1]
+      vertexData[offset + 11] = v.object_type
+      vertexData[offset + 12] = v.normal[0] // ✓ Add normal x
+      vertexData[offset + 13] = v.normal[1] // ✓ Add normal y
+      vertexData[offset + 14] = v.normal[2] // ✓ Add normal z
+    }
     queue.writeBuffer(this.vertexBuffer, 0, vertexData.buffer)
 
     // Create index buffer
@@ -288,12 +296,29 @@ export class Torus3D {
         const u = i / majorSegments
         const v = j / minorSegments
 
+        // Calculate normal for torus
+        // The normal points from the tube center outward
+        const tubeCenterX = this.radius * cosMajor
+        const tubeCenterY = 0
+        const tubeCenterZ = this.radius * sinMajor
+
+        const normalX = x - tubeCenterX
+        const normalY = y - tubeCenterY
+        const normalZ = z - tubeCenterZ
+
+        // Normalize the normal
+        const length = Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ)
+        const nx = normalX / length
+        const ny = normalY / length
+        const nz = normalZ / length
+
         vertices.push({
           position: [x, y, z],
           tex_coords: [u, v],
           color: color,
           gradient_coords: [u, v],
-          object_type: 7 // Will need to add Torus3D to ObjectType enum
+          object_type: 7,
+          normal: [nx, ny, nz] // ✓ Proper normal!
         })
       }
     }
@@ -342,10 +367,10 @@ export class Torus3D {
   }
 
   updateColor(queue: PolyfillQueue, newColor: [number, number, number, number]) {
-    this.backgroundFill = { type: 'Color', value: newColor };
+    this.backgroundFill = { type: 'Color', value: newColor }
     this.vertices.forEach((v) => {
-      v.color = newColor;
-    });
+      v.color = newColor
+    })
     queue.writeBuffer(
       this.vertexBuffer,
       0,
@@ -358,7 +383,7 @@ export class Torus3D {
           v.object_type
         ])
       )
-    );
+    )
   }
 
   updateLayer(layer: number) {

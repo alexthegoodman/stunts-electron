@@ -307,7 +307,7 @@ export class CanvasPipeline {
       'uniform3fv'
     )
     sunDirectionBuffer.unmap()
-    const sunDirectionData = new Float32Array([0.5, 1.0, 0.5]) // Default sun direction
+    const sunDirectionData = new Float32Array([1.0, 0.5, 0.5]) // Default sun direction
     gpuResources.queue!.writeBuffer(sunDirectionBuffer, 0, sunDirectionData)
 
     const sunDirectionBindGroupLayout = gpuResources.device!.createBindGroupLayout({
@@ -347,7 +347,7 @@ export class CanvasPipeline {
       'uniform3fv'
     )
     sunColorBuffer.unmap()
-    const sunColorData = new Float32Array([1.0, 1.0, 1.0]) // Default sun color (white)
+    const sunColorData = new Float32Array([0.2, 1.0, 1.0]) // Default sun color (white)
     gpuResources.queue!.writeBuffer(sunColorBuffer, 0, sunColorData)
 
     const sunColorBindGroupLayout = gpuResources.device!.createBindGroupLayout({
@@ -1044,7 +1044,7 @@ export class CanvasPipeline {
     gl.viewport(0, 0, editor.camera.windowSize.width, editor.camera.windowSize.height)
 
     // Clear the framebuffer
-    gl.clearColor(1.0, 1.0, 1.0, 1.0) // White background
+    gl.clearColor(0.5, 1.0, 1.0, 1.0) // White background
     gl.clearDepth(1.0)
     // gl.clearStencil(0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -1053,9 +1053,8 @@ export class CanvasPipeline {
     gl.enable(gl.DEPTH_TEST)
     gl.depthMask(true) // Always enable depth writes for opaque objects
     gl.enable(gl.CULL_FACE) // Enable culling by default
-    gl.cullFace(gl.BACK); // Cull back faces
-    gl.frontFace(gl.CCW); // Counter-clockwise winding order
-
+    gl.cullFace(gl.BACK) // Cull back faces
+    gl.frontFace(gl.CCW) // Counter-clockwise winding order
 
     // Set up blending for transparency
     gl.enable(gl.BLEND)
@@ -1117,7 +1116,8 @@ export class CanvasPipeline {
       indexBuffer: PolyfillBuffer,
       indexCount: number
     ) => {
-      const stride = 12 * Float32Array.BYTES_PER_ELEMENT // 48 bytes
+      // const stride = 12 * Float32Array.BYTES_PER_ELEMENT // 48 bytes
+      const stride = 15 * Float32Array.BYTES_PER_ELEMENT
 
       // Bind vertex buffer
       gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer.buffer)
