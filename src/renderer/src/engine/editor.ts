@@ -5018,10 +5018,10 @@ export class Editor {
             z: hit.position.GetZ() + hit.normal.GetZ() * halfExtent
           }
 
-          // Optional: Snap to grid for clean voxel alignment
-          voxelPosition.x = Math.round(voxelPosition.x)
-          voxelPosition.y = Math.round(voxelPosition.y)
-          voxelPosition.z = Math.round(voxelPosition.z)
+          // Snap to grid for clean voxel alignment (floor to avoid mid-air placements)
+          voxelPosition.x = Math.floor(voxelPosition.x)
+          voxelPosition.y = Math.floor(voxelPosition.y)
+          voxelPosition.z = Math.floor(voxelPosition.z)
         } else {
           // If no hit, place it a bit in front of the camera
           const forward = getCameraForward(camera)
