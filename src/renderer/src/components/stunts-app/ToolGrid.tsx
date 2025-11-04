@@ -1273,7 +1273,7 @@ export const ToolGrid = ({
             playerConfig.position.z
           ),
           new editor.physics.jolt.Quat(0, 0, 0, 1),
-          new editor.physics.jolt.Vec3(1, 1, 1)
+          new editor.physics.jolt.Vec3(1 / 2, 2 / 2, 1 / 2)
         )
         editor.bodies.set(new_id, staticBody)
 
@@ -1372,7 +1372,7 @@ export const ToolGrid = ({
             enemyConfig.position.z
           ),
           new editor.physics.jolt.Quat(0, 0, 0, 1),
-          new editor.physics.jolt.Vec3(1, 1, 1)
+          new editor.physics.jolt.Vec3(1 / 2, 2 / 2, 1 / 2)
         )
         editor.bodies.set(new_id, staticBody)
 

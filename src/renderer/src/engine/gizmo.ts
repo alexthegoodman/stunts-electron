@@ -28,8 +28,8 @@ export class Gizmo {
     physics: Physics
   ) {
     this.physics = physics
-    const axisLength = 2
-    const axisRadius = 0.05
+    const axisLength = 3.5
+    const axisRadius = 0.075
 
     const xAxisConfig: Cube3DConfig = {
       id: 'gizmo-x-axis',
@@ -347,7 +347,8 @@ export class Gizmo {
     this.target = null
   }
 
-  update(queue: PolyfillQueue, camera: Camera3D) {
+  update(queue: PolyfillQueue, camera: Camera3D, latestTarget: Transform | null) {
+    this.target = latestTarget
     if (this.target) {
       this.xAxis.hidden = false
       this.yAxis.hidden = false

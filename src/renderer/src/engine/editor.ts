@@ -884,7 +884,11 @@ export class Editor {
           const staticBody = this.physics.createStaticBox(
             new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z),
             new this.physics.jolt.Quat(0, 0, 0, 1),
-            new this.physics.jolt.Vec3(1, 1, 1)
+            new this.physics.jolt.Vec3(
+              c.dimensions[0] / 2,
+              c.dimensions[1] / 2,
+              c.dimensions[2] / 2
+            )
           )
           this.bodies.set(c.id, staticBody)
 
@@ -901,7 +905,11 @@ export class Editor {
           const staticBody = this.physics.createStaticBox(
             new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z),
             new this.physics.jolt.Quat(0, 0, 0, 1),
-            new this.physics.jolt.Vec3(1, 1, 1)
+            new this.physics.jolt.Vec3(
+              c.dimensions[0] / 2,
+              c.dimensions[1] / 2,
+              c.dimensions[2] / 2
+            )
           )
           this.bodies.set(c.id, staticBody)
 
@@ -910,7 +918,11 @@ export class Editor {
           const dynamicBody = this.physics.createDynamicBox(
             new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z || 0),
             new this.physics.jolt.Quat(0, 0, 0, 1),
-            new this.physics.jolt.Vec3(c.dimensions[0], c.dimensions[1], c.dimensions[2])
+            new this.physics.jolt.Vec3(
+              c.dimensions[0] / 2,
+              c.dimensions[1] / 2,
+              c.dimensions[2] / 2
+            )
           )
           this.bodies.set(c.id, dynamicBody)
 
@@ -4407,7 +4419,7 @@ export class Editor {
           if (body && body.GetID().GetIndexAndSequenceNumber() === bodyId) {
             this.selectedCube3DId = cube.id
             this.gizmo?.attach(cube.transform)
-            this.gizmo?.update(this.gpuResources?.queue!, this.camera!)
+            this.gizmo?.update(this.gpuResources?.queue!, this.camera!, cube.transform)
             console.info('Selected cube:', cube.id)
 
             found = true
@@ -4530,16 +4542,39 @@ export class Editor {
         const dx = (x - this.previousTopLeft.x) * 0.0001 // Adjust sensitivity
         const dy = (y - this.previousTopLeft.y) * 0.0001 // Adjust sensitivity
 
-        // TODO: doesnt work because depends which direction you are facing relative to object
+        const camera = this.camera!
+        const forward = getCameraForward(camera)
+        const right = vec3.cross(vec3.create(), forward, camera.up)
+        vec3.normalize(right, right)
+        const up = vec3.clone(camera.up)
+
         switch (this.draggingGizmoAxis) {
           case 'x':
-            selectedCube.transform.position[0] += dx
+            // Move along the camera's right vector
+            vec3.scaleAndAdd(
+              selectedCube.transform.position,
+              selectedCube.transform.position,
+              right,
+              dx
+            )
             break
           case 'y':
-            selectedCube.transform.position[1] -= dy // Invert Y for screen to world
+            // Move along the camera's up vector
+            vec3.scaleAndAdd(
+              selectedCube.transform.position,
+              selectedCube.transform.position,
+              up,
+              dy
+            )
             break
           case 'z':
-            selectedCube.transform.position[2] += dx // Or some other combination for Z
+            // Move along the camera's forward vector
+            vec3.scaleAndAdd(
+              selectedCube.transform.position,
+              selectedCube.transform.position,
+              forward,
+              dx
+            )
             break
         }
         console.info(
@@ -4551,7 +4586,7 @@ export class Editor {
           dy
         )
         selectedCube.transform.updateUniformBuffer(queue, windowSize)
-        this.gizmo?.update(queue, camera)
+        this.gizmo?.update(queue, camera, selectedCube.transform)
       }
       this.previousTopLeft = this.lastTopLeft
       return
@@ -4575,7 +4610,7 @@ export class Editor {
             break
         }
         selectedCube.transform.updateUniformBuffer(queue, windowSize)
-        this.gizmo?.update(queue, camera)
+        this.gizmo?.update(queue, camera, selectedCube.transform)
       }
       this.previousTopLeft = this.lastTopLeft
       return
@@ -4600,7 +4635,7 @@ export class Editor {
             break
         }
         selectedCube.transform.updateUniformBuffer(queue, windowSize)
-        this.gizmo?.update(queue, camera)
+        this.gizmo?.update(queue, camera, selectedCube.transform)
       }
       this.previousTopLeft = this.lastTopLeft
       return
