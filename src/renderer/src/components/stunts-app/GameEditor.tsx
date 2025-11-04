@@ -416,37 +416,46 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     if (!canvas) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      setNodes((nds) =>
-        nds.map((node) => {
-          if (node.data.label === 'Forward' && event.key === 'w') {
-            node.data = { ...node.data, pressed: true }
-          } else if (node.data.label === 'Backward' && event.key === 's') {
-            node.data = { ...node.data, pressed: true }
-          } else if (node.data.label === 'Left' && event.key === 'a') {
-            node.data = { ...node.data, pressed: true }
-          } else if (node.data.label === 'Right' && event.key === 'd') {
-            node.data = { ...node.data, pressed: true }
-          }
-          return node
-        })
-      )
+      if (isPlaying) {
+        setNodes((nds) =>
+          nds.map((node) => {
+            if (node.data.label === 'Forward' && event.key === 'w') {
+              node.data = { ...node.data, pressed: true }
+            } else if (node.data.label === 'Backward' && event.key === 's') {
+              node.data = { ...node.data, pressed: true }
+            } else if (node.data.label === 'Left' && event.key === 'a') {
+              node.data = { ...node.data, pressed: true }
+            } else if (node.data.label === 'Right' && event.key === 'd') {
+              node.data = { ...node.data, pressed: true }
+            }
+            return node
+          })
+        )
+      }
     }
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      setNodes((nds) =>
-        nds.map((node) => {
-          if (node.data.label === 'Forward' && event.key === 'w') {
-            node.data = { ...node.data, pressed: false }
-          } else if (node.data.label === 'Backward' && event.key === 's') {
-            node.data = { ...node.data, pressed: false }
-          } else if (node.data.label === 'Left' && event.key === 'a') {
-            node.data = { ...node.data, pressed: false }
-          } else if (node.data.label === 'Right' && event.key === 'd') {
-            node.data = { ...node.data, pressed: false }
-          }
-          return node
-        })
-      )
+      // Release pointer lock when shift is released
+      if (event.key === 'Shift' && document.pointerLockElement === canvas) {
+        document.exitPointerLock()
+      }
+
+      if (isPlaying) {
+        setNodes((nds) =>
+          nds.map((node) => {
+            if (node.data.label === 'Forward' && event.key === 'w') {
+              node.data = { ...node.data, pressed: false }
+            } else if (node.data.label === 'Backward' && event.key === 's') {
+              node.data = { ...node.data, pressed: false }
+            } else if (node.data.label === 'Left' && event.key === 'a') {
+              node.data = { ...node.data, pressed: false }
+            } else if (node.data.label === 'Right' && event.key === 'd') {
+              node.data = { ...node.data, pressed: false }
+            }
+            return node
+          })
+        )
+      }
     }
 
     console.info('attach key listeners in editor')
@@ -455,26 +464,16 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     canvas.addEventListener('keyup', handleKeyUp)
     canvas.setAttribute('tabindex', '0') // Make canvas focusable
 
-    let isMouseDown = false
-
-    // TODO: move to nodes and hook up to arrow keys rather than mouse for now
-    // also is buggy
-    const handleMouseDown = () => {
-      if (isPlaying) {
-        isMouseDown = true
-      }
-    }
-
-    const handleMouseUp = () => {
-      if (isPlaying) {
-        isMouseDown = false
-      }
-    }
-
     const handleMouseMove = (event: MouseEvent) => {
-      if (isPlaying && isMouseDown) {
+      if (isPlaying || event.shiftKey) {
         const editor = editorRef.current
-        if (editor && editor.camera instanceof FirstPersonCamera) {
+        if (editor && editor.camera) {
+          // Request pointer lock if not already active
+          if (document.pointerLockElement !== canvas) {
+            canvas.focus()
+            canvas.requestPointerLock()
+          }
+
           const sensitivity = editor.camera.mouseSensitivity
           const deltaX = event.movementX * sensitivity
           const deltaY = event.movementY * sensitivity
@@ -486,18 +485,30 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       }
     }
 
-    canvas.addEventListener('mousedown', handleMouseDown)
-    canvas.addEventListener('mouseup', handleMouseUp)
     canvas.addEventListener('mousemove', handleMouseMove)
 
     return () => {
       canvas.removeEventListener('keydown', handleKeyDown)
       canvas.removeEventListener('keyup', handleKeyUp)
-      canvas.removeEventListener('mousedown', handleMouseDown)
-      canvas.removeEventListener('mouseup', handleMouseUp)
       canvas.removeEventListener('mousemove', handleMouseMove)
+
+      // Release pointer lock on cleanup
+      if (document.pointerLockElement === canvas) {
+        document.exitPointerLock()
+      }
     }
   }, [setNodes, isPlaying])
+
+  // Separate effect to handle pointer lock when isPlaying changes
+  useEffect(() => {
+    const canvas = document.getElementById(`game-canvas`) as HTMLCanvasElement
+    if (!canvas) return
+
+    // Release pointer lock when playing stops
+    if (!isPlaying && document.pointerLockElement === canvas) {
+      document.exitPointerLock()
+    }
+  }, [isPlaying])
 
   let setupCanvasMouseTracking = (editor: Editor, canvas: HTMLCanvasElement) => {
     // let editor = editorRef.current

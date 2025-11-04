@@ -1191,6 +1191,25 @@ export class Editor {
 
         restored_voxel.hidden = hidden
         this.voxels.push(restored_voxel)
+
+        const staticBody = this.physics.createStaticBox(
+          new this.physics.jolt.RVec3(v.position.x, v.position.y, v.position.z),
+          new this.physics.jolt.Quat(0, 0, 0, 1),
+          new this.physics.jolt.Vec3(v.dimensions[0] / 2, v.dimensions[1] / 2, v.dimensions[2] / 2)
+        )
+        this.bodies.set(v.id, staticBody)
+
+        // const dynamicBody = this.physics.createDynamicBox(
+        //             new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z || 0),
+        //             new this.physics.jolt.Quat(0, 0, 0, 1),
+        //             new this.physics.jolt.Vec3(
+        //               c.dimensions[0] / 2,
+        //               c.dimensions[1] / 2,
+        //               c.dimensions[2] / 2
+        //             )
+        //           )
+        //           this.bodies.set(c.id, dynamicBody)
+
         console.log('Voxel restored...')
       }
     }

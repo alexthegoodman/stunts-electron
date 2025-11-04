@@ -5,7 +5,7 @@ import { degreesToRadians } from './transform'
 
 export class FirstPersonCamera extends Camera3D {
   // Sensitivity for mouse movement
-  mouseSensitivity: number = 0.1
+  // mouseSensitivity: number = 0.1
 
   constructor(windowSize: WindowSize) {
     super(windowSize)
@@ -20,11 +20,11 @@ export class FirstPersonCamera extends Camera3D {
   }
 
   // Helper to update the target based on current position and rotation
-  updateTarget(): void {
-    const forward = vec3.fromValues(0, 0, -1) // Default forward direction
-    vec3.transformQuat(forward, forward, this.rotation) // Rotate forward vector
-    vec3.add(this.target, this.position3D, forward) // Target is in front of camera
-  }
+  // updateTarget(): void {
+  //   const forward = vec3.fromValues(0, 0, -1) // Default forward direction
+  //   vec3.transformQuat(forward, forward, this.rotation) // Rotate forward vector
+  //   vec3.add(this.target, this.position3D, forward) // Target is in front of camera
+  // }
 
   // // Override moveForward to ensure target is updated
   // moveForward(distance: number): void {
@@ -56,25 +56,25 @@ export class FirstPersonCamera extends Camera3D {
     this.updateTarget() // Update target after moving
   }
 
-  // Pitch (look up/down)
-  pitch(angleDegrees: number): void {
-    const angleRadians = degreesToRadians(angleDegrees)
-    const pitchQuat = quat.create()
-    quat.setAxisAngle(pitchQuat, vec3.fromValues(1, 0, 0), angleRadians) // Rotate around local X-axis
-    quat.multiply(this.rotation, pitchQuat, this.rotation) // Apply pitch
-    quat.normalize(this.rotation, this.rotation)
-    this.updateTarget()
-  }
+  // // Pitch (look up/down)
+  // pitch(angleDegrees: number): void {
+  //   const angleRadians = degreesToRadians(angleDegrees)
+  //   const pitchQuat = quat.create()
+  //   quat.setAxisAngle(pitchQuat, vec3.fromValues(1, 0, 0), angleRadians) // Rotate around local X-axis
+  //   quat.multiply(this.rotation, pitchQuat, this.rotation) // Apply pitch
+  //   quat.normalize(this.rotation, this.rotation)
+  //   this.updateTarget()
+  // }
 
-  // Yaw (look left/right)
-  yaw(angleDegrees: number): void {
-    const angleRadians = degreesToRadians(angleDegrees)
-    const yawQuat = quat.create()
-    quat.setAxisAngle(yawQuat, vec3.fromValues(0, 1, 0), angleRadians) // Rotate around global Y-axis
-    quat.multiply(this.rotation, yawQuat, this.rotation) // Apply yaw
-    quat.normalize(this.rotation, this.rotation)
-    this.updateTarget()
-  }
+  // // Yaw (look left/right)
+  // yaw(angleDegrees: number): void {
+  //   const angleRadians = degreesToRadians(angleDegrees)
+  //   const yawQuat = quat.create()
+  //   quat.setAxisAngle(yawQuat, vec3.fromValues(0, 1, 0), angleRadians) // Rotate around global Y-axis
+  //   quat.multiply(this.rotation, yawQuat, this.rotation) // Apply yaw
+  //   quat.normalize(this.rotation, this.rotation)
+  //   this.updateTarget()
+  // }
 
   // Override update_zoom to adjust FOV for first-person zoom
   update_zoom(delta: number): void {
