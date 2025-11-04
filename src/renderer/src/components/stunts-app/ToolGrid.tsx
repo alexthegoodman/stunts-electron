@@ -68,7 +68,7 @@ export const ToolGrid = ({
 }) => {
   const { t } = useTranslation('common')
 
-  const [voxelSize, setVoxelSize] = useState<number>(0.1) // Default voxel size
+  const [voxelSize, setVoxelSize] = useState<number>(1) // Default voxel size
   const [voxelColor, setVoxelColor] = useState<string>('#FFFFFF') // Default voxel color (white)
   const [isVoxelPainting, setVoxelPainting] = useState(false)
 

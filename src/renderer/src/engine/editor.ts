@@ -445,7 +445,7 @@ export class Editor {
     this.generationChoreographed = true
     this.generationFade = true
     this.models3D = []
-    this.currentVoxelSize = 0.1
+    this.currentVoxelSize = 1
     this.currentVoxelColor = [1.0, 1.0, 1.0, 1.0]
 
     // TODO: update interactive bounds on window resize?
@@ -5037,12 +5037,13 @@ export class Editor {
         const voxelConfig: VoxelConfig = {
           id: new_id,
           name: 'Voxel',
-          dimensions: [1, 1, 1], // Default voxel size
+          dimensions: [this.currentVoxelSize, this.currentVoxelSize, this.currentVoxelSize], // Default voxel size
           position: voxelPosition,
           rotation: [0, 0, 0],
           backgroundFill: {
             type: 'Color',
-            value: [0.2, 0.2, 0.8, 1.0] // Default blue color
+            // value: [0.2, 0.2, 0.8, 1.0] // Default blue color
+            value: this.currentVoxelColor
           },
           layer: 0
         }
