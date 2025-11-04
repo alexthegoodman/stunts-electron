@@ -11,7 +11,7 @@ export class FirstPersonCamera extends Camera3D {
     super(windowSize)
 
     // Initialize position and rotation for a first-person view
-    this.position3D = vec3.fromValues(0, 0, 0) // Start at origin
+    this.position3D = vec3.fromValues(0, 1, 0) // Start at origin
     this.rotation = quat.create() // No initial rotation
 
     // Update the target based on the initial position and rotation
