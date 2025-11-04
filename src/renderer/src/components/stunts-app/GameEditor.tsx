@@ -456,45 +456,45 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
     let isMouseDown = false
 
-    // TODO: move to nodes
+    // TODO: move to nodes and hook up to arrow keys rather than mouse for now
     // also is buggy
-    // const handleMouseDown = () => {
-    //   if (isPlaying) {
-    //     isMouseDown = true
-    //   }
-    // }
+    const handleMouseDown = () => {
+      if (isPlaying) {
+        isMouseDown = true
+      }
+    }
 
-    // const handleMouseUp = () => {
-    //   if (isPlaying) {
-    //     isMouseDown = false
-    //   }
-    // }
+    const handleMouseUp = () => {
+      if (isPlaying) {
+        isMouseDown = false
+      }
+    }
 
-    // const handleMouseMove = (event: MouseEvent) => {
-    //   if (isPlaying && isMouseDown) {
-    //     const editor = editorRef.current
-    //     if (editor && editor.camera instanceof FirstPersonCamera) {
-    //       const sensitivity = editor.camera.mouseSensitivity
-    //       const deltaX = event.movementX * sensitivity
-    //       const deltaY = event.movementY * sensitivity
+    const handleMouseMove = (event: MouseEvent) => {
+      if (isPlaying && isMouseDown) {
+        const editor = editorRef.current
+        if (editor && editor.camera instanceof FirstPersonCamera) {
+          const sensitivity = editor.camera.mouseSensitivity
+          const deltaX = event.movementX * sensitivity
+          const deltaY = event.movementY * sensitivity
 
-    //       editor.camera.yaw(-deltaX) // Yaw around Y-axis
-    //       editor.camera.pitch(-deltaY) // Pitch around X-axis
-    //       editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
-    //     }
-    //   }
-    // }
+          editor.camera.yaw(-deltaX) // Yaw around Y-axis
+          editor.camera.pitch(-deltaY) // Pitch around X-axis
+          editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
+        }
+      }
+    }
 
-    // canvas.addEventListener('mousedown', handleMouseDown)
-    // canvas.addEventListener('mouseup', handleMouseUp)
-    // canvas.addEventListener('mousemove', handleMouseMove)
+    canvas.addEventListener('mousedown', handleMouseDown)
+    canvas.addEventListener('mouseup', handleMouseUp)
+    canvas.addEventListener('mousemove', handleMouseMove)
 
     return () => {
       canvas.removeEventListener('keydown', handleKeyDown)
       canvas.removeEventListener('keyup', handleKeyUp)
-      // canvas.removeEventListener('mousedown', handleMouseDown)
-      // canvas.removeEventListener('mouseup', handleMouseUp)
-      // canvas.removeEventListener('mousemove', handleMouseMove)
+      canvas.removeEventListener('mousedown', handleMouseDown)
+      canvas.removeEventListener('mouseup', handleMouseUp)
+      canvas.removeEventListener('mousemove', handleMouseMove)
     }
   }, [setNodes, isPlaying])
 
@@ -930,7 +930,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
         const currentPlayerHealths: number[] = []
         const currentEnemyHealths: number[] = []
 
-        editorRef.current.nodes.forEach((node) => {
+        nodes.forEach((node) => {
           if (node.data.label === 'PlayerController' && typeof node.data.health === 'number') {
             currentPlayerHealths.push(node.data.health)
           } else if (

@@ -1241,7 +1241,7 @@ export const ToolGrid = ({
           id: new_id,
           name: 'PlayerCharacter',
           dimensions: [1, 2, 1], // appropriate for radius?
-          position: { x: 0, y: 25, z: 0 },
+          position: { x: 0, y: 5, z: 0 },
           rotation: [0, 0, 0],
           backgroundFill: {
             type: 'Color',
@@ -1337,7 +1337,7 @@ export const ToolGrid = ({
           id: new_id,
           name: 'EnemyCharacter',
           dimensions: [1, 2, 1], // appropriate for radius?
-          position: { x: 10, y: 25, z: 0 }, // Slightly different position
+          position: { x: 10, y: 5, z: 0 }, // Slightly different position
           rotation: [0, 0, 0],
           backgroundFill: {
             type: 'Color',
