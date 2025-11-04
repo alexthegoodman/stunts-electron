@@ -533,7 +533,7 @@ export class Physics {
   public raycast(
     origin: Jolt.RVec3,
     direction: Jolt.Vec3
-  ): { bodyId: Jolt.BodyID; fraction: number; position: Jolt.RVec3 } | null {
+  ): { bodyId: Jolt.BodyID; fraction: number; position: Jolt.RVec3; normal: Jolt.Vec3 } | null {
     const jolt = this.jolt
     const physicsSystem = this.physicsSystem
     const query = physicsSystem.GetNarrowPhaseQuery()
@@ -592,10 +592,21 @@ export class Physics {
         origin.GetZ() + direction.GetZ() * closestHit.mFraction
       )
 
+      // Get the surface normal at the hit point
+      // The hit contains mSubShapeID2 which identifies the shape that was hit
+      const bodyLockInterface = physicsSystem.GetBodyLockInterface()
+      const body = bodyLockInterface.TryGetBody(closestHit.mBodyID)
+
+      // Get the surface normal using GetSurfaceNormal
+      const worldSpaceNormal = body.GetWorldSpaceSurfaceNormal(closestHit.mSubShapeID2, hitPosition)
+
+      // bodyLockInterface.UnlockRead(bodyLockRead)
+
       return {
         bodyId: closestHit.mBodyID,
         fraction: closestHit.mFraction,
-        position: hitPosition
+        position: hitPosition,
+        normal: worldSpaceNormal
       }
     }
 

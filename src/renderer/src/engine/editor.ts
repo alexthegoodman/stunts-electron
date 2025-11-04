@@ -4986,7 +4986,7 @@ export class Editor {
       return
     }
 
-    // Handle voxel painting end
+    // Handle voxel painting end on mouse up
     // Voxel Painting Logic
     // this painting logic allows from one at a time painting, which is prefered for voxel work as compared to continuous painting
     if (this.isVoxelPaintingMode && this.currentSequenceData) {
@@ -5009,11 +5009,19 @@ export class Editor {
 
         let voxelPosition = { x: 0, y: 0, z: 0 }
         if (hit) {
+          // Place the voxel "on top" of the surface by offsetting along the normal
+          const halfExtent = 0.5 // Half of voxel dimension (1/2 = 0.5)
+
           voxelPosition = {
-            x: hit.position.GetX(),
-            y: hit.position.GetY(),
-            z: hit.position.GetZ()
+            x: hit.position.GetX() + hit.normal.GetX() * halfExtent,
+            y: hit.position.GetY() + hit.normal.GetY() * halfExtent,
+            z: hit.position.GetZ() + hit.normal.GetZ() * halfExtent
           }
+
+          // Optional: Snap to grid for clean voxel alignment
+          voxelPosition.x = Math.round(voxelPosition.x)
+          voxelPosition.y = Math.round(voxelPosition.y)
+          voxelPosition.z = Math.round(voxelPosition.z)
         } else {
           // If no hit, place it a bit in front of the camera
           const forward = getCameraForward(camera)
