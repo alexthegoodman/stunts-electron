@@ -5,6 +5,7 @@ import { Transform } from './transform'
 import { Physics } from './physics'
 import Jolt from 'jolt-physics/debug-wasm-compat'
 import { Torus3D, Torus3DConfig } from './torus3d'
+import { vec3 } from 'gl-matrix'
 
 export class Gizmo {
   xAxis: Cube3D
@@ -20,6 +21,9 @@ export class Gizmo {
   physics: Physics
   bodies: Jolt.Body[] = []
 
+  axisLength = 3.5
+  axisRadius = 0.075
+
   constructor(
     gpuResources: GPUPolyfill,
     camera: Camera3D,
@@ -28,14 +32,12 @@ export class Gizmo {
     physics: Physics
   ) {
     this.physics = physics
-    const axisLength = 3.5
-    const axisRadius = 0.075
 
     const xAxisConfig: Cube3DConfig = {
       id: 'gizmo-x-axis',
       name: 'Gizmo X-Axis',
-      dimensions: [axisLength, axisRadius, axisRadius],
-      position: { x: axisLength / 2, y: 0, z: 0 },
+      dimensions: [this.axisLength, this.axisRadius, this.axisRadius],
+      position: { x: this.axisLength / 2, y: 0, z: 0 },
       rotation: [0, 0, 0],
       backgroundFill: {
         type: 'Color',
@@ -47,8 +49,8 @@ export class Gizmo {
     const yAxisConfig: Cube3DConfig = {
       id: 'gizmo-y-axis',
       name: 'Gizmo Y-Axis',
-      dimensions: [axisRadius, axisLength, axisRadius],
-      position: { x: 0, y: axisLength / 2, z: 0 },
+      dimensions: [this.axisRadius, this.axisLength, this.axisRadius],
+      position: { x: 0, y: this.axisLength / 2, z: 0 },
       rotation: [0, 0, 0],
       backgroundFill: {
         type: 'Color',
@@ -60,8 +62,8 @@ export class Gizmo {
     const zAxisConfig: Cube3DConfig = {
       id: 'gizmo-z-axis',
       name: 'Gizmo Z-Axis',
-      dimensions: [axisRadius, axisRadius, axisLength],
-      position: { x: 0, y: 0, z: axisLength / 2 },
+      dimensions: [this.axisRadius, this.axisRadius, this.axisLength],
+      position: { x: 0, y: 0, z: this.axisLength / 2 },
       rotation: [0, 0, 0],
       backgroundFill: {
         type: 'Color',
@@ -111,7 +113,7 @@ export class Gizmo {
         this.xAxis.transform.position[2]
       ),
       new this.physics.jolt.Quat(0, 0, 0, 1),
-      new this.physics.jolt.Vec3(axisLength, axisRadius, axisRadius)
+      new this.physics.jolt.Vec3(this.axisLength, this.axisRadius, this.axisRadius)
     )
     this.bodies.push(xAxisBody)
 
@@ -122,7 +124,7 @@ export class Gizmo {
         this.yAxis.transform.position[2]
       ),
       new this.physics.jolt.Quat(0, 0, 0, 1),
-      new this.physics.jolt.Vec3(axisRadius, axisLength, axisRadius)
+      new this.physics.jolt.Vec3(this.axisRadius, this.axisLength, this.axisRadius)
     )
     this.bodies.push(yAxisBody)
 
@@ -133,7 +135,7 @@ export class Gizmo {
         this.zAxis.transform.position[2]
       ),
       new this.physics.jolt.Quat(0, 0, 0, 1),
-      new this.physics.jolt.Vec3(axisRadius, axisRadius, axisLength)
+      new this.physics.jolt.Vec3(this.axisRadius, this.axisRadius, this.axisLength)
     )
     this.bodies.push(zAxisBody)
 
@@ -243,13 +245,13 @@ export class Gizmo {
     this.bodies.push(zRingBody)
 
     const scaleHandleSize = 0.2
-    // const axisLength = 2
+    // const this.axisLength = 2
 
     const xScaleConfig: Cube3DConfig = {
       id: 'gizmo-x-scale',
       name: 'Gizmo X-Scale',
       dimensions: [scaleHandleSize, scaleHandleSize, scaleHandleSize],
-      position: { x: axisLength, y: 0, z: 0 },
+      position: { x: this.axisLength, y: 0, z: 0 },
       rotation: [0, 0, 0],
       backgroundFill: {
         type: 'Color',
@@ -262,7 +264,7 @@ export class Gizmo {
       id: 'gizmo-y-scale',
       name: 'Gizmo Y-Scale',
       dimensions: [scaleHandleSize, scaleHandleSize, scaleHandleSize],
-      position: { x: 0, y: axisLength, z: 0 },
+      position: { x: 0, y: this.axisLength, z: 0 },
       rotation: [0, 0, 0],
       backgroundFill: {
         type: 'Color',
@@ -275,7 +277,7 @@ export class Gizmo {
       id: 'gizmo-z-scale',
       name: 'Gizmo Z-Scale',
       dimensions: [scaleHandleSize, scaleHandleSize, scaleHandleSize],
-      position: { x: 0, y: 0, z: axisLength },
+      position: { x: 0, y: 0, z: this.axisLength },
       rotation: [0, 0, 0],
       backgroundFill: {
         type: 'Color',
@@ -318,21 +320,21 @@ export class Gizmo {
     )
 
     const xScaleBody = this.physics.createStaticBox(
-      new this.physics.jolt.RVec3(axisLength, 0, 0),
+      new this.physics.jolt.RVec3(this.axisLength, 0, 0),
       new this.physics.jolt.Quat(0, 0, 0, 1),
       new this.physics.jolt.Vec3(scaleHandleSize, scaleHandleSize, scaleHandleSize)
     )
     this.bodies.push(xScaleBody)
 
     const yScaleBody = this.physics.createStaticBox(
-      new this.physics.jolt.RVec3(0, axisLength, 0),
+      new this.physics.jolt.RVec3(0, this.axisLength, 0),
       new this.physics.jolt.Quat(0, 0, 0, 1),
       new this.physics.jolt.Vec3(scaleHandleSize, scaleHandleSize, scaleHandleSize)
     )
     this.bodies.push(yScaleBody)
 
     const zScaleBody = this.physics.createStaticBox(
-      new this.physics.jolt.RVec3(0, 0, axisLength),
+      new this.physics.jolt.RVec3(0, 0, this.axisLength),
       new this.physics.jolt.Quat(0, 0, 0, 1),
       new this.physics.jolt.Vec3(scaleHandleSize, scaleHandleSize, scaleHandleSize)
     )
@@ -366,19 +368,27 @@ export class Gizmo {
       this.xRing.transform.position = this.target.position
       this.yRing.transform.position = this.target.position
       this.zRing.transform.position = this.target.position
-      this.xScale.transform.position = this.target.position
-      this.yScale.transform.position = this.target.position
-      this.zScale.transform.position = this.target.position
-
-      this.xAxis.transform.rotation = this.target.rotation
-      this.yAxis.transform.rotation = this.target.rotation
-      this.zAxis.transform.rotation = this.target.rotation
-      this.xRing.transform.rotation = this.target.rotation
-      this.yRing.transform.rotation = this.target.rotation
-      this.zRing.transform.rotation = this.target.rotation
-      this.xScale.transform.rotation = this.target.rotation
-      this.yScale.transform.rotation = this.target.rotation
-      this.zScale.transform.rotation = this.target.rotation
+      let xScalePos = vec3.fromValues(
+        this.target.position[0] + this.axisLength / 2,
+        this.target.position[1],
+        this.target.position[2]
+      )
+      let yScalePos = vec3.fromValues(
+        this.target.position[0],
+        this.target.position[1] + this.axisLength / 2,
+        this.target.position[2]
+      )
+      let zScalePos = vec3.fromValues(
+        this.target.position[0],
+        this.target.position[1],
+        this.target.position[2] + this.axisLength / 2
+      )
+      const xScalePosJ = new this.physics.jolt.RVec3(xScalePos[0], xScalePos[1], xScalePos[2])
+      const yScalePosJ = new this.physics.jolt.RVec3(yScalePos[0], yScalePos[1], yScalePos[2])
+      const zScalePosJ = new this.physics.jolt.RVec3(zScalePos[0], zScalePos[1], zScalePos[2])
+      this.xScale.transform.position = xScalePos // add this.axisLength
+      this.yScale.transform.position = yScalePos // add this.axisLength
+      this.zScale.transform.position = zScalePos // add this.axisLength
 
       this.xAxis.transform.updateUniformBuffer(queue, camera.windowSize)
       this.yAxis.transform.updateUniformBuffer(queue, camera.windowSize)
@@ -435,19 +445,19 @@ export class Gizmo {
       )
       this.physics.bodyInterface.SetPositionAndRotation(
         this.bodies[6].GetID(),
-        position,
+        xScalePosJ,
         rotation,
         this.physics.jolt.EActivation_Activate
       )
       this.physics.bodyInterface.SetPositionAndRotation(
         this.bodies[7].GetID(),
-        position,
+        yScalePosJ,
         rotation,
         this.physics.jolt.EActivation_Activate
       )
       this.physics.bodyInterface.SetPositionAndRotation(
         this.bodies[8].GetID(),
-        position,
+        zScalePosJ,
         rotation,
         this.physics.jolt.EActivation_Activate
       )

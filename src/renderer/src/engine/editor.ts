@@ -4618,61 +4618,61 @@ export class Editor {
       return
     }
 
-    if (this.draggingGizmoAxis && this.selectedCube3DId) {
-      const selectedCube = this.cubes3D.find((c) => c.id === this.selectedCube3DId)
-      if (selectedCube) {
-        const dx = (x - this.previousTopLeft.x) * 0.0001 // Adjust sensitivity
-        const dy = (y - this.previousTopLeft.y) * 0.0001 // Adjust sensitivity
+    // if (this.draggingGizmoAxis && this.selectedCube3DId) {
+    //   const selectedCube = this.cubes3D.find((c) => c.id === this.selectedCube3DId)
+    //   if (selectedCube) {
+    //     const dx = (x - this.previousTopLeft.x) * 0.0001 // Adjust sensitivity
+    //     const dy = (y - this.previousTopLeft.y) * 0.0001 // Adjust sensitivity
 
-        const camera = this.camera!
-        const forward = getCameraForward(camera)
-        const right = vec3.cross(vec3.create(), forward, camera.up)
-        vec3.normalize(right, right)
-        const up = vec3.clone(camera.up)
+    //     const camera = this.camera!
+    //     const forward = getCameraForward(camera)
+    //     const right = vec3.cross(vec3.create(), forward, camera.up)
+    //     vec3.normalize(right, right)
+    //     const up = vec3.clone(camera.up)
 
-        switch (this.draggingGizmoAxis) {
-          case 'x':
-            // Move along the camera's right vector
-            vec3.scaleAndAdd(
-              selectedCube.transform.position,
-              selectedCube.transform.position,
-              right,
-              dx
-            )
-            break
-          case 'y':
-            // Move along the camera's up vector
-            vec3.scaleAndAdd(
-              selectedCube.transform.position,
-              selectedCube.transform.position,
-              up,
-              dy
-            )
-            break
-          case 'z':
-            // Move along the camera's forward vector
-            vec3.scaleAndAdd(
-              selectedCube.transform.position,
-              selectedCube.transform.position,
-              forward,
-              dx
-            )
-            break
-        }
-        console.info(
-          'dragging gizmo axis',
-          this.draggingGizmoAxis,
-          this.selectedCube3DId,
-          selectedCube.transform.position,
-          dx,
-          dy
-        )
-        selectedCube.transform.updateUniformBuffer(queue, windowSize)
-        this.gizmo?.update(queue, camera, selectedCube.transform)
-      }
-      this.previousTopLeft = this.lastTopLeft
-      return
-    }
+    //     switch (this.draggingGizmoAxis) {
+    //       case 'x':
+    //         // Move along the camera's right vector
+    //         vec3.scaleAndAdd(
+    //           selectedCube.transform.position,
+    //           selectedCube.transform.position,
+    //           right,
+    //           dx
+    //         )
+    //         break
+    //       case 'y':
+    //         // Move along the camera's up vector
+    //         vec3.scaleAndAdd(
+    //           selectedCube.transform.position,
+    //           selectedCube.transform.position,
+    //           up,
+    //           dy
+    //         )
+    //         break
+    //       case 'z':
+    //         // Move along the camera's forward vector
+    //         vec3.scaleAndAdd(
+    //           selectedCube.transform.position,
+    //           selectedCube.transform.position,
+    //           forward,
+    //           dx
+    //         )
+    //         break
+    //     }
+    //     console.info(
+    //       'dragging gizmo axis',
+    //       this.draggingGizmoAxis,
+    //       this.selectedCube3DId,
+    //       selectedCube.transform.position,
+    //       dx,
+    //       dy
+    //     )
+    //     selectedCube.transform.updateUniformBuffer(queue, windowSize)
+    //     this.gizmo?.update(queue, camera, selectedCube.transform)
+    //   }
+    //   this.previousTopLeft = this.lastTopLeft
+    //   return
+    // }
 
     if (this.draggingGizmoRotation && this.selectedCube3DId) {
       const selectedCube = this.cubes3D.find((c) => c.id === this.selectedCube3DId)

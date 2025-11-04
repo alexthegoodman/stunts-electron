@@ -954,9 +954,9 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         <label className="block text-sm font-medium mb-2">Pan Horizontal (X)</label>
                         <input
                           type="range"
-                          min="-500"
-                          max="500"
-                          step="5"
+                          min="-200"
+                          max="200"
+                          step="2"
                           value={panX}
                           className="w-full"
                           onChange={(e) => {
@@ -979,9 +979,9 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         <label className="block text-sm font-medium mb-2">Pan Vertical (Y)</label>
                         <input
                           type="range"
-                          min="-500"
-                          max="500"
-                          step="5"
+                          min="-200"
+                          max="200"
+                          step="2"
                           value={panY}
                           className="w-full"
                           onChange={(e) => {
@@ -1178,6 +1178,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                       pipeline.isPlaying = !pipeline.isPlaying
                       editor.nodes = nodes
                       editor.edges = edges
+                      editor.gizmo.detach()
                       setIsPlaying(pipeline.isPlaying)
                     } else {
                       toast.error("Couldn't play!")
