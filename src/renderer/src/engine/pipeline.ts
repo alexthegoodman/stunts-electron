@@ -62,7 +62,7 @@ export class CanvasPipeline {
 
   // Character movement properties
   controlMovementDuringJump = true ///< If false the character cannot change movement direction in mid air
-  characterSpeed = 6.0
+  characterSpeed = 3.0
   jumpSpeed = 15.0
 
   enableCharacterInertia = false
