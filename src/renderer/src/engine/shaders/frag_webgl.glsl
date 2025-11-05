@@ -23,7 +23,7 @@ out vec4 fragColor;
 //     vec4 color;
 //     float intensity;
 // };
-uniform int u_point_light_count;
+// uniform int u_point_light_count;
 
 struct PointLight {
     vec3 position;
@@ -604,18 +604,22 @@ void main() {
 
     // fragColor = final_color;
 
+    // // Sun + Point lighting
     // Lighting calculations
     vec3 normalized_normal = normalize(v_normal);
-    vec3 ambient = u_ambient_color * 0.2; // General ambient light
+    // vec3 ambient = u_ambient_color * 0.2; // General ambient light
+
+    vec3 ambient = vec3(0.2, 0.2, 0.25);
+
     vec3 total_lighting = vec3(0.0);
 
     // Directional (Sun) Light
-    vec3 normalized_sun_direction = normalize(u_sun_direction);
+    vec3 normalized_sun_direction = normalize(vec3(0.1, 1.0, 0.1));
     float sun_diffuse = max(dot(normalized_normal, normalized_sun_direction), 0.0);
     total_lighting += u_sun_color * sun_diffuse * 0.7; // 0.7 is diffuse strength
 
     // Point Lights
-    for (int i = 0; i < u_point_light_count; i++) {
+    for (int i = 0; i < u_pointLights.count; i++) {
         vec3 light_direction = u_pointLights.lights[i].position - v_world_position;
         float distance = length(light_direction);
         light_direction = normalize(light_direction);
@@ -629,6 +633,8 @@ void main() {
     }
 
     final_color.rgb *= (ambient + total_lighting);
+
+    // final_color.rgb *= (ambient + total_lighting + vec3(0.1)); // just to see something
 
     fragColor = final_color;
 
