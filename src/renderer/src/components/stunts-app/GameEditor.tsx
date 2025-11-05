@@ -1354,8 +1354,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                                   <input
                                     type="range"
                                     min="0"
-                                    max="5"
-                                    step="0.1"
+                                    max="100"
+                                    step="1"
                                     value={light.intensity}
                                     onChange={(e) =>
                                       handleLightSettingChange(
