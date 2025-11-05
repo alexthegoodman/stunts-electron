@@ -36,7 +36,7 @@ import Jolt from 'jolt-physics/debug-wasm-compat'
 import { v4 as uuidv4 } from 'uuid'
 import { Polygon, PolygonConfig } from './polygon'
 import { TextRenderer, TextRendererConfig } from './text'
-import { Voxel, VoxelConfig } from './voxel'
+import { Voxel, VoxelConfig, VoxelType } from './voxel'
 import {
   AnimationData,
   AnimationProperty,
@@ -238,6 +238,7 @@ export class Editor {
   isVoxelPaintingMode: boolean = false
   currentVoxelSize: number = 0.1
   currentVoxelColor: [number, number, number, number] = [1.0, 1.0, 1.0, 1.0]
+  currentVoxelType: VoxelType = VoxelType.StandardVoxel
   selectedCube3DId: string | null
   gizmo: Gizmo | null = null
   draggingGizmoAxis: 'x' | 'y' | 'z' | null = null
@@ -1189,7 +1190,8 @@ export class Editor {
           },
           rotation: v.rotation,
           backgroundFill: v.backgroundFill,
-          layer: v.layer
+          layer: v.layer,
+          voxelType: v.voxelType ?? VoxelType.StandardVoxel
         }
 
         const restored_voxel = new Voxel(
@@ -5219,7 +5221,8 @@ export class Editor {
             // value: [0.2, 0.2, 0.8, 1.0] // Default blue color
             value: this.currentVoxelColor
           },
-          layer: 0
+          layer: 0,
+          voxelType: this.currentVoxelType ?? VoxelType.StandardVoxel
         }
 
         this.add_voxel(voxelConfig, new_id, this.currentSequenceData.id)

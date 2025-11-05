@@ -12,6 +12,13 @@ import {
   PolyfillQueue
 } from './polyfill'
 import { setupGradientBuffers } from './polygon'
+import Jolt from 'jolt-physics/debug-wasm-compat'
+import { Physics } from './physics'
+
+export enum VoxelType {
+  StandardVoxel = 'StandardVoxel',
+  WaterVoxel = 'WaterVoxel'
+}
 
 export interface VoxelConfig {
   id: string
@@ -21,6 +28,7 @@ export interface VoxelConfig {
   rotation: [number, number, number] // Euler angles [x, y, z]
   backgroundFill: BackgroundFill
   layer: number
+  voxelType: VoxelType
 }
 
 export interface SavedVoxelConfig {
@@ -31,6 +39,7 @@ export interface SavedVoxelConfig {
   rotation: [number, number, number]
   backgroundFill: BackgroundFill
   layer: number
+  voxelType: VoxelType
 }
 
 export class Voxel {
@@ -44,6 +53,7 @@ export class Voxel {
   layerSpacing: number
   hidden: boolean
   objectType: ObjectType
+  voxelType: VoxelType
 
   vertices: Vertex[]
   indices: number[]
@@ -81,6 +91,7 @@ export class Voxel {
     this.hidden = false
     this.objectType = ObjectType.Cube3D // Using Cube3D object type for now
     this.currentSequenceId = currentSequenceId
+    this.voxelType = config.voxelType
 
     // Generate cube geometry
     const [vertices, indices] = this.generateCubeGeometry()
@@ -422,7 +433,8 @@ export class Voxel {
       },
       rotation: this.rotation,
       backgroundFill: this.backgroundFill,
-      layer: this.layer
+      layer: this.layer,
+      voxelType: this.voxelType
     }
   }
 
@@ -439,5 +451,131 @@ export class Voxel {
     return (
       point.x >= x - w / 2 && point.x <= x + w / 2 && point.y >= y - h / 2 && point.y <= y + h / 2
     )
+  }
+}
+
+interface WaterVoxelConfig extends VoxelConfig {
+  buoyancy?: number
+  linearDrag?: number
+  angularDrag?: number
+  flowVelocity?: [number, number, number] // For moving fluids
+}
+
+export class WaterVoxel extends Voxel {
+  private physics: Physics
+  private jolt: typeof Jolt
+  private body: Jolt.Body
+  private bodyId: number
+  private buoyancy: number
+  private linearDrag: number
+  private angularDrag: number
+  private fluidVelocity: Jolt.Vec3
+  private surfaceNormal: Jolt.Vec3
+  private gravity: Jolt.Vec3
+  private objectsInside: Jolt.Body[] = []
+
+  constructor(
+    windowSize: WindowSize,
+    device: PolyfillDevice,
+    queue: PolyfillQueue,
+    bindGroupLayout: PolyfillBindGroupLayout,
+    groupBindGroupLayout: PolyfillBindGroupLayout,
+    camera: Camera,
+    config: WaterVoxelConfig,
+    currentSequenceId: string,
+    physics: Physics
+  ) {
+    super(
+      windowSize,
+      device,
+      queue,
+      bindGroupLayout,
+      groupBindGroupLayout,
+      camera,
+      config,
+      currentSequenceId
+    )
+
+    this.physics = physics
+    this.jolt = physics.jolt
+
+    // Fluid parameters
+    this.buoyancy = config.buoyancy ?? 1.1
+    this.linearDrag = config.linearDrag ?? 0.3
+    this.angularDrag = config.angularDrag ?? 0.05
+    this.fluidVelocity = new this.jolt.Vec3(...(config.flowVelocity ?? [0, 0, 0]))
+    this.surfaceNormal = new this.jolt.Vec3(0, 1, 0)
+    this.gravity = new this.jolt.Vec3(0, -9.8, 0)
+
+    // Create a Jolt sensor volume to represent the water
+    this.createSensorBody()
+    this.registerContactListener()
+  }
+
+  private createSensorBody() {
+    const { jolt, physics } = this
+    const position = new jolt.RVec3(this.position.x, this.position.y, this.position.z)
+    const rotation = jolt.Quat.prototype.sIdentity()
+    const halfExtent = new jolt.Vec3(
+      this.dimensions[0] / 2,
+      this.dimensions[1] / 2,
+      this.dimensions[2] / 2
+    )
+
+    const shape = new jolt.BoxShape(halfExtent, 0.05, null)
+    const creationSettings = new jolt.BodyCreationSettings(
+      shape,
+      position,
+      rotation,
+      jolt.EMotionType_Static,
+      physics.ObjectLayer_NonMoving.GetValue()
+    )
+
+    creationSettings.mIsSensor = true
+
+    this.body = physics.bodyInterface.CreateBody(creationSettings)
+    physics.bodyInterface.AddBody(this.body.GetID(), jolt.EActivation_Activate)
+    this.bodyId = this.body.GetID().GetIndexAndSequenceNumber()
+  }
+
+  private registerContactListener() {
+    this.physics.contactAddListeners.push(
+      (character, bodyID2, subShapeID2, contactPosition, contactNormal, settings) => {
+        const jolt = this.jolt
+        const bodyInterface = this.physics.bodyInterface
+        const id2 = bodyID2.GetIndexAndSequenceNumber()
+
+        if (id2 === this.bodyId) {
+          // const body = bodyInterface.GetBody(character.GetBodyID())
+          const bodyLockInterface = this.physics.physicsSystem.GetBodyLockInterface()
+          const body = bodyLockInterface.TryGetBody(character.GetBodyID())
+          this.objectsInside.push(body)
+        }
+      }
+    )
+  }
+
+  public update(deltaTime: number) {
+    const jolt = this.jolt
+    const surfacePosition = new jolt.RVec3(
+      this.position.x,
+      this.position.y + this.dimensions[1] / 2,
+      this.position.z
+    )
+
+    for (const body of this.objectsInside) {
+      body.ApplyBuoyancyImpulse(
+        surfacePosition,
+        this.surfaceNormal,
+        this.buoyancy,
+        this.linearDrag,
+        this.angularDrag,
+        this.fluidVelocity,
+        this.gravity,
+        deltaTime
+      )
+    }
+
+    this.objectsInside.length = 0
   }
 }

@@ -41,6 +41,7 @@ import { BrushConfig, BrushType, SavedBrushConfig } from '@renderer/engine/brush
 
 import { createEnemyNodes } from '../../gamelogic/nodes'
 import { GameNode } from './GameEditor'
+import { VoxelType } from '@renderer/engine/voxel'
 
 export const ToolGrid = ({
   editorRef,
@@ -69,6 +70,7 @@ export const ToolGrid = ({
 }) => {
   const { t } = useTranslation('common')
 
+  const [voxelType, setVoxelType] = useState<VoxelType>(VoxelType.StandardVoxel)
   const [voxelSize, setVoxelSize] = useState<number>(1) // Default voxel size
   const [voxelColor, setVoxelColor] = useState<string>('#FFFFFF') // Default voxel color (white)
   const [isVoxelPainting, setVoxelPainting] = useState(false)
@@ -1563,6 +1565,12 @@ export const ToolGrid = ({
 
   useEffect(() => {
     if (editorRef.current) {
+      editorRef.current.currentVoxelType = voxelType
+    }
+  }, [voxelType])
+
+  useEffect(() => {
+    if (editorRef.current) {
       const hexColor = voxelColor
       const r = parseInt(hexColor.slice(1, 3), 16) / 255.0
       const g = parseInt(hexColor.slice(3, 5), 16) / 255.0
@@ -2005,10 +2013,11 @@ export const ToolGrid = ({
             />
           )}
           <OptionButton
+            redHot={isVoxelPainting}
             style={{}}
-            label={t('Voxel Paint')}
+            label={isVoxelPainting ? 'Cancel Painting' : 'Paint Voxels'}
             icon="cube"
-            aria-label="Enable voxel painting mode"
+            aria-label={isVoxelPainting ? 'Disable Paint Voxels' : 'Enable Paint Voxels'}
             callback={() => {
               const newVoxelPaintingState = !isVoxelPainting
               setVoxelPainting(newVoxelPaintingState)
@@ -2017,26 +2026,7 @@ export const ToolGrid = ({
               }
             }}
           />
-          {isVoxelPainting && (
-            <div className="flex flex-col gap-2 p-2 border border-gray-700 rounded-md">
-              <label className="text-white text-xs">Voxel Size</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={voxelSize}
-                onChange={(e) => setVoxelSize(parseFloat(e.target.value))}
-                className="w-24 p-1 text-sm bg-gray-800 text-white border border-gray-600 rounded"
-              />
-              <label className="text-white text-xs">Voxel Color</label>
-              <input
-                type="color"
-                value={voxelColor}
-                onChange={(e) => setVoxelColor(e.target.value)}
-                className="w-24 h-8 p-0 border-none rounded overflow-hidden cursor-pointer"
-              />
-            </div>
-          )}
+
           {options.includes('mockup3d') && (
             <OptionButton
               style={{}}
@@ -2189,6 +2179,37 @@ export const ToolGrid = ({
           </>
         )}
       </div>
+
+      {isVoxelPainting && (
+        <div className="flex flex-col gap-2 p-2 border border-gray-700 rounded-md">
+          <label className="text-white text-xs">Voxel Type</label>
+          <select
+            defaultValue={VoxelType.StandardVoxel}
+            onChange={(e) => {
+              setVoxelType(e.target.value as VoxelType)
+            }}
+          >
+            <option value={VoxelType.StandardVoxel}>Standard</option>
+            <option value={VoxelType.WaterVoxel}>Water</option>
+          </select>
+          <label className="text-white text-xs">Voxel Size</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0.01"
+            value={voxelSize}
+            onChange={(e) => setVoxelSize(parseFloat(e.target.value))}
+            className="w-24 p-1 text-sm bg-gray-800 text-white border border-gray-600 rounded"
+          />
+          <label className="text-white text-xs">Voxel Color</label>
+          <input
+            type="color"
+            value={voxelColor}
+            onChange={(e) => setVoxelColor(e.target.value)}
+            className="w-24 h-8 p-0 border-none rounded overflow-hidden cursor-pointer"
+          />
+        </div>
+      )}
 
       <SourceSelectionModal
         isOpen={isSourceModalOpen}

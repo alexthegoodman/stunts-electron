@@ -1068,7 +1068,7 @@ export class CanvasPipeline {
               }
             }
 
-            editor.physics.step(deltaTime) // TODO: get actual deltaTime between frames
+            editor.physics.step(editor, deltaTime) // TODO: get actual deltaTime between frames
           }
         }
       }

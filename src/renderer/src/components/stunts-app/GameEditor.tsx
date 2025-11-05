@@ -1730,17 +1730,17 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                       editor.nodes = nodes
                       editor.edges = edges
 
-                      // hardcoded for now?
+                      // hardcoded for now - turning off sometimes to see 3rd person
                       if (pipeline.isPlaying) {
                         editor.gizmo.detach()
                         editor.gizmo.update(editor.gpuResources.queue, editor.camera, null)
 
-                        const firstPersonCam = new FirstPersonCamera(editor.camera.windowSize)
-                        editor.setCamera(firstPersonCam)
+                        // const firstPersonCam = new FirstPersonCamera(editor.camera.windowSize)
+                        // editor.setCamera(firstPersonCam)
                       } else {
-                        const editorCam = new Camera3D(editor.camera.windowSize)
-                        editor.setCamera(editorCam)
-                        editor.camera?.setPosition(15, 15, 15)
+                        // const editorCam = new Camera3D(editor.camera.windowSize)
+                        // editor.setCamera(editorCam)
+                        // editor.camera?.setPosition(15, 15, 15)
                       }
 
                       setIsPlaying(pipeline.isPlaying)

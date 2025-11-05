@@ -1,5 +1,7 @@
 import Jolt from 'jolt-physics/debug-wasm-compat'
 import { degreesToRadians } from './transform'
+import { Editor } from './editor'
+import { VoxelType, WaterVoxel } from './voxel'
 
 export class Physics {
   jolt: typeof Jolt
@@ -479,8 +481,14 @@ export class Physics {
     return character
   }
 
-  public step(deltaTime: number): void {
+  public step(editor: Editor, deltaTime: number): void {
     this.joltInterface.Step(deltaTime, 1)
+
+    editor.voxels
+      .filter((v) => v.voxelType === VoxelType.WaterVoxel)
+      .forEach((wv) => {
+        ;(wv as WaterVoxel).update(deltaTime)
+      })
   }
 
   public getBodyPositionAndRotation(body: Jolt.Body): {
