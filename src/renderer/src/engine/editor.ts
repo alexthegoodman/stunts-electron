@@ -28,7 +28,7 @@ import { Cube3D, Cube3DConfig } from './cube3d'
 import { Sphere3D, Sphere3DConfig } from './sphere3d'
 import { Mockup3D, Mockup3DConfig } from './mockup3d'
 import { processVideoZoom } from './state/animations/zoom'
-import { Model3D, Model3DConfig } from './model3d'
+import { Model3D, Model3DConfig, PointLight, PointLight3DConfig } from './model3d'
 import { Physics } from './physics'
 import Jolt from 'jolt-physics/debug-wasm-compat'
 // import * as fontkit from "fontkit";
@@ -178,6 +178,10 @@ export type VideoItemClickHandler = (video_id: string) => void | null
 export type Cube3DClickHandler = (cube_id: string, cube_config: Cube3DConfig) => void | null
 export type Sphere3DClickHandler = (sphere_id: string, sphere_config: Sphere3DConfig) => void | null
 export type Mockup3DClickHandler = (mockup_id: string, mockup_config: Mockup3DConfig) => void | null
+export type PointLightClickHandler = (
+  light_id: string,
+  light_config: PointLight3DConfig
+) => void | null
 export type VoxelClickHandler = (voxel_id: string, voxel_config: VoxelConfig) => void | null
 export type OnMouseUp = (id: string, point: Point) => [Sequence, string[]] | null
 export type OnHandleMouseUp = (
@@ -226,6 +230,7 @@ export class Editor {
   spheres3D: Sphere3D[] = []
   mockups3D: Mockup3D[] = []
   models3D: Model3D[] = []
+  pointLights: PointLight[] = []
   voxels: Voxel[] = []
   isVoxelPaintingMode: boolean = false
   currentVoxelSize: number = 0.1
@@ -266,6 +271,7 @@ export class Editor {
   handleCube3DClick: Cube3DClickHandler | null
   handleSphere3DClick: Sphere3DClickHandler | null
   handleMockup3DClick: Mockup3DClickHandler | null
+  handlePointLightClick: PointLightClickHandler | null
   scaleMultiplier: number = 1.0
   onVoxelAdded: (voxelId: string, voxelData: VoxelConfig) => void = (voxelId, voxelData) => {}
 
@@ -307,7 +313,9 @@ export class Editor {
   sunDirectionBuffer: PolyfillBuffer | null = null
   sunColorBuffer: PolyfillBuffer | null = null
   ambientColorBindGroup: PolyfillBindGroup | null = null
-  ambientColorBuffer: PolyfillBuffer | null = null
+  ambientColorBuffer: PolyfillBuffer | null
+  pointLightsBindGroup: PolyfillBindGroup | null
+  pointLightsBuffer: PolyfillBuffer | null
 
   // Events
   onMouseUp: OnMouseUp | null
@@ -378,6 +386,7 @@ export class Editor {
     this.handleCube3DClick = null
     this.handleSphere3DClick = null
     this.handleMockup3DClick = null
+    this.handlePointLightClick = null
     // this.handleVoxelClick = null
     this.gpuResources = null
     this.renderPipeline = null
@@ -445,6 +454,7 @@ export class Editor {
     this.generationChoreographed = true
     this.generationFade = true
     this.models3D = []
+    this.pointLights = []
     this.currentVoxelSize = 1
     this.currentVoxelColor = [1.0, 1.0, 1.0, 1.0]
 
@@ -3094,6 +3104,21 @@ export class Editor {
     )
 
     this.spheres3D.push(sphere)
+  }
+
+  add_point_light(config: PointLight3DConfig, id: string, currentSequenceId: string): void {
+    if (
+      !this.gpuResources ||
+      !this.camera ||
+      !this.modelBindGroupLayout ||
+      !this.groupBindGroupLayout
+    ) {
+      return
+    }
+
+    const light = new PointLight(config)
+
+    this.pointLights.push(light)
   }
 
   add_voxel(voxel_config: VoxelConfig, new_id: string, selected_sequence_id: string) {

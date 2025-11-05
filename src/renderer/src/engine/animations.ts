@@ -7,7 +7,7 @@ import { SavedBrushConfig } from './brush'
 import { SavedCube3DConfig } from './cube3d'
 import { SavedSphere3DConfig } from './sphere3d'
 import { SavedMockup3DConfig } from './mockup3d'
-import { SavedModel3DConfig } from './model3d'
+import { SavedModel3DConfig, SavedPointLight3DConfig } from './model3d'
 import { ShaderThemeConfig } from './shader_themes'
 import { CameraAnimation } from './3dcamera'
 import { Editor } from './editor'
@@ -80,7 +80,8 @@ export enum ObjectType {
   Mockup3D = 'Mockup3D',
   Model3D = 'Model3D',
   Voxel = 'Voxel',
-  Torus3D = 'Torus3D'
+  Torus3D = 'Torus3D',
+  PointLight = 'PointLight'
 }
 
 export enum EasingType {
@@ -127,6 +128,7 @@ export interface Sequence {
   activeSpheres3D?: SavedSphere3DConfig[]
   activeMockups3D?: SavedMockup3DConfig[]
   activeModels3D?: SavedModel3DConfig[]
+  activePointLights?: SavedPointLight3DConfig[]
   activeVoxels?: SavedVoxelConfig[]
 }
 
@@ -437,6 +439,11 @@ export function findObjectType(lastSavedState: SavedState, objectId: string): Ob
   // Check active Voxels
   if (lastSavedState.sequences.some((s) => s.activeVoxels?.some((av) => av.id === objectId))) {
     return ObjectType.Voxel
+  }
+
+  // Check active point lights
+  if (lastSavedState.sequences.some((s) => s.activePointLights?.some((av) => av.id === objectId))) {
+    return ObjectType.PointLight
   }
 
   return null

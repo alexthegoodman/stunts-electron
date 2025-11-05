@@ -19,7 +19,7 @@ import { SavedBrushConfig } from './brush'
 import { SavedCube3DConfig } from './cube3d'
 import { SavedSphere3DConfig } from './sphere3d'
 import { SavedMockup3DConfig } from './mockup3d'
-import { SavedModel3DConfig } from './model3d'
+import { SavedModel3DConfig, SavedPointLight3DConfig } from './model3d'
 import { SavedVoxelConfig } from './voxel'
 import { CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Editor } from './editor'
 import { getRandomNumber, InputValue, rgbToWgpu, wgpuToHuman } from '../engine/editor/helpers'
@@ -371,6 +371,40 @@ export default class EditorState {
           s.activeModels3D = []
         }
         s.activeModels3D.push(savable_model)
+
+        if (this.supportsMotionPaths && s.polygonMotionPaths) {
+          s.polygonMotionPaths.push(new_motion_path)
+        }
+      }
+    })
+
+    let sequences = saved_state.sequences
+
+    await saveSequencesData(sequences, this.saveTarget)
+
+    this.savedState = saved_state
+  }
+
+  async add_saved_point_light(
+    selected_sequence_id: string,
+    savable_light: SavedPointLight3DConfig
+  ) {
+    let new_motion_path = save_default_keyframes(
+      this,
+      savable_light.id,
+      ObjectType.PointLight,
+      savable_light.position,
+      20000
+    )
+
+    let saved_state = this.savedState
+
+    saved_state.sequences.forEach((s) => {
+      if (s.id == selected_sequence_id) {
+        if (!s.activePointLights) {
+          s.activePointLights = []
+        }
+        s.activePointLights.push(savable_light)
 
         if (this.supportsMotionPaths && s.polygonMotionPaths) {
           s.polygonMotionPaths.push(new_motion_path)

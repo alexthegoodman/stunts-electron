@@ -7,8 +7,18 @@ in vec4 v_color;
 in vec2 v_gradient_coords;
 flat in float v_object_type;
 in vec3 v_normal;
+in vec3 v_world_position;
 
 out vec4 fragColor;
+
+struct PointLight {
+    vec3 position;
+    vec4 color;
+    float intensity;
+};
+
+uniform PointLight u_point_lights[4];  // Assuming a maximum of 4 point lights for now
+uniform int u_point_light_count;
 
 // Bind group 1: Texture sampler
 uniform sampler2D bindGroup1_1;
@@ -571,16 +581,31 @@ void main() {
 
     // fragColor = final_color;
 
-    // Simple sun lighting with ambient
+    // Lighting calculations
     vec3 normalized_normal = normalize(v_normal);
-    vec3 normalized_sun_direction = normalize(vec3(0.1, 1.0, 0.1));
-    float diffuse = max(dot(normalized_normal, normalized_sun_direction), 0.0);
+    vec3 ambient = u_ambient_color * 0.2; // General ambient light
+    vec3 total_lighting = vec3(0.0);
 
-    // Add ambient to prevent completely black shadows
-    float ambient = 0.3;  // Adjust this value (0.2-0.4 works well)
-    float lighting = ambient + diffuse * 0.7;  // diffuse strength
+    // Directional (Sun) Light
+    vec3 normalized_sun_direction = normalize(u_sun_direction);
+    float sun_diffuse = max(dot(normalized_normal, normalized_sun_direction), 0.0);
+    total_lighting += u_sun_color * sun_diffuse * 0.7; // 0.7 is diffuse strength
 
-    final_color.rgb *= lighting;
+    // Point Lights
+    for (int i = 0; i < u_point_light_count; i++) {
+        vec3 light_direction = u_point_lights[i].position - v_world_position;
+        float distance = length(light_direction);
+        light_direction = normalize(light_direction);
+
+        float diffuse = max(dot(normalized_normal, light_direction), 0.0);
+
+        // Attenuation
+        float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
+
+        total_lighting += u_point_lights[i].color.rgb * u_point_lights[i].intensity * diffuse * attenuation;
+    }
+
+    final_color.rgb *= (ambient + total_lighting);
 
     fragColor = final_color;
 

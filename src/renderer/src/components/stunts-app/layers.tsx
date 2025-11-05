@@ -8,7 +8,7 @@ import { BrushConfig } from '../../engine/brush'
 import { Cube3DConfig } from '../../engine/cube3d'
 import { Sphere3DConfig } from '../../engine/sphere3d'
 import { Mockup3DConfig } from '../../engine/mockup3d'
-import { Model3DConfig } from '../../engine/model3d'
+import { Model3DConfig, PointLight3DConfig } from '../../engine/model3d'
 import { ObjectType } from '../../engine/animations'
 import { CreateIcon } from './icon'
 import { Editor } from '../../engine/editor'
@@ -76,6 +76,12 @@ export const LayerFromConfig = {
     instance_id: config.id,
     instance_name: config.name,
     instance_kind: ObjectType.Model3D,
+    initial_layer_index: config.layer
+  }),
+  fromPointLight3DConfig: (config: PointLight3DConfig): Layer => ({
+    instance_id: config.id,
+    instance_name: config.name,
+    instance_kind: ObjectType.PointLight,
     initial_layer_index: config.layer
   })
 }
@@ -226,6 +232,13 @@ export const LayerPanel: React.FC<{
         new_layers.push(new_layer)
       }
     })
+    editor.pointLights.forEach((light) => {
+      if (!light.hidden) {
+        let light_config: PointLight3DConfig = light.toConfig()
+        let new_layer: Layer = LayerFromConfig.fromPointLight3DConfig(light_config)
+        new_layers.push(new_layer)
+      }
+    })
 
     // sort layers by layer_index property, lower values should come first in the list
     // but reverse the order because the UI outputs the first one first, thus it displays last
@@ -281,6 +294,11 @@ export const LayerPanel: React.FC<{
       case ObjectType.Mockup3D:
         editor.mockups3D = editor.mockups3D.filter((v) => v.id !== id)
         sequence.activeMockups3D = sequence.activeMockups3D?.filter((v) => v.id !== id)
+        break
+
+      case ObjectType.PointLight:
+        editor.pointLights = editor.pointLights.filter((v) => v.id !== id)
+        sequence.activePointLights = sequence.activePointLights?.filter((v) => v.id !== id)
         break
 
       default:
@@ -512,6 +530,17 @@ export const LayerPanel: React.FC<{
       }
     })
 
+    editor.pointLights.forEach((light) => {
+      if (!light.hidden) {
+        let index = layers.findIndex((l) => l.instance_id === light.id)
+        if (index > -1) {
+          const positiveLayer = layers.length - 1 - index
+          light.updateLayer(positiveLayer)
+          sequence.activePointLights.find((l) => l.id === light.id)!.layer = positiveLayer
+        }
+      }
+    })
+
     await saveSequencesData(editorState.savedState.sequences, editor.target)
 
     update_layer_list()
@@ -532,6 +561,8 @@ export const LayerPanel: React.FC<{
                 return 'image'
               case ObjectType.VideoItem:
                 return 'video'
+              case ObjectType.PointLight:
+                return 'lightbulb'
               default:
                 return 'x' // Default icon
             }

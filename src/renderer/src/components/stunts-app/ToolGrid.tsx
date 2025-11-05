@@ -26,7 +26,7 @@ import { TextRendererConfig } from '../../engine/text'
 import { Cube3DConfig } from '../../engine/cube3d'
 import { Sphere3DConfig } from '../../engine/sphere3d'
 import { Mockup3DConfig } from '../../engine/mockup3d'
-import { Model3DConfig } from '../../engine/model3d'
+import { Model3DConfig, PointLight3DConfig } from '../../engine/model3d'
 import { PageSequence } from '../../engine/data'
 import { Layer, LayerFromConfig } from './layers'
 import { StVideoConfig } from '../../engine/video'
@@ -1221,11 +1221,83 @@ export const ToolGrid = ({
         setUserMessage('')
       }
     },
-    [authToken, setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
-  )
-
-  const on_add_player_character = useCallback(
-    async (sequence_id: string) => {
+        [authToken, setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
+      )
+    
+      const on_add_point_light = useCallback(
+        async (sequence_id: string) => {
+          let editor = editorRef.current
+          let editor_state = editorStateRef.current
+    
+          if (!editor || !editor_state) {
+            return
+          }
+    
+          if (!editor.settings) {
+            console.error('Editor settings are not defined.')
+            return
+          }
+    
+          try {
+            const new_light_id = uuidv4()
+    
+            const lightConfig: PointLight3DConfig = {
+              id: new_light_id,
+              name: 'Point Light',
+              position: { x: 0, y: 5, z: -5 },
+              color: [1.0, 0.7, 0.2], // Warm white
+              intensity: 20.0,
+              layer: layers.length
+            }
+    
+            // Add the light to the editor
+            editor.add_point_light(lightConfig, new_light_id, sequence_id)
+    
+            // Save light to state
+            await editor_state.add_saved_point_light(sequence_id, lightConfig)
+    
+            console.info('Saved point light!')
+    
+            let saved_state = editor_state.savedState
+            let updated_sequence = saved_state.sequences.find((s) => s.id == sequence_id)
+    
+            let sequence_cloned = updated_sequence
+    
+            if (!sequence_cloned) {
+              return
+            }
+    
+            if (set_sequences) {
+              set_sequences(saved_state.sequences)
+            }
+    
+            editor.currentSequenceData = sequence_cloned
+            editor.updateMotionPaths(sequence_cloned)
+    
+            // Add layer for the light
+            editor.pointLights.forEach((light) => {
+              if (!light.hidden && light.id === lightConfig.id) {
+                let light_config: PointLight3DConfig = light.toConfig()
+                let new_layer: Layer = LayerFromConfig.fromPointLight3DConfig(light_config)
+                layers.push(new_layer)
+              }
+            })
+    
+            setLayers(layers)
+    
+            update()
+    
+            console.info('PointLight added!')
+            toast.success('Point light added successfully!')
+          } catch (error: any) {
+            console.error('add point light error', error)
+            toast.error(error.message || 'An error occurred')
+          }
+        },
+        [set_sequences, setLayers, layers]
+      )
+    
+      const on_add_player_character = useCallback(    async (sequence_id: string) => {
       let editor = editorRef.current
       let editor_state = editorStateRef.current
 
@@ -1755,6 +1827,24 @@ export const ToolGrid = ({
                 </div>
               </Dialog>
             </>
+          )}
+        </div>
+
+        <span className="block mb-2 text-white text-xs">Lights</span>
+        <div className="flex flex-row flex-wrap gap-2 mb-4">
+          {options.includes('pointLight') && (
+            <OptionButton
+              style={{}}
+              label={t('Add Point Light')}
+              icon="lightbulb"
+              aria-label="Add a point light to the scene"
+              callback={() => {
+                if (!currentSequenceId) {
+                  return
+                }
+                on_add_point_light(currentSequenceId)
+              }}
+            />
           )}
         </div>
 

@@ -14,6 +14,7 @@ out vec4 v_color;
 out vec2 v_gradient_coords;
 flat out float v_object_type;
 out vec3 v_normal;
+out vec3 v_world_position;
 
 uniform mat4 bindGroup0_0; // u_camera_view_proj
 uniform vec2 bindGroup0_1; // u_window_size (changed from mat4 to vec2)
@@ -26,6 +27,7 @@ void main() {
     
     // Apply model and group transforms
     vec4 world_pos = bindGroup1_0 * group_transform * vec4(a_position, 1.0);
+    v_world_position = world_pos.xyz;
     v_normal = normalize(mat3(bindGroup1_0 * group_transform) * a_normal);
 
     // Apply camera view-projection matrix

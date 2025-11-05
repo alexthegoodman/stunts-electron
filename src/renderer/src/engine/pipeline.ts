@@ -415,6 +415,47 @@ export class CanvasPipeline {
       ]
     })
 
+    // Create point lights buffer and bind group
+    const pointLightsBufferSize = 4 * (3 * 4 + 4 * 4 + 4) + 4 // 4 lights * (vec3 pos + vec4 color + float intensity) + int count
+    const pointLightsBuffer = gpuResources.device!.createBuffer(
+      {
+        label: 'Point Lights Buffer',
+        size: pointLightsBufferSize,
+        usage:
+          process.env.NODE_ENV === 'test' ? 0 : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
+      },
+      'UBO'
+    )
+    pointLightsBuffer.unmap()
+    const pointLightsData = new Float32Array(pointLightsBufferSize / 4) // Initialize with zeros
+    gpuResources.queue!.writeBuffer(pointLightsBuffer, 0, pointLightsData)
+
+    const pointLightsBindGroupLayout = gpuResources.device!.createBindGroupLayout({
+      entries: [
+        {
+          binding: 0,
+          visibility: GPUShaderStage.FRAGMENT,
+          buffer: {
+            type: 'uniform'
+          }
+        }
+      ]
+    })
+
+    const pointLightsBindGroup = gpuResources.device!.createBindGroup({
+      layout: pointLightsBindGroupLayout,
+      entries: [
+        {
+          binding: 0,
+          groupIndex: 8, // Assign a new bind group index
+          resource: {
+            pbuffer: pointLightsBuffer
+          }
+        }
+      ]
+    })
+
     // gpuResources.queue!.writeBuffer(windowSizeBuffer, 0, windowSizeData);
 
     // Create pipeline layout
@@ -428,7 +469,8 @@ export class CanvasPipeline {
         sceneShaderBindGroupLayout,
         sunDirectionBindGroupLayout,
         sunColorBindGroupLayout,
-        ambientColorBindGroupLayout
+        ambientColorBindGroupLayout,
+        pointLightsBindGroupLayout
       ]
     })
 
@@ -510,6 +552,8 @@ export class CanvasPipeline {
     editor.sunColorBuffer = sunColorBuffer
     editor.ambientColorBindGroup = ambientColorBindGroup
     editor.ambientColorBuffer = ambientColorBuffer
+    editor.pointLightsBindGroup = pointLightsBindGroup
+    editor.pointLightsBuffer = pointLightsBuffer
 
     editor.renderPipeline = renderPipeline
 
@@ -1107,6 +1151,35 @@ export class CanvasPipeline {
       editor.ambientColorBindGroup.bindWebGLBindGroup(gl)
     } else {
       console.error("Couldn't get ambient color group")
+      return
+    }
+
+    // Update and bind point lights uniform buffer
+    if (editor.pointLightsBindGroup && editor.pointLightsBuffer) {
+      const pointLightsData = new Float32Array(4 * 8 + 4) // 4 lights * (vec3 pos + vec4 color + float intensity) + int count
+      let offset = 0
+      for (let i = 0; i < Math.min(editor.pointLights.length, 4); i++) {
+        const light = editor.pointLights[i]
+        pointLightsData[offset++] = light.position.x
+        pointLightsData[offset++] = light.position.y
+        pointLightsData[offset++] = light.position.z
+        pointLightsData[offset++] = 0 // Padding for vec4 alignment
+        pointLightsData[offset++] = light.color[0]
+        pointLightsData[offset++] = light.color[1]
+        pointLightsData[offset++] = light.color[2]
+        // pointLightsData[offset++] = light.color[3];
+        pointLightsData[offset++] = 1.0
+        pointLightsData[offset++] = light.intensity
+        pointLightsData[offset++] = 0 // Padding
+        pointLightsData[offset++] = 0 // Padding
+        pointLightsData[offset++] = 0 // Padding
+      }
+      pointLightsData[offset++] = editor.pointLights.length // Number of active lights
+
+      queue.writeBuffer(editor.pointLightsBuffer, 0, pointLightsData)
+      editor.pointLightsBindGroup.bindWebGLBindGroup(gl)
+    } else {
+      console.error("Couldn't get point lights group or buffer")
       return
     }
 
