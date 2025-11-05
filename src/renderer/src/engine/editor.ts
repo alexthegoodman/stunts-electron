@@ -196,6 +196,8 @@ export enum ControlMode {
   Pan
 }
 
+export type OnVoxelRemoved = (voxelId: string) => void
+
 export interface windowSize {
   width: number
   height: number
@@ -274,6 +276,7 @@ export class Editor {
   handlePointLightClick: PointLightClickHandler | null
   scaleMultiplier: number = 1.0
   onVoxelAdded: (voxelId: string, voxelData: VoxelConfig) => void = (voxelId, voxelData) => {}
+  onVoxelRemoved: OnVoxelRemoved = (voxelId) => {}
 
   window: Window | null
   camera: Camera3D | null
@@ -4606,7 +4609,8 @@ export class Editor {
 
   handle_mouse_down(
     positionX: number, // mouse x
-    positionY: number // mouse y
+    positionY: number, // mouse y
+    event: MouseEvent // Add MouseEvent to get button information
   ) {
     let camera = this.camera
 
@@ -4727,7 +4731,6 @@ export class Editor {
 
     return
   }
-
   handle_mouse_move(
     // windowSize: WindowSize,
     // device: Polyfilldevice!,
@@ -5082,7 +5085,7 @@ export class Editor {
     this.previousTopLeft = this.lastTopLeft
   }
 
-  handle_mouse_up() {
+  handle_mouse_up(event) {
     // let action_edit = None;
 
     let camera = this.camera
@@ -5115,6 +5118,49 @@ export class Editor {
 
     // Handle voxel painting end on mouse up
     // Voxel Painting Logic
+    // Voxel Removal Logic (Right-click)
+    if (event.button === 2 && this.isVoxelPaintingMode && this.currentSequenceData) {
+      if (this.lastRay && this.physics) {
+        const direction = new this.physics.jolt.Vec3(
+          this.lastRay.direction[0],
+          this.lastRay.direction[1],
+          this.lastRay.direction[2]
+        )
+        direction.Mul(1000)
+
+        const hit = this.physics.raycast(
+          new this.physics.jolt.RVec3(
+            this.lastRay.origin[0],
+            this.lastRay.origin[1],
+            this.lastRay.origin[2]
+          ),
+          direction
+        )
+
+        if (hit) {
+          const bodyId = hit.bodyId.GetIndexAndSequenceNumber()
+          const voxelToRemoveIndex = this.voxels.findIndex((voxel) => {
+            const body = this.bodies.get(voxel.id)
+            return body && body.GetID().GetIndexAndSequenceNumber() === bodyId
+          })
+
+          if (voxelToRemoveIndex !== -1) {
+            const removedVoxel = this.voxels[voxelToRemoveIndex]
+            this.voxels.splice(voxelToRemoveIndex, 1) // Remove from rendering list
+            // this.physics.removeBody(this.bodies.get(removedVoxel.id)!) // Remove from physics
+            // this.physics.jolt.destroy()// ?
+            this.bodies.delete(removedVoxel.id) // Remove from map
+
+            console.info('Voxel removed:', removedVoxel.id)
+            this.onVoxelRemoved(removedVoxel.id) // Notify GameEditor.tsx
+            // return // Consume the right-click event
+          }
+        }
+
+        return // right click can return usually here
+      }
+    }
+
     // this painting logic allows from one at a time painting, which is prefered for voxel work as compared to continuous painting
     if (this.isVoxelPaintingMode && this.currentSequenceData) {
       if (this.lastRay && this.physics) {

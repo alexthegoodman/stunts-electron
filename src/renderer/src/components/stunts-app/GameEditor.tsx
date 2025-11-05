@@ -624,19 +624,19 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     canvas.addEventListener('pointerdown', (event) => {
       canvas.setPointerCapture(event.pointerId)
       const coords = getCanvasCoordinates(canvas, event)
-      editor.handle_mouse_down(coords.x, coords.y)
+      editor.handle_mouse_down(coords.x, coords.y, event) // Pass the event object
     })
 
     canvas.addEventListener('pointerup', (event) => {
       console.info('handle mouse up')
       canvas.releasePointerCapture(event.pointerId)
-      editor.handle_mouse_up()
+      editor.handle_mouse_up(event)
     })
 
     canvas.addEventListener('pointercancel', (event) => {
       console.info('pointer cancelled - treating as mouse up')
       canvas.releasePointerCapture(event.pointerId)
-      editor.handle_mouse_up()
+      editor.handle_mouse_up(event)
     })
   }
 
@@ -701,6 +701,27 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     })
 
     console.info('handle_voxel_added', activeVoxel.id)
+
+    saveSequencesData(editor_state.savedState.sequences, SaveTarget.Games)
+  }
+
+  let handle_voxel_removed = (voxelId: string) => {
+    let editor = editorRef.current
+    let editor_state = editorStateRef.current
+
+    if (!editor || !editor_state) {
+      return
+    }
+
+    editor_state.savedState.sequences.forEach((s) => {
+      if (s.id === current_sequence_id) {
+        if (s.activeVoxels) {
+          s.activeVoxels = s.activeVoxels.filter((voxel) => voxel.id !== voxelId)
+        }
+      }
+    })
+
+    console.info('handle_voxel_removed', voxelId)
 
     saveSequencesData(editor_state.savedState.sequences, SaveTarget.Games)
   }
@@ -870,6 +891,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       editor.handleTextClick = handle_text_click
       editor.handleImageClick = handle_image_click
       editor.onVoxelAdded = handle_voxel_added
+      editor.onVoxelRemoved = handle_voxel_removed
 
       // The rest of the on_open_sequence logic for setting up the scene
       let background_fill = {
