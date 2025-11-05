@@ -477,21 +477,6 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     const light = editor.pointLights.find((l) => l.id === lightId)
     if (!light) return
 
-    setLightSettings((prev) => {
-      const newSettings = { ...prev }
-      const lightConfig = { ...newSettings[lightId] }
-
-      if (property.startsWith('position')) {
-        const axis = property.split('.')[1] as 'x' | 'y' | 'z'
-        lightConfig.position[axis] = parseFloat(value)
-      } else {
-        ;(lightConfig as any)[property] = value
-      }
-
-      newSettings[lightId] = lightConfig
-      return newSettings
-    })
-
     if (property.startsWith('position')) {
       const axis = property.split('.')[1] as 'x' | 'y' | 'z'
       light.position[axis] = parseFloat(value)
@@ -499,7 +484,12 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       light.intensity = value
     }
 
-    // editor.draw()
+    setLightSettings((prev) => ({
+      ...prev,
+      [lightId]: light.toConfig()
+    }))
+
+    editor.initializePointLights()
     setRefreshUINow(Date.now())
   }
 
@@ -1347,64 +1337,84 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                     </div>
                     <div className="mt-4">
                       <h6 className="text-md font-semibold mb-2">Point Lights</h6>
-                      {editorRef.current &&
-                        editorRef.current.pointLights.map((light) => (
-                          <div key={light.id} className="mb-4 p-2 border border-gray-600 rounded">
-                            <p className="text-sm font-semibold">{light.name}</p>
-                            <div className="grid grid-cols-2 gap-2 mt-2">
-                              <div>
-                                <label className="block text-xs">Intensity</label>
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max="5"
-                                  step="0.1"
-                                  value={light.intensity}
-                                  onChange={(e) =>
-                                    handleLightSettingChange(
-                                      light.id,
-                                      'intensity',
-                                      parseFloat(e.target.value)
-                                    )
-                                  }
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs">Position X</label>
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={light.position.x}
-                                  onChange={(e) =>
-                                    handleLightSettingChange(light.id, 'position.x', e.target.value)
-                                  }
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs">Position Y</label>
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={light.position.y}
-                                  onChange={(e) =>
-                                    handleLightSettingChange(light.id, 'position.y', e.target.value)
-                                  }
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs">Position Z</label>
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={light.position.z}
-                                  onChange={(e) =>
-                                    handleLightSettingChange(light.id, 'position.z', e.target.value)
-                                  }
-                                />
+                      {layers
+                        .filter((layer) => layer.instance_kind === ObjectType.PointLight)
+                        .map((layer) => {
+                          const light = editorRef.current?.pointLights.find(
+                            (l) => l.id === layer.instance_id
+                          )
+                          if (!light) return null
+
+                          return (
+                            <div key={light.id} className="mb-4 p-2 border border-gray-600 rounded">
+                              <p className="text-sm font-semibold">{light.name}</p>
+                              <div className="grid grid-cols-2 gap-2 mt-2">
+                                <div>
+                                  <label className="block text-xs">Intensity</label>
+                                  <input
+                                    type="range"
+                                    min="0"
+                                    max="5"
+                                    step="0.1"
+                                    value={light.intensity}
+                                    onChange={(e) =>
+                                      handleLightSettingChange(
+                                        light.id,
+                                        'intensity',
+                                        parseFloat(e.target.value)
+                                      )
+                                    }
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs">Position X</label>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={light.position.x}
+                                    onChange={(e) =>
+                                      handleLightSettingChange(
+                                        light.id,
+                                        'position.x',
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs">Position Y</label>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={light.position.y}
+                                    onChange={(e) =>
+                                      handleLightSettingChange(
+                                        light.id,
+                                        'position.y',
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs">Position Z</label>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={light.position.z}
+                                    onChange={(e) =>
+                                      handleLightSettingChange(
+                                        light.id,
+                                        'position.z',
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                     </div>
                   </div>
                 )}
