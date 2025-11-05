@@ -13,7 +13,13 @@ import { RepeatableObject } from './repeater'
 
 import { makeShaderDataDefinitions, makeStructuredView } from 'webgpu-utils'
 import { SaveTarget } from './editor_state'
-import { getCameraForward, getCameraRight, quatToEuler } from './editor/helpers'
+import {
+  getCameraForward,
+  getCameraRight,
+  getObjectForward,
+  getObjectRight,
+  quatToEuler
+} from './editor/helpers'
 import { Camera3D } from './3dcamera'
 import {
   GPUPolyfill,
@@ -913,8 +919,11 @@ export class CanvasPipeline {
       let deltaTime = 1.0 / 60.0 // TODO: make real
       const player = editor.cubes3D.find((c) => c.name === 'PlayerCharacter') // TODO: change to c.type so name can be changed
 
-      const cameraForward = getCameraForward(editor.camera)
-      const cameraRight = getCameraRight(editor.camera)
+      // const cameraForward = getCameraForward(editor.camera)
+      // const cameraRight = getCameraRight(editor.camera)
+
+      const cameraForward = getObjectForward(editor.camera, player)
+      const cameraRight = getObjectRight(editor.camera, player)
 
       const cameraBackward = vec3.create()
       vec3.negate(cameraBackward, cameraForward)

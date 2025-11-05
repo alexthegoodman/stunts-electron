@@ -227,6 +227,44 @@ export function getCameraRight(camera: Camera3D): vec3 {
   return right
 }
 
+// Assuming cube.transform or cube.rotationMatrix is a mat4
+export function getObjectForward(camera: Camera3D, cube: Cube3D): vec3 {
+  const forward = vec3.fromValues(0, 0, -1) // default forward in model space
+  const worldMatrix = cube.transform.getWorldMatrix(camera.windowSize)
+  const dir = vec3.create()
+
+  // Rotate the local forward vector by the object's world rotation
+  vec3.transformMat4(dir, forward, worldMatrix)
+  vec3.subtract(dir, dir, cube.transform.position)
+  vec3.normalize(dir, dir)
+
+  return dir
+}
+
+export function getObjectRight(camera: Camera3D, cube: Cube3D): vec3 {
+  const right = vec3.fromValues(1, 0, 0) // default right in model space
+  const worldMatrix = cube.transform.getWorldMatrix(camera.windowSize)
+  const dir = vec3.create()
+
+  vec3.transformMat4(dir, right, worldMatrix)
+  vec3.subtract(dir, dir, cube.transform.position)
+  vec3.normalize(dir, dir)
+
+  return dir
+}
+
+export function getObjectUp(camera: Camera3D, cube: Cube3D): vec3 {
+  const up = vec3.fromValues(0, 1, 0) // default up in model space
+  const worldMatrix = cube.transform.getWorldMatrix(camera.windowSize)
+  const dir = vec3.create()
+
+  vec3.transformMat4(dir, up, worldMatrix)
+  vec3.subtract(dir, dir, cube.transform.position)
+  vec3.normalize(dir, dir)
+
+  return dir
+}
+
 // The new, proper 3D Ray interface
 export interface IRay3D {
   origin: vec3
@@ -298,6 +336,7 @@ export class Ray implements IRay3D {
 
 import { mat4, vec4 } from 'gl-matrix'
 import { Camera3D } from '../3dcamera'
+import { Cube3D } from '../cube3d'
 
 // NOTE: This implementation assumes you have the gl-matrix library available.
 // NOTE: Your Camera3D.getProjection() uses a fixed aspect ratio of 500/500,
