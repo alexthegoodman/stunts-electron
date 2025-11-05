@@ -1094,6 +1094,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         // 'imageGeneration',
                         // 'stickers',
                         // 'brush'
+                        'pointLight',
                         'cube3d',
                         'model3d',
                         'voxelPaint'

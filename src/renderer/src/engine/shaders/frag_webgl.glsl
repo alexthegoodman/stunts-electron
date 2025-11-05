@@ -11,14 +11,37 @@ in vec3 v_world_position;
 
 out vec4 fragColor;
 
+// struct PointLight {
+//     vec3 position;
+//     vec4 color;
+//     float intensity;
+// };
+
+// uniform PointLight bindGroup8_0[4];  // Assuming a maximum of 4 point lights for now
+// layout(std140) uniform bindGroup8_0 {
+//     vec3 position;
+//     vec4 color;
+//     float intensity;
+// };
+uniform int u_point_light_count;
+
 struct PointLight {
     vec3 position;
+    float _pad1;
     vec4 color;
     float intensity;
+    float _pad2;
+    float _pad3;
+    float _pad4;
 };
 
-uniform PointLight u_point_lights[4];  // Assuming a maximum of 4 point lights for now
-uniform int u_point_light_count;
+layout(std140) uniform bindGroup8_0 {
+    PointLight lights[4];
+    int count;
+    int _pad5;
+    int _pad6;
+    int _pad7;
+} u_pointLights;
 
 // Bind group 1: Texture sampler
 uniform sampler2D bindGroup1_1;
@@ -593,7 +616,7 @@ void main() {
 
     // Point Lights
     for (int i = 0; i < u_point_light_count; i++) {
-        vec3 light_direction = u_point_lights[i].position - v_world_position;
+        vec3 light_direction = u_pointLights.lights[i].position - v_world_position;
         float distance = length(light_direction);
         light_direction = normalize(light_direction);
 
@@ -602,7 +625,7 @@ void main() {
         // Attenuation
         float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
 
-        total_lighting += u_point_lights[i].color.rgb * u_point_lights[i].intensity * diffuse * attenuation;
+        total_lighting += u_pointLights.lights[i].color.rgb * u_pointLights.lights[i].intensity * diffuse * attenuation;
     }
 
     final_color.rgb *= (ambient + total_lighting);

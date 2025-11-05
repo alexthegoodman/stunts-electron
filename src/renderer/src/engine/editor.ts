@@ -1258,6 +1258,31 @@ export class Editor {
         }
       }
     }
+
+    if (saved_sequence.activePointLights) {
+      for (const pointLight of saved_sequence.activePointLights) {
+        if (
+          !this.gpuResources ||
+          !this.camera ||
+          !this.modelBindGroupLayout ||
+          !this.groupBindGroupLayout
+        ) {
+          continue
+        }
+
+        try {
+          const restored_light = new PointLight(pointLight, this, this.gpuResources.queue)
+
+          restored_light.hidden = hidden
+
+          this.pointLights.push(restored_light)
+
+          console.info('light restored')
+        } catch (error) {
+          console.error('Error restoring model:', error)
+        }
+      }
+    }
   }
 
   reset_sequence_objects() {
@@ -3116,7 +3141,7 @@ export class Editor {
       return
     }
 
-    const light = new PointLight(config)
+    const light = new PointLight(config, this, this.gpuResources.queue)
 
     this.pointLights.push(light)
   }

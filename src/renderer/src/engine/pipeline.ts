@@ -416,7 +416,8 @@ export class CanvasPipeline {
     })
 
     // Create point lights buffer and bind group
-    const pointLightsBufferSize = 4 * (3 * 4 + 4 * 4 + 4) + 4 // 4 lights * (vec3 pos + vec4 color + float intensity) + int count
+    // const pointLightsBufferSize = 4 * (3 * 4 + 4 * 4 + 4) + 4 // 4 lights * (vec3 pos + vec4 color + float intensity) + int count
+    const pointLightsBufferSize = 4 * 48 + 16 // 208 bytes
     const pointLightsBuffer = gpuResources.device!.createBuffer(
       {
         label: 'Point Lights Buffer',
@@ -1154,29 +1155,38 @@ export class CanvasPipeline {
       return
     }
 
-    // Update and bind point lights uniform buffer
-    if (editor.pointLightsBindGroup && editor.pointLightsBuffer) {
-      const pointLightsData = new Float32Array(4 * 8 + 4) // 4 lights * (vec3 pos + vec4 color + float intensity) + int count
-      let offset = 0
-      for (let i = 0; i < Math.min(editor.pointLights.length, 4); i++) {
-        const light = editor.pointLights[i]
-        pointLightsData[offset++] = light.position.x
-        pointLightsData[offset++] = light.position.y
-        pointLightsData[offset++] = light.position.z
-        pointLightsData[offset++] = 0 // Padding for vec4 alignment
-        pointLightsData[offset++] = light.color[0]
-        pointLightsData[offset++] = light.color[1]
-        pointLightsData[offset++] = light.color[2]
-        // pointLightsData[offset++] = light.color[3];
-        pointLightsData[offset++] = 1.0
-        pointLightsData[offset++] = light.intensity
-        pointLightsData[offset++] = 0 // Padding
-        pointLightsData[offset++] = 0 // Padding
-        pointLightsData[offset++] = 0 // Padding
-      }
-      pointLightsData[offset++] = editor.pointLights.length // Number of active lights
+    // // Update and bind point lights uniform buffer
+    // // TODO: this is bad, and it doesn't work, because "bindGroup8_0 not found" for the corresponding bind group layout at binding 8 (point lights) make more like the other objects. it needs to be robust. at lesat dont rewrite the bfufer every frame, only bind. doesnt seem to pad for all 4 lights
+    // if (editor.pointLightsBindGroup && editor.pointLightsBuffer) {
+    //   const pointLightsData = new Float32Array(4 * 8 + 4) // 4 lights * (vec3 pos + vec4 color + float intensity) + int count
+    //   let offset = 0
+    //   for (let i = 0; i < Math.min(editor.pointLights.length, 4); i++) {
+    //     const light = editor.pointLights[i]
+    //     pointLightsData[offset++] = light.position.x
+    //     pointLightsData[offset++] = light.position.y
+    //     pointLightsData[offset++] = light.position.z
+    //     pointLightsData[offset++] = 0 // Padding for vec4 alignment
+    //     pointLightsData[offset++] = light.color[0]
+    //     pointLightsData[offset++] = light.color[1]
+    //     pointLightsData[offset++] = light.color[2]
+    //     // pointLightsData[offset++] = light.color[3];
+    //     pointLightsData[offset++] = 1.0
+    //     pointLightsData[offset++] = light.intensity
+    //     pointLightsData[offset++] = 0 // Padding
+    //     pointLightsData[offset++] = 0 // Padding
+    //     pointLightsData[offset++] = 0 // Padding
+    //   }
+    //   pointLightsData[offset++] = editor.pointLights.length // Number of active lights
 
-      queue.writeBuffer(editor.pointLightsBuffer, 0, pointLightsData)
+    //   queue.writeBuffer(editor.pointLightsBuffer, 0, pointLightsData)
+    //   editor.pointLightsBindGroup.bindWebGLBindGroup(gl)
+    // } else {
+    //   console.error("Couldn't get point lights group or buffer")
+    //   return
+    // }
+
+    // Update point lights uniform buffer (only when lights change)
+    if (editor.pointLightsBindGroup && editor.pointLightsBuffer) {
       editor.pointLightsBindGroup.bindWebGLBindGroup(gl)
     } else {
       console.error("Couldn't get point lights group or buffer")

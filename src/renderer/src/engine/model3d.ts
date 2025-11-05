@@ -1,6 +1,6 @@
 import { mat4, vec2, vec3 } from 'gl-matrix'
 import { Camera, WindowSize } from './camera'
-import { BoundingBox, CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Point } from './editor'
+import { BoundingBox, CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Editor, Point } from './editor'
 import { createEmptyGroupTransform, matrix4ToRawArray, Transform } from './transform'
 import { createVertex, getZLayer, toNDC, Vertex, vertexByteSize } from './vertex'
 import { BackgroundFill, ObjectType } from './animations'
@@ -556,7 +556,7 @@ export class PointLight {
   hidden: boolean
   objectType: ObjectType
 
-  constructor(config: PointLight3DConfig) {
+  constructor(config: PointLight3DConfig, editor: Editor, queue: PolyfillQueue) {
     this.id = config.id
     this.name = config.name
     this.position = config.position
@@ -565,6 +565,47 @@ export class PointLight {
     this.layer = config.layer
     this.hidden = false
     this.objectType = ObjectType.PointLight
+
+    // Each light: vec3 pos (12 bytes) + 4 padding + vec4 color (16 bytes) + float intensity (4 bytes) + 12 padding = 48 bytes
+    // 4 lights * 48 bytes + 4 bytes (count) + 12 padding = 208 bytes
+    const LIGHT_STRIDE = 12 // floats per light (48 bytes / 4)
+    const pointLightsData = new Float32Array(4 * LIGHT_STRIDE + 4) // 52 floats total
+
+    // Write all 4 light slots (padding inactive ones with zeros)
+    for (let i = 0; i < 4; i++) {
+      const offset = i * LIGHT_STRIDE
+
+      if (i < editor.pointLights.length) {
+        const light = editor.pointLights[i]
+
+        // Position (vec3) + padding
+        pointLightsData[offset + 0] = light.position.x
+        pointLightsData[offset + 1] = light.position.y
+        pointLightsData[offset + 2] = light.position.z
+        pointLightsData[offset + 3] = 0 // Padding
+
+        // Color (vec4)
+        pointLightsData[offset + 4] = light.color[0]
+        pointLightsData[offset + 5] = light.color[1]
+        pointLightsData[offset + 6] = light.color[2]
+        pointLightsData[offset + 7] = 1.0
+
+        // Intensity + padding to next 16-byte boundary
+        pointLightsData[offset + 8] = light.intensity
+        pointLightsData[offset + 9] = 0
+        pointLightsData[offset + 10] = 0
+        pointLightsData[offset + 11] = 0
+      }
+      // else: leave as zeros (inactive light)
+    }
+
+    // Light count at the end
+    pointLightsData[48] = editor.pointLights.length
+    // Remaining 3 floats are padding (already zero)
+
+    // if (editor.pointLights.length) {
+    queue.writeBuffer(editor.pointLightsBuffer, 0, pointLightsData)
+    // }
   }
 
   toConfig(): PointLight3DConfig {
