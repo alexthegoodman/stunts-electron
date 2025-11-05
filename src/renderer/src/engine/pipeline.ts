@@ -417,7 +417,8 @@ export class CanvasPipeline {
 
     // Create point lights buffer and bind group
     // const pointLightsBufferSize = 4 * (3 * 4 + 4 * 4 + 4) + 4 // 4 lights * (vec3 pos + vec4 color + float intensity) + int count
-    const pointLightsBufferSize = 4 * 48 + 16 // 208 bytes
+    const extraMultipler = 2
+    const pointLightsBufferSize = 16 * 16 // 252 bytes
     const pointLightsBuffer = gpuResources.device!.createBuffer(
       {
         label: 'Point Lights Buffer',
@@ -428,7 +429,7 @@ export class CanvasPipeline {
       },
       'UBO'
     )
-    pointLightsBuffer.unmap()
+    // pointLightsBuffer.unmap()
     const pointLightsData = new Float32Array(pointLightsBufferSize / 4) // Initialize with zeros
     gpuResources.queue!.writeBuffer(pointLightsBuffer, 0, pointLightsData)
 

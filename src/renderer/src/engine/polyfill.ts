@@ -378,6 +378,7 @@ export class PolyfillBuffer {
     if (error !== gl.NO_ERROR) {
       console.warn('WebGL Error:', error)
     }
+    // console.info('buffer size', this.type, this.size)
     gl.bufferData(target, size, gl.DYNAMIC_DRAW)
     error = gl.getError()
     if (error !== gl.NO_ERROR) {
@@ -848,133 +849,101 @@ export class PolyfillQueue {
   //   dataOffset?: number,
   //   size?: number
   // ) {
-  //   // Set data property (ArrayBuffer) on PolyfillBuffer accounting for dataOffset and size
-  //   const sourceBuffer = data instanceof ArrayBuffer ? data : data.buffer;
-  //   const actualDataOffset = dataOffset || 0;
-  //   const actualSize =
-  //     size !== undefined
-  //       ? size
-  //       : data instanceof ArrayBuffer
-  //       ? data.byteLength - actualDataOffset
-  //       : data.byteLength;
+  //   // Convert input data to Float32Array for consistent float handling
+  //   let floatData: Float32Array
 
-  //   // Create a new ArrayBuffer with just the relevant data
-  //   const relevantData = sourceBuffer.slice(
-  //     actualDataOffset,
-  //     actualDataOffset + actualSize
-  //   );
+  //   if (data instanceof ArrayBuffer) {
+  //     const actualDataOffset = dataOffset || 0
+  //     const actualSize = size !== undefined ? size : data.byteLength - actualDataOffset
+  //     floatData = new Float32Array(data, actualDataOffset, actualSize / 4) // Divide by 4 for float32 elements
+  //   } else if (data instanceof Float32Array) {
+  //     const actualDataOffset = dataOffset || 0
+  //     const actualSize = size !== undefined ? size / 4 : data.length - actualDataOffset
+  //     floatData = data.subarray(actualDataOffset, actualDataOffset + actualSize)
+  //   } else {
+  //     // Convert other typed arrays to Float32Array
+  //     const actualDataOffset = dataOffset || 0
+  //     const actualSize = size !== undefined ? size : data.byteLength
+  //     const sourceView = new Uint8Array(data.buffer, data.byteOffset + actualDataOffset, actualSize)
+  //     floatData = new Float32Array(sourceView.buffer, sourceView.byteOffset, actualSize / 4)
+  //   }
 
-  //   // Update the buffer's data property
-  //   if (!buffer.data || buffer.data.byteLength < bufferOffset + actualSize) {
-  //     // Expand the buffer if needed
-  //     const newSize = Math.max(
-  //       buffer.data?.byteLength || 0,
-  //       bufferOffset + actualSize
-  //     );
-  //     const newBuffer = new ArrayBuffer(newSize);
+  //   // Calculate byte size for buffer operations
+  //   const byteSize = floatData.byteLength
+  //   const byteOffset = bufferOffset
+
+  //   // Expand buffer if needed
+  //   if (!buffer.data || buffer.data.byteLength < byteOffset + byteSize) {
+  //     const newSize = Math.max(buffer.data?.byteLength || 0, byteOffset + byteSize)
+  //     const newBuffer = new ArrayBuffer(newSize)
   //     if (buffer.data) {
-  //       new Uint8Array(newBuffer).set(new Uint8Array(buffer.data));
+  //       new Uint8Array(newBuffer).set(new Uint8Array(buffer.data))
   //     }
-  //     buffer.data = newBuffer;
+  //     buffer.data = newBuffer
   //   }
 
-  //   // Copy the new data into the buffer at the specified offset
-  //   new Uint8Array(buffer.data, bufferOffset, actualSize).set(
-  //     new Uint8Array(relevantData)
-  //   );
+  //   // Copy float data into buffer
+  //   new Float32Array(buffer.data, byteOffset, floatData.length).set(floatData)
 
-  //   buffer.unmap(); // Ensure the buffer is updated in WebGL
+  //   buffer.unmap()
 
-  //   // const target =
-  //   //   buffer.usage === "vertex"
-  //   //     ? this.gl.ARRAY_BUFFER
-  //   //     : buffer.usage === "index"
-  //   //     ? this.gl.ELEMENT_ARRAY_BUFFER
-  //   //     : this.gl.ARRAY_BUFFER;
-
-  //   let target: number;
+  //   // Determine WebGL buffer target
+  //   let target: number
   //   switch (buffer.usage) {
-  //     case "vertex":
-  //       target = this.gl.ARRAY_BUFFER;
-  //       break;
-  //     case "index":
-  //       target = this.gl.ELEMENT_ARRAY_BUFFER;
-  //       break;
-  //     case "storage":
-  //     case "uniform":
-  //       target = this.gl.UNIFORM_BUFFER || this.gl.ARRAY_BUFFER;
-  //       break;
+  //     case 'vertex':
+  //       target = this.gl.ARRAY_BUFFER
+  //       break
+  //     case 'index':
+  //       target = this.gl.ELEMENT_ARRAY_BUFFER
+  //       break
+  //     case 'storage':
+  //     case 'uniform':
+  //       target = this.gl.UNIFORM_BUFFER || this.gl.ARRAY_BUFFER
+  //       break
   //     default:
-  //       target = this.gl.ARRAY_BUFFER;
+  //       target = this.gl.ARRAY_BUFFER
   //   }
 
-  //   this.gl.bindBuffer(target, buffer.buffer);
+  //   this.gl.bindBuffer(target, buffer.buffer)
 
-  //   const dataToWrite =
-  //     size !== undefined
-  //       ? new Uint8Array(
-  //           data instanceof ArrayBuffer ? data : data.buffer,
-  //           dataOffset || 0,
-  //           size
-  //         )
-  //       : data instanceof ArrayBuffer
-  //       ? new Uint8Array(data, dataOffset || 0)
-  //       : new Uint8Array(
-  //           data.buffer,
-  //           data.byteOffset + (dataOffset || 0),
-  //           data.byteLength
-  //         );
-
-  //   this.gl.bufferSubData(target, bufferOffset, dataToWrite);
+  //   // Upload the float data directly to WebGL
+  //   this.gl.bufferSubData(target, byteOffset, floatData)
   // }
 
   writeBuffer(
     buffer: PolyfillBuffer,
     bufferOffset: number,
-    data: ArrayBuffer | ArrayBufferView,
+    data: ArrayBuffer | Float32Array,
     dataOffset?: number,
     size?: number
   ) {
-    // Convert input data to Float32Array for consistent float handling
     let floatData: Float32Array
 
-    if (data instanceof ArrayBuffer) {
-      const actualDataOffset = dataOffset || 0
-      const actualSize = size !== undefined ? size : data.byteLength - actualDataOffset
-      floatData = new Float32Array(data, actualDataOffset, actualSize / 4) // Divide by 4 for float32 elements
-    } else if (data instanceof Float32Array) {
-      const actualDataOffset = dataOffset || 0
-      const actualSize = size !== undefined ? size / 4 : data.length - actualDataOffset
-      floatData = data.subarray(actualDataOffset, actualDataOffset + actualSize)
+    if (data instanceof Float32Array) {
+      const offset = dataOffset || 0
+      const length = size !== undefined ? size / 4 : data.length - offset
+      floatData = data.subarray(offset, offset + length)
+    } else if (data instanceof ArrayBuffer) {
+      const offset = dataOffset || 0
+      const length = size !== undefined ? Math.floor(size / 4) : (data.byteLength - offset) / 4
+      floatData = new Float32Array(data, offset, length)
     } else {
-      // Convert other typed arrays to Float32Array
-      const actualDataOffset = dataOffset || 0
-      const actualSize = size !== undefined ? size : data.byteLength
-      const sourceView = new Uint8Array(data.buffer, data.byteOffset + actualDataOffset, actualSize)
-      floatData = new Float32Array(sourceView.buffer, sourceView.byteOffset, actualSize / 4)
+      throw new Error('Unsupported data type for writeBuffer')
     }
 
-    // Calculate byte size for buffer operations
-    const byteSize = floatData.byteLength
-    const byteOffset = bufferOffset
-
-    // Expand buffer if needed
-    if (!buffer.data || buffer.data.byteLength < byteOffset + byteSize) {
-      const newSize = Math.max(buffer.data?.byteLength || 0, byteOffset + byteSize)
-      const newBuffer = new ArrayBuffer(newSize)
-      if (buffer.data) {
-        new Uint8Array(newBuffer).set(new Uint8Array(buffer.data))
-      }
+    // Ensure buffer is large enough
+    const requiredSize = bufferOffset + floatData.byteLength
+    if (!buffer.data || buffer.data.byteLength < requiredSize) {
+      const newBuffer = new ArrayBuffer(requiredSize)
+      if (buffer.data) new Uint8Array(newBuffer).set(new Uint8Array(buffer.data))
       buffer.data = newBuffer
     }
 
-    // Copy float data into buffer
-    new Float32Array(buffer.data, byteOffset, floatData.length).set(floatData)
+    // Copy data
+    new Float32Array(buffer.data, bufferOffset, floatData.length).set(floatData)
 
-    buffer.unmap()
-
-    // Determine WebGL buffer target
-    let target: number
+    // Bind and upload to WebGL
+    let target: any = this.gl.ARRAY_BUFFER
     switch (buffer.usage) {
       case 'vertex':
         target = this.gl.ARRAY_BUFFER
@@ -982,19 +951,98 @@ export class PolyfillQueue {
       case 'index':
         target = this.gl.ELEMENT_ARRAY_BUFFER
         break
-      case 'storage':
       case 'uniform':
         target = this.gl.UNIFORM_BUFFER || this.gl.ARRAY_BUFFER
         break
-      default:
-        target = this.gl.ARRAY_BUFFER
     }
 
-    this.gl.bindBuffer(target, buffer.buffer)
-
-    // Upload the float data directly to WebGL
-    this.gl.bufferSubData(target, byteOffset, floatData)
+    // this.gl.bindBuffer(target, buffer.buffer)
+    // this.gl.bufferSubData(target, bufferOffset, floatData)
+    if (
+      this.validateWebGLBufferWrite(this.gl, buffer, target, floatData, bufferOffset, 'uniform')
+    ) {
+      // console.info('valid!', buffer.type, bufferOffset, buffer.data)
+      this.gl.bindBuffer(target, buffer.buffer)
+      this.gl.bufferSubData(target, bufferOffset, buffer.data)
+    } else {
+      console.error('Skipping unsafe buffer upload!')
+    }
   }
+
+  validateWebGLBufferWrite(
+    gl: WebGL2RenderingContext,
+    buffer: PolyfillBuffer | null,
+    target: number,
+    data: ArrayBufferView,
+    offset: number = 0,
+    usage: 'vertex' | 'index' | 'uniform' | 'storage' = 'vertex'
+  ): boolean {
+    // 1️⃣ Check if buffer exists
+    if (!buffer) {
+      console.error('WebGL buffer is null or undefined')
+      return false
+    }
+
+    // 2️⃣ Check if WebGL context is lost
+    if (gl.isContextLost()) {
+      console.error('WebGL context is lost')
+      return false
+    }
+
+    // 3️⃣ Check data type
+    if (
+      !(data instanceof Float32Array || data instanceof Uint8Array || data instanceof Uint16Array)
+    ) {
+      console.error('Data must be a typed array (Float32Array, Uint8Array, Uint16Array)')
+      return false
+    }
+
+    // 4️⃣ Calculate byte length of the data
+    const dataByteLength = data.byteLength
+
+    // 5️⃣ Check offset and alignment for uniform buffers
+    if (usage === 'uniform') {
+      if (offset % 16 !== 0) {
+        console.warn(`Uniform buffer offset ${offset} is not 16-byte aligned`)
+      }
+      if (dataByteLength % 16 !== 0) {
+        console.warn(`Uniform buffer size ${dataByteLength} is not multiple of 16 bytes`)
+      }
+    }
+
+    // 6️⃣ Check that offset is non-negative
+    if (offset < 0) {
+      console.error('Buffer offset cannot be negative')
+      return false
+    }
+
+    // // 7️⃣ Check that the offset + data length does not exceed buffer size
+    // const bufferSize = gl.getBufferParameter(target, gl.BUFFER_SIZE)
+    // if (bufferSize === null) {
+    //   console.warn('Unable to query buffer size; skipping size check')
+    // } else if (offset + dataByteLength > bufferSize) {
+    //   console.error(
+    //     `Data write would overflow buffer: offset (${offset}) + data byte length (${dataByteLength}) > buffer size (${bufferSize})`
+    //   )
+    //   return false
+    // }
+
+    gl.bindBuffer(target, buffer.buffer) // bind the buffer you want to check
+    const bufferSize = gl.getBufferParameter(target, gl.BUFFER_SIZE)
+
+    if (bufferSize === null) {
+      console.warn('Unable to query buffer size; skipping size check')
+    } else if (offset + data.byteLength > bufferSize) {
+      console.error(
+        `Data write would overflow buffer: offset (${offset}) + data byte length (${data.byteLength}) > buffer size (${bufferSize})`
+      )
+      return false
+    }
+
+    // ✅ All checks passed
+    return true
+  }
+
   writeTexture(
     destination: {
       texture: PolyfillTexture

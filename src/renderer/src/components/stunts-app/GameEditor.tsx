@@ -84,6 +84,7 @@ import { GameLogic } from '../../engine/GameLogic'
 import { Sphere3DConfig } from '@renderer/engine/sphere3d'
 import HealthBar from './HealthBar'
 import { VoxelConfig } from '@renderer/engine/voxel'
+import { PointLight3DConfig } from '@renderer/engine/model3d'
 
 const createLandscape = (editor: Editor, sequence_id: string) => {
   // Add a default landscape cube
@@ -818,6 +819,9 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       editor.cubes3D.forEach((t) => {
         t.hidden = true
       })
+      editor.pointLights.forEach((t) => {
+        t.hidden = true
+      })
 
       saved_sequence.activePolygons.forEach((ap) => {
         let polygon = editor.polygons.find((p) => p.id == ap.id)
@@ -835,6 +839,10 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
         let cube = editor.cubes3D.find((t) => t.id == tr.id)
         if (cube) cube.hidden = false
       })
+      saved_sequence.activePointLights.forEach((tr) => {
+        let light = editor.pointLights.find((t) => t.id == tr.id)
+        if (light) light.hidden = false
+      })
 
       if (!editor.camera) {
         toast.error('No camera found in editor')
@@ -849,7 +857,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       // we want sunlight!!!! not shadow from skybox
       // editor.replace_background(saved_sequence.id, background_fill, backgroundSize)
 
-      editor.updateMotionPaths(saved_sequence)
+      // editor.updateMotionPaths(saved_sequence)
 
       let new_layers: Layer[] = []
       editor.polygons.forEach((polygon) => {
@@ -877,6 +885,13 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
         if (!cube.hidden) {
           let cube_config: Cube3DConfig = cube.toConfig()
           let new_layer: Layer = LayerFromConfig.fromCube3DConfig(cube_config)
+          new_layers.push(new_layer)
+        }
+      })
+      editor.pointLights.forEach((light) => {
+        if (!light.hidden) {
+          let light_config: PointLight3DConfig = light.toConfig()
+          let new_layer: Layer = LayerFromConfig.fromPointLight3DConfig(light_config)
           new_layers.push(new_layer)
         }
       })
@@ -1012,6 +1027,13 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
           {/* {editorStateSet && (
           <ExportVideoButton editorRef={editorRef} editorStateRef={editorStateRef} />
         )} */}
+          {/* <button
+            onClick={() => {
+              editorRef.current.initializePointLights()
+            }}
+          >
+            Enable Lights
+          </button> */}
         </div>
 
         <div className="flex flex-col w-full">

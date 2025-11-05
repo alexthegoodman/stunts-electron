@@ -1271,18 +1271,73 @@ export class Editor {
         }
 
         try {
-          const restored_light = new PointLight(pointLight, this, this.gpuResources.queue)
+          const restored_light = new PointLight(pointLight)
 
           restored_light.hidden = hidden
 
           this.pointLights.push(restored_light)
+
+          // restored_light.initialize(this, this.gpuResources.queue) //  initialize after pushing :)
 
           console.info('light restored')
         } catch (error) {
           console.error('Error restoring model:', error)
         }
       }
+
+      this.initializePointLights() // dont want to call here aas not all buffers guaranteed yet
     }
+  }
+
+  initializePointLights() {
+    // Each light: vec3 pos (12 bytes) + 4 padding + vec4 color (16 bytes) + float intensity (4 bytes) + 12 padding = 48 bytes
+    // 4 lights * 48 bytes + 4 bytes (count) + 12 padding = 208 bytes
+    const LIGHT_STRIDE = 12 // floats per light (48 bytes / 4)
+    const pointLightsData = new Float32Array(4 * LIGHT_STRIDE + 4) // 52 floats total
+
+    // Write all 4 light slots (padding inactive ones with zeros)
+    for (let i = 0; i < 4; i++) {
+      const offset = i * LIGHT_STRIDE
+
+      if (i < this.pointLights.length) {
+        const light = this.pointLights[i]
+
+        // Position (vec3) + padding
+        pointLightsData[offset + 0] = light.position.x
+        pointLightsData[offset + 1] = light.position.y
+        pointLightsData[offset + 2] = light.position.z
+        pointLightsData[offset + 3] = 0 // Padding
+
+        // Color (vec4)
+        pointLightsData[offset + 4] = light.color[0]
+        pointLightsData[offset + 5] = light.color[1]
+        pointLightsData[offset + 6] = light.color[2]
+        pointLightsData[offset + 7] = 1.0
+
+        // Intensity + padding to next 16-byte boundary
+        pointLightsData[offset + 8] = light.intensity
+        pointLightsData[offset + 9] = 0
+        pointLightsData[offset + 10] = 0
+        pointLightsData[offset + 11] = 0
+
+        console.info('writing point light buffer', light)
+      }
+      // else: leave as zeros (inactive light)
+    }
+
+    // // Light count at the end
+    pointLightsData[48] = this.pointLights.length
+    // // Remaining 3 floats are padding (already zero)
+
+    console.log(
+      'pointLightsData:',
+      this.pointLightsBuffer,
+      pointLightsData.buffer,
+      Array.from(pointLightsData),
+      pointLightsData.byteLength
+    )
+
+    this.gpuResources.queue.writeBuffer(this.pointLightsBuffer, 0, pointLightsData.buffer)
   }
 
   reset_sequence_objects() {
@@ -3141,9 +3196,12 @@ export class Editor {
       return
     }
 
-    const light = new PointLight(config, this, this.gpuResources.queue)
+    const light = new PointLight(config)
 
     this.pointLights.push(light)
+
+    // light.initialize(this, this.gpuResources.queue)
+    this.initializePointLights()
   }
 
   add_voxel(voxel_config: VoxelConfig, new_id: string, selected_sequence_id: string) {

@@ -619,14 +619,13 @@ void main() {
     total_lighting += u_sun_color * sun_diffuse * 0.7; // 0.7 is diffuse strength
 
     // Point Lights
-    for (int i = 0; i < u_pointLights.count; i++) {
+    const int NUM_POINT_LIGHTS = 4; // match your uniform array size (hardcode so shader doesnt freeze and crash)
+    for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
         vec3 light_direction = u_pointLights.lights[i].position - v_world_position;
         float distance = length(light_direction);
         light_direction = normalize(light_direction);
 
         float diffuse = max(dot(normalized_normal, light_direction), 0.0);
-
-        // Attenuation
         float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
 
         total_lighting += u_pointLights.lights[i].color.rgb * u_pointLights.lights[i].intensity * diffuse * attenuation;
