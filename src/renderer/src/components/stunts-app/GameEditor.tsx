@@ -84,7 +84,7 @@ import { GameLogic } from '../../engine/GameLogic'
 import { Sphere3DConfig } from '@renderer/engine/sphere3d'
 import HealthBar from './HealthBar'
 import { VoxelConfig } from '@renderer/engine/voxel'
-import { PointLight3DConfig } from '@renderer/engine/model3d'
+import { PointLight3DConfig } from '@renderer/engine/pointlight'
 
 const createLandscape = (editor: Editor, sequence_id: string) => {
   // Add a default landscape cube
