@@ -410,7 +410,98 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
   const [playerHealths, setPlayerHealths] = useState<number[]>([])
   const [enemyHealths, setEnemyHealths] = useState<number[]>([])
 
+  const [sunDirection, setSunDirection] = useState<[number, number, number]>([1.0, 0.5, 0.5])
+  const [sunColor, setSunColor] = useState<[number, number, number]>([1.0, 1.0, 1.0])
+  const [ambientColor, setAmbientColor] = useState<[number, number, number]>([0.1, 0.1, 0.1])
+
+  const [lightSettings, setLightSettings] = useState<{ [key: string]: PointLight3DConfig }>({})
+
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.pointLights) {
+      const initialLightSettings: { [key: string]: PointLight3DConfig } = {}
+      editorRef.current.pointLights.forEach((light) => {
+        initialLightSettings[light.id] = light.toConfig()
+      })
+      setLightSettings(initialLightSettings)
+    }
+  }, [editorRef.current?.pointLights])
+
   const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges])
+
+  const handleSunlightChange = (
+    type: 'direction' | 'color' | 'ambient',
+    index: number,
+    value: string | number
+  ) => {
+    const editor = editorRef.current
+    if (!editor || !editor.gpuResources) return
+
+    if (type === 'direction') {
+      const newDirection = [...sunDirection] as [number, number, number]
+      newDirection[index] = value as number
+      setSunDirection(newDirection)
+      editor.gpuResources.queue.writeBuffer(
+        editor.sunDirectionBuffer,
+        0,
+        new Float32Array(newDirection)
+      )
+    } else if (type === 'color') {
+      const hex = value.toString().substring(1)
+      const r = parseInt(hex.substring(0, 2), 16) / 255
+      const g = parseInt(hex.substring(2, 4), 16) / 255
+      const b = parseInt(hex.substring(4, 6), 16) / 255
+      const newColor: [number, number, number] = [r, g, b]
+      setSunColor(newColor)
+      editor.gpuResources.queue.writeBuffer(editor.sunColorBuffer, 0, new Float32Array(newColor))
+    } else if (type === 'ambient') {
+      const hex = value.toString().substring(1)
+      const r = parseInt(hex.substring(0, 2), 16) / 255
+      const g = parseInt(hex.substring(2, 4), 16) / 255
+      const b = parseInt(hex.substring(4, 6), 16) / 255
+      const newColor: [number, number, number] = [r, g, b]
+      setAmbientColor(newColor)
+      editor.gpuResources.queue.writeBuffer(
+        editor.ambientColorBuffer,
+        0,
+        new Float32Array(newColor)
+      )
+    }
+
+    setRefreshUINow(Date.now())
+  }
+
+  const handleLightSettingChange = (lightId: string, property: string, value: any) => {
+    const editor = editorRef.current
+    if (!editor) return
+
+    const light = editor.pointLights.find((l) => l.id === lightId)
+    if (!light) return
+
+    setLightSettings((prev) => {
+      const newSettings = { ...prev }
+      const lightConfig = { ...newSettings[lightId] }
+
+      if (property.startsWith('position')) {
+        const axis = property.split('.')[1] as 'x' | 'y' | 'z'
+        lightConfig.position[axis] = parseFloat(value)
+      } else {
+        ;(lightConfig as any)[property] = value
+      }
+
+      newSettings[lightId] = lightConfig
+      return newSettings
+    })
+
+    if (property.startsWith('position')) {
+      const axis = property.split('.')[1] as 'x' | 'y' | 'z'
+      light.position[axis] = parseFloat(value)
+    } else if (property === 'intensity') {
+      light.intensity = value
+    }
+
+    // editor.draw()
+    setRefreshUINow(Date.now())
+  }
 
   useEffect(() => {
     const canvas = document.getElementById(`game-canvas`) as HTMLCanvasElement
@@ -1096,6 +1187,17 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                     icon={'stack'}
                     label={'Scene'}
                   />
+                  <MiniSquareButton
+                    onClick={() => {
+                      if (toolbarTab === 'lights') {
+                        setToolbarTab('none')
+                      } else {
+                        setToolbarTab('lights')
+                      }
+                    }}
+                    icon={'sun'}
+                    label={'Lights'}
+                  />
                 </div>
               </div>
 
@@ -1165,6 +1267,145 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                       layers={layers}
                       setLayers={set_layers}
                     />
+                  </div>
+                )}
+
+                {toolbarTab === 'lights' && (
+                  <div className="text-white">
+                    <h5 className="text-lg font-semibold mb-4">Lighting Controls</h5>
+                    <div>
+                      <h6 className="text-md font-semibold mb-2">Sunlight</h6>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block text-xs">Direction X</label>
+                          <input
+                            type="range"
+                            min="-1"
+                            max="1"
+                            step="0.1"
+                            value={sunDirection[0]}
+                            onChange={(e) =>
+                              handleSunlightChange('direction', 0, parseFloat(e.target.value))
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs">Direction Y</label>
+                          <input
+                            type="range"
+                            min="-1"
+                            max="1"
+                            step="0.1"
+                            value={sunDirection[1]}
+                            onChange={(e) =>
+                              handleSunlightChange('direction', 1, parseFloat(e.target.value))
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs">Direction Z</label>
+                          <input
+                            type="range"
+                            min="-1"
+                            max="1"
+                            step="0.1"
+                            value={sunDirection[2]}
+                            onChange={(e) =>
+                              handleSunlightChange('direction', 2, parseFloat(e.target.value))
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <label className="block text-xs">Sun Color</label>
+                        <input
+                          type="color"
+                          value={`#${Math.round(sunColor[0] * 255)
+                            .toString(16)
+                            .padStart(2, '0')}${Math.round(sunColor[1] * 255)
+                            .toString(16)
+                            .padStart(2, '0')}${Math.round(sunColor[2] * 255)
+                            .toString(16)
+                            .padStart(2, '0')}`}
+                          onChange={(e) => handleSunlightChange('color', 0, e.target.value)}
+                        />
+                      </div>
+                      <div className="mt-2">
+                        <label className="block text-xs">Ambient Color</label>
+                        <input
+                          type="color"
+                          value={`#${Math.round(ambientColor[0] * 255)
+                            .toString(16)
+                            .padStart(2, '0')}${Math.round(ambientColor[1] * 255)
+                            .toString(16)
+                            .padStart(2, '0')}${Math.round(ambientColor[2] * 255)
+                            .toString(16)
+                            .padStart(2, '0')}`}
+                          onChange={(e) => handleSunlightChange('ambient', 0, e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <h6 className="text-md font-semibold mb-2">Point Lights</h6>
+                      {editorRef.current &&
+                        editorRef.current.pointLights.map((light) => (
+                          <div key={light.id} className="mb-4 p-2 border border-gray-600 rounded">
+                            <p className="text-sm font-semibold">{light.name}</p>
+                            <div className="grid grid-cols-2 gap-2 mt-2">
+                              <div>
+                                <label className="block text-xs">Intensity</label>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="5"
+                                  step="0.1"
+                                  value={light.intensity}
+                                  onChange={(e) =>
+                                    handleLightSettingChange(
+                                      light.id,
+                                      'intensity',
+                                      parseFloat(e.target.value)
+                                    )
+                                  }
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs">Position X</label>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={light.position.x}
+                                  onChange={(e) =>
+                                    handleLightSettingChange(light.id, 'position.x', e.target.value)
+                                  }
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs">Position Y</label>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={light.position.y}
+                                  onChange={(e) =>
+                                    handleLightSettingChange(light.id, 'position.y', e.target.value)
+                                  }
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs">Position Z</label>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={light.position.z}
+                                  onChange={(e) =>
+                                    handleLightSettingChange(light.id, 'position.z', e.target.value)
+                                  }
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
                   </div>
                 )}
 
