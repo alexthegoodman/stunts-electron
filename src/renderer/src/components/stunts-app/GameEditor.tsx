@@ -1690,7 +1690,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                   id="level-select"
                   value={current_sequence_id || ''}
                   onChange={(e) => set_current_sequence_id(e.target.value)}
-                  className="p-2 border rounded"
+                  className="p-2 border rounded bg-slate-500"
                 >
                   {sequences.map((seq) => (
                     <option key={seq.id} value={seq.id}>
