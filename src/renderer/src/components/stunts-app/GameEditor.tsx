@@ -1142,7 +1142,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                       }
                     }}
                     icon={'palette'}
-                    label={'Themes'}
+                    label={'Skybox'}
                   />
                   <MiniSquareButton
                     onClick={() => {
@@ -1682,8 +1682,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
             </div>
 
             <section className="flex-grow flex flex-col justify-center items-center">
-              <div className="mb-4">
-                <label htmlFor="level-select" className="mr-2">
+              <div className="flex flex-row justify-center align-center gap-2 mb-4">
+                <label htmlFor="level-select" className="mt-2">
                   Select Level:
                 </label>
                 <select
@@ -1726,7 +1726,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                       toast.error("Couldn't play!")
                     }
                   }}
-                  className="p-2 border rounded"
+                  className="min-w-20 p-2 border rounded"
                 >
                   {isPlaying ? 'Stop' : 'Play'}
                 </button>

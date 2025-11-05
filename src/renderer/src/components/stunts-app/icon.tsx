@@ -78,11 +78,15 @@ import {
   SelectionIcon,
   FolderOpenIcon,
   GameControllerIcon,
-  GridNineIcon
+  GridNineIcon,
+  SunIcon
 } from '@phosphor-icons/react'
 
 export const CreateIcon = ({ icon, size }: { icon: string; size: string }) => {
   switch (icon) {
+    case 'sun': {
+      return <SunIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
+    }
     case 'grid': {
       return <GridNineIcon data-testid={`icon-${icon}`} weight="thin" size={size} />
     }
