@@ -312,6 +312,55 @@ export const updateSequences = async (
   return { updatedProject: result.data }
 }
 
+export async function saveGameStateData(
+  game_state: SavedState['game_state'],
+  saveTarget: SaveTarget
+): Promise<UpdateSequencesResponse | null> {
+  if (process.env.NODE_ENV === 'test') {
+    return null
+  }
+
+  try {
+    // Get stored-project from local storage
+    const storedProjectString = localStorage.getItem('stored-project')
+
+    if (!storedProjectString) {
+      throw new Error("Couldn't get stored project from local storage")
+    }
+
+    const storedProject = JSON.parse(storedProjectString)
+
+    // Call the updateSequences function
+    return await updateGameState(
+      '', // No longer need token
+      storedProject.project_id,
+      game_state,
+      saveTarget
+    )
+  } catch (error) {
+    console.error('Error saving game state data:', error)
+    throw error
+  }
+}
+
+export const updateGameState = async (
+  token: string,
+  projectId: string,
+  game_state: SavedState['game_state'],
+  saveTarget: SaveTarget
+): Promise<UpdateSequencesResponse> => {
+  const result = await window.api.projects.updateSequences({
+    projectId,
+    fileData: { game_state, saveTarget }
+  })
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to update game state')
+  }
+
+  return { updatedProject: result.data }
+}
+
 export async function saveSettingsData(
   settings: ProjectSettings,
   saveTarget: SaveTarget

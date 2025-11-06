@@ -14,12 +14,16 @@ import { CameraAnimation } from './3dcamera'
 import { Editor } from './editor'
 import { SavedVoxelConfig } from './voxel'
 import { SavedVoxelComponent } from './voxelComponent'
+import { GameEdge, GameNode } from '@renderer/components/stunts-app/GameLogic'
 
 export interface SavedState {
   sequences: Sequence[]
   timeline_state?: SavedTimelineStateConfig | null
   grid_state?: SavedGridStateConfig | null
-  game_state?: null
+  game_state?: {
+    nodes: GameNode[]
+    edges: GameEdge[]
+  }
   settings?: ProjectSettings
 }
 

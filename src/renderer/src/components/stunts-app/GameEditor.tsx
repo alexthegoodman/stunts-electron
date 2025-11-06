@@ -38,6 +38,7 @@ import {
   AuthToken,
   getSingleProject,
   getUploadedImageData,
+  saveGameStateData,
   saveImage,
   saveSequencesData,
   saveSettingsData,
@@ -79,7 +80,7 @@ import Jolt from 'jolt-physics/debug-wasm-compat'
 import { Physics } from '../../engine/physics'
 import { CameraAnimation, Camera3D } from '@renderer/engine/3dcamera'
 import { FirstPersonCamera } from '@renderer/engine/firstPersonCamera'
-import GameLogicEditor from './GameLogic'
+import GameLogicEditor, { initialEdges, initialNodes } from './GameLogic'
 import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
 import { degreesToRadians } from '@renderer/engine/transform'
 import { GameLogic } from '../../engine/GameLogic'
@@ -302,49 +303,6 @@ const createLandscape = (editor: Editor, sequence_id: string) => {
   )
   editor.bodies.set('landscape-cube', landscapeBody)
 }
-
-export interface GameNode {
-  id: string
-  data: {
-    label: string
-    pressed?: boolean
-    value?: number | string
-    health?: number
-    fireRate?: number
-  }
-  position: {
-    x: number
-    y: number
-  }
-}
-
-const initialNodes: GameNode[] = [
-  { id: '1', data: { label: 'PlayerController', health: 100 }, position: { x: 250, y: 5 } },
-  { id: '2', data: { label: 'Input' }, position: { x: 100, y: 100 } },
-  { id: '3', data: { label: 'Forward', pressed: false }, position: { x: 400, y: 100 } },
-  { id: '4', data: { label: 'Backward', pressed: false }, position: { x: 400, y: 150 } },
-  { id: '5', data: { label: 'Left', pressed: false }, position: { x: 400, y: 200 } },
-  { id: '6', data: { label: 'Right', pressed: false }, position: { x: 400, y: 250 } },
-  {
-    id: '7',
-    data: { label: 'EnemyController', health: 100, fireRate: 1000 },
-    position: { x: 850, y: 5 }
-  },
-  { id: '8', data: { label: 'RandomWalk' }, position: { x: 700, y: 100 } },
-  { id: '9', data: { label: 'ShootProjectile' }, position: { x: 1000, y: 100 } },
-  { id: '10', data: { label: 'Health', value: 100 }, position: { x: 850, y: 200 } }
-]
-
-const initialEdges = [
-  { id: 'e2-1', source: '2', target: '1' },
-  { id: 'e3-2', source: '3', target: '2' },
-  { id: 'e3-3', source: '4', target: '2' },
-  { id: 'e3-4', source: '5', target: '2' },
-  { id: 'e3-5', source: '6', target: '2' },
-  { id: 'e8-7', source: '8', target: '7' },
-  { id: 'e9-7', source: '9', target: '7' },
-  { id: 'e10-7', source: '10', target: '7' }
-]
 
 const DEFAULT_GAME_WIDTH = 1200
 const DEFAULT_GAME_HEIGHT = 800
@@ -775,6 +733,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       let cloned_sequences = fileData?.sequences
       let cloned_settings = fileData?.settings
       let cloned_grid = fileData?.grid_state
+      let cloned_game_state = fileData?.game_state
 
       if (!cloned_settings) {
         cloned_settings = {
@@ -795,6 +754,11 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       set_sequences(cloned_sequences)
       set_grid(cloned_grid)
       set_project_name(fileName)
+
+      if (cloned_game_state) {
+        setNodes(cloned_game_state.nodes)
+        setEdges(cloned_game_state.edges)
+      }
     } catch (error: any) {
       console.error('Error fetching data:', error)
       toast.error('Failed to fetch project data')
@@ -1094,7 +1058,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (editorRef.current) {
+      if (editorRef.current && canvasPipelineRef.current.isPlaying) {
         const currentPlayerHealths: number[] = []
         const currentEnemyHealths: number[] = []
 
@@ -1114,6 +1078,13 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     }, 500)
     return () => clearInterval(interval)
   }, [nodes])
+
+  useEffect(() => {
+    if (!canvasPipelineRef.current.isPlaying) {
+      // Important: dont want to save during frequent in-game updates
+      saveGameStateData({ nodes, edges }, SaveTarget.Games)
+    }
+  }, [nodes, edges])
 
   return (
     <>

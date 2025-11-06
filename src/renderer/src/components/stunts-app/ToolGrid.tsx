@@ -1,6 +1,6 @@
 'use client'
 
-import { CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Editor } from '../../engine/editor'
+import { CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Editor, Point } from '../../engine/editor'
 import { getRandomNumber, InputValue, rgbToWgpu, wgpuToHuman } from '../../engine/editor/helpers'
 import { OptionButton } from './items'
 import EditorState from '../../engine/editor_state'
@@ -17,9 +17,10 @@ import {
   saveImage,
   selectModel,
   saveModelFromPath,
-  getUploadedModelData
+  getUploadedModelData,
+  saveGameStateData
 } from '../../fetchers/projects'
-import { Sequence } from '../../engine/animations'
+import { ObjectType, Sequence } from '../../engine/animations'
 import { PolygonConfig } from '../../engine/polygon'
 import { useLocalStorage } from '@uidotdev/usehooks'
 import { TextRendererConfig } from '../../engine/text'
@@ -40,7 +41,7 @@ import { TextAnimationConfig, createTextAnimationPreset } from '../../engine/tex
 import { BrushConfig, BrushType, SavedBrushConfig } from '@renderer/engine/brush'
 
 import { createEnemyNodes } from '../../gamelogic/nodes'
-import { GameNode } from './GameEditor'
+import { GameNode } from './GameLogic'
 import { VoxelType } from '@renderer/engine/voxel'
 
 export const ToolGrid = ({
@@ -1495,6 +1496,179 @@ export const ToolGrid = ({
     [set_sequences, setLayers, layers]
   )
 
+  const on_add_health_potion = useCallback((currentSequenceId: string) => {
+    const newCubeId = addCube({
+      x: 1,
+      y: 0,
+      z: 0
+    })
+
+    setNodes((prevNodes) => {
+      let newNode: GameNode = {
+        id: '12',
+        data: {
+          label: 'Collectable',
+          type: 'HealthPotion',
+          objectId: newCubeId,
+          objectType: ObjectType.Cube3D,
+          quantity: 1,
+          collected: false,
+          effects: [
+            {
+              property: 'health',
+              value: 25,
+              operation: 'add'
+            }
+          ]
+        },
+        position: { x: 550, y: 350 }
+      }
+
+      return [...prevNodes, newNode]
+    })
+  }, [])
+
+  const on_add_sword = useCallback((currentSequenceId: string) => {
+    const newCubeId = addCube({
+      x: 0,
+      y: 1,
+      z: 0
+    })
+
+    setNodes((prevNodes) => {
+      let newNode: GameNode = {
+        id: '14',
+        data: {
+          label: 'Collectable',
+          type: 'FireSword',
+          objectId: newCubeId,
+          objectType: ObjectType.Cube3D,
+          quantity: 1,
+          collected: false,
+          effects: [
+            {
+              property: 'damage',
+              value: 15,
+              operation: 'add'
+            },
+            {
+              property: 'fireRate',
+              value: 1.5,
+              operation: 'multiply'
+            }
+          ]
+        },
+        position: { x: 550, y: 550 }
+      }
+
+      return [...prevNodes, newNode]
+    })
+  }, [])
+
+  const on_add_armor = useCallback((currentSequenceId: string) => {
+    const newCubeId = addCube({
+      x: 0,
+      y: 0,
+      z: 1
+    })
+
+    setNodes((prevNodes) => {
+      let newNode: GameNode = {
+        id: '13',
+        data: {
+          label: 'Collectable',
+          type: 'IronArmor',
+          objectId: newCubeId,
+          objectType: ObjectType.Cube3D,
+          quantity: 1,
+          collected: false,
+          effects: [
+            {
+              property: 'defense',
+              value: 10,
+              operation: 'add'
+            }
+          ]
+        },
+        position: { x: 550, y: 450 }
+      }
+
+      return [...prevNodes, newNode]
+    })
+  }, [])
+
+  const addCube = (initialPosition?: Point) => {
+    if (!editorRef.current || !currentSequenceId) {
+      return
+    }
+
+    const editor = editorRef.current
+    const editor_state = editorStateRef.current
+
+    if (!editor || !editor_state || !editor.settings) {
+      return
+    }
+
+    const random_number_800 = getRandomNumber(100, editor.settings.dimensions.width)
+    const random_number_450 = getRandomNumber(100, editor.settings.dimensions.height)
+
+    const new_id = uuidv4()
+
+    const cubeConfig: Cube3DConfig = {
+      id: new_id,
+      name: '3D Cube',
+      dimensions: [0.5, 0.5, 0.2],
+      position: initialPosition
+        ? initialPosition
+        : {
+            x: 0,
+            y: 0
+          },
+      rotation: [0, 0, 0],
+      backgroundFill: {
+        type: 'Color',
+        value: [0.5, 0.7, 1.0, 1.0]
+      },
+      layer: layers.length
+    }
+
+    editor.add_cube3d(cubeConfig, new_id, currentSequenceId)
+
+    editor_state.add_saved_cube3d(currentSequenceId, cubeConfig)
+
+    let saved_state = editor_state.savedState
+
+    let updated_sequence = saved_state.sequences.find((s) => s.id == currentSequenceId)
+
+    let sequence_cloned = updated_sequence
+
+    if (!sequence_cloned) {
+      throw Error('Sequence does not exist')
+    }
+
+    if (set_sequences) {
+      set_sequences(saved_state.sequences)
+    }
+
+    editor.currentSequenceData = sequence_cloned
+
+    editor.updateMotionPaths(sequence_cloned)
+
+    editor.cubes3D.forEach((cube) => {
+      if (!cube.hidden && cube.id === cubeConfig.id) {
+        let cube_config: Cube3DConfig = cube.toConfig()
+        let new_layer: Layer = LayerFromConfig.fromCube3DConfig(cube_config)
+        layers.push(new_layer)
+      }
+    })
+
+    setLayers(layers)
+
+    update()
+
+    return new_id
+  }
+
   const brushClick = async (brushType: BrushType) => {
     let editor = editorRef.current
     let editor_state = editorStateRef.current
@@ -1868,71 +2042,7 @@ export const ToolGrid = ({
               icon="cube"
               aria-label="Add a 3D cube to the canvas"
               callback={() => {
-                if (!editorRef.current || !currentSequenceId) {
-                  return
-                }
-
-                const editor = editorRef.current
-                const editor_state = editorStateRef.current
-
-                if (!editor || !editor_state || !editor.settings) {
-                  return
-                }
-
-                const random_number_800 = getRandomNumber(100, editor.settings.dimensions.width)
-                const random_number_450 = getRandomNumber(100, editor.settings.dimensions.height)
-
-                const new_id = uuidv4()
-
-                const cubeConfig: Cube3DConfig = {
-                  id: new_id,
-                  name: '3D Cube',
-                  dimensions: [0.5, 0.5, 0.2],
-                  position: {
-                    x: 0,
-                    y: 0
-                  },
-                  rotation: [0, 0, 0],
-                  backgroundFill: {
-                    type: 'Color',
-                    value: [0.5, 0.7, 1.0, 1.0]
-                  },
-                  layer: layers.length
-                }
-
-                editor.add_cube3d(cubeConfig, new_id, currentSequenceId)
-
-                editor_state.add_saved_cube3d(currentSequenceId, cubeConfig)
-
-                let saved_state = editor_state.savedState
-
-                let updated_sequence = saved_state.sequences.find((s) => s.id == currentSequenceId)
-
-                let sequence_cloned = updated_sequence
-
-                if (!sequence_cloned) {
-                  throw Error('Sequence does not exist')
-                }
-
-                if (set_sequences) {
-                  set_sequences(saved_state.sequences)
-                }
-
-                editor.currentSequenceData = sequence_cloned
-
-                editor.updateMotionPaths(sequence_cloned)
-
-                editor.cubes3D.forEach((cube) => {
-                  if (!cube.hidden && cube.id === cubeConfig.id) {
-                    let cube_config: Cube3DConfig = cube.toConfig()
-                    let new_layer: Layer = LayerFromConfig.fromCube3DConfig(cube_config)
-                    layers.push(new_layer)
-                  }
-                })
-
-                setLayers(layers)
-
-                update()
+                addCube()
               }}
             />
           )}
@@ -2077,6 +2187,42 @@ export const ToolGrid = ({
                     return
                   }
                   on_add_enemy_character(currentSequenceId)
+                }}
+              />
+              <OptionButton
+                style={{}}
+                label={t('Add Health Potion')}
+                icon="user-x"
+                aria-label="Add Health Potion"
+                callback={() => {
+                  if (!currentSequenceId) {
+                    return
+                  }
+                  on_add_health_potion(currentSequenceId)
+                }}
+              />
+              <OptionButton
+                style={{}}
+                label={t('Add Sword')}
+                icon="user-x"
+                aria-label="Add Sword"
+                callback={() => {
+                  if (!currentSequenceId) {
+                    return
+                  }
+                  on_add_sword(currentSequenceId)
+                }}
+              />
+              <OptionButton
+                style={{}}
+                label={t('Add Armor')}
+                icon="user-x"
+                aria-label="Add Armor"
+                callback={() => {
+                  if (!currentSequenceId) {
+                    return
+                  }
+                  on_add_armor(currentSequenceId)
                 }}
               />
             </>
