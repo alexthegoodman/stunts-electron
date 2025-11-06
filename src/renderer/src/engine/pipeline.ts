@@ -1,7 +1,7 @@
 import { mat4, vec3, vec4 } from 'gl-matrix'
 import { createVertexBufferLayout } from './vertex'
 import { Camera, CameraBinding } from './camera'
-import { ControlMode, Editor } from './editor'
+import { ControlMode, EditMode, Editor } from './editor'
 
 // import FragShader from "./shaders/frag_primary.wgsl?raw";
 // import VertShader from "./shaders/vert_primary.wgsl?raw";
@@ -1379,492 +1379,533 @@ export class CanvasPipeline {
       // gl.drawArrays(gl.TRIANGLES, 0, vertexCount); // Use indexCount directly for drawArrays
     }
 
-    // Draw static polygons
-    for (const polygon of editor.staticPolygons || []) {
-      // Update uniform buffer if this polygon is being dragged
-      if (editor.draggingPathHandle === polygon.id) {
-        polygon.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+    if (editor.editMode === EditMode.Component) {
+      // Draw just the selected component
+      for (const voxel of editor.currentEditComponent.voxels || []) {
+        if (!voxel.hidden) {
+          if (editor.draggingCube3D === voxel.id || editor.isPlaying) {
+            voxel.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+          }
+
+          voxel.bindGroup.bindWebGLBindGroup(gl)
+          voxel.groupBindGroup?.bindWebGLBindGroup(gl)
+
+          drawIndexedGeometry(
+            voxel.vertexBuffer as PolyfillBuffer,
+            voxel.indexBuffer as PolyfillBuffer,
+            voxel.indices.length
+          )
+        }
       }
-
-      if (
-        polygon.name === 'canvas_background' &&
-        editor.target === SaveTarget.Videos &&
-        editor.isPlaying
-      ) {
-        // Use faster deltaTime for shader backgrounds (10x) to make animations visible
-        const deltaTime = polygon.backgroundFill.type === 'Shader' ? 0.1 : 0.001
-        polygon.updateGradientAnimation(device, deltaTime)
-      }
-
-      polygon.bindGroup.bindWebGLBindGroup(gl)
-      // polygon.gradientBindGroup?.bindWebGLBindGroup(gl);
-      polygon.groupBindGroup?.bindWebGLBindGroup(gl)
-
-      // log data
-      // console.info(
-      //   "polygon data",
-      //   polygon.bindGroup.resources.filter((x) =>
-      //     x.resource instanceof PolyfillBuffer ? x.resource.data : null
-      //   ),
-      //   // polygon.gradientBindGroup?.resources.filter((x) =>
-      //   //   x.resource instanceof PolyfillBuffer ? x.resource.data : null
-      //   // ),
-      //   polygon.groupBindGroup.resources.filter((x) =>
-      //     x.resource instanceof PolyfillBuffer ? x.resource.data : null
-      //   )
-      // );
-
-      drawIndexedGeometry(
-        polygon.vertexBuffer as PolyfillBuffer,
-        polygon.indexBuffer as PolyfillBuffer,
-        polygon.indices.length
-      )
-    }
-
-    // Draw motion paths
-    for (const path of editor.motionPaths || []) {
-      // Update path transform if being dragged
-      if (
-        editor.draggingPath === path.id ||
-        editor.draggingPolygon === path.associatedPolygonId ||
-        editor.draggingImage === path.associatedPolygonId ||
-        editor.draggingText === path.associatedPolygonId ||
-        editor.draggingVideo === path.associatedPolygonId
-      ) {
-        path.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-      }
-
-      // this.bindWebGLBindGroup(gl, path.bindGroup, 3);
-      path.bindGroup.bindWebGLBindGroup(gl)
-
-      // Draw static polygons in this path
-      for (const polygon of path.staticPolygons || []) {
+    } else {
+      // Draw static polygons
+      for (const polygon of editor.staticPolygons || []) {
+        // Update uniform buffer if this polygon is being dragged
         if (editor.draggingPathHandle === polygon.id) {
           polygon.transform.updateUniformBuffer(queue, editor.camera.windowSize)
         }
 
-        // this.bindWebGLBindGroup(gl, polygon.bindGroup, 1);
-
-        polygon.bindGroup.bindWebGLBindGroup(gl)
-        // polygon.groupBindGroup?.bindWebGLBindGroup(gl);
-
-        drawIndexedGeometry(
-          polygon.vertexBuffer as PolyfillBuffer,
-          polygon.indexBuffer as PolyfillBuffer,
-          polygon.indices.length
-        )
-      }
-    }
-
-    // Draw regular polygons
-    for (const polygon of editor.polygons || []) {
-      if (!polygon.hidden) {
-        // Update if dragging or during playback
-        if (editor.draggingPolygon === polygon.id || editor.isPlaying) {
-          polygon.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-
-          // console.info("polygon", polygon.id, polygon.transform.layer);
+        if (
+          polygon.name === 'canvas_background' &&
+          editor.target === SaveTarget.Videos &&
+          editor.isPlaying
+        ) {
+          // Use faster deltaTime for shader backgrounds (10x) to make animations visible
+          const deltaTime = polygon.backgroundFill.type === 'Shader' ? 0.1 : 0.001
+          polygon.updateGradientAnimation(device, deltaTime)
         }
 
-        // this.bindWebGLBindGroup(gl, polygon.bindGroup, 1);
-        // this.bindWebGLBindGroup(gl, polygon.groupBindGroup, 3);
-
         polygon.bindGroup.bindWebGLBindGroup(gl)
+        // polygon.gradientBindGroup?.bindWebGLBindGroup(gl);
         polygon.groupBindGroup?.bindWebGLBindGroup(gl)
 
+        // log data
+        // console.info(
+        //   "polygon data",
+        //   polygon.bindGroup.resources.filter((x) =>
+        //     x.resource instanceof PolyfillBuffer ? x.resource.data : null
+        //   ),
+        //   // polygon.gradientBindGroup?.resources.filter((x) =>
+        //   //   x.resource instanceof PolyfillBuffer ? x.resource.data : null
+        //   // ),
+        //   polygon.groupBindGroup.resources.filter((x) =>
+        //     x.resource instanceof PolyfillBuffer ? x.resource.data : null
+        //   )
+        // );
+
         drawIndexedGeometry(
           polygon.vertexBuffer as PolyfillBuffer,
           polygon.indexBuffer as PolyfillBuffer,
           polygon.indices.length
         )
       }
-    }
 
-    // Draw text items
-    for (const textItem of editor.textItems || []) {
-      if (!textItem.hidden && textItem.indices) {
-        // Draw background polygon if not hidden
-        if (!textItem.backgroundPolygon.hidden && !textItem.hiddenBackground) {
-          if (editor.draggingText === textItem.backgroundPolygon.id || editor.isPlaying) {
-            textItem.backgroundPolygon.transform.updateUniformBuffer(
-              queue,
-              editor.camera.windowSize
-            )
+      // Draw motion paths
+      for (const path of editor.motionPaths || []) {
+        // Update path transform if being dragged
+        if (
+          editor.draggingPath === path.id ||
+          editor.draggingPolygon === path.associatedPolygonId ||
+          editor.draggingImage === path.associatedPolygonId ||
+          editor.draggingText === path.associatedPolygonId ||
+          editor.draggingVideo === path.associatedPolygonId
+        ) {
+          path.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+        }
+
+        // this.bindWebGLBindGroup(gl, path.bindGroup, 3);
+        path.bindGroup.bindWebGLBindGroup(gl)
+
+        // Draw static polygons in this path
+        for (const polygon of path.staticPolygons || []) {
+          if (editor.draggingPathHandle === polygon.id) {
+            polygon.transform.updateUniformBuffer(queue, editor.camera.windowSize)
           }
 
-          // this.bindWebGLBindGroup(gl, textItem.backgroundPolygon.bindGroup, 1);
-          // this.bindWebGLBindGroup(
-          //   gl,
-          //   textItem.backgroundPolygon.groupBindGroup,
-          //   3
-          // );
+          // this.bindWebGLBindGroup(gl, polygon.bindGroup, 1);
 
-          textItem.bindGroup.bindWebGLBindGroup(gl)
-          textItem.groupBindGroup?.bindWebGLBindGroup(gl)
+          polygon.bindGroup.bindWebGLBindGroup(gl)
+          // polygon.groupBindGroup?.bindWebGLBindGroup(gl);
 
           drawIndexedGeometry(
-            textItem.backgroundPolygon.vertexBuffer as PolyfillBuffer,
-            textItem.backgroundPolygon.indexBuffer as PolyfillBuffer,
-            textItem.backgroundPolygon.indices.length
+            polygon.vertexBuffer as PolyfillBuffer,
+            polygon.indexBuffer as PolyfillBuffer,
+            polygon.indices.length
           )
         }
-
-        // Draw the text itself
-        if (editor.draggingText === textItem.id || editor.isPlaying) {
-          textItem.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-        }
-
-        // this.bindWebGLBindGroup(gl, textItem.bindGroup, 1);
-        // this.bindWebGLBindGroup(gl, textItem.groupBindGroup, 3);
-
-        if (textItem.hiddenBackground) {
-          textItem.bindGroup.bindWebGLBindGroup(gl)
-          textItem.groupBindGroup?.bindWebGLBindGroup(gl)
-        }
-
-        drawIndexedGeometry(
-          textItem.vertexBuffer as PolyfillBuffer,
-          textItem.indexBuffer as PolyfillBuffer,
-          textItem.indices.length
-        )
       }
-    }
 
-    // Draw video items
-    for (const video of editor.videoItems || []) {
-      if (!video.hidden) {
-        // this.bindWebGLBindGroup(gl, video.groupBindGroup, 3);
+      // Draw regular polygons
+      for (const polygon of editor.polygons || []) {
+        if (!polygon.hidden) {
+          // Update if dragging or during playback
+          if (editor.draggingPolygon === polygon.id || editor.isPlaying) {
+            polygon.transform.updateUniformBuffer(queue, editor.camera.windowSize)
 
-        if (video.mousePath) {
-          // Update path transform if being dragged
-          if (editor.draggingPath === video.mousePath.id || editor.draggingVideo === video.id) {
-            video.mousePath.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+            // console.info("polygon", polygon.id, polygon.transform.layer);
           }
 
-          video.mousePath.bindGroup.bindWebGLBindGroup(gl)
+          // this.bindWebGLBindGroup(gl, polygon.bindGroup, 1);
+          // this.bindWebGLBindGroup(gl, polygon.groupBindGroup, 3);
 
-          // Draw static polygons in this path
-          for (const polygon of video.mousePath.staticPolygons || []) {
-            if (editor.draggingPathHandle === polygon.id || editor.draggingVideo === video.id) {
-              polygon.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+          polygon.bindGroup.bindWebGLBindGroup(gl)
+          polygon.groupBindGroup?.bindWebGLBindGroup(gl)
+
+          drawIndexedGeometry(
+            polygon.vertexBuffer as PolyfillBuffer,
+            polygon.indexBuffer as PolyfillBuffer,
+            polygon.indices.length
+          )
+        }
+      }
+
+      // Draw text items
+      for (const textItem of editor.textItems || []) {
+        if (!textItem.hidden && textItem.indices) {
+          // Draw background polygon if not hidden
+          if (!textItem.backgroundPolygon.hidden && !textItem.hiddenBackground) {
+            if (editor.draggingText === textItem.backgroundPolygon.id || editor.isPlaying) {
+              textItem.backgroundPolygon.transform.updateUniformBuffer(
+                queue,
+                editor.camera.windowSize
+              )
             }
 
-            // this.bindWebGLBindGroup(gl, polygon.bindGroup, 1);
+            // this.bindWebGLBindGroup(gl, textItem.backgroundPolygon.bindGroup, 1);
+            // this.bindWebGLBindGroup(
+            //   gl,
+            //   textItem.backgroundPolygon.groupBindGroup,
+            //   3
+            // );
 
-            polygon.bindGroup.bindWebGLBindGroup(gl)
-            // video.mousePath.bindGroup.bindWebGLBindGroup(gl)
-            // polygon.groupBindGroup?.bindWebGLBindGroup(gl)
+            textItem.bindGroup.bindWebGLBindGroup(gl)
+            textItem.groupBindGroup?.bindWebGLBindGroup(gl)
 
             drawIndexedGeometry(
-              polygon.vertexBuffer as PolyfillBuffer,
-              polygon.indexBuffer as PolyfillBuffer,
-              polygon.indices.length
+              textItem.backgroundPolygon.vertexBuffer as PolyfillBuffer,
+              textItem.backgroundPolygon.indexBuffer as PolyfillBuffer,
+              textItem.backgroundPolygon.indices.length
             )
           }
-        }
 
-        if (editor.draggingVideo === video.id || editor.isPlaying) {
-          video.groupTransform.updateUniformBuffer(queue, editor.camera.windowSize)
-        }
-
-        // this.bindWebGLBindGroup(gl, video.bindGroup, 1);
-
-        video.bindGroup.bindWebGLBindGroup(gl)
-        video.groupBindGroup?.bindWebGLBindGroup(gl)
-
-        // console.info("video layer", video.layer, video.transform.layer);
-
-        drawIndexedGeometry(
-          video.vertexBuffer as PolyfillBuffer,
-          video.indexBuffer as PolyfillBuffer,
-          video.indices.length
-        )
-      }
-    }
-
-    // Draw image items
-    for (const image of editor.imageItems || []) {
-      if (!image.hidden) {
-        // Disable depth writes for transparent images
-        // gl.depthMask(false);
-
-        if (editor.draggingImage === image.id || editor.isPlaying) {
-          image.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-        }
-
-        // this.bindWebGLBindGroup(gl, image.bindGroup, 1);
-        // this.bindWebGLBindGroup(gl, image.groupBindGroup, 3);
-
-        image.bindGroup.bindWebGLBindGroup(gl)
-        image.groupBindGroup?.bindWebGLBindGroup(gl)
-
-        drawIndexedGeometry(
-          image.vertexBuffer as PolyfillBuffer,
-          image.indexBuffer as PolyfillBuffer,
-          image.indices.length
-        )
-
-        // Re-enable depth writes for subsequent objects
-        // gl.depthMask(true);
-      }
-    }
-
-    // Draw brushes
-    for (const brush of editor.brushes || []) {
-      if (!brush.hidden && brush.vertices.length > 0) {
-        // Brushes don't typically need dragging updates, but could be added if needed
-        if (editor.isPlaying) {
-          brush.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-        }
-
-        const indicesToDraw = editor.isPlaying ? brush.drawCount : brush.totalIndices
-
-        brush.bindGroup.bindWebGLBindGroup(gl)
-        brush.groupBindGroup?.bindWebGLBindGroup(gl)
-
-        drawIndexedGeometry(
-          brush.vertexBuffer as PolyfillBuffer,
-          brush.indexBuffer as PolyfillBuffer,
-          // brush.indices.length
-          indicesToDraw
-        )
-      }
-    }
-
-    // Draw 3D Mockups
-    for (const mockup of editor.mockups3D || []) {
-      if (!mockup.hidden) {
-        if (editor.draggingMockup3D === mockup.id || editor.isPlaying) {
-          mockup.groupTransform.updateUniformBuffer(queue, editor.camera.windowSize)
-        }
-
-        mockup.groupBindGroup?.bindWebGLBindGroup(gl)
-        mockup.bindGroup.bindWebGLBindGroup(gl)
-
-        drawIndexedGeometry(
-          mockup.vertexBuffer as PolyfillBuffer,
-          mockup.indexBuffer as PolyfillBuffer,
-          mockup.indices.length
-        )
-
-        // Draw anchor debug cube if it exists
-        // if (mockup.anchorDebugCube) {
-        //   mockup.groupBindGroup?.bindWebGLBindGroup(gl)
-        //   mockup.anchorDebugCube.bindGroup.bindWebGLBindGroup(gl)
-
-        //   drawIndexedGeometry(
-        //     mockup.anchorDebugCube.vertexBuffer as PolyfillBuffer,
-        //     mockup.anchorDebugCube.indexBuffer as PolyfillBuffer,
-        //     mockup.anchorDebugCube.indices.length
-        //   )
-        // }
-
-        if (mockup.videoChild) {
-          if (editor.draggingVideo === mockup.videoChild.id || editor.isPlaying) {
-            mockup.videoChild.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+          // Draw the text itself
+          if (editor.draggingText === textItem.id || editor.isPlaying) {
+            textItem.transform.updateUniformBuffer(queue, editor.camera.windowSize)
           }
 
-          mockup.videoChild.bindGroup.bindWebGLBindGroup(gl)
+          // this.bindWebGLBindGroup(gl, textItem.bindGroup, 1);
+          // this.bindWebGLBindGroup(gl, textItem.groupBindGroup, 3);
+
+          if (textItem.hiddenBackground) {
+            textItem.bindGroup.bindWebGLBindGroup(gl)
+            textItem.groupBindGroup?.bindWebGLBindGroup(gl)
+          }
+
+          drawIndexedGeometry(
+            textItem.vertexBuffer as PolyfillBuffer,
+            textItem.indexBuffer as PolyfillBuffer,
+            textItem.indices.length
+          )
+        }
+      }
+
+      // Draw video items
+      for (const video of editor.videoItems || []) {
+        if (!video.hidden) {
+          // this.bindWebGLBindGroup(gl, video.groupBindGroup, 3);
+
+          if (video.mousePath) {
+            // Update path transform if being dragged
+            if (editor.draggingPath === video.mousePath.id || editor.draggingVideo === video.id) {
+              video.mousePath.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+            }
+
+            video.mousePath.bindGroup.bindWebGLBindGroup(gl)
+
+            // Draw static polygons in this path
+            for (const polygon of video.mousePath.staticPolygons || []) {
+              if (editor.draggingPathHandle === polygon.id || editor.draggingVideo === video.id) {
+                polygon.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+              }
+
+              // this.bindWebGLBindGroup(gl, polygon.bindGroup, 1);
+
+              polygon.bindGroup.bindWebGLBindGroup(gl)
+              // video.mousePath.bindGroup.bindWebGLBindGroup(gl)
+              // polygon.groupBindGroup?.bindWebGLBindGroup(gl)
+
+              drawIndexedGeometry(
+                polygon.vertexBuffer as PolyfillBuffer,
+                polygon.indexBuffer as PolyfillBuffer,
+                polygon.indices.length
+              )
+            }
+          }
+
+          if (editor.draggingVideo === video.id || editor.isPlaying) {
+            video.groupTransform.updateUniformBuffer(queue, editor.camera.windowSize)
+          }
+
+          // this.bindWebGLBindGroup(gl, video.bindGroup, 1);
+
+          video.bindGroup.bindWebGLBindGroup(gl)
+          video.groupBindGroup?.bindWebGLBindGroup(gl)
 
           // console.info("video layer", video.layer, video.transform.layer);
 
           drawIndexedGeometry(
-            mockup.videoChild.vertexBuffer as PolyfillBuffer,
-            mockup.videoChild.indexBuffer as PolyfillBuffer,
-            mockup.videoChild.indices.length
+            video.vertexBuffer as PolyfillBuffer,
+            video.indexBuffer as PolyfillBuffer,
+            video.indices.length
           )
         }
       }
-    }
 
-    // Draw 3D cubes
-    for (const cube of editor.cubes3D || []) {
-      if (!cube.hidden) {
-        // console.info('cube pos', cube.transform.position)
+      // Draw image items
+      for (const image of editor.imageItems || []) {
+        if (!image.hidden) {
+          // Disable depth writes for transparent images
+          // gl.depthMask(false);
 
-        if (editor.draggingCube3D === cube.id || editor.isPlaying) {
-          cube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-        }
+          if (editor.draggingImage === image.id || editor.isPlaying) {
+            image.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+          }
 
-        cube.bindGroup.bindWebGLBindGroup(gl)
-        cube.groupBindGroup?.bindWebGLBindGroup(gl)
+          // this.bindWebGLBindGroup(gl, image.bindGroup, 1);
+          // this.bindWebGLBindGroup(gl, image.groupBindGroup, 3);
 
-        drawIndexedGeometry(
-          cube.vertexBuffer as PolyfillBuffer,
-          cube.indexBuffer as PolyfillBuffer,
-          cube.indices.length
-        )
-      }
-    }
-
-    // Draw 3D cubes
-    for (const voxel of editor.voxels || []) {
-      if (!voxel.hidden) {
-        // console.info('cube pos', cube.transform.position)
-
-        if (editor.draggingCube3D === voxel.id || editor.isPlaying) {
-          voxel.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-        }
-
-        voxel.bindGroup.bindWebGLBindGroup(gl)
-        voxel.groupBindGroup?.bindWebGLBindGroup(gl)
-
-        drawIndexedGeometry(
-          voxel.vertexBuffer as PolyfillBuffer,
-          voxel.indexBuffer as PolyfillBuffer,
-          voxel.indices.length
-        )
-      }
-    }
-
-    // Draw Gizmo
-    if (editor.gizmo) {
-      for (const axis of [
-        editor.gizmo.xAxis,
-        editor.gizmo.yAxis,
-        editor.gizmo.zAxis,
-        editor.gizmo.xRing,
-        editor.gizmo.yRing,
-        editor.gizmo.zRing,
-        editor.gizmo.zScale,
-        editor.gizmo.yScale,
-        editor.gizmo.zScale
-      ]) {
-        if (!axis.hidden) {
-          axis.bindGroup.bindWebGLBindGroup(gl)
-          axis.groupBindGroup?.bindWebGLBindGroup(gl)
+          image.bindGroup.bindWebGLBindGroup(gl)
+          image.groupBindGroup?.bindWebGLBindGroup(gl)
 
           drawIndexedGeometry(
-            axis.vertexBuffer as PolyfillBuffer,
-            axis.indexBuffer as PolyfillBuffer,
-            axis.indices.length
+            image.vertexBuffer as PolyfillBuffer,
+            image.indexBuffer as PolyfillBuffer,
+            image.indices.length
+          )
+
+          // Re-enable depth writes for subsequent objects
+          // gl.depthMask(true);
+        }
+      }
+
+      // Draw brushes
+      for (const brush of editor.brushes || []) {
+        if (!brush.hidden && brush.vertices.length > 0) {
+          // Brushes don't typically need dragging updates, but could be added if needed
+          if (editor.isPlaying) {
+            brush.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+          }
+
+          const indicesToDraw = editor.isPlaying ? brush.drawCount : brush.totalIndices
+
+          brush.bindGroup.bindWebGLBindGroup(gl)
+          brush.groupBindGroup?.bindWebGLBindGroup(gl)
+
+          drawIndexedGeometry(
+            brush.vertexBuffer as PolyfillBuffer,
+            brush.indexBuffer as PolyfillBuffer,
+            // brush.indices.length
+            indicesToDraw
           )
         }
       }
-    }
 
-    // Draw 3D spheres
-    for (const sphere of editor.spheres3D || []) {
-      if (!sphere.hidden) {
-        if (editor.draggingSphere3D === sphere.id || editor.isPlaying) {
-          sphere.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-        }
+      // Draw 3D Mockups
+      for (const mockup of editor.mockups3D || []) {
+        if (!mockup.hidden) {
+          if (editor.draggingMockup3D === mockup.id || editor.isPlaying) {
+            mockup.groupTransform.updateUniformBuffer(queue, editor.camera.windowSize)
+          }
 
-        sphere.bindGroup.bindWebGLBindGroup(gl)
-        sphere.groupBindGroup?.bindWebGLBindGroup(gl)
+          mockup.groupBindGroup?.bindWebGLBindGroup(gl)
+          mockup.bindGroup.bindWebGLBindGroup(gl)
 
-        drawIndexedGeometry(
-          sphere.vertexBuffer as PolyfillBuffer,
-          sphere.indexBuffer as PolyfillBuffer,
-          sphere.indices.length
-        )
-      }
-    }
+          drawIndexedGeometry(
+            mockup.vertexBuffer as PolyfillBuffer,
+            mockup.indexBuffer as PolyfillBuffer,
+            mockup.indices.length
+          )
 
-    // Draw 3D models
-    for (const model of editor.models3D || []) {
-      if (!model.hidden) {
-        // if (editor.draggingModel3D === model.id || editor.isPlaying) {
-        if (editor.isPlaying) {
-          model.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-        }
+          // Draw anchor debug cube if it exists
+          // if (mockup.anchorDebugCube) {
+          //   mockup.groupBindGroup?.bindWebGLBindGroup(gl)
+          //   mockup.anchorDebugCube.bindGroup.bindWebGLBindGroup(gl)
 
-        model.bindGroup.bindWebGLBindGroup(gl)
-        model.groupBindGroup?.bindWebGLBindGroup(gl)
+          //   drawIndexedGeometry(
+          //     mockup.anchorDebugCube.vertexBuffer as PolyfillBuffer,
+          //     mockup.anchorDebugCube.indexBuffer as PolyfillBuffer,
+          //     mockup.anchorDebugCube.indices.length
+          //   )
+          // }
 
-        drawIndexedGeometry(
-          model.vertexBuffer as PolyfillBuffer,
-          model.indexBuffer as PolyfillBuffer,
-          model.indices.length
-        )
-      }
-    }
-
-    // Draw repeat objects
-    let repeatObjects = editor.repeatManager.getAllRepeatObjects()
-    if (repeatObjects.length > 0) {
-      for (const repeatObject of repeatObjects || []) {
-        if (!repeatObject.hidden && repeatObject.indices && repeatObject.indexBuffer) {
-          let sourceObject = repeatObject.sourceObject
-          let instances = repeatObject.instances
-
-          for (let instance of instances) {
-            if (isTextRenderer(sourceObject)) {
-              if (
-                sourceObject.objectType === ObjectType.TextItem &&
-                sourceObject?.backgroundPolygon
-              ) {
-                // Draw background polygon if not hidden
-                if (
-                  sourceObject?.backgroundPolygon &&
-                  !sourceObject.backgroundPolygon.hidden &&
-                  !sourceObject.hiddenBackground
-                ) {
-                  if (editor.isPlaying) {
-                    sourceObject.backgroundPolygon.transform.updateUniformBuffer(
-                      queue,
-                      editor.camera.windowSize
-                    )
-                  }
-
-                  // this.bindWebGLBindGroup(
-                  //   gl,
-                  //   sourceObject.backgroundPolygon.bindGroup,
-                  //   1
-                  // );
-                  // this.bindWebGLBindGroup(
-                  //   gl,
-                  //   sourceObject.backgroundPolygon.groupBindGroup,
-                  //   3
-                  // );
-
-                  sourceObject.bindGroup.bindWebGLBindGroup(gl)
-                  sourceObject.groupBindGroup?.bindWebGLBindGroup(gl)
-
-                  drawIndexedGeometry(
-                    sourceObject.backgroundPolygon.vertexBuffer as PolyfillBuffer,
-                    sourceObject.backgroundPolygon.indexBuffer as PolyfillBuffer,
-                    sourceObject.backgroundPolygon.indices.length
-                  )
-                }
-              }
+          if (mockup.videoChild) {
+            if (editor.draggingVideo === mockup.videoChild.id || editor.isPlaying) {
+              mockup.videoChild.transform.updateUniformBuffer(queue, editor.camera.windowSize)
             }
 
-            // Allow for animations
-            if (instance.transform && editor.isPlaying) {
-              instance.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-            }
+            mockup.videoChild.bindGroup.bindWebGLBindGroup(gl)
 
-            // this.bindWebGLBindGroup(gl, instance.bindGroup!, 1);
-            // this.bindWebGLBindGroup(gl, sourceObject.groupBindGroup, 3);
-
-            instance.bindGroup.bindWebGLBindGroup(gl)
-            sourceObject.groupBindGroup?.bindWebGLBindGroup(gl)
+            // console.info("video layer", video.layer, video.transform.layer);
 
             drawIndexedGeometry(
-              repeatObject.vertexBuffer as PolyfillBuffer,
-              repeatObject.indexBuffer as PolyfillBuffer,
-              repeatObject.indices.length
+              mockup.videoChild.vertexBuffer as PolyfillBuffer,
+              mockup.videoChild.indexBuffer as PolyfillBuffer,
+              mockup.videoChild.indices.length
             )
           }
         }
       }
-    }
 
-    // Draw text areas
-    if (editor.textArea) {
-      if (!editor.textArea.hidden && editor.textArea.indices) {
-        // this.bindWebGLBindGroup(gl, editor.textArea.bindGroup, 1);
-        // this.bindWebGLBindGroup(gl, editor.textArea.groupBindGroup, 3);
+      // Draw 3D cubes
+      for (const cube of editor.cubes3D || []) {
+        if (!cube.hidden) {
+          // console.info('cube pos', cube.transform.position)
 
-        //         textArea.bindGroup.bindWebGLBindGroup(gl);
-        // textArea.groupBindGroup?.bindWebGLBindGroup(gl);
+          if (editor.draggingCube3D === cube.id || editor.isPlaying) {
+            cube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+          }
 
-        drawIndexedGeometry(
-          editor.textArea.vertexBuffer as PolyfillBuffer,
-          editor.textArea.indexBuffer as PolyfillBuffer,
-          editor.textArea.indices.length
-        )
+          cube.bindGroup.bindWebGLBindGroup(gl)
+          cube.groupBindGroup?.bindWebGLBindGroup(gl)
+
+          drawIndexedGeometry(
+            cube.vertexBuffer as PolyfillBuffer,
+            cube.indexBuffer as PolyfillBuffer,
+            cube.indices.length
+          )
+        }
+      }
+
+      // Draw 3D cubes
+      for (const voxel of editor.voxels || []) {
+        if (!voxel.hidden) {
+          // console.info('cube pos', cube.transform.position)
+
+          if (editor.draggingCube3D === voxel.id || editor.isPlaying) {
+            voxel.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+          }
+
+          voxel.bindGroup.bindWebGLBindGroup(gl)
+          voxel.groupBindGroup?.bindWebGLBindGroup(gl)
+
+          drawIndexedGeometry(
+            voxel.vertexBuffer as PolyfillBuffer,
+            voxel.indexBuffer as PolyfillBuffer,
+            voxel.indices.length
+          )
+        }
+      }
+
+      // Draw just the active components
+      // NOTE: a bottleneck now, but compoennts open the opportunity for perf gains later
+      for (const voxelComponent of editor.voxelComponents || []) {
+        for (const voxel of voxelComponent.voxels || []) {
+          if (!voxel.hidden) {
+            if (editor.draggingCube3D === voxel.id || editor.isPlaying) {
+              voxel.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+            }
+
+            voxel.bindGroup.bindWebGLBindGroup(gl)
+            voxel.groupBindGroup?.bindWebGLBindGroup(gl)
+
+            drawIndexedGeometry(
+              voxel.vertexBuffer as PolyfillBuffer,
+              voxel.indexBuffer as PolyfillBuffer,
+              voxel.indices.length
+            )
+          }
+        }
+      }
+
+      // Draw Gizmo
+      if (editor.gizmo) {
+        for (const axis of [
+          editor.gizmo.xAxis,
+          editor.gizmo.yAxis,
+          editor.gizmo.zAxis,
+          editor.gizmo.xRing,
+          editor.gizmo.yRing,
+          editor.gizmo.zRing,
+          editor.gizmo.zScale,
+          editor.gizmo.yScale,
+          editor.gizmo.zScale
+        ]) {
+          if (!axis.hidden) {
+            axis.bindGroup.bindWebGLBindGroup(gl)
+            axis.groupBindGroup?.bindWebGLBindGroup(gl)
+
+            drawIndexedGeometry(
+              axis.vertexBuffer as PolyfillBuffer,
+              axis.indexBuffer as PolyfillBuffer,
+              axis.indices.length
+            )
+          }
+        }
+      }
+
+      // Draw 3D spheres
+      for (const sphere of editor.spheres3D || []) {
+        if (!sphere.hidden) {
+          if (editor.draggingSphere3D === sphere.id || editor.isPlaying) {
+            sphere.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+          }
+
+          sphere.bindGroup.bindWebGLBindGroup(gl)
+          sphere.groupBindGroup?.bindWebGLBindGroup(gl)
+
+          drawIndexedGeometry(
+            sphere.vertexBuffer as PolyfillBuffer,
+            sphere.indexBuffer as PolyfillBuffer,
+            sphere.indices.length
+          )
+        }
+      }
+
+      // Draw 3D models
+      for (const model of editor.models3D || []) {
+        if (!model.hidden) {
+          // if (editor.draggingModel3D === model.id || editor.isPlaying) {
+          if (editor.isPlaying) {
+            model.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+          }
+
+          model.bindGroup.bindWebGLBindGroup(gl)
+          model.groupBindGroup?.bindWebGLBindGroup(gl)
+
+          drawIndexedGeometry(
+            model.vertexBuffer as PolyfillBuffer,
+            model.indexBuffer as PolyfillBuffer,
+            model.indices.length
+          )
+        }
+      }
+
+      // Draw repeat objects
+      let repeatObjects = editor.repeatManager.getAllRepeatObjects()
+      if (repeatObjects.length > 0) {
+        for (const repeatObject of repeatObjects || []) {
+          if (!repeatObject.hidden && repeatObject.indices && repeatObject.indexBuffer) {
+            let sourceObject = repeatObject.sourceObject
+            let instances = repeatObject.instances
+
+            for (let instance of instances) {
+              if (isTextRenderer(sourceObject)) {
+                if (
+                  sourceObject.objectType === ObjectType.TextItem &&
+                  sourceObject?.backgroundPolygon
+                ) {
+                  // Draw background polygon if not hidden
+                  if (
+                    sourceObject?.backgroundPolygon &&
+                    !sourceObject.backgroundPolygon.hidden &&
+                    !sourceObject.hiddenBackground
+                  ) {
+                    if (editor.isPlaying) {
+                      sourceObject.backgroundPolygon.transform.updateUniformBuffer(
+                        queue,
+                        editor.camera.windowSize
+                      )
+                    }
+
+                    // this.bindWebGLBindGroup(
+                    //   gl,
+                    //   sourceObject.backgroundPolygon.bindGroup,
+                    //   1
+                    // );
+                    // this.bindWebGLBindGroup(
+                    //   gl,
+                    //   sourceObject.backgroundPolygon.groupBindGroup,
+                    //   3
+                    // );
+
+                    sourceObject.bindGroup.bindWebGLBindGroup(gl)
+                    sourceObject.groupBindGroup?.bindWebGLBindGroup(gl)
+
+                    drawIndexedGeometry(
+                      sourceObject.backgroundPolygon.vertexBuffer as PolyfillBuffer,
+                      sourceObject.backgroundPolygon.indexBuffer as PolyfillBuffer,
+                      sourceObject.backgroundPolygon.indices.length
+                    )
+                  }
+                }
+              }
+
+              // Allow for animations
+              if (instance.transform && editor.isPlaying) {
+                instance.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+              }
+
+              // this.bindWebGLBindGroup(gl, instance.bindGroup!, 1);
+              // this.bindWebGLBindGroup(gl, sourceObject.groupBindGroup, 3);
+
+              instance.bindGroup.bindWebGLBindGroup(gl)
+              sourceObject.groupBindGroup?.bindWebGLBindGroup(gl)
+
+              drawIndexedGeometry(
+                repeatObject.vertexBuffer as PolyfillBuffer,
+                repeatObject.indexBuffer as PolyfillBuffer,
+                repeatObject.indices.length
+              )
+            }
+          }
+        }
+      }
+
+      // Draw text areas
+      if (editor.textArea) {
+        if (!editor.textArea.hidden && editor.textArea.indices) {
+          // this.bindWebGLBindGroup(gl, editor.textArea.bindGroup, 1);
+          // this.bindWebGLBindGroup(gl, editor.textArea.groupBindGroup, 3);
+
+          //         textArea.bindGroup.bindWebGLBindGroup(gl);
+          // textArea.groupBindGroup?.bindWebGLBindGroup(gl);
+
+          drawIndexedGeometry(
+            editor.textArea.vertexBuffer as PolyfillBuffer,
+            editor.textArea.indexBuffer as PolyfillBuffer,
+            editor.textArea.indices.length
+          )
+        }
       }
     }
 

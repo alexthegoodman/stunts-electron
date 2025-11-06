@@ -13,6 +13,7 @@ import { ShaderThemeConfig } from './shader_themes'
 import { CameraAnimation } from './3dcamera'
 import { Editor } from './editor'
 import { SavedVoxelConfig } from './voxel'
+import { SavedVoxelComponent } from './voxelComponent'
 
 export interface SavedState {
   sequences: Sequence[]
@@ -131,6 +132,8 @@ export interface Sequence {
   activeModels3D?: SavedModel3DConfig[]
   activePointLights?: SavedPointLight3DConfig[]
   activeVoxels?: SavedVoxelConfig[]
+  storedVoxelComponents?: SavedVoxelComponent[] // the master copies
+  activeVoxelComponents?: SavedVoxelComponent[] // active, in the scene
 }
 
 export const getSequenceDuration = (editor: Editor, sequence: Sequence) => {

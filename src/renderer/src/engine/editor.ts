@@ -82,6 +82,7 @@ import { radiansToDegrees } from './transform'
 import { GameLogic } from './GameLogic'
 import { Gizmo } from './gizmo'
 import { Torus3D } from './torus3d'
+import VoxelComponent from './voxelComponent'
 
 export const TEXT_BACKGROUNDS_DEFAULT_HIDDEN = true
 
@@ -197,6 +198,11 @@ export enum ControlMode {
   Pan
 }
 
+export enum EditMode {
+  Level,
+  Component
+}
+
 export type OnVoxelRemoved = (voxelId: string) => void
 
 export interface windowSize {
@@ -235,6 +241,8 @@ export class Editor {
   models3D: Model3D[] = []
   pointLights: PointLight[] = []
   voxels: Voxel[] = []
+  voxelComponents: VoxelComponent[] = []
+  currentEditComponent: VoxelComponent | null = null
   isVoxelPaintingMode: boolean = false
   currentVoxelSize: number = 0.1
   currentVoxelColor: [number, number, number, number] = [1.0, 1.0, 1.0, 1.0]
@@ -339,7 +347,8 @@ export class Editor {
   videoStartPlayingTime: number | null
   videoCurrentSequenceTimeline: SavedTimelineStateConfig | null
   videoCurrentSequencesData: Sequence[] | null
-  controlMode: ControlMode
+  controlMode: ControlMode = ControlMode.Select
+  editMode: EditMode = EditMode.Level
   isPanning: boolean
   isExporting: boolean = false
   gamePlaying: boolean = false
@@ -3261,6 +3270,23 @@ export class Editor {
     )
 
     this.voxels.push(voxel)
+  }
+
+  AddVoxelComponent() {
+    let camera = this.camera
+    let gpuResources = this.gpuResources
+
+    let voxelComponent = new VoxelComponent(
+      camera.windowSize,
+      gpuResources.device,
+      gpuResources.queue,
+      this.modelBindGroupLayout,
+      this.groupBindGroupLayout,
+      camera,
+      this.currentSequenceData.id
+    )
+
+    this.voxelComponents.push(voxelComponent)
   }
 
   add_mockup3d(mockup_config: Mockup3DConfig, new_id: string, selected_sequence_id: string) {

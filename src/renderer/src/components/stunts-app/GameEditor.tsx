@@ -50,6 +50,8 @@ import { useDevEffectOnce } from '../../hooks/useDevOnce'
 import {
   CANVAS_HORIZ_OFFSET,
   CANVAS_VERT_OFFSET,
+  ControlMode,
+  EditMode,
   Editor,
   Point,
   Viewport
@@ -85,6 +87,7 @@ import { Sphere3DConfig } from '@renderer/engine/sphere3d'
 import HealthBar from './HealthBar'
 import { VoxelConfig } from '@renderer/engine/voxel'
 import { PointLight3DConfig } from '@renderer/engine/pointlight'
+import VoxelComponent, { SavedVoxelComponent } from '@renderer/engine/voxelComponent'
 
 const createLandscape = (editor: Editor, sequence_id: string) => {
   // Add a default landscape cube
@@ -403,6 +406,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
   const [project_name, set_project_name] = useState('Loading...')
   const [physicsReady, setPhysicsReady] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [voxelComponents, setVoxelComponents] = useState<SavedVoxelComponent[]>([])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
@@ -726,6 +730,13 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     saveSequencesData(editor_state.savedState.sequences, SaveTarget.Games)
   }
 
+  const [currentMode, setCurrentMode] = useState(EditMode.Level)
+
+  // const changeCurrentMode = (mode: EditMode) => {
+  //   setCurrentMode(mode)
+  //   editorRef.current.editMode = mode
+  // }
+
   useDevEffectOnce(() => {
     if (editorIsSet) {
       return
@@ -1001,6 +1012,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
       new_layers.sort((a, b) => b.initial_layer_index - a.initial_layer_index)
       set_layers(new_layers)
+      setVoxelComponents(saved_sequence.storedVoxelComponents) // not the activeVoxelComponents
 
       // Create a dynamic cube
       // const dynamicCubeConfig: Cube3DConfig = {
@@ -1157,6 +1169,17 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                   />
                   <MiniSquareButton
                     onClick={() => {
+                      if (toolbarTab === 'components') {
+                        setToolbarTab('none')
+                      } else {
+                        setToolbarTab('components')
+                      }
+                    }}
+                    icon={'toolbox'}
+                    label={'Components'}
+                  />
+                  <MiniSquareButton
+                    onClick={() => {
                       if (toolbarTab === 'themes') {
                         setToolbarTab('none')
                       } else {
@@ -1242,6 +1265,125 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                       }}
                       setNodes={setNodes}
                     />
+                  </div>
+                )}
+
+                {toolbarTab === 'components' && current_sequence_id && (
+                  <div className="max-h-[35vh] md:max-h-full overflow-y-scroll overflow-x-hidden">
+                    <button
+                      onClick={() => {
+                        let editor = editorRef.current
+                        let editorState = editorStateRef.current
+
+                        if (!editor || !editorState) {
+                          return
+                        }
+
+                        // create one for accurate config
+                        let voxelComponent = new VoxelComponent(
+                          editor.camera.windowSize,
+                          editor.gpuResources.device,
+                          editor.gpuResources.queue,
+                          editor.modelBindGroupLayout,
+                          editor.groupBindGroupLayout,
+                          editor.camera,
+                          editor.currentSequenceData.id
+                        )
+
+                        let newVoxelConfig = voxelComponent.toSavedConfig()
+
+                        let storedComponents = []
+                        editorState.savedState.sequences.forEach((s) => {
+                          if (s.id === current_sequence_id) {
+                            s.storedVoxelComponents.push(newVoxelConfig)
+                            storedComponents = s.storedVoxelComponents
+                          }
+                        })
+
+                        set_sequences(editorState.savedState.sequences)
+                        setVoxelComponents(storedComponents)
+
+                        saveSequencesData(editorState.savedState.sequences, SaveTarget.Games)
+                      }}
+                    >
+                      New Component
+                    </button>
+                    {voxelComponents.map((vc) => {
+                      return (
+                        <div className="flex flex-row gap-2">
+                          <span>{vc.name}</span>
+                          <button
+                            onClick={() => {
+                              let editor = editorRef.current
+                              let editorState = editorStateRef.current
+
+                              if (!editor || !editorState) {
+                                return
+                              }
+
+                              let voxelComponent = new VoxelComponent(
+                                editor.camera.windowSize,
+                                editor.gpuResources.device,
+                                editor.gpuResources.queue,
+                                editor.modelBindGroupLayout,
+                                editor.groupBindGroupLayout,
+                                editor.camera,
+                                editor.currentSequenceData.id,
+                                vc
+                              )
+
+                              editor.voxelComponents.push(voxelComponent)
+
+                              editorState.savedState.sequences.forEach((s) => {
+                                if (s.id === current_sequence_id) {
+                                  s.activeVoxelComponents.push(vc)
+                                }
+                              })
+
+                              set_sequences(editorState.savedState.sequences)
+
+                              saveSequencesData(editorState.savedState.sequences, SaveTarget.Games)
+                            }}
+                          >
+                            Add to Scene
+                          </button>
+                          <button
+                            onClick={() => {
+                              let editor = editorRef.current
+                              let editorState = editorStateRef.current
+
+                              if (!editor || !editorState) {
+                                return
+                              }
+
+                              if (currentMode === EditMode.Component) {
+                                editor.currentEditComponent = null
+                                editor.editMode = EditMode.Level
+                                setCurrentMode(EditMode.Level)
+                              } else {
+                                let voxelComponent = new VoxelComponent(
+                                  editor.camera.windowSize,
+                                  editor.gpuResources.device,
+                                  editor.gpuResources.queue,
+                                  editor.modelBindGroupLayout,
+                                  editor.groupBindGroupLayout,
+                                  editor.camera,
+                                  editor.currentSequenceData.id,
+                                  vc
+                                )
+
+                                editor.currentEditComponent = voxelComponent
+                                editor.editMode = EditMode.Component
+                                setCurrentMode(EditMode.Component)
+                              }
+                            }}
+                          >
+                            {currentMode === EditMode.Level ? 'Edit' : 'Cancel Editing'}
+                          </button>
+                          <button>Delete</button>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
 
@@ -1705,6 +1847,16 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
             <section className="flex-grow flex flex-col justify-center items-center">
               <div className="flex flex-row justify-center align-center gap-2 mb-4">
+                {/* <button
+                  className="min-w-20 p-2 border rounded"
+                  onClick={() =>
+                    changeCurrentMode(
+                      currentMode === EditMode.Component ? EditMode.Level : EditMode.Component
+                    )
+                  }
+                >
+                  {currentMode === EditMode.Component ? 'Enter Level Mode' : 'Enter Component Mode'}
+                </button> */}
                 <label htmlFor="level-select" className="mt-2">
                   Select Level:
                 </label>
