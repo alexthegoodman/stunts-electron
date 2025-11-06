@@ -53,6 +53,9 @@ export const initialNodes: GameNode[] = [
   { id: '4', data: { label: 'Backward', pressed: false }, position: { x: 400, y: 150 } },
   { id: '5', data: { label: 'Left', pressed: false }, position: { x: 400, y: 200 } },
   { id: '6', data: { label: 'Right', pressed: false }, position: { x: 400, y: 250 } },
+  { id: '6b', data: { label: 'Jump', pressed: false }, position: { x: 500, y: 250 } },
+  { id: '6c', data: { label: 'Grab', pressed: false }, position: { x: 600, y: 250 } },
+  { id: '6d', data: { label: 'Collect', pressed: false }, position: { x: 700, y: 250 } },
   {
     id: '7',
     data: { label: 'EnemyController', health: 100, fireRate: 1000 },
@@ -72,72 +75,6 @@ export const initialNodes: GameNode[] = [
     },
     position: { x: 250, y: 350 }
   }
-
-  // add these collectables one by one along with needed object
-  // // NEW: Health Potion Collectable
-  // {
-  //   id: '12',
-  //   data: {
-  //     label: 'Collectable',
-  //     type: 'HealthPotion',
-  //     objectId: 'health-potion-sphere-1', // References a sphere/cube in the scene
-  //     quantity: 1,
-  //     collected: false,
-  //     effects: [
-  //       {
-  //         property: 'health',
-  //         value: 25,
-  //         operation: 'add'
-  //       }
-  //     ]
-  //   },
-  //   position: { x: 550, y: 350 }
-  // },
-
-  // // NEW: Armor Collectable example
-  // {
-  //   id: '13',
-  //   data: {
-  //     label: 'Collectable',
-  //     type: 'IronArmor',
-  //     objectId: 'armor-cube-1',
-  //     quantity: 1,
-  //     collected: false,
-  //     effects: [
-  //       {
-  //         property: 'defense',
-  //         value: 10,
-  //         operation: 'add'
-  //       }
-  //     ]
-  //   },
-  //   position: { x: 550, y: 450 }
-  // },
-
-  // // NEW: Weapon Collectable example
-  // {
-  //   id: '14',
-  //   data: {
-  //     label: 'Collectable',
-  //     type: 'FireSword',
-  //     objectId: 'sword-model-1',
-  //     quantity: 1,
-  //     collected: false,
-  //     effects: [
-  //       {
-  //         property: 'damage',
-  //         value: 15,
-  //         operation: 'add'
-  //       },
-  //       {
-  //         property: 'fireRate',
-  //         value: 1.5,
-  //         operation: 'multiply'
-  //       }
-  //     ]
-  //   },
-  //   position: { x: 550, y: 550 }
-  // }
 ]
 
 export interface GameEdge {
@@ -152,17 +89,15 @@ export const initialEdges: GameEdge[] = [
   { id: 'e3-3', source: '4', target: '2' },
   { id: 'e3-4', source: '5', target: '2' },
   { id: 'e3-5', source: '6', target: '2' },
+  { id: 'e3-5b', source: '6b', target: '2' },
+  { id: 'e3-5c', source: '6c', target: '2' },
+  { id: 'e3-5d', source: '6d', target: '2' },
   { id: 'e8-7', source: '8', target: '7' },
   { id: 'e9-7', source: '9', target: '7' },
   { id: 'e10-7', source: '10', target: '7' },
 
-  // NEW: Connect Inventory to PlayerController
+  // Connect Inventory to PlayerController
   { id: 'e11-1', source: '11', target: '1' }
-
-  // NEW: Connect Collectables to Inventory
-  // { id: 'e12-11', source: '12', target: '11' },
-  // { id: 'e13-11', source: '13', target: '11' },
-  // { id: 'e14-11', source: '14', target: '11' }
 ]
 
 // Utility function to handle collection

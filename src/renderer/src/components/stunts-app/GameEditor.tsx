@@ -471,6 +471,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
               node.data = { ...node.data, pressed: true }
             } else if (node.data.label === 'Right' && event.key === 'd') {
               node.data = { ...node.data, pressed: true }
+            } else if (node.data.label === 'Jump' && event.code === 'Space') {
+              node.data = { ...node.data, pressed: true }
             }
             return node
           })
@@ -494,6 +496,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
             } else if (node.data.label === 'Left' && event.key === 'a') {
               node.data = { ...node.data, pressed: false }
             } else if (node.data.label === 'Right' && event.key === 'd') {
+              node.data = { ...node.data, pressed: false }
+            } else if (node.data.label === 'Jump' && event.code === 'Space') {
               node.data = { ...node.data, pressed: false }
             }
             return node
@@ -1080,7 +1084,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
   }, [nodes])
 
   useEffect(() => {
-    if (!canvasPipelineRef.current.isPlaying) {
+    if (canvasPipelineRef.current && !canvasPipelineRef.current.isPlaying) {
       // Important: dont want to save during frequent in-game updates
       saveGameStateData({ nodes, edges }, SaveTarget.Games)
     }
@@ -1235,6 +1239,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         setRefreshUINow(Date.now())
                       }}
                       setNodes={setNodes}
+                      setEdges={setEdges}
                     />
                   </div>
                 )}

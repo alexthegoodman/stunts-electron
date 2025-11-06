@@ -41,7 +41,7 @@ import { TextAnimationConfig, createTextAnimationPreset } from '../../engine/tex
 import { BrushConfig, BrushType, SavedBrushConfig } from '@renderer/engine/brush'
 
 import { createEnemyNodes } from '../../gamelogic/nodes'
-import { GameNode } from './GameLogic'
+import { GameEdge, GameNode } from './GameLogic'
 import { VoxelType } from '@renderer/engine/voxel'
 
 export const ToolGrid = ({
@@ -55,7 +55,8 @@ export const ToolGrid = ({
   layers,
   setLayers,
   update,
-  setNodes
+  setNodes,
+  setEdges
 }: {
   editorRef: React.RefObject<Editor | null>
   editorStateRef: React.RefObject<EditorState | null>
@@ -68,6 +69,7 @@ export const ToolGrid = ({
   setLayers: React.Dispatch<React.SetStateAction<Layer[]>>
   update: () => void
   setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
+  setEdges: React.Dispatch<React.SetStateAction<GameEdge[]>>
 }) => {
   const { t } = useTranslation('common')
 
@@ -1433,6 +1435,7 @@ export const ToolGrid = ({
 
         const newNodes = createEnemyNodes(new_id)
         setNodes((nds) => [...nds, ...newNodes])
+        // TODO: setEdges()
 
         const dynamicBody = editor.physics.createVirtualCharacter(
           new editor.physics.jolt.RVec3(
@@ -1526,6 +1529,8 @@ export const ToolGrid = ({
 
       return [...prevNodes, newNode]
     })
+
+    // TODO: setEdges()
   }, [])
 
   const on_add_sword = useCallback((currentSequenceId: string) => {
@@ -1563,6 +1568,8 @@ export const ToolGrid = ({
 
       return [...prevNodes, newNode]
     })
+
+    // TODO: setEdges()
   }, [])
 
   const on_add_armor = useCallback((currentSequenceId: string) => {
@@ -1595,6 +1602,8 @@ export const ToolGrid = ({
 
       return [...prevNodes, newNode]
     })
+
+    // TODO: setEdges()
   }, [])
 
   const addCube = (initialPosition?: Point) => {
