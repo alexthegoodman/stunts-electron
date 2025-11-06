@@ -69,6 +69,7 @@ export class CanvasPipeline {
   // Character movement properties
   controlMovementDuringJump = true ///< If false the character cannot change movement direction in mid air
   characterSpeed = 3.0
+  // characterSpeed = 0.5
   jumpSpeed = 15.0
 
   enableCharacterInertia = false
@@ -755,6 +756,117 @@ export class CanvasPipeline {
     )
   }
 
+  // handleInput(
+  //   editor: Editor,
+  //   character: Jolt.CharacterVirtual,
+  //   movementDirection: vec3, // gl-matrix
+  //   jump: boolean,
+  //   switchStance,
+  //   deltaTime: number,
+  //   optionalBody?: Jolt.Body
+  // ) {
+  //   const playerControlsHorizontalVelocity =
+  //     this.controlMovementDuringJump || character.IsSupported()
+
+  //   // Temporary vectors
+  //   const tmpA = vec3.create()
+  //   const tmpB = vec3.create()
+
+  //   if (playerControlsHorizontalVelocity) {
+  //     // Smooth the player input
+  //     if (this.enableCharacterInertia) {
+  //       // movementDirection *= 0.25 * speed
+  //       vec3.scale(tmpA, movementDirection, 0.25 * this.characterSpeed)
+  //       // desiredVelocity = desiredVelocity + tmpA * 0.75
+  //       vec3.scaleAndAdd(this.desiredVelocity, this.desiredVelocity, tmpA, 0.75)
+  //     } else {
+  //       // desiredVelocity = movementDirection * characterSpeed
+  //       vec3.scale(this.desiredVelocity, movementDirection, this.characterSpeed)
+  //     }
+  //   } else {
+  //     // While in air we allow sliding
+  //     this.allowSliding = true
+  //   }
+
+  //   vec3.set(this._tmpVec3, this.upRotationX, 0, this.upRotationZ)
+  //   const characterUpRotation = editor.physics.jolt.Quat.prototype.sEulerAngles(
+  //     new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+  //   )
+  //   character.SetUp(characterUpRotation.RotateAxisY())
+  //   character.SetRotation(characterUpRotation)
+  //   const upRotation = vec4.fromValues(
+  //     characterUpRotation.GetX(),
+  //     characterUpRotation.GetY(),
+  //     characterUpRotation.GetZ(),
+  //     characterUpRotation.GetW()
+  //   )
+
+  //   character.UpdateGroundVelocity()
+
+  //   const characterUp = wrapVec3(character.GetUp()) // gl-matrix vec3
+  //   const linearVelocity = wrapVec3(character.GetLinearVelocity()) // gl-matrix vec3
+
+  //   // project linearVelocity onto characterUp: currentVerticalVelocity = characterUp * (linearVelocity · characterUp)
+  //   const dot = vec3.dot(linearVelocity, characterUp)
+  //   const currentVerticalVelocity = vec3.create()
+  //   vec3.scale(currentVerticalVelocity, characterUp, dot)
+
+  //   const groundVelocity = wrapVec3(character.GetGroundVelocity())
+  //   const gravity = wrapVec3(editor.physics.physicsSystem.GetGravity())
+
+  //   const newVelocity = vec3.create()
+  //   const movingTowardsGround = currentVerticalVelocity[1] - groundVelocity[1] < 0.1
+
+  //   if (
+  //     character.GetGroundState() == editor.physics.jolt.EGroundState_OnGround &&
+  //     (this.enableCharacterInertia
+  //       ? movingTowardsGround
+  //       : !character.IsSlopeTooSteep(character.GetGroundNormal()))
+  //   ) {
+  //     // On ground -> start from ground velocity
+  //     vec3.copy(newVelocity, groundVelocity)
+
+  //     // Jump
+  //     if (jump && movingTowardsGround) {
+  //       vec3.scaleAndAdd(newVelocity, newVelocity, characterUp, this.jumpSpeed)
+  //     }
+  //   } else {
+  //     // In air -> preserve vertical component
+  //     vec3.copy(newVelocity, currentVerticalVelocity)
+  //   }
+
+  //   // Gravity: apply gravity * deltaTime rotated by upRotation
+  //   vec3.scale(tmpA, gravity, deltaTime) // tmpA = gravity * deltaTime
+  //   vec3.transformQuat(tmpB, tmpA, upRotation) // tmpB = tmpA rotated by upRotation
+  //   vec3.add(newVelocity, newVelocity, tmpB)
+
+  //   if (playerControlsHorizontalVelocity) {
+  //     // Player input: apply desiredVelocity rotated by upRotation
+  //     vec3.transformQuat(tmpA, this.desiredVelocity, upRotation)
+  //     vec3.add(newVelocity, newVelocity, tmpA)
+  //   } else {
+  //     // Preserve horizontal velocity: linearVelocity - currentVerticalVelocity
+  //     vec3.subtract(tmpA, linearVelocity, currentVerticalVelocity)
+  //     vec3.add(newVelocity, newVelocity, tmpA)
+  //   }
+
+  //   // Set physics character velocity
+  //   vec3.set(this._tmpVec3, newVelocity[0], newVelocity[1], newVelocity[2])
+
+  //   // console.info('newVelocity', this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+  //   character.SetLinearVelocity(
+  //     new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+  //   )
+  //   if (optionalBody) {
+  //     editor.physics.bodyInterface.SetPositionAndRotation(
+  //       optionalBody.GetID(),
+  //       new editor.physics.jolt.RVec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2]),
+  //       new editor.physics.jolt.Quat(0, 0, 0, 1), // Assuming no rotation for gizmo bodies
+  //       editor.physics.jolt.EActivation_Activate
+  //     )
+  //   }
+  // }
+
   handleInput(
     editor: Editor,
     character: Jolt.CharacterVirtual,
@@ -853,19 +965,32 @@ export class CanvasPipeline {
     vec3.set(this._tmpVec3, newVelocity[0], newVelocity[1], newVelocity[2])
 
     // console.info('newVelocity', this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
-    character.SetLinearVelocity(
-      new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
-    )
+    // character.SetLinearVelocity(
+    //   new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+    // )
+    // if (optionalBody) {
+    //   editor.physics.bodyInterface.SetPositionAndRotation(
+    //     optionalBody.GetID(),
+    //     new editor.physics.jolt.RVec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2]),
+    //     new editor.physics.jolt.Quat(0, 0, 0, 1), // Assuming no rotation for gizmo bodies
+    //     editor.physics.jolt.EActivation_Activate
+    //   )
+    // }
+
     if (optionalBody) {
-      // optionalBody.SetLinearVelocity(
+      editor.physics.bodyInterface.SetLinearVelocity(
+        optionalBody.GetID(),
+        new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
+      )
+
+      // let bodyPosition = optionalBody.GetPosition()
+
+      // character.SetLinearVelocity(
       //   new editor.physics.jolt.Vec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2])
       // )
-      editor.physics.bodyInterface.SetPositionAndRotation(
-        optionalBody.GetID(),
-        new editor.physics.jolt.RVec3(this._tmpVec3[0], this._tmpVec3[1], this._tmpVec3[2]),
-        new editor.physics.jolt.Quat(0, 0, 0, 1), // Assuming no rotation for gizmo bodies
-        editor.physics.jolt.EActivation_Activate
-      )
+      // character.SetPosition(
+      //   new editor.physics.jolt.RVec3(bodyPosition.GetX(), bodyPosition.GetY(), bodyPosition.GetZ())
+      // )
     }
   }
 
@@ -1049,33 +1174,33 @@ export class CanvasPipeline {
               }
             }
 
-            for (const [id, chaacter] of editor.characters.entries()) {
-              this.prePhysicsUpdate(editor, chaacter, deltaTime)
+            // for (const [id, chaacter] of editor.characters.entries()) {
+            //   this.prePhysicsUpdate(editor, chaacter, deltaTime)
 
-              const { position, rotation } =
-                editor.physics.getCharacterPositionAndRotation(chaacter)
-              const cube = editor.cubes3D.find((s) => s.id === id)
-              // console.info(
-              //   'cube postition',
-              //   cube.name,
-              //   position.GetX(),
-              //   position.GetY(),
-              //   position.GetZ()
-              // )
-              if (cube) {
-                cube.transform.position[0] = position.GetX()
-                cube.transform.position[1] = position.GetY()
-                cube.transform.position[2] = position.GetZ()
+            //   const { position, rotation } =
+            //     editor.physics.getCharacterPositionAndRotation(chaacter)
+            //   const cube = editor.cubes3D.find((s) => s.id === id)
+            //   // console.info(
+            //   //   'cube postition',
+            //   //   cube.name,
+            //   //   position.GetX(),
+            //   //   position.GetY(),
+            //   //   position.GetZ()
+            //   // )
+            //   if (cube) {
+            //     cube.transform.position[0] = position.GetX()
+            //     cube.transform.position[1] = position.GetY()
+            //     cube.transform.position[2] = position.GetZ()
 
-                cube.transform.rotationX = rotation.GetEulerAngles().GetX()
-                cube.transform.rotationY = rotation.GetEulerAngles().GetY()
-                cube.transform.rotation = rotation.GetEulerAngles().GetZ()
+            //     cube.transform.rotationX = rotation.GetEulerAngles().GetX()
+            //     cube.transform.rotationY = rotation.GetEulerAngles().GetY()
+            //     cube.transform.rotation = rotation.GetEulerAngles().GetZ()
 
-                // console.info('cube postition', cube.name, cube.transform.position) // stays same?
+            //     // console.info('cube postition', cube.name, cube.transform.position) // stays same?
 
-                cube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
-              }
-            }
+            //     cube.transform.updateUniformBuffer(queue, editor.camera.windowSize)
+            //   }
+            // }
 
             editor.physics.step(editor, deltaTime) // TODO: get actual deltaTime between frames
           }

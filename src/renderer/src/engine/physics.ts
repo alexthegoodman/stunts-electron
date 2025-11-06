@@ -484,6 +484,14 @@ export class Physics {
   public step(editor: Editor, deltaTime: number): void {
     this.joltInterface.Step(deltaTime, 1)
 
+    editor.characters.entries().forEach(([id, ch]) => {
+      let associatedBody = editor.bodies.get(id)
+      let bodyPosition = associatedBody.GetPosition()
+      ch.SetPosition(
+        new editor.physics.jolt.RVec3(bodyPosition.GetX(), bodyPosition.GetY(), bodyPosition.GetZ())
+      )
+    })
+
     editor.voxels
       .filter((v) => v.voxelType === VoxelType.WaterVoxel)
       .forEach((wv) => {

@@ -36,7 +36,7 @@ import Jolt from 'jolt-physics/debug-wasm-compat'
 import { v4 as uuidv4 } from 'uuid'
 import { Polygon, PolygonConfig } from './polygon'
 import { TextRenderer, TextRendererConfig } from './text'
-import { Voxel, VoxelConfig, VoxelType } from './voxel'
+import { Voxel, VoxelConfig, VoxelType, WaterVoxel } from './voxel'
 import {
   AnimationData,
   AnimationProperty,
@@ -928,7 +928,7 @@ export class Editor {
           )
           this.characters.set(c.id, dynamicBody)
 
-          const staticBody = this.physics.createStaticBox(
+          const staticBody = this.physics.createDynamicBox(
             new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z),
             new this.physics.jolt.Quat(0, 0, 0, 1),
             new this.physics.jolt.Vec3(
@@ -949,7 +949,7 @@ export class Editor {
           )
           this.characters.set(c.id, dynamicBody)
 
-          const staticBody = this.physics.createStaticBox(
+          const staticBody = this.physics.createDynamicBox(
             new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z),
             new this.physics.jolt.Quat(0, 0, 0, 1),
             new this.physics.jolt.Vec3(
@@ -1194,26 +1194,47 @@ export class Editor {
           voxelType: v.voxelType ?? VoxelType.StandardVoxel
         }
 
-        const restored_voxel = new Voxel(
-          windowSize,
-          device!,
-          queue!,
-          this.modelBindGroupLayout!,
-          this.groupBindGroupLayout!,
-          camera,
-          voxel_config,
-          saved_sequence.id
-        )
+        if (v.voxelType === VoxelType.StandardVoxel) {
+          const restored_voxel = new Voxel(
+            windowSize,
+            device!,
+            queue!,
+            this.modelBindGroupLayout!,
+            this.groupBindGroupLayout!,
+            camera,
+            voxel_config,
+            saved_sequence.id
+          )
 
-        restored_voxel.hidden = hidden
-        this.voxels.push(restored_voxel)
+          restored_voxel.hidden = hidden
+          this.voxels.push(restored_voxel)
 
-        const staticBody = this.physics.createStaticBox(
-          new this.physics.jolt.RVec3(v.position.x, v.position.y, v.position.z),
-          new this.physics.jolt.Quat(0, 0, 0, 1),
-          new this.physics.jolt.Vec3(v.dimensions[0] / 2, v.dimensions[1] / 2, v.dimensions[2] / 2)
-        )
-        this.bodies.set(v.id, staticBody)
+          const staticBody = this.physics.createStaticBox(
+            new this.physics.jolt.RVec3(v.position.x, v.position.y, v.position.z),
+            new this.physics.jolt.Quat(0, 0, 0, 1),
+            new this.physics.jolt.Vec3(
+              v.dimensions[0] / 2,
+              v.dimensions[1] / 2,
+              v.dimensions[2] / 2
+            )
+          )
+          this.bodies.set(v.id, staticBody)
+        } else {
+          const restored_voxel = new WaterVoxel(
+            windowSize,
+            device!,
+            queue!,
+            this.modelBindGroupLayout!,
+            this.groupBindGroupLayout!,
+            camera,
+            voxel_config,
+            saved_sequence.id,
+            this.physics
+          )
+
+          restored_voxel.hidden = hidden
+          this.voxels.push(restored_voxel)
+        }
 
         // const dynamicBody = this.physics.createDynamicBox(
         //             new this.physics.jolt.RVec3(c.position.x, c.position.y, c.position.z || 0),

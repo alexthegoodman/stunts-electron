@@ -540,16 +540,26 @@ export class WaterVoxel extends Voxel {
 
   private registerContactListener() {
     this.physics.contactAddListeners.push(
-      (character, bodyID2, subShapeID2, contactPosition, contactNormal, settings) => {
+      (
+        character: number,
+        bodyID2: number,
+        subShapeID2,
+        contactPosition,
+        contactNormal,
+        settings
+      ) => {
         const jolt = this.jolt
         const bodyInterface = this.physics.bodyInterface
-        const id2 = bodyID2.GetIndexAndSequenceNumber()
+        // const id2 = bodyID2.GetIndexAndSequenceNumber()
+        let id1 = this.physics.jolt.wrapPointer(character, this.physics.jolt.CharacterVirtual)
+        let id2 = this.physics.jolt.wrapPointer(bodyID2, this.physics.jolt.BodyID)
 
-        if (id2 === this.bodyId) {
+        if (id2.GetIndexAndSequenceNumber() === this.bodyId) {
           // const body = bodyInterface.GetBody(character.GetBodyID())
-          const bodyLockInterface = this.physics.physicsSystem.GetBodyLockInterface()
-          const body = bodyLockInterface.TryGetBody(character.GetBodyID())
-          this.objectsInside.push(body)
+          // Probably just want this handled by the dynamic body if going that approach
+          // const bodyLockInterface = this.physics.physicsSystem.GetBodyLockInterface()
+          // const body = bodyLockInterface.TryGetBody(id1.GetInnerBodyID())
+          // this.objectsInside.push(body)
         }
       }
     )
