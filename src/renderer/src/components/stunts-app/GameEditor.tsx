@@ -1375,6 +1375,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                                 editor.currentEditComponent = voxelComponent
                                 editor.editMode = EditMode.Component
                                 setCurrentMode(EditMode.Component)
+
+                                // TODO: need to set voxel paint mode and make sure new voxels are added to the component, not normal voxel array
                               }
                             }}
                           >
