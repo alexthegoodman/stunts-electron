@@ -113,6 +113,13 @@ export class Physics {
       this.jolt.EMotionType_Dynamic,
       this.ObjectLayer_Moving.GetValue()
     )
+
+    // can cause things to easily tip over
+    // const massProperties = new this.jolt.MassProperties()
+    // massProperties.mMass = 0.8 // Medium heavy
+    // creationSettings.mOverrideMassProperties = this.jolt.EOverrideMassProperties_CalculateInertia
+    // creationSettings.mMassPropertiesOverride = massProperties
+
     const body = this.bodyInterface.CreateBody(creationSettings)
     this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_Activate)
     return body
@@ -148,66 +155,6 @@ export class Physics {
     this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_Activate)
     return body
   }
-
-  // public createStaticTorus(
-  //   position: Jolt.RVec3,
-  //   rotation: Jolt.Quat,
-  //   radius: number,
-  //   tubeRadius: number,
-  //   plane: string = 'x'
-  // ): Jolt.Body {
-  //   // const shape = new this.jolt.TorusShape(radius, tubeRadius, null)
-  //   const shape = new this.jolt.BoxShape(
-  //     new this.jolt.Vec3(
-  //       plane === 'z' ? 1 : radius,
-  //       plane === 'x' ? 1 : radius,
-  //       plane === 'y' ? 1 : radius
-  //     ),
-  //     0.05,
-  //     null
-  //   )
-  //   const creationSettings = new this.jolt.BodyCreationSettings(
-  //     shape,
-  //     position,
-  //     rotation,
-  //     this.jolt.EMotionType_Static,
-  //     this.ObjectLayer_NonMoving.GetValue()
-  //   )
-  //   const body = this.bodyInterface.CreateBody(creationSettings)
-  //   this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_Activate)
-  //   return body
-  // }
-
-  // public createStaticTorus(
-  //   position: Jolt.RVec3,
-  //   rotation: Jolt.Quat,
-  //   radius: number,
-  //   tubeRadius: number,
-  //   plane: string = 'x'
-  // ): Jolt.Body {
-  //   // Create a thin disc/plane shape
-  //   // For a plane perpendicular to an axis, that axis should be thin (tubeRadius)
-  //   // and the other two axes should be wide (radius)
-  //   const shape = new this.jolt.BoxShape( // TODO: I think I need MeshShape tied to my actual torus?
-  //     new this.jolt.Vec3(
-  //       plane === 'x' ? tubeRadius : radius, // X: thin if perpendicular to X
-  //       plane === 'y' ? tubeRadius : radius, // Y: thin if perpendicular to Y
-  //       plane === 'z' ? tubeRadius : radius // Z: thin if perpendicular to Z
-  //     ),
-  //     0.05,
-  //     null
-  //   )
-  //   const creationSettings = new this.jolt.BodyCreationSettings(
-  //     shape,
-  //     position,
-  //     rotation,
-  //     this.jolt.EMotionType_Static,
-  //     this.ObjectLayer_NonMoving.GetValue()
-  //   )
-  //   const body = this.bodyInterface.CreateBody(creationSettings)
-  //   this.bodyInterface.AddBody(body.GetID(), this.jolt.EActivation_Activate)
-  //   return body
-  // }
 
   public createStaticTorus(
     position: Jolt.RVec3,

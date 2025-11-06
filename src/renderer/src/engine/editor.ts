@@ -1191,10 +1191,10 @@ export class Editor {
           rotation: v.rotation,
           backgroundFill: v.backgroundFill,
           layer: v.layer,
-          voxelType: v.voxelType ?? VoxelType.StandardVoxel
+          voxelType: v.voxelType ? v.voxelType : VoxelType.StandardVoxel
         }
 
-        if (v.voxelType === VoxelType.StandardVoxel) {
+        if (voxel_config.voxelType === VoxelType.StandardVoxel) {
           const restored_voxel = new Voxel(
             windowSize,
             device!,
@@ -1219,7 +1219,7 @@ export class Editor {
             )
           )
           this.bodies.set(v.id, staticBody)
-        } else {
+        } else if (voxel_config.voxelType === VoxelType.WaterVoxel) {
           const restored_voxel = new WaterVoxel(
             windowSize,
             device!,
