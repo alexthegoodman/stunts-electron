@@ -939,6 +939,9 @@ export class Editor {
           )
           this.bodies.set(c.id, staticBody)
 
+          // for now, only expecting one!
+          this.physics.mainCharacterId = staticBody.GetID().GetIndexAndSequenceNumber()
+
           console.log('Player Character restored...')
         } else if (c.name === 'EnemyCharacter') {
           const dynamicBody = this.physics.createVirtualCharacter(

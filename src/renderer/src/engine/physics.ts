@@ -18,6 +18,8 @@ export class Physics {
   bodyFilter: Jolt.BodyFilter
   shapeFilter: Jolt.ShapeFilter
 
+  mainCharacterId: number
+
   contactAddListeners: ((
     character,
     bodyID2,
@@ -26,6 +28,8 @@ export class Physics {
     contactNormal,
     settings
   ) => void)[] = []
+
+  primaryContactAddListeners: ((body1, body2, manifold, settings) => void)[] = []
 
   constructor() {}
 
@@ -88,6 +92,17 @@ export class Physics {
     this.nonmovingLayerFilter = nonmovingLayerFilter
     this.bodyFilter = bodyFilter
     this.shapeFilter = shapeFilter
+
+    const contactListener = new this.jolt.ContactListenerJS()
+    contactListener.OnContactAdded = (body1, body2, manifold, settings) => {
+      this.runPrimaryContactAddedListeners(body1, body2, manifold, settings)
+    }
+    contactListener.OnContactPersisted = contactListener.OnContactAdded
+    contactListener.OnContactValidate = (body1, body2, baseOffset, collideShapeResult) => {
+      return Jolt.ValidateResult_AcceptAllContactsForThisBodyPair
+    }
+    contactListener.OnContactRemoved = (subShapePair) => {}
+    this.physicsSystem.SetContactListener(contactListener)
   }
 
   public createStaticBox(position: Jolt.RVec3, rotation: Jolt.Quat, size: Jolt.Vec3): Jolt.Body {
@@ -267,6 +282,13 @@ export class Physics {
     for (let index = 0; index < this.contactAddListeners.length; index++) {
       const listener = this.contactAddListeners[index]
       listener(character, bodyID2, subShapeID2, contactPosition, contactNormal, settings)
+    }
+  }
+
+  public runPrimaryContactAddedListeners(body1, body2, manifold, settings) {
+    for (let index = 0; index < this.primaryContactAddListeners.length; index++) {
+      const listener = this.primaryContactAddListeners[index]
+      listener(body1, body2, manifold, settings)
     }
   }
 
