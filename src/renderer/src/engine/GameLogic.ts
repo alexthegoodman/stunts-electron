@@ -2,12 +2,12 @@ import { Editor } from './editor'
 import { Node } from '@xyflow/react'
 import { Sphere3DConfig } from './sphere3d'
 import { v4 as uuidv4 } from 'uuid'
-import { GameNode } from '@renderer/components/stunts-app/GameEditor'
 import Jolt from 'jolt-physics/debug-wasm-compat'
 import { CanvasPipeline } from './pipeline'
 import { vec3 } from 'gl-matrix'
 import { Camera3D } from './3dcamera'
 import { FirstPersonCamera } from './firstPersonCamera'
+import { GameNode } from '@renderer/components/stunts-app/GameLogic'
 
 export class GameLogic {
   private setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
@@ -316,8 +316,8 @@ export class GameLogic {
         }
 
         if (!moveDirection || !lastMoveTime || now - lastMoveTime > this.MOVE_INTERVAL) {
-          const randomX = (Math.random() * 2 - 1) * 0.1
-          const randomZ = (Math.random() * 2 - 1) * 0.1
+          const randomX = (Math.random() * 2 - 1) * 2.0
+          const randomZ = (Math.random() * 2 - 1) * 2.0
           moveDirection = new editor.physics.jolt.Vec3(randomX, 0, randomZ)
           console.info(
             'moveDirection',
@@ -338,10 +338,12 @@ export class GameLogic {
 
           // console.info('not updating for some reason')
 
+          let currentVerticalVelocity = enemyStaticBody.GetLinearVelocity().GetY()
+
           this.pipeline.handleInput(
             editor,
             enemyCharacter,
-            vec3.fromValues(moveDirection.GetX(), moveDirection.GetY(), moveDirection.GetZ()),
+            vec3.fromValues(moveDirection.GetX(), currentVerticalVelocity, moveDirection.GetZ()),
             false,
             null,
             deltaTime,
@@ -355,21 +357,22 @@ export class GameLogic {
       if (healthNode) {
         if (typeof healthNode.data.value === 'number' && healthNode.data.value <= 0) {
           // Enemy is dead
-          const enemy = editor.cubes3D.find((c) => c.id === enemyId)
-          if (enemy) {
-            // editor.remove_cube3d(enemy.id)
-            editor.cubes3D = editor.cubes3D.filter((c) => c.id !== enemy.id)
-            editor.characters.delete(enemy.id)
-            this.setNodes((nds) =>
-              nds.filter(
-                (n) =>
-                  n.id !== `${enemyId}-7` &&
-                  n.id !== `${enemyId}-8` &&
-                  n.id !== `${enemyId}-9` &&
-                  n.id !== `${enemyId}-10`
-              )
-            )
-          }
+          // need to refine
+          // const enemy = editor.cubes3D.find((c) => c.id === enemyId)
+          // if (enemy) {
+          //   // editor.remove_cube3d(enemy.id)
+          //   editor.cubes3D = editor.cubes3D.filter((c) => c.id !== enemy.id)
+          //   editor.characters.delete(enemy.id)
+          //   this.setNodes((nds) =>
+          //     nds.filter(
+          //       (n) =>
+          //         n.id !== `${enemyId}-7` &&
+          //         n.id !== `${enemyId}-8` &&
+          //         n.id !== `${enemyId}-9` &&
+          //         n.id !== `${enemyId}-10`
+          //     )
+          //   )
+          // }
         }
       }
     }

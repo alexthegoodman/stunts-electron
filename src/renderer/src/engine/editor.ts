@@ -4722,11 +4722,11 @@ export class Editor {
 
       // this.add_cube3d(hitCube, hitCube.id, this.currentSequenceData.id)
 
-      console.info('checking hit', direction.GetX(), direction.GetY(), direction.GetZ())
+      // console.info('checking hit', direction.GetX(), direction.GetY(), direction.GetZ())
 
       if (hit) {
         const bodyId = hit.bodyId.GetIndexAndSequenceNumber()
-        console.info('hit!', bodyId)
+        // console.info('hit!', bodyId)
         let found = false
         for (const cube of this.cubes3D) {
           let blacklist = ['landscape-cube']
@@ -5244,7 +5244,7 @@ export class Editor {
             z: hit.position.GetZ() + hit.normal.GetZ() * halfExtent
           }
 
-          // Snap to grid for clean voxel alignment (floor to avoid mid-air placements)
+          // Snap to grid for clean voxel alignment (floor to avoid mid-air and halfway placements)
           voxelPosition.x = Math.floor(voxelPosition.x)
           voxelPosition.y = Math.floor(voxelPosition.y)
           voxelPosition.z = Math.floor(voxelPosition.z)
@@ -5257,6 +5257,24 @@ export class Editor {
             y: pos[1] + forward[1] * 5,
             z: pos[2] + forward[2] * 5
           }
+        }
+
+        // check if voxel already exists at position
+        let passed = true
+        this.voxels.forEach((v) => {
+          if (
+            v.transform.position[0] === voxelPosition.x &&
+            v.transform.position[1] === voxelPosition.y &&
+            v.transform.position[2] === voxelPosition.z
+          ) {
+            console.info('voxel at this spot already!')
+            passed = false
+            return
+          }
+        })
+
+        if (!passed) {
+          return
         }
 
         const new_id = uuidv4()
