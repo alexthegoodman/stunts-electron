@@ -451,7 +451,22 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       [lightId]: light.toConfig()
     }))
 
+    const allLightConfigs = editor.pointLights.map((p) => p.toSavedConfig())
+
+    let cloned_sequence = null
+    editorStateRef.current.savedState.sequences.forEach((s) => {
+      if (s.id === current_sequence_id) {
+        s.activePointLights = allLightConfigs
+        cloned_sequence = s
+      }
+    })
+
+    editor.currentSequenceData = cloned_sequence
+
     editor.initializePointLights()
+
+    saveSequencesData(editorStateRef.current.savedState.sequences, SaveTarget.Games)
+
     setRefreshUINow(Date.now())
   }
 
@@ -1090,6 +1105,39 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     }
   }, [nodes, edges])
 
+  const resetCamera = (position) => {
+    const editor = editorRef.current
+    if (editor && editor.camera) {
+      // Reset zoom
+      editor.camera.reset_zoom()
+
+      editor.camera.rotation = quat.create()
+
+      // Reset orbit
+      const orbitDeltaX = -orbitX
+      const orbitDeltaY = -orbitY
+      editor.camera.orbit(orbitDeltaX, orbitDeltaY)
+
+      // Reset pan
+      const panDeltaX = -panX
+      const panDeltaY = -panY
+      editor.camera.pan(vec2.fromValues(panDeltaX, panDeltaY))
+
+      editor.camera.setPosition(position[0], position[1], position[2])
+
+      editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
+
+      // Reset state
+      setOrbitX(0)
+      setOrbitY(0)
+      setPanX(0)
+      setPanY(0)
+      setRotateX(0)
+      setRotateY(0)
+      setZoom(0)
+    }
+  }
+
   return (
     <>
       {error ? (
@@ -1492,63 +1540,67 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                               <p className="text-sm font-semibold">{light.name}</p>
                               <div className="grid grid-cols-2 gap-2 mt-2">
                                 <div>
-                                  <label className="block text-xs">Intensity</label>
-                                  <input
-                                    type="range"
+                                  <DebouncedInput
+                                    id={`intensity-${light.id}`}
+                                    label="Intensity"
+                                    inputType="range"
                                     min="0"
                                     max="100"
                                     step="1"
-                                    value={light.intensity}
-                                    onChange={(e) =>
+                                    initialValue={light.intensity}
+                                    onDebounce={(value) =>
                                       handleLightSettingChange(
                                         light.id,
                                         'intensity',
-                                        parseFloat(e.target.value)
+                                        parseFloat(value as string)
                                       )
                                     }
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-xs">Position X</label>
-                                  <input
-                                    type="number"
+                                  <DebouncedInput
+                                    id={`positionX-${light.id}`}
+                                    label="Position X"
+                                    inputType="number"
                                     step="0.1"
-                                    value={light.position.x}
-                                    onChange={(e) =>
+                                    initialValue={light.position.x}
+                                    onDebounce={(value) =>
                                       handleLightSettingChange(
                                         light.id,
                                         'position.x',
-                                        e.target.value
+                                        value as string
                                       )
                                     }
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-xs">Position Y</label>
-                                  <input
-                                    type="number"
+                                  <DebouncedInput
+                                    id={`positionY-${light.id}`}
+                                    label="Position Y"
+                                    inputType="number"
                                     step="0.1"
-                                    value={light.position.y}
-                                    onChange={(e) =>
+                                    initialValue={light.position.y}
+                                    onDebounce={(value) =>
                                       handleLightSettingChange(
                                         light.id,
                                         'position.y',
-                                        e.target.value
+                                        value as string
                                       )
                                     }
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-xs">Position Z</label>
-                                  <input
-                                    type="number"
+                                  <DebouncedInput
+                                    id={`positionZ-${light.id}`}
+                                    label="Position Z"
+                                    inputType="number"
                                     step="0.1"
-                                    value={light.position.z}
-                                    onChange={(e) =>
+                                    initialValue={light.position.z}
+                                    onDebounce={(value) =>
                                       handleLightSettingChange(
                                         light.id,
                                         'position.z',
-                                        e.target.value
+                                        value as string
                                       )
                                     }
                                   />
@@ -1782,40 +1834,27 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
                       <button
                         className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
-                        onClick={() => {
-                          const editor = editorRef.current
-                          if (editor && editor.camera) {
-                            // Reset zoom
-                            editor.camera.reset_zoom()
-
-                            editor.camera.rotation = quat.create()
-
-                            // Reset orbit
-                            const orbitDeltaX = -orbitX
-                            const orbitDeltaY = -orbitY
-                            editor.camera.orbit(orbitDeltaX, orbitDeltaY)
-
-                            // Reset pan
-                            const panDeltaX = -panX
-                            const panDeltaY = -panY
-                            editor.camera.pan(vec2.fromValues(panDeltaX, panDeltaY))
-
-                            editor.camera.setPosition(0, 0, editor.camera.resetZ)
-
-                            editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
-
-                            // Reset state
-                            setOrbitX(0)
-                            setOrbitY(0)
-                            setPanX(0)
-                            setPanY(0)
-                            setRotateX(0)
-                            setRotateY(0)
-                            setZoom(0)
-                          }
-                        }}
+                        onClick={() => resetCamera([15, 15, 15])}
                       >
-                        Reset Camera
+                        Reset Camera to Corner 1
+                      </button>
+                      <button
+                        className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
+                        onClick={() => resetCamera([-15, 15, 15])}
+                      >
+                        Reset Camera to Corner 2
+                      </button>
+                      <button
+                        className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
+                        onClick={() => resetCamera([-15, 15, -15])}
+                      >
+                        Reset Camera to Corner 3
+                      </button>
+                      <button
+                        className="block w-full stunts-gradient py-1 mt-4 text-xs rounded"
+                        onClick={() => resetCamera([15, 15, -15])}
+                      >
+                        Reset Camera to Corner 4
                       </button>
                     </div>
                   </div>
@@ -1865,12 +1904,12 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         editor.gizmo.detach()
                         editor.gizmo.update(editor.gpuResources.queue, editor.camera, null)
 
-                        // const firstPersonCam = new FirstPersonCamera(editor.camera.windowSize)
-                        // editor.setCamera(firstPersonCam)
+                        const firstPersonCam = new FirstPersonCamera(editor.camera.windowSize)
+                        editor.setCamera(firstPersonCam)
                       } else {
-                        // const editorCam = new Camera3D(editor.camera.windowSize)
-                        // editor.setCamera(editorCam)
-                        // editor.camera?.setPosition(15, 15, 15)
+                        const editorCam = new Camera3D(editor.camera.windowSize)
+                        editor.setCamera(editorCam)
+                        editor.camera?.setPosition(15, 15, 15)
                       }
 
                       setIsPlaying(pipeline.isPlaying)

@@ -227,6 +227,17 @@ export function getCameraRight(camera: Camera3D): vec3 {
   return right
 }
 
+export function getCameraUp(camera: Camera3D): vec3 {
+  const forward = getCameraForward(camera)
+  const right = getCameraRight(camera)
+  const up = vec3.create()
+
+  vec3.cross(up, right, forward)
+  vec3.normalize(up, up)
+
+  return up
+}
+
 // Assuming cube.transform or cube.rotationMatrix is a mat4
 export function getObjectForward(camera: Camera3D, cube: Cube3D): vec3 {
   const forward = vec3.fromValues(0, 0, -1) // default forward in model space

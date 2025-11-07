@@ -10,6 +10,9 @@ export class FirstPersonCamera extends Camera3D {
   constructor(windowSize: WindowSize) {
     super(windowSize)
 
+    // Default field of view
+    this.fov = Math.PI / 4 // best for first person?
+
     // Initialize position and rotation for a first-person view
     this.defaultPosition3D = vec3.fromValues(0, 2, 0) // Start at origin
     this.position3D = this.defaultPosition3D // Start at origin

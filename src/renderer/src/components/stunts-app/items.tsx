@@ -298,10 +298,14 @@ const parseStyle = (styleString: string) => {
 interface DebouncedInputProps {
   id: string
   label: string
-  placeholder: string
-  initialValue: string
-  onDebounce: (value: string) => void
+  placeholder?: string
+  initialValue: string | number
+  onDebounce: (value: string | number) => void
   style?: any
+  inputType?: string
+  min?: any
+  max?: any
+  step?: any
 }
 
 export const DebouncedInput: React.FC<DebouncedInputProps> = ({
@@ -310,7 +314,9 @@ export const DebouncedInput: React.FC<DebouncedInputProps> = ({
   placeholder,
   initialValue,
   onDebounce,
-  style
+  style,
+  inputType,
+  ...inputProps
 }) => {
   const [value, setValue] = useState(initialValue)
   const debouncedValue = useDebounce(value, 300)
@@ -340,10 +346,11 @@ export const DebouncedInput: React.FC<DebouncedInputProps> = ({
         name={id}
         key={id}
         placeholder={placeholder}
-        type="text"
+        type={inputType ?? 'text'}
         value={value}
         onChange={handleChange}
         className="border rounded px-2 py-1 w-full min-w-2 text-xs"
+        {...inputProps}
       />
     </div>
   )
