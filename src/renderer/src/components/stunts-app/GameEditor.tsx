@@ -676,21 +676,23 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
     // let activeVoxel = editor.voxels.find((v) => v.id === voxelId)
 
+    let allVoxels = [
+      ...editor.voxels.map((v) => v.toSavedConfig()),
+      ...editor.cachedVoxels.map((v) => v.toSavedConfig())
+    ]
+
     editor_state.savedState.sequences.forEach((s) => {
       if (s.id === current_sequence_id) {
         if (!s.activeVoxels) {
           s.activeVoxels = []
         }
         // s.activeVoxels.push(activeVoxel.toSavedConfig())
-        let allVoxels = [
-          ...editor.voxels.map((v) => v.toSavedConfig()),
-          ...editor.cachedVoxels.map((v) => v.toSavedConfig())
-        ]
+
         s.activeVoxels = allVoxels
       }
     })
 
-    console.info('voxels synced')
+    console.info('voxels synced', allVoxels)
 
     saveSequencesData(editor_state.savedState.sequences, SaveTarget.Games)
   }

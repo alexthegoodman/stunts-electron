@@ -83,6 +83,7 @@ export class Voxel {
       y: CANVAS_VERT_OFFSET + config.position.y,
       z: config.position.z
     }
+
     this.rotation = config.rotation
     this.backgroundFill = config.backgroundFill
     this.originalBackgroundFill = { ...config.backgroundFill } // Store a copy of the original
@@ -236,6 +237,8 @@ export class Voxel {
       windowSize
     )
     this.groupBindGroup = tmp_group_bind_group
+
+    // console.info('new voxel', this.position, config.position)
   }
 
   private generateCubeGeometry(): [Vertex[], number[]] {
@@ -433,9 +436,9 @@ export class Voxel {
       name: this.name,
       dimensions: this.dimensions,
       position: {
-        x: this.position[0] - CANVAS_HORIZ_OFFSET,
-        y: this.position[1] - CANVAS_VERT_OFFSET,
-        z: this.position[2]
+        x: this.position.x - CANVAS_HORIZ_OFFSET,
+        y: this.position.y - CANVAS_VERT_OFFSET,
+        z: this.position.z
       },
       rotation: this.rotation,
       backgroundFill: this.backgroundFill,

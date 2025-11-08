@@ -5264,33 +5264,6 @@ export class Editor {
           direction
         )
 
-        // let voxelPosition = { x: 0, y: 0, z: 0 }
-        // if (hit) {
-        //   // Place the voxel "on top" of the surface by offsetting along the normal
-        //   // const halfExtent = 0.5 // Half of voxel dimension (1/2 = 0.5)
-        //   const halfExtent = 1
-
-        //   voxelPosition = {
-        //     x: hit.position.GetX() + hit.normal.GetX() * halfExtent,
-        //     y: hit.position.GetY() + hit.normal.GetY() * halfExtent,
-        //     z: hit.position.GetZ() + hit.normal.GetZ() * halfExtent
-        //   }
-
-        //   // Snap to grid for clean voxel alignment (.floor() in an attempt to avoid mid-air and halfway placements caused by .round(), although both may have problems)
-        //   voxelPosition.x = Math.floor(voxelPosition.x)
-        //   voxelPosition.y = Math.floor(voxelPosition.y)
-        //   voxelPosition.z = Math.floor(voxelPosition.z)
-        // } else {
-        //   // If no hit, place it a bit in front of the camera
-        //   const forward = getCameraForward(camera)
-        //   const pos = camera.position
-        //   voxelPosition = {
-        //     x: pos[0] + forward[0] * 5,
-        //     y: pos[1] + forward[1] * 5,
-        //     z: pos[2] + forward[2] * 5
-        //   }
-        // }
-
         let voxelPosition = { x: 0, y: 0, z: 0 }
         if (hit) {
           // Get the body that was hit
@@ -5397,7 +5370,9 @@ export class Editor {
         if (
           Number.isNaN(voxelPosition.x) ||
           Number.isNaN(voxelPosition.y) ||
-          Number.isNaN(voxelPosition.z)
+          Number.isNaN(voxelPosition.z) ||
+          voxelPosition.x === null ||
+          voxelPosition.y === null
         ) {
           console.warn('NaN Number for Voxel!')
           passed = false
@@ -5442,7 +5417,7 @@ export class Editor {
         this.bodies.set(new_id, staticBody)
 
         // TODO: Call editor_state.add_saved_voxel here (after editor_state is updated)
-        console.info('Voxel added at', voxelPosition)
+        // console.info('Voxel added at', voxelPosition)
 
         if (this.isVoxelPaintingContinuous) {
           this.stickyVoxelY = voxelConfig.position.y
