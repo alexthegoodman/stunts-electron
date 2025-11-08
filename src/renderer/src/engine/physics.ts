@@ -115,6 +115,8 @@ export class Physics {
     setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
   ) {
     return (body1: number, body2: number, manifold: number, settings: number) => {
+      console.info('CONTACT!')
+
       const isProjectile = (bodyId: string) => {
         const projectile = editor.spheres3D.find((s) => s.id === bodyId)
         return projectile && projectile.name === 'Projectile'
@@ -139,12 +141,14 @@ export class Physics {
           body.GetID().GetIndexAndSequenceNumber() === body1x.GetID().GetIndexAndSequenceNumber()
         ) {
           gameBodyId1 = id
-          break
         }
         if (
           body.GetID().GetIndexAndSequenceNumber() === body2x.GetID().GetIndexAndSequenceNumber()
         ) {
           gameBodyId2 = id
+        }
+
+        if (gameBodyId1 && gameBodyId2) {
           break
         }
       }
@@ -153,32 +157,33 @@ export class Physics {
       const b2Id = gameBodyId2
 
       if ((isProjectile(b1Id) && isEnemy(b2Id)) || (isProjectile(b2Id) && isEnemy(b1Id))) {
-        const enemyId = isEnemy(b1Id) ? b1Id : b2Id
-        const enemyNode = editor.nodes.find((n) => n.id === `${enemyId}-7`)
-        if (enemyNode && typeof enemyNode.data.health === 'number') {
-          setNodes((nds) =>
-            nds.map((n) => {
-              if (n.id === enemyNode.id) {
-                console.warn('MINUS 10 HEALTH on ENEMY')
-                return { ...n, data: { ...n.data, health: n.data.health - 10 } }
-              }
-              return n
-            })
-          )
-        }
+        // const enemyId = isEnemy(b1Id) ? b1Id : b2Id
+        // const enemyNode = editor.nodes.find((n) => n.id === `${enemyId}-7`)
+        // const enemyNode = editor.nodes.find((n) => n.data.label === 'EnemyController')
+        // if (enemyNode && typeof enemyNode.data.health === 'number') {
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (n.data.label === 'EnemyController') {
+              console.warn('MINUS 10 HEALTH on ENEMY')
+              return { ...n, data: { ...n.data, health: n.data.health - 10 } }
+            }
+            return n
+          })
+        )
+        // }
       } else if ((isProjectile(b1Id) && isPlayer(b2Id)) || (isProjectile(b2Id) && isPlayer(b1Id))) {
-        const playerNode = editor.nodes.find((n) => n.data.label === 'PlayerController')
-        if (playerNode && typeof playerNode.data.health === 'number') {
-          setNodes((nds) =>
-            nds.map((n) => {
-              if (n.id === playerNode.id) {
-                console.warn('MINUS 10 HEALTH on PLAYER')
-                return { ...n, data: { ...n.data, health: n.data.health - 10 } }
-              }
-              return n
-            })
-          )
-        }
+        // const playerNode = editor.nodes.find((n) => n.data.label === 'PlayerController')
+        // if (playerNode && typeof playerNode.data.health === 'number') {
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (n.data.label === 'PlayerController') {
+              console.warn('MINUS 10 HEALTH on PLAYER')
+              return { ...n, data: { ...n.data, health: n.data.health - 10 } }
+            }
+            return n
+          })
+        )
+        // }
       }
     }
   }
