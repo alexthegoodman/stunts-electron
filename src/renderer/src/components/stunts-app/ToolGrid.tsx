@@ -43,6 +43,7 @@ import { BrushConfig, BrushType, SavedBrushConfig } from '@renderer/engine/brush
 import { createEnemyNodes } from '../../gamelogic/nodes'
 import { GameEdge, GameNode } from './GameLogic'
 import { VoxelType } from '@renderer/engine/voxel'
+import { useTools } from '@renderer/contexts/ToolContext'
 
 export const ToolGrid = ({
   editorRef,
@@ -73,28 +74,40 @@ export const ToolGrid = ({
 }) => {
   const { t } = useTranslation('common')
 
-  const [voxelType, setVoxelType] = useState<VoxelType>(VoxelType.StandardVoxel)
-  const [voxelSize, setVoxelSize] = useState<number>(1) // Default voxel size
-  const [voxelColor, setVoxelColor] = useState<string>('#FFFFFF') // Default voxel color (white)
-  const [isVoxelPainting, setVoxelPainting] = useState(false)
-
-  const [authToken] = useLocalStorage<AuthToken | null>('auth-token', null)
-
-  const [isCapturing, setIsCapturing] = useState(false)
-  const [isSourceModalOpen, setIsSourceModalOpen] = useState(false)
-  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null)
-  const [selectedSourceData, setSelectedSourceData] = useState<any | null>(null)
-  const [uploadProgress, setUploadProgress] = useState(0)
+  const {
+    voxelType,
+    setVoxelType,
+    voxelSize,
+    setVoxelSize,
+    voxelColor,
+    setVoxelColor,
+    isVoxelPainting,
+    setVoxelPainting,
+    isCapturing,
+    setIsCapturing,
+    isSourceModalOpen,
+    setIsSourceModalOpen,
+    selectedSourceId,
+    setSelectedSourceId,
+    selectedSourceData,
+    setSelectedSourceData,
+    uploadProgress,
+    setUploadProgress,
+    generateImageModalOpen,
+    setGenerateImageModalOpen,
+    generateImagePrompt,
+    setGenerateImagePrompt,
+    isGeneratingImage,
+    setIsGeneratingImage,
+    userMessage,
+    setUserMessage,
+    stickerModalOpen,
+    setStickerModalOpen,
+    textRollModalOpen,
+    setTextRollModalOpen
+  } = useTools()
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-
-  const [generateImageModalOpen, setGenerateImageModalOpen] = useState(false)
-  const [generateImagePrompt, setGenerateImagePrompt] = useState('')
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false)
-  const [userMessage, setUserMessage] = useState('')
-
-  const [stickerModalOpen, setStickerModalOpen] = useState(false)
-  const [textRollModalOpen, setTextRollModalOpen] = useState(false)
 
   const availableStickers = [
     'airplane1.png',
@@ -861,7 +874,7 @@ export const ToolGrid = ({
         toast.error(error.message || 'An error occurred')
       }
     },
-    [authToken, setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
+    [setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
   )
 
   let on_add_video = useCallback(
@@ -1110,7 +1123,7 @@ export const ToolGrid = ({
         toast.error(error.message || 'An error occurred')
       }
     },
-    [authToken, setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
+    [setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
   )
 
   const on_add_model3d = useCallback(
@@ -1227,7 +1240,7 @@ export const ToolGrid = ({
         setUserMessage('')
       }
     },
-    [authToken, setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
+    [setUploadProgress, getRandomNumber, set_sequences, setLayers, layers]
   )
 
   const on_add_point_light = useCallback(

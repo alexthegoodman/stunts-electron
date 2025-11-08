@@ -999,7 +999,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
       new_layers.sort((a, b) => b.initial_layer_index - a.initial_layer_index)
       set_layers(new_layers)
-      setVoxelComponents(saved_sequence.storedVoxelComponents) // not the activeVoxelComponents
+      setVoxelComponents(saved_sequence.storedVoxelComponents ?? []) // not the activeVoxelComponents
 
       // Create a dynamic cube
       // const dynamicCubeConfig: Cube3DConfig = {
@@ -1329,6 +1329,9 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                         let storedComponents = []
                         editorState.savedState.sequences.forEach((s) => {
                           if (s.id === current_sequence_id) {
+                            if (!s.storedVoxelComponents) {
+                              s.storedVoxelComponents = []
+                            }
                             s.storedVoxelComponents.push(newVoxelConfig)
                             storedComponents = s.storedVoxelComponents
                           }
@@ -1342,7 +1345,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                     >
                       New Component
                     </button>
-                    {voxelComponents.map((vc) => {
+                    {voxelComponents?.map((vc) => {
                       return (
                         <div className="flex flex-row gap-2">
                           <span>{vc.name}</span>

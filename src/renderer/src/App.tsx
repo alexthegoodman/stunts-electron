@@ -25,133 +25,136 @@ import Ads from './stunts-pages/project/[projectId]/ads/page'
 import Copy from './stunts-pages/project/[projectId]/copy/page'
 import Library from './stunts-pages/project/[projectId]/library/page'
 import Games from './stunts-pages/project/[projectId]/games/page'
+import { ToolProvider } from './contexts/ToolContext'
 
 function App(): React.JSX.Element {
   return (
     <ThemeProvider>
-      <RouterProvider initialPath="/profiles">
-        <Router
-          routes={[
-            // Root routes
-            { path: '/profiles', component: <Profiles /> },
-            { path: '/projects', component: <Projects /> },
-            { path: '/create-project', component: <CreateProject /> },
-            { path: '/select-language', component: <SelectLanguage /> },
-            { path: '/onboarding', component: <OnboardingCarousel /> },
-            { path: '/redirect', component: <RedirectPage /> },
+      <ToolProvider>
+        <RouterProvider initialPath="/profiles">
+          <Router
+            routes={[
+              // Root routes
+              { path: '/profiles', component: <Profiles /> },
+              { path: '/projects', component: <Projects /> },
+              { path: '/create-project', component: <CreateProject /> },
+              { path: '/select-language', component: <SelectLanguage /> },
+              { path: '/onboarding', component: <OnboardingCarousel /> },
+              { path: '/redirect', component: <RedirectPage /> },
 
-            // Project routes (with layout)
-            {
-              path: '/project/:projectId/flow',
-              component: (
-                <ProjectLayout>
-                  <Project />
-                </ProjectLayout>
-              )
-              // exact: true
-            },
-            {
-              path: '/project/:projectId/choose-path',
-              component: (
-                <ProjectLayout>
-                  <ChoosePath />
-                </ProjectLayout>
-              )
-            },
-            {
-              path: '/project/:projectId/videos',
-              component: (
-                <ProjectLayout>
-                  <Videos />
-                </ProjectLayout>
-              )
-            },
-            {
-              path: '/project/:projectId/games',
-              component: (
-                <ProjectLayout>
-                  <Games />
-                </ProjectLayout>
-              )
-            },
-            {
-              path: '/project/:projectId/ads',
-              component: (
-                <ProjectLayout>
-                  <Ads />
-                </ProjectLayout>
-              )
-            },
-            {
-              path: '/project/:projectId/copy',
-              component: (
-                <ProjectLayout>
-                  <Copy />
-                </ProjectLayout>
-              )
-            },
-            {
-              path: '/project/:projectId/library',
-              component: (
-                <ProjectLayout>
-                  <Library />
-                </ProjectLayout>
-              )
-            },
-            {
-              path: '/project/:projectId/documents',
-              component: (
-                <ProjectLayout>
-                  <Documents />
-                </ProjectLayout>
-              )
-            },
-            {
-              path: '/project/:projectId/slides',
-              component: (
-                <ProjectLayout>
-                  <Slides />
-                </ProjectLayout>
-              )
-            },
-            {
-              path: '/project/:projectId/books',
-              component: (
-                <ProjectLayout>
-                  <Books />
-                </ProjectLayout>
-              )
-            },
-            {
-              path: '/project/:projectId/market',
-              component: (
-                <ProjectLayout>
-                  <Market />
-                </ProjectLayout>
-              )
-            },
-            {
-              path: '/project/:projectId/settings',
-              component: (
-                <ProjectLayout>
-                  <ProjectSettings />
-                </ProjectLayout>
-              )
-            },
+              // Project routes (with layout)
+              {
+                path: '/project/:projectId/flow',
+                component: (
+                  <ProjectLayout>
+                    <Project />
+                  </ProjectLayout>
+                )
+                // exact: true
+              },
+              {
+                path: '/project/:projectId/choose-path',
+                component: (
+                  <ProjectLayout>
+                    <ChoosePath />
+                  </ProjectLayout>
+                )
+              },
+              {
+                path: '/project/:projectId/videos',
+                component: (
+                  <ProjectLayout>
+                    <Videos />
+                  </ProjectLayout>
+                )
+              },
+              {
+                path: '/project/:projectId/games',
+                component: (
+                  <ProjectLayout>
+                    <Games />
+                  </ProjectLayout>
+                )
+              },
+              {
+                path: '/project/:projectId/ads',
+                component: (
+                  <ProjectLayout>
+                    <Ads />
+                  </ProjectLayout>
+                )
+              },
+              {
+                path: '/project/:projectId/copy',
+                component: (
+                  <ProjectLayout>
+                    <Copy />
+                  </ProjectLayout>
+                )
+              },
+              {
+                path: '/project/:projectId/library',
+                component: (
+                  <ProjectLayout>
+                    <Library />
+                  </ProjectLayout>
+                )
+              },
+              {
+                path: '/project/:projectId/documents',
+                component: (
+                  <ProjectLayout>
+                    <Documents />
+                  </ProjectLayout>
+                )
+              },
+              {
+                path: '/project/:projectId/slides',
+                component: (
+                  <ProjectLayout>
+                    <Slides />
+                  </ProjectLayout>
+                )
+              },
+              {
+                path: '/project/:projectId/books',
+                component: (
+                  <ProjectLayout>
+                    <Books />
+                  </ProjectLayout>
+                )
+              },
+              {
+                path: '/project/:projectId/market',
+                component: (
+                  <ProjectLayout>
+                    <Market />
+                  </ProjectLayout>
+                )
+              },
+              {
+                path: '/project/:projectId/settings',
+                component: (
+                  <ProjectLayout>
+                    <ProjectSettings />
+                  </ProjectLayout>
+                )
+              },
 
-            // Flow routes (without layout)
-            {
-              path: '/project/:projectId/flows/:flowId/content',
-              component: <FlowContent />
-            },
-            {
-              path: '/project/:projectId/flows/:flowId/questions',
-              component: <FlowQuestions />
-            }
-          ]}
-          fallback={<div className="p-8">404 - Page not found</div>}
-        />
-      </RouterProvider>
+              // Flow routes (without layout)
+              {
+                path: '/project/:projectId/flows/:flowId/content',
+                component: <FlowContent />
+              },
+              {
+                path: '/project/:projectId/flows/:flowId/questions',
+                component: <FlowQuestions />
+              }
+            ]}
+            fallback={<div className="p-8">404 - Page not found</div>}
+          />
+        </RouterProvider>
+      </ToolProvider>
     </ThemeProvider>
   )
 }
