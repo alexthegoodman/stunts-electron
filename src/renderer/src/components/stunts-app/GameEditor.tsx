@@ -488,6 +488,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
               node.data = { ...node.data, pressed: true }
             } else if (node.data.label === 'Jump' && event.code === 'Space') {
               node.data = { ...node.data, pressed: true }
+            } else if (node.data.label === 'Fire' && event.key === 'q') {
+              node.data = { ...node.data, pressed: true }
             }
             return node
           })
@@ -513,6 +515,8 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
             } else if (node.data.label === 'Right' && event.key === 'd') {
               node.data = { ...node.data, pressed: false }
             } else if (node.data.label === 'Jump' && event.code === 'Space') {
+              node.data = { ...node.data, pressed: false }
+            } else if (node.data.label === 'Fire' && event.key === 'q') {
               node.data = { ...node.data, pressed: false }
             }
             return node

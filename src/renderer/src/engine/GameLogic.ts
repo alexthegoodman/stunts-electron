@@ -8,12 +8,14 @@ import { vec3 } from 'gl-matrix'
 import { Camera3D } from './3dcamera'
 import { FirstPersonCamera } from './firstPersonCamera'
 import { GameNode } from '@renderer/components/stunts-app/GameLogic'
+import { getCameraForward } from './editor/helpers'
 
 export class GameLogic {
   private setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
   private editor: Editor
   private pipeline: CanvasPipeline
   private lastShotTime: number = 0
+  private lastPlayerShotTime: number = 0
   private enemyMoveDirections: Map<string, Jolt.Vec3> = new Map()
   private enemyLastMoveTime: Map<string, number> = new Map()
   private readonly MOVE_INTERVAL = 2000 // 2 seconds
@@ -197,6 +199,63 @@ export class GameLogic {
       }
     }
     const enemyNodes = nodes.filter((n) => n.data.label === 'EnemyController')
+
+    // Player firing logic
+    const fireNode = nodes.find((n) => n.data.label === 'Fire')
+    if (fireNode?.data.pressed) {
+      const now = Date.now()
+      const fireRate = 500 // ms between shots
+      if (now - this.lastPlayerShotTime > fireRate) {
+        this.lastPlayerShotTime = now
+
+        const playerCharacter = editor.characters.get(
+          editor.cubes3D.find((c) => c.name === 'PlayerCharacter')?.id
+        )
+        if (playerCharacter && editor.camera) {
+          const projectileId = uuidv4()
+          const startPosition = playerCharacter.GetPosition()
+          const projectileConfig: Sphere3DConfig = {
+            id: projectileId,
+            name: 'Projectile',
+            radius: 0.2,
+            position: {
+              x: startPosition.GetX(),
+              y: startPosition.GetY() + 1.5, // Adjust height to be closer to camera
+              z: startPosition.GetZ()
+            },
+            rotation: [0, 0, 0],
+            backgroundFill: {
+              type: 'Color',
+              value: [0.0, 1.0, 0.0, 1.0] // Green
+            },
+            layer: 0
+          }
+          editor.add_sphere3d(projectileConfig, projectileConfig.id, editor.currentSequenceData.id)
+
+          const projectileBody = editor.physics.createDynamicSphere(
+            new editor.physics.jolt.RVec3(
+              projectileConfig.position.x,
+              projectileConfig.position.y,
+              projectileConfig.position.z
+            ),
+            new editor.physics.jolt.Quat(0, 0, 0, 1),
+            projectileConfig.radius
+          )
+
+          editor.bodies.set(projectileId, projectileBody)
+          editor.projectiles.push({ id: projectileId, creationTime: Date.now() })
+
+          const forward = getCameraForward(editor.camera)
+          const speed = 50
+          const velocity = new editor.physics.jolt.Vec3(
+            forward[0] * speed,
+            forward[1] * speed,
+            forward[2] * speed
+          )
+          editor.physics.bodyInterface.SetLinearVelocity(projectileBody.GetID(), velocity)
+        }
+      }
+    }
 
     // console.info('enemyNode', enemyNodes)
 

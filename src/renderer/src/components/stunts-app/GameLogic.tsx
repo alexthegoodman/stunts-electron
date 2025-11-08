@@ -56,6 +56,7 @@ export const initialNodes: GameNode[] = [
   { id: '6b', data: { label: 'Jump', pressed: false }, position: { x: 500, y: 250 } },
   { id: '6c', data: { label: 'Grab', pressed: false }, position: { x: 600, y: 250 } },
   { id: '6d', data: { label: 'Collect', pressed: false }, position: { x: 700, y: 250 } },
+  { id: '6e', data: { label: 'Fire', pressed: false }, position: { x: 600, y: 300 } },
   {
     id: '7',
     data: { label: 'EnemyController', health: 100, fireRate: 1000 },
@@ -92,6 +93,7 @@ export const initialEdges: GameEdge[] = [
   { id: 'e3-5b', source: '6b', target: '2' },
   { id: 'e3-5c', source: '6c', target: '2' },
   { id: 'e3-5d', source: '6d', target: '2' },
+  { id: 'e3-5e', source: '6e', target: '2' },
   { id: 'e8-7', source: '8', target: '7' },
   { id: 'e9-7', source: '9', target: '7' },
   { id: 'e10-7', source: '10', target: '7' },
