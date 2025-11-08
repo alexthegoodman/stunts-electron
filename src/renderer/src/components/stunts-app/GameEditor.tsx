@@ -1102,12 +1102,24 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     return () => clearInterval(interval)
   }, [nodes])
 
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
   useEffect(() => {
-    if (canvasPipelineRef.current && !canvasPipelineRef.current.isPlaying) {
-      // Important: dont want to save during frequent in-game updates
+    if (!canvasPipelineRef.current || canvasPipelineRef.current.isPlaying) return
+
+    // clear any pending save
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+
+    // debounce the save to avoid frequent writes
+    timeoutRef.current = setTimeout(() => {
       saveGameStateData({ nodes, edges }, SaveTarget.Games)
+    }, 500) // ← adjust delay as needed (e.g., 300–1000ms)
+
+    // cleanup when effect reruns or component unmounts
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
-  }, [nodes, edges])
+  }, [nodes, edges, canvasPipelineRef, saveGameStateData])
 
   const resetCamera = (position) => {
     const editor = editorRef.current
@@ -1432,6 +1444,35 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
                 {toolbarTab === 'logic' && (
                   <div className="text-white">
                     <h5 className="text-lg font-semibold mb-4">Game Logic</h5>
+                    <div className="flex items-center mb-4">
+                      <select
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        onChange={(e) => {
+                          const selectedLabel = e.target.value
+                          const nodeTemplate = initialNodes.find(
+                            (n) => n.data.label === selectedLabel
+                          )
+                          if (nodeTemplate) {
+                            const newNode = {
+                              id: uuidv4(),
+                              data: { ...nodeTemplate.data },
+                              position: { x: Math.random() * 400, y: Math.random() * 400 }
+                            }
+                            setNodes((nds) => nds.concat(newNode))
+                          }
+                        }}
+                        defaultValue=""
+                      >
+                        <option value="" disabled>
+                          Select a node to add
+                        </option>
+                        {initialNodes.map((node) => (
+                          <option key={node.data.label} value={node.data.label}>
+                            {node.data.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     <GameLogicEditor
                       nodes={nodes}
                       edges={edges}
