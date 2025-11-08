@@ -298,7 +298,7 @@ export class GameLogic {
       let velocity = null
 
       if (length > 0.001) {
-        const speed = 2
+        const speed = 25
         velocity = new editor.physics.jolt.Vec3(
           (direction[0] / length) * speed,
           (direction[1] / length) * speed,
@@ -375,8 +375,8 @@ export class GameLogic {
         }
 
         if (!moveDirection || !lastMoveTime || now - lastMoveTime > this.MOVE_INTERVAL) {
-          const randomX = (Math.random() * 2 - 1) * 2.0
-          const randomZ = (Math.random() * 2 - 1) * 2.0
+          const randomX = (Math.random() * 2 - 1) * 3.0
+          const randomZ = (Math.random() * 2 - 1) * 3.0
           moveDirection = new editor.physics.jolt.Vec3(randomX, 0, randomZ)
           console.info(
             'moveDirection',
