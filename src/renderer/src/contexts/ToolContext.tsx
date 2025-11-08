@@ -34,6 +34,8 @@ interface ToolContextType {
   setStickerModalOpen
   textRollModalOpen
   setTextRollModalOpen
+  voxelContinuous
+  setVoxelContinuous
 }
 
 const ToolContext = createContext<ToolContextType | undefined>(undefined)
@@ -43,6 +45,7 @@ export function ToolProvider({ children }: { children: React.ReactNode }) {
   const [voxelSize, setVoxelSize] = useState<number>(1) // Default voxel size
   const [voxelColor, setVoxelColor] = useState<string>('#FFFFFF') // Default voxel color (white)
   const [isVoxelPainting, setVoxelPainting] = useState(false)
+  const [voxelContinuous, setVoxelContinuous] = useState(false)
 
   const [isCapturing, setIsCapturing] = useState(false)
   const [isSourceModalOpen, setIsSourceModalOpen] = useState(false)
@@ -95,7 +98,9 @@ export function ToolProvider({ children }: { children: React.ReactNode }) {
         stickerModalOpen,
         setStickerModalOpen,
         textRollModalOpen,
-        setTextRollModalOpen
+        setTextRollModalOpen,
+        voxelContinuous,
+        setVoxelContinuous
       }}
     >
       {children}

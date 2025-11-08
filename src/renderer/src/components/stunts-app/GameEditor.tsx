@@ -603,7 +603,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
     canvas.addEventListener('pointermove', (event: PointerEvent) => {
       const coords = getCanvasCoordinates(canvas, event)
-      editor.handle_mouse_move(coords.x, coords.y)
+      editor.handle_mouse_move(coords.x, coords.y, event)
     })
 
     canvas.addEventListener('pointerdown', (event) => {
@@ -666,7 +666,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
     select_image(image_id)
   }
 
-  let handle_voxel_added = (voxelId: string, voxelData: VoxelConfig) => {
+  let handle_voxel_added = (voxelId?: string, voxelData?: VoxelConfig) => {
     let editor = editorRef.current
     let editor_state = editorStateRef.current
 
@@ -674,18 +674,19 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
       return
     }
 
-    let activeVoxel = editor.voxels.find((v) => v.id === voxelId)
+    // let activeVoxel = editor.voxels.find((v) => v.id === voxelId)
 
     editor_state.savedState.sequences.forEach((s) => {
       if (s.id === current_sequence_id) {
         if (!s.activeVoxels) {
           s.activeVoxels = []
         }
-        s.activeVoxels.push(activeVoxel.toSavedConfig())
+        // s.activeVoxels.push(activeVoxel.toSavedConfig())
+        s.activeVoxels = editor.voxels.map((v) => v.toSavedConfig())
       }
     })
 
-    console.info('handle_voxel_added', activeVoxel.id)
+    console.info('voxels synced')
 
     saveSequencesData(editor_state.savedState.sequences, SaveTarget.Games)
   }

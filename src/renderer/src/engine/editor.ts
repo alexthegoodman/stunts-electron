@@ -248,6 +248,7 @@ export class Editor {
   currentVoxelSize: number = 0.1
   currentVoxelColor: [number, number, number, number] = [1.0, 1.0, 1.0, 1.0]
   currentVoxelType: VoxelType = VoxelType.StandardVoxel
+  isVoxelPaintingContinuous: boolean = false
   selectedCube3DId: string | null
   gizmo: Gizmo | null = null
   draggingGizmoAxis: 'x' | 'y' | 'z' | null = null
@@ -257,6 +258,8 @@ export class Editor {
   projectiles: { id: string; creationTime: number }[] = []
   projectileLifetime: number = 15000 // 15 second
   gameLogic: GameLogic | null = null
+  isPainting: boolean = false
+  stickyVoxelY: number | null = null
 
   draggingCube3D: string | null
   draggingSphere3D: string | null
@@ -286,7 +289,7 @@ export class Editor {
   handleMockup3DClick: Mockup3DClickHandler | null
   handlePointLightClick: PointLightClickHandler | null
   scaleMultiplier: number = 1.0
-  onVoxelAdded: (voxelId: string, voxelData: VoxelConfig) => void = (voxelId, voxelData) => {}
+  onVoxelAdded: (voxelId?: string, voxelData?: VoxelConfig) => void = (voxelId, voxelData) => {}
   onVoxelRemoved: OnVoxelRemoved = (voxelId) => {}
 
   window: Window | null
@@ -4693,6 +4696,10 @@ export class Editor {
 
     let ndc = toNDC(positionX, positionY, camera.windowSize.width, camera.windowSize.height)
 
+    if (event.button === 0 && this.isVoxelPaintingMode && this.currentSequenceData) {
+      this.isPainting = true
+    }
+
     // if (intersecting_objects.length <= 0) {
     // const ray = this.lastRay
     if (ray && this.physics) {
@@ -4791,7 +4798,8 @@ export class Editor {
     // device: Polyfilldevice!,
     // queue: PolyfillQueue,
     x: number,
-    y: number
+    y: number,
+    event
   ) {
     let camera = this.camera
     let windowSize = camera?.windowSize
@@ -4823,6 +4831,12 @@ export class Editor {
 
     this.lastTopLeft = top_left
     this.lastRay = ray
+
+    if (this.isVoxelPaintingContinuous) {
+      this.handle_voxel_mode(event)
+
+      return
+    }
 
     // Gizmo hover detection
     let newHoveredGizmoPart: Cube3D | Torus3D | null = null
@@ -5140,36 +5154,8 @@ export class Editor {
     this.previousTopLeft = this.lastTopLeft
   }
 
-  handle_mouse_up(event) {
-    // let action_edit = None;
-
+  handle_voxel_mode(event) {
     let camera = this.camera
-
-    if (!camera) {
-      return
-    }
-
-    // Handle brush stroke end
-    if (this.brushDrawingMode && this.currentBrush && this.currentBrush.currentStroke) {
-      this.currentBrush.endStroke()
-
-      // Regenerate final geometry with all strokes
-      const windowSize = camera.windowSize
-      const gpuResources = this.gpuResources
-      const device = gpuResources?.device
-      const queue = gpuResources?.queue
-
-      if (windowSize && device && queue) {
-        this.currentBrush.createGeometry(camera, windowSize)
-        this.currentBrush.updateBuffers(device, queue, camera, windowSize)
-      }
-
-      if (this.onBrushStrokeUp) {
-        this.onBrushStrokeUp(this.currentBrush.id)
-      }
-
-      return
-    }
 
     // Handle voxel painting end on mouse up
     // Voxel Painting Logic
@@ -5193,6 +5179,7 @@ export class Editor {
         )
 
         if (hit) {
+          // TODO: detect WaterVoxel sensor to ensure WaterVoxel's can be removed
           const bodyId = hit.bodyId.GetIndexAndSequenceNumber()
           const voxelToRemoveIndex = this.voxels.findIndex((voxel) => {
             const body = this.bodies.get(voxel.id)
@@ -5217,7 +5204,7 @@ export class Editor {
     }
 
     // this painting logic allows from one at a time painting, which is prefered for voxel work as compared to continuous painting
-    if (this.isVoxelPaintingMode && this.currentSequenceData) {
+    if (this.isPainting && this.isVoxelPaintingMode && this.currentSequenceData) {
       if (this.lastRay && this.physics) {
         const direction = new this.physics.jolt.Vec3(
           this.lastRay.direction[0],
@@ -5288,17 +5275,28 @@ export class Editor {
             const ny = Math.round(hit.normal.GetY())
             const nz = Math.round(hit.normal.GetZ())
 
+            let paintY = hitVoxelPosition.y + ny * this.currentVoxelSize
+            if (this.isVoxelPaintingContinuous && this.stickyVoxelY !== null) {
+              paintY = this.stickyVoxelY
+            }
+
             voxelPosition = {
               x: hitVoxelPosition.x + nx * this.currentVoxelSize,
-              y: hitVoxelPosition.y + ny * this.currentVoxelSize,
+              y: paintY,
               z: hitVoxelPosition.z + nz * this.currentVoxelSize
             }
           } else {
             // Hit something that's not a voxel (like ground plane), use offset method
+            // voxelPosition = {
+            //   x: Math.floor(hit.position.GetX() + hit.normal.GetX() * this.currentVoxelSize),
+            //   y: Math.floor(hit.position.GetY() + hit.normal.GetY() * this.currentVoxelSize),
+            //   z: Math.floor(hit.position.GetZ() + hit.normal.GetZ() * this.currentVoxelSize)
+            // }
+
             voxelPosition = {
-              x: Math.floor(hit.position.GetX() + hit.normal.GetX() * this.currentVoxelSize),
-              y: Math.floor(hit.position.GetY() + hit.normal.GetY() * this.currentVoxelSize),
-              z: Math.floor(hit.position.GetZ() + hit.normal.GetZ() * this.currentVoxelSize)
+              x: Math.round(hit.position.GetX()),
+              y: Math.round(hit.position.GetY()),
+              z: Math.round(hit.position.GetZ())
             }
           }
         } else {
@@ -5313,7 +5311,6 @@ export class Editor {
         }
 
         // check if voxel already exists at position
-        // TODO: for some reason, clicks often log "voxel at this spot already!" when clicking an open side of a voxel.
         let passed = true
         this.voxels.forEach((v) => {
           if (
@@ -5368,9 +5365,53 @@ export class Editor {
         // TODO: Call editor_state.add_saved_voxel here (after editor_state is updated)
         console.info('Voxel added at', voxelPosition)
 
-        this.onVoxelAdded(new_id, voxelConfig)
+        if (this.isVoxelPaintingContinuous) {
+          this.stickyVoxelY = voxelConfig.position.y
+        }
+
+        // this.onVoxelAdded() // run on mouse up
       }
       return // Consume the click event for voxel painting
+    }
+  }
+
+  handle_mouse_up(event) {
+    // let action_edit = None;
+
+    let camera = this.camera
+
+    if (!camera) {
+      return
+    }
+
+    // Handle brush stroke end
+    if (this.brushDrawingMode && this.currentBrush && this.currentBrush.currentStroke) {
+      this.currentBrush.endStroke()
+
+      // Regenerate final geometry with all strokes
+      const windowSize = camera.windowSize
+      const gpuResources = this.gpuResources
+      const device = gpuResources?.device
+      const queue = gpuResources?.queue
+
+      if (windowSize && device && queue) {
+        this.currentBrush.createGeometry(camera, windowSize)
+        this.currentBrush.updateBuffers(device, queue, camera, windowSize)
+      }
+
+      if (this.onBrushStrokeUp) {
+        this.onBrushStrokeUp(this.currentBrush.id)
+      }
+
+      return
+    }
+
+    if (!this.isVoxelPaintingContinuous) {
+      this.handle_voxel_mode(event)
+    }
+
+    if (this.isVoxelPaintingMode) {
+      this.onVoxelAdded()
     }
 
     // TODO: does another bounds cause this to get stuck?
@@ -5637,6 +5678,8 @@ export class Editor {
     this.draggingGizmoAxis = null
     this.draggingGizmoRotation = null
     this.draggingGizmoScale = null
+    this.isPainting = false
+    this.stickyVoxelY = null
 
     // Clear any hovered gizmo part on mouse up
     if (this.hoveredGizmoPart) {

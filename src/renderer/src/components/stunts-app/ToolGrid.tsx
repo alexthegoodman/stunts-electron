@@ -104,7 +104,9 @@ export const ToolGrid = ({
     stickerModalOpen,
     setStickerModalOpen,
     textRollModalOpen,
-    setTextRollModalOpen
+    setTextRollModalOpen,
+    voxelContinuous,
+    setVoxelContinuous
   } = useTools()
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -1767,6 +1769,12 @@ export const ToolGrid = ({
 
   useEffect(() => {
     if (editorRef.current) {
+      editorRef.current.isVoxelPaintingContinuous = voxelContinuous
+    }
+  }, [voxelContinuous])
+
+  useEffect(() => {
+    if (editorRef.current) {
       const hexColor = voxelColor
       const r = parseInt(hexColor.slice(1, 3), 16) / 255.0
       const g = parseInt(hexColor.slice(3, 5), 16) / 255.0
@@ -2374,6 +2382,13 @@ export const ToolGrid = ({
             type="color"
             value={voxelColor}
             onChange={(e) => setVoxelColor(e.target.value)}
+            className="w-24 h-8 p-0 border-none rounded overflow-hidden cursor-pointer"
+          />
+          <label className="text-white text-xs">Continuous Mode</label>
+          <input
+            type="checkbox"
+            value={voxelContinuous}
+            onChange={(e) => setVoxelContinuous(e.target.checked)}
             className="w-24 h-8 p-0 border-none rounded overflow-hidden cursor-pointer"
           />
         </div>
