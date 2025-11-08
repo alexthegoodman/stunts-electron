@@ -682,7 +682,11 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
           s.activeVoxels = []
         }
         // s.activeVoxels.push(activeVoxel.toSavedConfig())
-        s.activeVoxels = editor.voxels.map((v) => v.toSavedConfig())
+        let allVoxels = [
+          ...editor.voxels.map((v) => v.toSavedConfig()),
+          ...editor.cachedVoxels.map((v) => v.toSavedConfig())
+        ]
+        s.activeVoxels = allVoxels
       }
     })
 
@@ -937,11 +941,11 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
         let text = editor.textItems.find((t) => t.id == tr.id)
         if (text) text.hidden = false
       })
-      saved_sequence.activeCubes3D.forEach((tr) => {
+      saved_sequence?.activeCubes3D?.forEach((tr) => {
         let cube = editor.cubes3D.find((t) => t.id == tr.id)
         if (cube) cube.hidden = false
       })
-      saved_sequence.activePointLights.forEach((tr) => {
+      saved_sequence?.activePointLights?.forEach((tr) => {
         let light = editor.pointLights.find((t) => t.id == tr.id)
         if (light) light.hidden = false
       })

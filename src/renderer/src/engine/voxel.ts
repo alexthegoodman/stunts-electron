@@ -433,9 +433,9 @@ export class Voxel {
       name: this.name,
       dimensions: this.dimensions,
       position: {
-        x: this.transform.position[0] - CANVAS_HORIZ_OFFSET,
-        y: this.transform.position[1] - CANVAS_VERT_OFFSET,
-        z: this.transform.position[2]
+        x: this.position[0] - CANVAS_HORIZ_OFFSET,
+        y: this.position[1] - CANVAS_VERT_OFFSET,
+        z: this.position[2]
       },
       rotation: this.rotation,
       backgroundFill: this.backgroundFill,

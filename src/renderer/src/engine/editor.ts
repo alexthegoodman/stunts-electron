@@ -264,6 +264,7 @@ export class Editor {
   // voxelVertexCache: Vertex[] = []
   // voxelIndiceCache: number[] = []
   voxelCache: VoxelCache | null = null
+  cachedVoxels: Voxel[] = []
 
   draggingCube3D: string | null
   draggingSphere3D: string | null
@@ -1201,6 +1202,17 @@ export class Editor {
     // Restore Voxels
     if (saved_sequence.activeVoxels) {
       for (let v of saved_sequence.activeVoxels) {
+        if (
+          Number.isNaN(v.position.x) ||
+          Number.isNaN(v.position.y) ||
+          Number.isNaN(v.position.z) ||
+          v.position.x === null ||
+          v.position.y === null
+        ) {
+          console.warn('NaN Number for Voxel!')
+          continue
+        }
+
         const voxel_config: VoxelConfig = {
           id: v.id,
           name: v.name,
@@ -1230,6 +1242,7 @@ export class Editor {
 
           restored_voxel.hidden = hidden
           // this.voxels.push(restored_voxel)
+          this.cachedVoxels.push(restored_voxel)
 
           // ** Add to Voxel Cache ** //
           // Offset indices before pushing them into the global cache
@@ -5289,9 +5302,21 @@ export class Editor {
             const body = this.bodies.get(voxel.id)
             if (body && body.GetID().GetIndexAndSequenceNumber() === hitBodyId) {
               hitVoxelPosition = {
-                x: voxel.transform.position[0],
-                y: voxel.transform.position[1],
-                z: voxel.transform.position[2]
+                x: voxel.position[0],
+                y: voxel.position[1],
+                z: voxel.position[2]
+              }
+              break
+            }
+          }
+
+          for (const voxel of this.cachedVoxels) {
+            const body = this.bodies.get(voxel.id)
+            if (body && body.GetID().GetIndexAndSequenceNumber() === hitBodyId) {
+              hitVoxelPosition = {
+                x: voxel.position[0],
+                y: voxel.position[1],
+                z: voxel.position[2]
               }
               break
             }
@@ -5348,15 +5373,35 @@ export class Editor {
         let passed = true
         this.voxels.forEach((v) => {
           if (
-            v.transform.position[0] === voxelPosition.x &&
-            v.transform.position[1] === voxelPosition.y &&
-            v.transform.position[2] === voxelPosition.z
+            v.position[0] === voxelPosition.x &&
+            v.position[1] === voxelPosition.y &&
+            v.position[2] === voxelPosition.z
           ) {
             console.info('voxel at this spot already!')
             passed = false
             return
           }
         })
+        this.cachedVoxels.forEach((v) => {
+          if (
+            v.position[0] === voxelPosition.x &&
+            v.position[1] === voxelPosition.y &&
+            v.position[2] === voxelPosition.z
+          ) {
+            console.info('voxel at this spot already!')
+            passed = false
+            return
+          }
+        })
+
+        if (
+          Number.isNaN(voxelPosition.x) ||
+          Number.isNaN(voxelPosition.y) ||
+          Number.isNaN(voxelPosition.z)
+        ) {
+          console.warn('NaN Number for Voxel!')
+          passed = false
+        }
 
         if (!passed) {
           return
