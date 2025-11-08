@@ -1,6 +1,6 @@
 import { mat4, vec2, vec3 } from 'gl-matrix'
 import { Camera, WindowSize } from './camera'
-import { BoundingBox, CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Point } from './editor'
+import { BoundingBox, CANVAS_HORIZ_OFFSET, CANVAS_VERT_OFFSET, Editor, Point } from './editor'
 import { createEmptyGroupTransform, matrix4ToRawArray, Transform } from './transform'
 import { createVertex, getZLayer, Vertex, vertexByteSize } from './vertex'
 import { BackgroundFill, ObjectType } from './animations'
@@ -12,6 +12,8 @@ import {
   PolyfillQueue
 } from './polyfill'
 import { setupGradientBuffers } from './polygon'
+import { Physics } from './physics'
+import { GameNode } from '@renderer/components/stunts-app/GameLogic'
 
 export interface Cube3DConfig {
   id: string
@@ -384,10 +386,10 @@ export class Cube3D {
   }
 
   updateColor(queue: PolyfillQueue, newColor: [number, number, number, number]) {
-    this.backgroundFill = { type: 'Color', value: newColor };
+    this.backgroundFill = { type: 'Color', value: newColor }
     this.vertices.forEach((v) => {
-      v.color = newColor;
-    });
+      v.color = newColor
+    })
     queue.writeBuffer(
       this.vertexBuffer,
       0,
@@ -401,7 +403,7 @@ export class Cube3D {
           ...v.normal
         ])
       )
-    );
+    )
   }
 
   updateLayer(layer: number) {

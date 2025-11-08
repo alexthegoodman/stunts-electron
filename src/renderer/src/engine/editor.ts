@@ -83,6 +83,7 @@ import { GameLogic } from './GameLogic'
 import { Gizmo } from './gizmo'
 import { Torus3D } from './torus3d'
 import VoxelComponent from './voxelComponent'
+import { GameNode } from '@renderer/components/stunts-app/GameLogic'
 
 export const TEXT_BACKGROUNDS_DEFAULT_HIDDEN = true
 
@@ -554,9 +555,10 @@ export class Editor {
   async restore_sequence_objects(
     saved_sequence: Sequence,
     hidden: boolean,
-    cloned_settings: ProjectSettings
+    cloned_settings: ProjectSettings,
+    setNodes: React.Dispatch<React.SetStateAction<GameNode[]>> //  needed for game logic only, not videos
   ) {
-    await this.physics.initialize()
+    await this.physics.initialize(this, setNodes)
 
     this.gizmo = new Gizmo(
       this.gpuResources!,

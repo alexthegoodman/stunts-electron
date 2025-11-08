@@ -2,6 +2,7 @@ import Jolt from 'jolt-physics/debug-wasm-compat'
 import { degreesToRadians } from './transform'
 import { Editor } from './editor'
 import { VoxelType, WaterVoxel } from './voxel'
+import { GameNode } from '@renderer/components/stunts-app/GameLogic'
 
 export class Physics {
   jolt: typeof Jolt
@@ -33,7 +34,10 @@ export class Physics {
 
   constructor() {}
 
-  public async initialize(): Promise<void> {
+  public async initialize(
+    editor: Editor,
+    setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
+  ): Promise<void> {
     this.jolt = await Jolt()
     const jolt = this.jolt
 
@@ -96,6 +100,7 @@ export class Physics {
     const contactListener = new this.jolt.ContactListenerJS()
     contactListener.OnContactAdded = (body1, body2, manifold, settings) => {
       this.runPrimaryContactAddedListeners(body1, body2, manifold, settings)
+      this.addGlobalContactAddedListener(editor, setNodes)(body1, body2, manifold, settings) // no need to run on Persisted (should not persist)
     }
     contactListener.OnContactPersisted = contactListener.OnContactAdded
     contactListener.OnContactValidate = (body1, body2, baseOffset, collideShapeResult) => {
@@ -103,6 +108,79 @@ export class Physics {
     }
     contactListener.OnContactRemoved = (subShapePair) => {}
     this.physicsSystem.SetContactListener(contactListener)
+  }
+
+  addGlobalContactAddedListener(
+    editor: Editor,
+    setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
+  ) {
+    return (body1: number, body2: number, manifold: number, settings: number) => {
+      const isProjectile = (bodyId: string) => {
+        const projectile = editor.spheres3D.find((s) => s.id === bodyId)
+        return projectile && projectile.name === 'Projectile'
+      }
+      const isEnemy = (bodyId: string) => {
+        const enemy = editor.cubes3D.find((c) => c.id === bodyId)
+        return enemy && enemy.name === 'EnemyCharacter'
+      }
+      const isPlayer = (bodyId: string) => {
+        const player = editor.cubes3D.find((c) => c.id === bodyId)
+        return player && player.name === 'PlayerCharacter'
+      }
+
+      let body1x = editor.physics.jolt.wrapPointer(body1, editor.physics.jolt.Body)
+      let body2x = editor.physics.jolt.wrapPointer(body2, editor.physics.jolt.Body)
+
+      // expensive extraction of uuid / matching of body
+      let gameBodyId1: string | undefined
+      let gameBodyId2: string | undefined
+      for (const [id, body] of editor.bodies.entries()) {
+        if (
+          body.GetID().GetIndexAndSequenceNumber() === body1x.GetID().GetIndexAndSequenceNumber()
+        ) {
+          gameBodyId1 = id
+          break
+        }
+        if (
+          body.GetID().GetIndexAndSequenceNumber() === body2x.GetID().GetIndexAndSequenceNumber()
+        ) {
+          gameBodyId2 = id
+          break
+        }
+      }
+
+      const b1Id = gameBodyId1
+      const b2Id = gameBodyId2
+
+      if ((isProjectile(b1Id) && isEnemy(b2Id)) || (isProjectile(b2Id) && isEnemy(b1Id))) {
+        const enemyId = isEnemy(b1Id) ? b1Id : b2Id
+        const enemyNode = editor.nodes.find((n) => n.id === `${enemyId}-7`)
+        if (enemyNode && typeof enemyNode.data.health === 'number') {
+          setNodes((nds) =>
+            nds.map((n) => {
+              if (n.id === enemyNode.id) {
+                console.warn('MINUS 10 HEALTH on ENEMY')
+                return { ...n, data: { ...n.data, health: n.data.health - 10 } }
+              }
+              return n
+            })
+          )
+        }
+      } else if ((isProjectile(b1Id) && isPlayer(b2Id)) || (isProjectile(b2Id) && isPlayer(b1Id))) {
+        const playerNode = editor.nodes.find((n) => n.data.label === 'PlayerController')
+        if (playerNode && typeof playerNode.data.health === 'number') {
+          setNodes((nds) =>
+            nds.map((n) => {
+              if (n.id === playerNode.id) {
+                console.warn('MINUS 10 HEALTH on PLAYER')
+                return { ...n, data: { ...n.data, health: n.data.health - 10 } }
+              }
+              return n
+            })
+          )
+        }
+      }
+    }
   }
 
   public createStaticBox(position: Jolt.RVec3, rotation: Jolt.Quat, size: Jolt.Vec3): Jolt.Body {

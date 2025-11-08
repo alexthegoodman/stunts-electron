@@ -880,7 +880,7 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
 
       editor.cameraBinding?.update(editor.gpuResources?.queue!, editor.camera)
 
-      await editor.restore_sequence_objects(saved_sequence, false, settings)
+      await editor.restore_sequence_objects(saved_sequence, false, settings, setNodes)
 
       const canvas = document.getElementById(`game-canvas`) as HTMLCanvasElement
       setupCanvasMouseTracking(editor, canvas)
@@ -1080,26 +1080,20 @@ export const GameEditor: React.FC<any> = ({ projectId }) => {
   }
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (editorRef.current && canvasPipelineRef.current.isPlaying) {
-        const currentPlayerHealths: number[] = []
-        const currentEnemyHealths: number[] = []
+    if (editorRef.current && canvasPipelineRef.current.isPlaying) {
+      const currentPlayerHealths: number[] = []
+      const currentEnemyHealths: number[] = []
 
-        nodes.forEach((node) => {
-          if (node.data.label === 'PlayerController' && typeof node.data.health === 'number') {
-            currentPlayerHealths.push(node.data.health)
-          } else if (
-            node.data.label === 'EnemyController' &&
-            typeof node.data.health === 'number'
-          ) {
-            currentEnemyHealths.push(node.data.health)
-          }
-        })
-        setPlayerHealths(currentPlayerHealths)
-        setEnemyHealths(currentEnemyHealths)
-      }
-    }, 500)
-    return () => clearInterval(interval)
+      nodes.forEach((node) => {
+        if (node.data.label === 'PlayerController' && typeof node.data.health === 'number') {
+          currentPlayerHealths.push(node.data.health)
+        } else if (node.data.label === 'EnemyController' && typeof node.data.health === 'number') {
+          currentEnemyHealths.push(node.data.health)
+        }
+      })
+      setPlayerHealths(currentPlayerHealths)
+      setEnemyHealths(currentEnemyHealths)
+    }
   }, [nodes])
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
