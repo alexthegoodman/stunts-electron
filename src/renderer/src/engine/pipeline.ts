@@ -1636,7 +1636,19 @@ export class CanvasPipeline {
         }
       }
 
-      // Draw 3D cubes
+      // draw the cached voxels
+      if (editor.voxelCache.vertexCache.length && editor.voxelCache.indiceCache.length) {
+        editor.voxelCache.bindGroup.bindWebGLBindGroup(gl)
+        editor.voxelCache.groupBindGroup?.bindWebGLBindGroup(gl)
+
+        drawIndexedGeometry(
+          editor.voxelCache.vertexBuffer as PolyfillBuffer,
+          editor.voxelCache.indexBuffer as PolyfillBuffer,
+          editor.voxelCache.indiceCache.length
+        )
+      }
+
+      // Draw non-cached voxels
       for (const voxel of editor.voxels || []) {
         if (!voxel.hidden) {
           // console.info('cube pos', cube.transform.position)

@@ -77,13 +77,14 @@ import {
   checkRayPlaneIntersection,
   getCameraForward
 } from './editor/helpers'
-import { fromNDC, toNDC, toSystemScale } from './vertex'
+import { fromNDC, toNDC, toSystemScale, Vertex, vertexOffset } from './vertex'
 import { radiansToDegrees } from './transform'
 import { GameLogic } from './GameLogic'
 import { Gizmo } from './gizmo'
 import { Torus3D } from './torus3d'
 import VoxelComponent from './voxelComponent'
 import { GameNode } from '@renderer/components/stunts-app/GameLogic'
+import VoxelCache from './voxelCache'
 
 export const TEXT_BACKGROUNDS_DEFAULT_HIDDEN = true
 
@@ -260,6 +261,9 @@ export class Editor {
   gameLogic: GameLogic | null = null
   isPainting: boolean = false
   stickyVoxelY: number | null = null
+  // voxelVertexCache: Vertex[] = []
+  // voxelIndiceCache: number[] = []
+  voxelCache: VoxelCache | null = null
 
   draggingCube3D: string | null
   draggingSphere3D: string | null
@@ -475,6 +479,7 @@ export class Editor {
     this.pointLights = []
     this.currentVoxelSize = 1
     this.currentVoxelColor = [1.0, 1.0, 1.0, 1.0]
+    this.voxelCache = new VoxelCache(uuidv4(), 'PrimaryVoxelCache')
 
     // TODO: update interactive bounds on window resize?
     // this.interactiveBounds = {
@@ -1224,7 +1229,20 @@ export class Editor {
           )
 
           restored_voxel.hidden = hidden
-          this.voxels.push(restored_voxel)
+          // this.voxels.push(restored_voxel)
+
+          // ** Add to Voxel Cache ** //
+          // Offset indices before pushing them into the global cache
+          // const offset = Math.floor(this.voxelCache.vertexCache.length / vertexOffset) // assuming x,y,z per vertex
+          const offset = this.voxelCache.vertexCache.length
+
+          // Append vertices
+          this.voxelCache.vertexCache.push(...restored_voxel.vertices)
+
+          // Append indices (offset by current vertex count)
+          this.voxelCache.indiceCache.push(...restored_voxel.indices.map((i) => i + offset))
+
+          // cache is initiialized after restored
 
           const staticBody = this.physics.createStaticBox(
             new this.physics.jolt.RVec3(v.position.x, v.position.y, v.position.z),
@@ -1266,6 +1284,17 @@ export class Editor {
 
         console.log('Voxel restored...')
       }
+
+      // ** INitialize Voxel Cache ** //
+      this.voxelCache.after_vertex_restored(
+        windowSize,
+        device!,
+        queue!,
+        this.modelBindGroupLayout!,
+        this.groupBindGroupLayout!,
+        camera,
+        saved_sequence.id
+      )
     }
 
     if (saved_sequence.activeBrushes) {
@@ -2761,7 +2790,7 @@ export class Editor {
                 //   this.spheres3D[objectIdx].updateOpacity(queue!, opacity);
                 //   break;
                 case ObjectType.Voxel:
-                  this.voxels[objectIdx].updateOpacity(queue!, opacity)
+                  // this.voxels[objectIdx].updateOpacity(queue!, opacity)
                   break
               }
             } else {
@@ -5293,9 +5322,14 @@ export class Editor {
             //   z: Math.floor(hit.position.GetZ() + hit.normal.GetZ() * this.currentVoxelSize)
             // }
 
+            let paintY = Math.round(hit.position.GetY())
+            if (this.isVoxelPaintingContinuous && this.stickyVoxelY !== null) {
+              paintY = this.stickyVoxelY
+            }
+
             voxelPosition = {
               x: Math.round(hit.position.GetX()),
-              y: Math.round(hit.position.GetY()),
+              y: paintY,
               z: Math.round(hit.position.GetZ())
             }
           }

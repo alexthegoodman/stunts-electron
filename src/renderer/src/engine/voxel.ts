@@ -216,7 +216,8 @@ export class Voxel {
 
     // Create transform
     this.transform = new Transform(
-      vec3.fromValues(this.position.x, this.position.y, this.position.z ?? 0),
+      // vec3.fromValues(this.position.x, this.position.y, this.position.z ?? 0),
+      vec3.fromValues(0, 0, 0), // now hardcoding position as individual voxels dont move
       0, // 2D rotation (we'll handle 3D rotation separately)
       vec2.fromValues(1, 1),
       uniformBuffer
@@ -306,7 +307,7 @@ export class Voxel {
     }
 
     // Define the 8 cube corners
-    const positions: [number, number, number][] = [
+    const localPositions: [number, number, number][] = [
       [-hw, -hh, hd], // 0 Front-bottom-left
       [hw, -hh, hd], // 1 Front-bottom-right
       [hw, hh, hd], // 2 Front-top-right
@@ -316,6 +317,11 @@ export class Voxel {
       [hw, hh, -hd], // 6 Back-top-right
       [-hw, hh, -hd] // 7 Back-top-left
     ]
+
+    const positions = localPositions.map(
+      ([x, y, z]) =>
+        [x + this.position.x, y + this.position.y, z + this.position.z] as [number, number, number]
+    )
 
     // Define faces with indices and normals
     const faces = [
@@ -360,66 +366,66 @@ export class Voxel {
     return [vertices, indices]
   }
 
-  updateOpacity(queue: PolyfillQueue, opacity: number) {
-    let new_color: [number, number, number, number] = [1, 1, 1, opacity]
-    if (this.backgroundFill.type === 'Gradient') {
-      let firstStop = this.backgroundFill.value.stops[0]
-      new_color = [firstStop.color[0], firstStop.color[1], firstStop.color[2], opacity]
-    } else if (this.backgroundFill.type === 'Color') {
-      new_color = [
-        this.backgroundFill.value[0],
-        this.backgroundFill.value[1],
-        this.backgroundFill.value[2],
-        opacity
-      ]
-    }
+  // updateOpacity(queue: PolyfillQueue, opacity: number) {
+  //   let new_color: [number, number, number, number] = [1, 1, 1, opacity]
+  //   if (this.backgroundFill.type === 'Gradient') {
+  //     let firstStop = this.backgroundFill.value.stops[0]
+  //     new_color = [firstStop.color[0], firstStop.color[1], firstStop.color[2], opacity]
+  //   } else if (this.backgroundFill.type === 'Color') {
+  //     new_color = [
+  //       this.backgroundFill.value[0],
+  //       this.backgroundFill.value[1],
+  //       this.backgroundFill.value[2],
+  //       opacity
+  //     ]
+  //   }
 
-    this.vertices.forEach((v) => {
-      v.color = new_color
-    })
+  //   this.vertices.forEach((v) => {
+  //     v.color = new_color
+  //   })
 
-    queue.writeBuffer(
-      this.vertexBuffer,
-      0,
-      new Float32Array(
-        this.vertices.flatMap((v) => [
-          ...v.position,
-          ...v.tex_coords,
-          ...v.color,
-          ...v.gradient_coords,
-          v.object_type,
-          ...v.normal
-        ])
-      )
-    )
-  }
+  //   queue.writeBuffer(
+  //     this.vertexBuffer,
+  //     0,
+  //     new Float32Array(
+  //       this.vertices.flatMap((v) => [
+  //         ...v.position,
+  //         ...v.tex_coords,
+  //         ...v.color,
+  //         ...v.gradient_coords,
+  //         v.object_type,
+  //         ...v.normal
+  //       ])
+  //     )
+  //   )
+  // }
 
-  updateColor(queue: PolyfillQueue, newColor: [number, number, number, number]) {
-    this.backgroundFill = { type: 'Color', value: newColor }
-    this.vertices.forEach((v) => {
-      v.color = newColor
-    })
-    queue.writeBuffer(
-      this.vertexBuffer,
-      0,
-      new Float32Array(
-        this.vertices.flatMap((v) => [
-          ...v.position,
-          ...v.tex_coords,
-          ...v.color,
-          ...v.gradient_coords,
-          v.object_type,
-          ...v.normal
-        ])
-      )
-    )
-  }
+  // updateColor(queue: PolyfillQueue, newColor: [number, number, number, number]) {
+  //   this.backgroundFill = { type: 'Color', value: newColor }
+  //   this.vertices.forEach((v) => {
+  //     v.color = newColor
+  //   })
+  //   queue.writeBuffer(
+  //     this.vertexBuffer,
+  //     0,
+  //     new Float32Array(
+  //       this.vertices.flatMap((v) => [
+  //         ...v.position,
+  //         ...v.tex_coords,
+  //         ...v.color,
+  //         ...v.gradient_coords,
+  //         v.object_type,
+  //         ...v.normal
+  //       ])
+  //     )
+  //   )
+  // }
 
-  updateLayer(layer: number) {
-    let layer_index = getZLayer(layer, this.layerSpacing)
-    this.layer = layer
-    this.transform.layer = layer_index as number
-  }
+  // updateLayer(layer: number) {
+  //   let layer_index = getZLayer(layer, this.layerSpacing)
+  //   this.layer = layer
+  //   this.transform.layer = layer_index as number
+  // }
 
   toConfig(): VoxelConfig {
     return {
