@@ -5235,33 +5235,85 @@ export class Editor {
           direction
         )
 
+        // let voxelPosition = { x: 0, y: 0, z: 0 }
+        // if (hit) {
+        //   // Place the voxel "on top" of the surface by offsetting along the normal
+        //   // const halfExtent = 0.5 // Half of voxel dimension (1/2 = 0.5)
+        //   const halfExtent = 1
+
+        //   voxelPosition = {
+        //     x: hit.position.GetX() + hit.normal.GetX() * halfExtent,
+        //     y: hit.position.GetY() + hit.normal.GetY() * halfExtent,
+        //     z: hit.position.GetZ() + hit.normal.GetZ() * halfExtent
+        //   }
+
+        //   // Snap to grid for clean voxel alignment (.floor() in an attempt to avoid mid-air and halfway placements caused by .round(), although both may have problems)
+        //   voxelPosition.x = Math.floor(voxelPosition.x)
+        //   voxelPosition.y = Math.floor(voxelPosition.y)
+        //   voxelPosition.z = Math.floor(voxelPosition.z)
+        // } else {
+        //   // If no hit, place it a bit in front of the camera
+        //   const forward = getCameraForward(camera)
+        //   const pos = camera.position
+        //   voxelPosition = {
+        //     x: pos[0] + forward[0] * 5,
+        //     y: pos[1] + forward[1] * 5,
+        //     z: pos[2] + forward[2] * 5
+        //   }
+        // }
+
         let voxelPosition = { x: 0, y: 0, z: 0 }
         if (hit) {
-          // Place the voxel "on top" of the surface by offsetting along the normal
-          const halfExtent = 0.5 // Half of voxel dimension (1/2 = 0.5)
+          // Get the body that was hit
+          const hitBodyId = hit.bodyId.GetIndexAndSequenceNumber()
+          let hitVoxelPosition = null
 
-          voxelPosition = {
-            x: hit.position.GetX() + hit.normal.GetX() * halfExtent,
-            y: hit.position.GetY() + hit.normal.GetY() * halfExtent,
-            z: hit.position.GetZ() + hit.normal.GetZ() * halfExtent
+          // Find the voxel that was hit
+          for (const voxel of this.voxels) {
+            const body = this.bodies.get(voxel.id)
+            if (body && body.GetID().GetIndexAndSequenceNumber() === hitBodyId) {
+              hitVoxelPosition = {
+                x: voxel.transform.position[0],
+                y: voxel.transform.position[1],
+                z: voxel.transform.position[2]
+              }
+              break
+            }
           }
 
-          // Snap to grid for clean voxel alignment (floor to avoid mid-air and halfway placements)
-          voxelPosition.x = Math.floor(voxelPosition.x)
-          voxelPosition.y = Math.floor(voxelPosition.y)
-          voxelPosition.z = Math.floor(voxelPosition.z)
+          if (hitVoxelPosition) {
+            // Use the normal to determine which face was hit and place adjacent
+            // Normals will be close to [±1,0,0], [0,±1,0], or [0,0,±1]
+            const nx = Math.round(hit.normal.GetX())
+            const ny = Math.round(hit.normal.GetY())
+            const nz = Math.round(hit.normal.GetZ())
+
+            voxelPosition = {
+              x: hitVoxelPosition.x + nx * this.currentVoxelSize,
+              y: hitVoxelPosition.y + ny * this.currentVoxelSize,
+              z: hitVoxelPosition.z + nz * this.currentVoxelSize
+            }
+          } else {
+            // Hit something that's not a voxel (like ground plane), use offset method
+            voxelPosition = {
+              x: Math.floor(hit.position.GetX() + hit.normal.GetX() * this.currentVoxelSize),
+              y: Math.floor(hit.position.GetY() + hit.normal.GetY() * this.currentVoxelSize),
+              z: Math.floor(hit.position.GetZ() + hit.normal.GetZ() * this.currentVoxelSize)
+            }
+          }
         } else {
-          // If no hit, place it a bit in front of the camera
+          // No hit - place in front of camera
           const forward = getCameraForward(camera)
           const pos = camera.position
           voxelPosition = {
-            x: pos[0] + forward[0] * 5,
-            y: pos[1] + forward[1] * 5,
-            z: pos[2] + forward[2] * 5
+            x: Math.floor(pos[0] + forward[0] * 5),
+            y: Math.floor(pos[1] + forward[1] * 5),
+            z: Math.floor(pos[2] + forward[2] * 5)
           }
         }
 
         // check if voxel already exists at position
+        // TODO: for some reason, clicks often log "voxel at this spot already!" when clicking an open side of a voxel.
         let passed = true
         this.voxels.forEach((v) => {
           if (
