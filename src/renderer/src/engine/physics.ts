@@ -115,7 +115,7 @@ export class Physics {
     setNodes: React.Dispatch<React.SetStateAction<GameNode[]>>
   ) {
     return (body1: number, body2: number, manifold: number, settings: number) => {
-      console.info('CONTACT!')
+      // console.info('CONTACT!')
 
       const isProjectile = (bodyId: string) => {
         const projectile = editor.spheres3D.find((s) => s.id === bodyId)
@@ -164,8 +164,8 @@ export class Physics {
         setNodes((nds) =>
           nds.map((n) => {
             if (n.data.label === 'EnemyController') {
-              console.warn('MINUS 10 HEALTH on ENEMY')
-              return { ...n, data: { ...n.data, health: n.data.health - 10 } }
+              console.warn('MINUS 5 HEALTH on ENEMY')
+              return { ...n, data: { ...n.data, health: n.data.health - 5 } }
             }
             return n
           })
@@ -177,8 +177,8 @@ export class Physics {
         setNodes((nds) =>
           nds.map((n) => {
             if (n.data.label === 'PlayerController') {
-              console.warn('MINUS 10 HEALTH on PLAYER')
-              return { ...n, data: { ...n.data, health: n.data.health - 10 } }
+              console.warn('MINUS 2.5 HEALTH on PLAYER')
+              return { ...n, data: { ...n.data, health: n.data.health - 2.5 } }
             }
             return n
           })
