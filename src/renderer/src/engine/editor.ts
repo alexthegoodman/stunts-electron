@@ -5275,9 +5275,9 @@ export class Editor {
             const body = this.bodies.get(voxel.id)
             if (body && body.GetID().GetIndexAndSequenceNumber() === hitBodyId) {
               hitVoxelPosition = {
-                x: voxel.position[0],
-                y: voxel.position[1],
-                z: voxel.position[2]
+                x: voxel.position.x,
+                y: voxel.position.y,
+                z: voxel.position.z
               }
               break
             }
@@ -5287,9 +5287,9 @@ export class Editor {
             const body = this.bodies.get(voxel.id)
             if (body && body.GetID().GetIndexAndSequenceNumber() === hitBodyId) {
               hitVoxelPosition = {
-                x: voxel.position[0],
-                y: voxel.position[1],
-                z: voxel.position[2]
+                x: voxel.position.x,
+                y: voxel.position.y,
+                z: voxel.position.z
               }
               break
             }
@@ -5312,6 +5312,16 @@ export class Editor {
               y: paintY,
               z: hitVoxelPosition.z + nz * this.currentVoxelSize
             }
+
+            // console.info(
+            //   'Hit Voxel!',
+            //   voxelPosition,
+            //   hitVoxelPosition,
+            //   nx,
+            //   ny,
+            //   nz,
+            //   this.currentVoxelSize
+            // )
           } else {
             // Hit something that's not a voxel (like ground plane), use offset method
             // voxelPosition = {
