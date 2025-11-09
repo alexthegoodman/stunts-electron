@@ -1213,6 +1213,11 @@ export class Editor {
 
     // Restore Voxels
     if (saved_sequence.activeVoxels) {
+      console.info('Loading Voxels... ', saved_sequence.activeVoxels.length)
+
+      const voxelLoadStart = Date.now()
+
+      // TBD TODO: load the activeVoxels in chunks? Is this possible? Perhaps would need to be stored in an octree format to query by position efficiently
       for (let v of saved_sequence.activeVoxels) {
         if (
           Number.isNaN(v.position.x) ||
@@ -1261,6 +1266,8 @@ export class Editor {
           // const offset = Math.floor(this.voxelCache.vertexCache.length / vertexOffset) // assuming x,y,z per vertex
           const offset = this.voxelCache.vertexCache.length
 
+          // TBD TODO: cache chunks with a mid-level that is wireframe or blur?
+
           // Append vertices
           this.voxelCache.vertexCache.push(...restored_voxel.vertices)
 
@@ -1307,6 +1314,12 @@ export class Editor {
 
         console.log('Voxel restored...')
       }
+
+      const voxelLoadEnd = Date.now()
+      const totalLoadTimeMs = voxelLoadEnd - voxelLoadStart
+      const totalLoadTime = totalLoadTimeMs / 1000
+
+      console.info(`Voxels Loaded in ${totalLoadTime} seconds!`)
 
       // ** INitialize Voxel Cache ** //
       this.voxelCache.after_vertex_restored(
