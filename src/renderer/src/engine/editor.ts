@@ -12,6 +12,7 @@ import { DocumentSize, FormattedPage, loadFonts, MultiPageEditor, RenderItem } f
 import EditorState, { SaveTarget } from './editor_state'
 import { Camera3D, CameraAnimation } from './3dcamera'
 import { FirstPersonCamera } from './firstPersonCamera'
+import { Octree } from './octree'
 import {
   GPUPolyfill,
   PolyfillBindGroup,
@@ -265,6 +266,12 @@ export class Editor {
   // voxelIndiceCache: number[] = []
   voxelCache: VoxelCache | null = null
   cachedVoxels: Voxel[] = []
+  staticBodiesOctree: Octree<{
+    id: string
+    position: { x: number; y: number; z: number }
+    dimensions: [number, number, number]
+  }> | null
+  activeStaticBodies: Map<string, Jolt.Body>
 
   draggingCube3D: string | null
   draggingSphere3D: string | null
@@ -481,6 +488,11 @@ export class Editor {
     this.currentVoxelSize = 1
     this.currentVoxelColor = [1.0, 1.0, 1.0, 1.0]
     this.voxelCache = new VoxelCache(uuidv4(), 'PrimaryVoxelCache')
+    this.staticBodiesOctree = new Octree({
+      min: { x: -500, y: -500, z: -500 },
+      max: { x: 500, y: 500, z: 500 }
+    })
+    this.activeStaticBodies = new Map()
 
     // TODO: update interactive bounds on window resize?
     // this.interactiveBounds = {
@@ -1257,16 +1269,14 @@ export class Editor {
 
           // cache is initiialized after restored
 
-          const staticBody = this.physics.createStaticBox(
-            new this.physics.jolt.RVec3(v.position.x, v.position.y, v.position.z),
-            new this.physics.jolt.Quat(0, 0, 0, 1),
-            new this.physics.jolt.Vec3(
-              v.dimensions[0] / 2,
-              v.dimensions[1] / 2,
-              v.dimensions[2] / 2
-            )
+          this.staticBodiesOctree.insert(
+            { x: v.position.x, y: v.position.y, z: v.position.z },
+            {
+              id: v.id,
+              position: { x: v.position.x, y: v.position.y, z: v.position.z },
+              dimensions: v.dimensions
+            }
           )
-          this.bodies.set(v.id, staticBody)
         } else if (voxel_config.voxelType === VoxelType.WaterVoxel) {
           const restored_voxel = new WaterVoxel(
             windowSize,
@@ -1424,6 +1434,48 @@ export class Editor {
     )
 
     this.gpuResources.queue.writeBuffer(this.pointLightsBuffer, 0, pointLightsData.buffer)
+  }
+
+  updateStaticBodies() {
+    if (!this.camera || !this.physics || !this.staticBodiesOctree) {
+      return
+    }
+
+    // const cameraPosition = this.camera.getPosition()
+    const cameraPosition = this.camera.position3D
+    const loadRadius = 10.0 // Starting with 10, as landscape is 100x100
+
+    const nearbyItems = this.staticBodiesOctree.queryRadius(
+      { x: cameraPosition[0], y: cameraPosition[1], z: cameraPosition[2] },
+      loadRadius
+    )
+    const nearbyIds = new Set(nearbyItems.map((item) => item.data.id))
+
+    // Bodies to remove
+    for (const [id, body] of this.activeStaticBodies.entries()) {
+      if (!nearbyIds.has(id)) {
+        this.physics.bodyInterface.RemoveBody(body.GetID())
+        this.physics.bodyInterface.DestroyBody(body.GetID())
+        this.activeStaticBodies.delete(id)
+        this.bodies.delete(id)
+        console.log(`Removed static body: ${id}`)
+      }
+    }
+
+    // Bodies to add
+    for (const item of nearbyItems) {
+      const { id, position, dimensions } = item.data
+      if (!this.activeStaticBodies.has(id)) {
+        const staticBody = this.physics.createStaticBox(
+          new this.physics.jolt.RVec3(position.x, position.y, position.z),
+          new this.physics.jolt.Quat(0, 0, 0, 1),
+          new this.physics.jolt.Vec3(dimensions[0] / 2, dimensions[1] / 2, dimensions[2] / 2)
+        )
+        this.activeStaticBodies.set(id, staticBody)
+        this.bodies.set(id, staticBody)
+        console.log(`Added static body: ${id}`)
+      }
+    }
   }
 
   reset_sequence_objects() {

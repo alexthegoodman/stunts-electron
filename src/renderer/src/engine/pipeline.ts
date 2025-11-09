@@ -927,6 +927,8 @@ export class CanvasPipeline {
       return
     }
 
+    editor.updateStaticBodies()
+
     // Get WebGL resources through polyfill
     const device = editor.gpuResources.getDevice() as PolyfillDevice
     const queue = editor.gpuResources.getQueue() as PolyfillQueue
