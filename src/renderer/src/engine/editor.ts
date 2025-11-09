@@ -1443,7 +1443,7 @@ export class Editor {
 
     // const cameraPosition = this.camera.getPosition()
     const cameraPosition = this.camera.position3D
-    const loadRadius = 10.0 // Starting with 10, as landscape is 100x100
+    const loadRadius = this.gamePlaying ? 10.0 : 100.0 // Starting with 10 to keep high performance (100 during editing due to less active collisions, no step function)
 
     const nearbyItems = this.staticBodiesOctree.queryRadius(
       { x: cameraPosition[0], y: cameraPosition[1], z: cameraPosition[2] },
@@ -1458,7 +1458,7 @@ export class Editor {
         this.physics.bodyInterface.DestroyBody(body.GetID())
         this.activeStaticBodies.delete(id)
         this.bodies.delete(id)
-        console.log(`Removed static body: ${id}`)
+        // console.log(`Removed static body: ${id}`)
       }
     }
 
@@ -1473,7 +1473,7 @@ export class Editor {
         )
         this.activeStaticBodies.set(id, staticBody)
         this.bodies.set(id, staticBody)
-        console.log(`Added static body: ${id}`)
+        // console.log(`Added static body: ${id}`)
       }
     }
   }

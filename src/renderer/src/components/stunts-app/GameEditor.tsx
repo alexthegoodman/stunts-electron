@@ -96,7 +96,7 @@ const createLandscape = (editor: Editor, sequence_id: string) => {
     id: 'landscape-cube',
     name: 'Landscape',
     // dimensions: [1000, 10, 1000],
-    dimensions: [100, 2, 100],
+    dimensions: [1000, 2, 1000],
     position: { x: 0, y: -5, z: 0 },
     rotation: [0, 0, 0],
     backgroundFill: {
