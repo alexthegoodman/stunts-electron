@@ -39,9 +39,21 @@ export default function ProjectLayout({ children = null }: { children: any }) {
         <div className="flex flex-col gap-4 mr-4">
           <ThemeSelector />
 
+          <NavButton
+            label={t('Chat')}
+            icon="chat"
+            destination={`/project/${projectId}/chat`}
+          />
+
           <NavButton label={t('Video')} icon="video" destination={`/project/${projectId}/videos`} />
 
           <NavButton label={t('Games')} icon="games" destination={`/project/${projectId}/games`} />
+
+          <NavButton
+            label={t("Documents")}
+            icon="file-cloud"
+            destination={`/project/${projectId}/documents`}
+          />
 
           {/* <NavButton label={t('Ads')} icon="stack-plus" destination={`/project/${projectId}/ads`} />
 
@@ -53,11 +65,7 @@ export default function ProjectLayout({ children = null }: { children: any }) {
             destination={`/project/${projectId}/library`}
           />
 
-          {/* <NavButton
-            label={t("Document")}
-            icon="file-cloud"
-            destination={`/project/${projectId}/documents`}
-          /> */}
+          
           {/* <NavButton
             label="Slides"
             icon="presentation"

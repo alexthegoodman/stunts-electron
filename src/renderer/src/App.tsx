@@ -26,6 +26,7 @@ import Copy from './stunts-pages/project/[projectId]/copy/page'
 import Library from './stunts-pages/project/[projectId]/library/page'
 import Games from './stunts-pages/project/[projectId]/games/page'
 import { ToolProvider } from './contexts/ToolContext'
+import Chat from './stunts-pages/project/[projectId]/chat/page'
 
 function App(): React.JSX.Element {
   return (
@@ -97,6 +98,14 @@ function App(): React.JSX.Element {
                 component: (
                   <ProjectLayout>
                     <Library />
+                  </ProjectLayout>
+                )
+              },
+              {
+                path: '/project/:projectId/chat',
+                component: (
+                  <ProjectLayout>
+                    <Chat />
                   </ProjectLayout>
                 )
               },

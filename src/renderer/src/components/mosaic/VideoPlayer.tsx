@@ -40,12 +40,7 @@ import {
   CANVAS_HORIZ_OFFSET,
   CANVAS_VERT_OFFSET,
   Editor,
-  getRandomNumber,
-  InputValue,
-  Point,
-  rgbToWgpu,
   Viewport,
-  wgpuToHuman
 } from '../../engine/editor'
 import { StVideoConfig } from '../../engine/video'
 import { fileToBlob, StImageConfig } from '../../engine/image'
@@ -56,9 +51,7 @@ import LayerPanel, { Layer, LayerFromConfig } from '../stunts-app/layers'
 import { CanvasPipeline } from '../../engine/pipeline'
 import {
   ImageProperties,
-  KeyframeProperties,
   PolygonProperties,
-  TextProperties,
   VideoProperties
 } from '../stunts-app/Properties'
 import { callMotionInference } from '../../fetchers/inference'
@@ -85,8 +78,9 @@ import { useTranslation } from 'react-i18next'
 import { FlowArrow } from '@phosphor-icons/react/dist/ssr'
 import useSWR from 'swr'
 import { getCurrentUser } from '../../hooks/useCurrentUser'
+import { wgpuToHuman } from '@renderer/engine/editor/helpers'
 
-export const VideoPlayer: React.FC<any> = ({ projectId }) => {
+export const VideoPlayer: React.FC<any> = ({ projectId, set_project_name }) => {
   const { t } = useTranslation('common')
 
   const router = useRouter()
@@ -162,6 +156,7 @@ export const VideoPlayer: React.FC<any> = ({ projectId }) => {
 
       localStorage.setItem('stored-project', JSON.stringify({ project_id: projectId }))
 
+      let fileName = response.project?.name || ''
       let fileData = response.project?.fileData
 
       console.info('savedState', fileData)
@@ -192,6 +187,7 @@ export const VideoPlayer: React.FC<any> = ({ projectId }) => {
 
       console.info('cloned_settings', cloned_settings)
 
+      set_project_name(fileName)
       set_settings(cloned_settings)
       set_sequences(cloned_sequences)
       // set_timeline_state(response.project?.fileData.timeline_state);
@@ -233,8 +229,10 @@ export const VideoPlayer: React.FC<any> = ({ projectId }) => {
       for (let sequence of cloned_sequences) {
         await editorRef.current.restore_sequence_objects(
           sequence,
-          true
+          true,
           // "",
+          cloned_settings,
+          () => {}
         )
       }
 
@@ -416,28 +414,28 @@ export const VideoPlayer: React.FC<any> = ({ projectId }) => {
       let new_layers: Layer[] = []
       editor.polygons.forEach((polygon) => {
         if (!polygon.hidden) {
-          let polygon_config: PolygonConfig = polygon.toConfig()
+          let polygon_config: PolygonConfig = polygon.toConfig(editor.camera?.windowSize)
           let new_layer: Layer = LayerFromConfig.fromPolygonConfig(polygon_config)
           new_layers.push(new_layer)
         }
       })
       editor.textItems.forEach((text) => {
         if (!text.hidden) {
-          let text_config: TextRendererConfig = text.toConfig()
+          let text_config: TextRendererConfig = text.toConfig(editor.camera?.windowSize)
           let new_layer: Layer = LayerFromConfig.fromTextConfig(text_config)
           new_layers.push(new_layer)
         }
       })
       editor.imageItems.forEach((image) => {
         if (!image.hidden) {
-          let image_config: StImageConfig = image.toConfig()
+          let image_config: StImageConfig = image.toConfig(editor.camera?.windowSize)
           let new_layer: Layer = LayerFromConfig.fromImageConfig(image_config)
           new_layers.push(new_layer)
         }
       })
       editor.videoItems.forEach((video) => {
         if (!video.hidden) {
-          let video_config: StVideoConfig = video.toConfig()
+          let video_config: StVideoConfig = video.toConfig(editor.camera?.windowSize)
           let new_layer: Layer = LayerFromConfig.fromVideoConfig(video_config)
           new_layers.push(new_layer)
         }
@@ -524,9 +522,9 @@ export const VideoPlayer: React.FC<any> = ({ projectId }) => {
           <div
             id="scene-canvas-wrapper"
             style={
-              settings?.dimensions.width === 900
-                ? { aspectRatio: 900 / 550, maxWidth: '900px' }
-                : { aspectRatio: 550 / 900, maxWidth: '550px' }
+              settings?.dimensions.width === 960
+                    ? { aspectRatio: 960 / 540, maxWidth: '960px' }
+                    : { aspectRatio: 540 / 960, maxWidth: '540px' }
             }
           >
             <canvas
