@@ -2152,20 +2152,6 @@ export const ToolGrid = ({
               }}
             />
           )}
-          <OptionButton
-            redHot={isVoxelPainting}
-            style={{}}
-            label={isVoxelPainting ? 'Cancel Painting' : 'Paint Voxels'}
-            icon="cube"
-            aria-label={isVoxelPainting ? 'Disable Paint Voxels' : 'Enable Paint Voxels'}
-            callback={() => {
-              const newVoxelPaintingState = !isVoxelPainting
-              setVoxelPainting(newVoxelPaintingState)
-              if (editorRef.current) {
-                editorRef.current.isVoxelPaintingMode = newVoxelPaintingState
-              }
-            }}
-          />
 
           {options.includes('mockup3d') && (
             <OptionButton
@@ -2181,21 +2167,24 @@ export const ToolGrid = ({
               }}
             />
           )}
-          {options.includes('model3d') && (
+          {options.includes('games') && (
             <>
-              <OptionButton
-                style={{}}
-                label={t('Import 3D Model')}
-                icon="cube"
-                aria-label="Import a 3D model (GLB/GLTF)"
-                callback={() => {
-                  if (!currentSequenceId) {
-                    return
-                  }
-                  on_add_model3d(currentSequenceId)
-                }}
-              />
-              <OptionButton
+            
+          <OptionButton
+            redHot={isVoxelPainting}
+            style={{}}
+            label={isVoxelPainting ? 'Cancel Painting' : 'Paint Voxels'}
+            icon="cube"
+            aria-label={isVoxelPainting ? 'Disable Paint Voxels' : 'Enable Paint Voxels'}
+            callback={() => {
+              const newVoxelPaintingState = !isVoxelPainting
+              setVoxelPainting(newVoxelPaintingState)
+              if (editorRef.current) {
+                editorRef.current.isVoxelPaintingMode = newVoxelPaintingState
+              }
+            }}
+          />
+               <OptionButton
                 style={{}}
                 label={t('Add Player Character')}
                 icon="user"
@@ -2255,6 +2244,23 @@ export const ToolGrid = ({
                   on_add_armor(currentSequenceId)
                 }}
               />
+            </>
+          )}
+          {options.includes('model3d') && (
+            <>
+              <OptionButton
+                style={{}}
+                label={t('Import 3D Model')}
+                icon="cube"
+                aria-label="Import a 3D model (GLB/GLTF)"
+                callback={() => {
+                  if (!currentSequenceId) {
+                    return
+                  }
+                  on_add_model3d(currentSequenceId)
+                }}
+              />
+             
             </>
           )}
         </div>

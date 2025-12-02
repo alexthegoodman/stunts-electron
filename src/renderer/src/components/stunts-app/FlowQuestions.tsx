@@ -36,6 +36,7 @@ import { SavedStVideoConfig } from '../../engine/video'
 import { SavedStImageConfig } from '../../engine/image'
 import { mergeTemplateWithUserContent } from '../../engine/merge'
 import { rgbToWgpu } from '@renderer/engine/editor/helpers'
+import { getEmptyVideoData } from '@renderer/lib/getData'
 
 export default function FlowQuestions({
   flowId = null,
@@ -311,47 +312,7 @@ export default function FlowQuestions({
       flow?.flow.questions
     )
 
-    let currentSequenceId = uuidv4().toString()
-
-    const defaultVideoSequence: Sequence = {
-      id: currentSequenceId,
-      name: 'Sequence #1',
-      backgroundFill: { type: 'Color', value: [200, 200, 200, 255] },
-      // durationMs: 20000,
-      activePolygons: [],
-      polygonMotionPaths: [],
-      activeTextItems: [],
-      activeImageItems: [],
-      activeVideoItems: []
-    }
-
-    let dimensions = isVertical
-      ? {
-          width: 500,
-          height: 900
-        }
-      : {
-          width: 900,
-          height: 500
-        }
-
-    const emptyVideoState: SavedState = {
-      sequences: [defaultVideoSequence],
-      timeline_state: {
-        timeline_sequences: [
-          {
-            id: uuidv4(),
-            sequenceId: currentSequenceId,
-            trackType: TrackType.Video
-            // startTimeMs: 0
-            // duration_ms: 20000,
-          }
-        ]
-      },
-      settings: {
-        dimensions
-      }
-    }
+    const emptyVideoState = getEmptyVideoData();
 
     const viewport = new Viewport(900, 500)
     const editor = new Editor(viewport)

@@ -114,6 +114,7 @@ import { Model3DConfig } from '@renderer/engine/model3d'
 import { ProjectSelector } from '../ProjectSelector'
 import { SceneShaderPicker } from './SceneShaderPicker'
 import { BrushConfig } from '@renderer/engine/brush'
+import { getEmptyVideoData } from '@renderer/lib/getData'
 
 export function update_keyframe(
   editor_state: EditorState,
@@ -296,25 +297,25 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
 
     canvas.addEventListener('pointermove', (event: PointerEvent) => {
       const coords = getCanvasCoordinates(canvas, event)
-      editor.handle_mouse_move(coords.x, coords.y)
+      editor.handle_mouse_move(coords.x, coords.y, event)
     })
 
     canvas.addEventListener('pointerdown', (event) => {
       canvas.setPointerCapture(event.pointerId)
       const coords = getCanvasCoordinates(canvas, event)
-      editor.handle_mouse_down(coords.x, coords.y)
+      editor.handle_mouse_down(coords.x, coords.y, event)
     })
 
     canvas.addEventListener('pointerup', (event) => {
       console.info('handle mouse up')
       canvas.releasePointerCapture(event.pointerId)
-      editor.handle_mouse_up()
+      editor.handle_mouse_up(event)
     })
 
     canvas.addEventListener('pointercancel', (event) => {
       console.info('pointer cancelled - treating as mouse up')
       canvas.releasePointerCapture(event.pointerId)
-      editor.handle_mouse_up()
+      editor.handle_mouse_up(event)
     })
   }
 
@@ -738,6 +739,8 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       if (!fileData) {
         toast.error('No file data')
 
+        // fileData = getEmptyVideoData(false);
+
         return
       }
 
@@ -801,7 +804,7 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
       // console.info("Restoring objects...");
 
       for (let sequence of cloned_sequences) {
-        await editorRef.current.restore_sequence_objects(sequence, true, cloned_settings)
+        await editorRef.current.restore_sequence_objects(sequence, true, cloned_settings, () => console.info("set nodes"))
       }
 
       // set handlers
@@ -1692,6 +1695,8 @@ export const VideoEditor: React.FC<any> = ({ projectId }) => {
                     update={() => {
                       setRefreshUINow(Date.now())
                     }}
+                    setNodes={() => {}}
+                    setEdges={() => {}}
                   />
                 </div>
               )}

@@ -6,13 +6,14 @@ import { VideoEditor } from '../../components/stunts-app/VideoEditor'
 import React from 'react'
 import { useParams } from '../../hooks/useRouter'
 import useSWR from 'swr'
-import { AuthToken, getSingleProject, saveSettingsData } from '../../fetchers/projects'
+import { AuthToken, getEmptyAdData, getSingleProject, saveSequencesData, saveSettingsData } from '../../fetchers/projects'
 import { useLocalStorage } from '@uidotdev/usehooks'
 import { JwtData } from '../../hooks/useCurrentUser'
 import { set } from 'zod'
 import { SavedState } from '../../engine/animations'
 import { SaveTarget } from '../../engine/editor_state'
 import { useTranslation } from 'react-i18next'
+import { getEmptyVideoData } from '@renderer/lib/getData'
 
 export default function VideoStartupSettings() {
   const { t } = useTranslation('common')
@@ -104,6 +105,8 @@ export default function VideoStartupSettings() {
 
                 await saveSettingsData(newSettings, SaveTarget.Videos)
 
+                await saveSequencesData(getEmptyVideoData(false).sequences, SaveTarget.Videos)
+
                 setStartupScreen(false)
               }}
             >
@@ -129,6 +132,8 @@ export default function VideoStartupSettings() {
                 }
 
                 await saveSettingsData(newSettings, SaveTarget.Videos)
+
+                await saveSequencesData(getEmptyVideoData(true).sequences, SaveTarget.Videos)
 
                 setStartupScreen(false)
               }}
